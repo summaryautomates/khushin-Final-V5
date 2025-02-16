@@ -4,9 +4,8 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/products/product-grid";
 import type { Product } from "@shared/schema";
-import dynamic from "next/dynamic";
-const Scene = dynamic(() => import("@react-three/fiber").then(mod => mod.Canvas), { ssr: false });
-const Stage = dynamic(() => import("@react-three/drei").then(mod => mod.Stage), { ssr: false });
+import { Canvas } from "@react-three/fiber";
+import { Stage } from "@react-three/drei";
 
 export default function Home() {
   const { data: products, isLoading } = useQuery<Product[]>({
