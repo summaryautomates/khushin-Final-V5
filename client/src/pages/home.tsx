@@ -47,7 +47,7 @@ export default function Home() {
               transition={{ delay: 1, duration: 1 }}
               className="mt-8 text-xl md:text-2xl leading-relaxed text-zinc-400 max-w-2xl mx-auto tracking-wide"
             >
-              Discover our curated collection of sophisticated designs
+              Exclusive luxury lighters - The perfect gift to light up their smile.
             </motion.p>
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
