@@ -80,14 +80,15 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const startServer = async () => {
-  const WORKFLOW_PORT = 5000;
+  const PRIMARY_PORT = 5000;
+  const FALLBACK_PORTS = [5001, 5002, 5003, 5004];
+  const RETRY_DELAY = 1000;
   const MAX_RETRIES = 3;
-  const RETRY_DELAY = 2000;
 
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+  // First, try to start on the primary port
+  for (let retry = 0; retry < MAX_RETRIES; retry++) {
     try {
-      log(`Starting server attempt ${attempt}/${MAX_RETRIES} on port ${WORKFLOW_PORT}...`, 'server');
-
+      log(`Attempting to start server on primary port ${PRIMARY_PORT}...`, 'server');
       const server = createServer(app);
 
       await new Promise<void>((resolve, reject) => {
@@ -106,7 +107,7 @@ const startServer = async () => {
         server.once('error', onError);
         server.once('listening', onListening);
 
-        server.listen(WORKFLOW_PORT, '0.0.0.0');
+        server.listen(PRIMARY_PORT, '0.0.0.0');
       });
 
       // Setup graceful shutdown
@@ -140,11 +141,12 @@ const startServer = async () => {
       return; // Server started successfully
     } catch (err: any) {
       if (err.code === 'EADDRINUSE') {
-        if (attempt === MAX_RETRIES) {
-          console.error(`Error: Port ${WORKFLOW_PORT} is still in use after ${MAX_RETRIES} attempts. Please ensure no other process is using this port.`);
-          process.exit(1);
+        if (retry === MAX_RETRIES - 1) {
+          // If we've exhausted retries on primary port, try fallback ports
+          log(`Unable to bind to primary port ${PRIMARY_PORT} after ${MAX_RETRIES} attempts, trying fallback ports...`, 'server');
+          break;
         }
-        log(`Port ${WORKFLOW_PORT} is in use, retrying in ${RETRY_DELAY}ms...`, 'server');
+        log(`Port ${PRIMARY_PORT} is in use, retrying in ${RETRY_DELAY}ms...`, 'server');
         await sleep(RETRY_DELAY);
       } else {
         console.error('Failed to start server:', err);
@@ -152,6 +154,43 @@ const startServer = async () => {
       }
     }
   }
+
+  // If primary port fails, try fallback ports
+  for (const port of FALLBACK_PORTS) {
+    try {
+      log(`Attempting to start server on fallback port ${port}...`, 'server');
+      const server = createServer(app);
+
+      await new Promise<void>((resolve, reject) => {
+        server.once('error', reject);
+        server.once('listening', () => {
+          const address = server.address() as AddressInfo;
+          log(`Server is running on fallback port ${address.port}`, 'server');
+          resolve();
+        });
+        server.listen(port, '0.0.0.0');
+      });
+
+      // Setup Vite
+      if (process.env.NODE_ENV !== 'production') {
+        await setupVite(app, server);
+      } else {
+        serveStatic(app);
+      }
+
+      return; // Server started successfully on fallback port
+    } catch (err: any) {
+      if (err.code === 'EADDRINUSE') {
+        log(`Fallback port ${port} is in use, trying next port...`, 'server');
+        continue;
+      }
+      console.error(`Failed to start server on fallback port ${port}:`, err);
+    }
+  }
+
+  // If we get here, all ports failed
+  console.error('Failed to start server on any available port');
+  process.exit(1);
 };
 
 startServer();
