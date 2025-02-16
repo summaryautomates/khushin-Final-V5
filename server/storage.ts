@@ -2,6 +2,8 @@ import {
   type Product,
   type BlogPost,
   type ContactMessage,
+  type InsertProduct,
+  type InsertBlogPost,
   type InsertContactMessage,
   products,
   blogPosts,
@@ -9,11 +11,6 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
-import session from "express-session";
-import connectPg from "connect-pg-simple";
-import { pool } from "./db";
-
-const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   // Products
@@ -27,20 +24,9 @@ export interface IStorage {
 
   // Contact messages
   createContactMessage(message: InsertContactMessage): Promise<ContactMessage>;
-
-  sessionStore: session.Store;
 }
 
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.Store;
-
-  constructor() {
-    this.sessionStore = new PostgresSessionStore({
-      pool,
-      createTableIfMissing: true,
-    });
-  }
-
   async getProducts(): Promise<Product[]> {
     return await db.select().from(products);
   }

@@ -1,18 +1,19 @@
-import type { Express, Request, Response } from "express";
+
+import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertContactMessageSchema } from "../shared/schema";
+import { insertContactMessageSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Products API
   const productsRouter = {
-    getAll: async (_req: Request, res: Response) => {
+    getAll: async (_req, res) => {
       const products = await storage.getProducts();
       res.json(products);
     },
 
-    getById: async (req: Request, res: Response) => {
+    getById: async (req, res) => {
       const id = parseInt(req.params.id);
       const product = await storage.getProduct(id);
       if (!product) {
@@ -21,7 +22,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(product);
     },
 
-    getByCategory: async (req: Request, res: Response) => {
+    getByCategory: async (req, res) => {
       const products = await storage.getProductsByCategory(req.params.category);
       res.json(products);
     }
@@ -29,12 +30,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Blog API
   const blogRouter = {
-    getAll: async (_req: Request, res: Response) => {
+    getAll: async (_req, res) => {
       const posts = await storage.getBlogPosts();
       res.json(posts);
     },
 
-    getBySlug: async (req: Request, res: Response) => {
+    getBySlug: async (req, res) => {
       const post = await storage.getBlogPost(req.params.slug);
       if (!post) {
         return res.status(404).json({ message: "Blog post not found" });
@@ -47,11 +48,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/products", productsRouter.getAll);
   app.get("/api/products/:id", productsRouter.getById);
   app.get("/api/products/category/:category", productsRouter.getByCategory);
+  app.put("/api/products/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    const product = await storage.getProduct(id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    const updatedImages = [...product.images, "https://m.media-amazon.com/images/I/814byfcwBVL._SX679_.jpg"];
+    const updatedProduct = await storage.updateProduct(id, { images: updatedImages });
+    res.json(updatedProduct);
+  });
   app.get("/api/blog", blogRouter.getAll);
   app.get("/api/blog/:slug", blogRouter.getBySlug);
 
   // Contact route
-  app.post("/api/contact", async (req: Request, res: Response) => {
+  app.post("/api/contact", async (req, res) => {
     try {
       const data = insertContactMessageSchema.parse(req.body);
       const message = await storage.createContactMessage(data);
