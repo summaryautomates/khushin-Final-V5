@@ -9,6 +9,15 @@ import { Shield, Lock, CreditCard } from "lucide-react";
 export function Footer() {
   const { toast } = useToast();
   const [email, setEmail] = useState("");
+  const [search, setSearch] = useState("");
+  const navigate = useNavigate();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (search) {
+      navigate(`/products?search=${encodeURIComponent(search)}`);
+    }
+  };
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,41 +33,47 @@ export function Footer() {
   return (
     <footer className="border-t bg-background">
       <div className="container mx-auto px-4 py-12 md:py-16">
-        {/* Trust Badges Section */}
+        {/* Search Section */}
         <div className="mb-12 border-b pb-12">
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
-            <div className="flex items-center justify-center space-x-4">
-              <Shield className="h-8 w-8 text-primary" />
-              <div>
-                <h4 className="font-semibold">Secure Shopping</h4>
-                <p className="text-sm text-muted-foreground">256-bit SSL Security</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-center space-x-4">
-              <Lock className="h-8 w-8 text-primary" />
-              <div>
-                <h4 className="font-semibold">Privacy Protected</h4>
-                <p className="text-sm text-muted-foreground">GDPR Compliant</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-center space-x-4">
-              <CreditCard className="h-8 w-8 text-primary" />
-              <div>
-                <h4 className="font-semibold">Secure Payments</h4>
-                <p className="text-sm text-muted-foreground">PCI DSS Compliant</p>
-              </div>
-            </div>
+          <div className="max-w-md mx-auto">
+            <form onSubmit={handleSearch} className="flex gap-2">
+              <Input
+                type="search"
+                placeholder="Search products..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="flex-1"
+              />
+              <Button type="submit">Search</Button>
+            </form>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-5 lg:gap-12">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4 lg:gap-12">
           <div className="space-y-3">
-            <h3 className="text-lg font-semibold">Support</h3>
+            <h3 className="text-lg font-semibold">Products</h3>
             <ul className="space-y-3">
-              <li><Link href="/faqs" className="text-muted-foreground hover:text-foreground">FAQs</Link></li>
-              <li><Link href="/warranty" className="text-muted-foreground hover:text-foreground">Warranty</Link></li>
-              <li><Link href="/shipping" className="text-muted-foreground hover:text-foreground">Shipping</Link></li>
-              <li><Link href="/returns" className="text-muted-foreground hover:text-foreground">Returns</Link></li>
+              <li><Link href="/products/category/lighters" className="text-muted-foreground hover:text-foreground">Stylized Lighters</Link></li>
+              <li><Link href="/products/new" className="text-muted-foreground hover:text-foreground">New Arrivals</Link></li>
+              <li><Link href="/products/bestsellers" className="text-muted-foreground hover:text-foreground">Best Sellers</Link></li>
+            </ul>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold">Contact</h3>
+            <ul className="space-y-3">
+              <li><Link href="/contact" className="text-muted-foreground hover:text-foreground">Contact Us</Link></li>
+              <li><p className="text-muted-foreground">WhatsApp Support<br/>+919373395733</p></li>
+              <li><Link href="/support" className="text-muted-foreground hover:text-foreground">Customer Support</Link></li>
+            </ul>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold">Blog</h3>
+            <ul className="space-y-3">
+              <li><Link href="/blog/latest" className="text-muted-foreground hover:text-foreground">Latest Posts</Link></li>
+              <li><Link href="/blog/guides" className="text-muted-foreground hover:text-foreground">Style Guides</Link></li>
+              <li><Link href="/blog/collections" className="text-muted-foreground hover:text-foreground">Collections</Link></li>
             </ul>
           </div>
 
@@ -67,27 +82,7 @@ export function Footer() {
             <ul className="space-y-3">
               <li><a href="https://instagram.com" className="text-muted-foreground hover:text-foreground" target="_blank" rel="noopener noreferrer">Instagram</a></li>
               <li><a href="https://facebook.com" className="text-muted-foreground hover:text-foreground" target="_blank" rel="noopener noreferrer">Facebook</a></li>
-              <li><a href="https://twitter.com" className="text-muted-foreground hover:text-foreground" target="_blank" rel="noopener noreferrer">Twitter</a></li>
-              <li><a href="mailto:contact@khush.in" className="text-muted-foreground hover:text-foreground">Email</a></li>
-              <li><p className="text-muted-foreground">Toll Free - WhatsApp Support<br/>+919373395733</p></li>
-            </ul>
-          </div>
-
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold">Explore</h3>
-            <ul className="space-y-3">
-              <li><Link href="/" className="text-muted-foreground hover:text-foreground">Home</Link></li>
-              <li><Link href="/about" className="text-muted-foreground hover:text-foreground">About</Link></li>
-              <li><Link href="/products" className="text-muted-foreground hover:text-foreground">Products</Link></li>
-              <li><Link href="/contact" className="text-muted-foreground hover:text-foreground">Contact</Link></li>
-            </ul>
-          </div>
-
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold">Legal</h3>
-            <ul className="space-y-3">
-              <li><Link href="/privacy" className="text-muted-foreground hover:text-foreground">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="text-muted-foreground hover:text-foreground">Terms of Service</Link></li>
+              <li><a href="mailto:contact@khush.in" className="text-muted-foreground hover:text-foreground">Email Us</a></li>
             </ul>
           </div>
 
