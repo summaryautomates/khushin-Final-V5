@@ -28,17 +28,19 @@ export function Footer() {
             <h3 className="text-lg font-semibold">Products</h3>
             <ul className="space-y-3">
               <li>
-                <Link href="/products/category/lighters">
-                  <a className="text-muted-foreground transition-colors hover:text-foreground">
-                    Stylized Lighters
-                  </a>
+                <Link 
+                  href="/products/category/lighters"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Stylized Lighters
                 </Link>
               </li>
               <li>
-                <Link href="/products/category/warmers">
-                  <a className="text-muted-foreground transition-colors hover:text-foreground">
-                    Winter Warmers
-                  </a>
+                <Link 
+                  href="/products/category/warmers"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Winter Warmers
                 </Link>
               </li>
             </ul>
@@ -47,17 +49,19 @@ export function Footer() {
             <h3 className="text-lg font-semibold">Company</h3>
             <ul className="space-y-3">
               <li>
-                <Link href="/about">
-                  <a className="text-muted-foreground transition-colors hover:text-foreground">
-                    About Us
-                  </a>
+                <Link 
+                  href="/about"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  About Us
                 </Link>
               </li>
               <li>
-                <Link href="/contact">
-                  <a className="text-muted-foreground transition-colors hover:text-foreground">
-                    Contact
-                  </a>
+                <Link 
+                  href="/contact"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Contact
                 </Link>
               </li>
             </ul>
@@ -66,10 +70,11 @@ export function Footer() {
             <h3 className="text-lg font-semibold">Resources</h3>
             <ul className="space-y-3">
               <li>
-                <Link href="/blog">
-                  <a className="text-muted-foreground transition-colors hover:text-foreground">
-                    Blog
-                  </a>
+                <Link 
+                  href="/blog"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Blog
                 </Link>
               </li>
             </ul>
@@ -78,17 +83,19 @@ export function Footer() {
             <h3 className="text-lg font-semibold">Legal</h3>
             <ul className="space-y-3">
               <li>
-                <Link href="/privacy">
-                  <a className="text-muted-foreground transition-colors hover:text-foreground">
-                    Privacy Policy
-                  </a>
+                <Link 
+                  href="/privacy"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="/terms">
-                  <a className="text-muted-foreground transition-colors hover:text-foreground">
-                    Terms of Service
-                  </a>
+                <Link 
+                  href="/terms"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Terms of Service
                 </Link>
               </li>
             </ul>
