@@ -38,46 +38,60 @@ app.use((req, res, next) => {
 
 // Initialize server
 (async () => {
-  const server = await registerRoutes(app);
+  log("Starting server initialization");
 
-  // Error handling middleware
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-    res.status(status).json({ message });
-    log(`Error: ${message}`);
-  });
-
-  // Setup Vite in development
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
-
-  // Try different ports if default port is in use
-  const tryPort = (port: number): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      server.listen(port, "0.0.0.0")
-        .once('error', (err: any) => {
-          if (err.code === 'EADDRINUSE') {
-            log(`Port ${port} is in use, trying ${port + 1}`);
-            tryPort(port + 1).then(resolve).catch(reject);
-          } else {
-            reject(err);
-          }
-        })
-        .once('listening', () => {
-          log(`Server running on port ${port}`);
-          resolve();
-        });
-    });
-  };
-
-  // Start server on initial port (default 5000) or use PORT env variable
-  const initialPort = parseInt(process.env.PORT || "5000", 10);
   try {
-    await tryPort(initialPort);
+    const server = await registerRoutes(app);
+
+    // Error handling middleware
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
+      res.status(status).json({ message });
+      log(`Error: ${message}`);
+    });
+
+    const port = parseInt(process.env.PORT || "5000", 10);
+    let currentPort = port;
+    let serverStarted = false;
+
+    while (!serverStarted && currentPort < port + 3) {
+      try {
+        log(`Attempting to start server on port ${currentPort}`);
+
+        // Setup middleware based on environment
+        if (app.get("env") === "development") {
+          log("Setting up Vite middleware");
+          await setupVite(app, server);
+        } else {
+          log("Setting up static file serving");
+          serveStatic(app);
+        }
+
+        await new Promise<void>((resolve, reject) => {
+          server.listen(currentPort, "0.0.0.0")
+            .once('error', (err: any) => {
+              if (err.code === 'EADDRINUSE') {
+                log(`Port ${currentPort} is in use`);
+                currentPort++;
+                reject(err);
+              } else {
+                log(`Failed to start server: ${err}`);
+                reject(err);
+              }
+            })
+            .once('listening', () => {
+              serverStarted = true;
+              log(`Server successfully started on port ${currentPort}`);
+              resolve();
+            });
+        });
+      } catch (err) {
+        if (currentPort >= port + 3) {
+          throw new Error('Could not find an available port after 3 attempts');
+        }
+      }
+    }
   } catch (err) {
     console.error("Failed to start server:", err);
     process.exit(1);
