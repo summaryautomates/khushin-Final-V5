@@ -12,25 +12,19 @@ export default function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="min-h-[80vh] flex items-center justify-center bg-gradient-to-r from-zinc-50 to-zinc-100">
+      <section className="min-h-screen flex items-center justify-center bg-black text-white">
         <div className="container">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-5xl md:text-7xl font-light tracking-tight text-zinc-900 mb-8">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-7xl md:text-8xl font-light tracking-tight mb-12">
               Make your loved ones happy!
             </h1>
-            <p className="mt-6 text-lg md:text-xl leading-relaxed text-zinc-600 max-w-2xl mx-auto">
-              Discover our curated collection of exquisitely crafted pieces, 
-              where luxury meets timeless elegance in every detail.
+            <p className="mt-8 text-xl md:text-2xl leading-relaxed text-zinc-400 max-w-2xl mx-auto">
+              Discover extraordinary pieces that define elegance
             </p>
-            <div className="mt-12 flex items-center justify-center gap-x-8">
+            <div className="mt-16 flex items-center justify-center gap-x-8">
               <Link href="/products">
-                <Button size="lg" className="text-base px-8 py-6">
-                  Explore Collection
-                </Button>
-              </Link>
-              <Link href="/contact">
-                <Button variant="outline" size="lg" className="text-base px-8 py-6">
-                  Book Consultation
+                <Button size="lg" className="text-lg px-12 py-8 bg-white text-black hover:bg-zinc-200">
+                  Explore
                 </Button>
               </Link>
             </div>
@@ -39,10 +33,10 @@ export default function Home() {
       </section>
 
       {/* Featured Products */}
-      <section className="py-24 bg-white">
+      <section className="py-32 bg-white">
         <div className="container">
-          <h2 className="text-3xl md:text-4xl font-light text-center mb-16">
-            Featured Pieces
+          <h2 className="text-4xl md:text-5xl font-light text-center mb-24">
+            Featured Collection
           </h2>
           {isLoading ? (
             <div className="text-center text-zinc-500">Loading collection...</div>
@@ -53,14 +47,13 @@ export default function Home() {
       </section>
 
       {/* Brand Story */}
-      <section className="py-24 bg-zinc-50">
+      <section className="py-32 bg-black text-white">
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-light mb-8">Our Heritage</h2>
-            <p className="text-lg text-zinc-600 leading-relaxed">
-              Since our inception, KHUSH.IN has been dedicated to crafting exceptional 
-              pieces that embody sophistication and refinement. Each creation is a 
-              testament to our commitment to excellence and timeless luxury.
+            <h2 className="text-4xl md:text-5xl font-light mb-12">Heritage</h2>
+            <p className="text-xl text-zinc-400 leading-relaxed">
+              KHUSH.IN crafts exceptional pieces that embody sophistication. 
+              Each creation is a testament to our dedication to excellence.
             </p>
           </div>
         </div>
