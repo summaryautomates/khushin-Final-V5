@@ -1,5 +1,4 @@
-
-import { Link, useNavigate } from "wouter";
+import { useLocation, useNavigate } from "@wouter/router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -11,6 +10,8 @@ export function Footer() {
   const [email, setEmail] = useState("");
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
+  const [location, setLocation] = useLocation();
+
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,27 +54,27 @@ export function Footer() {
           <div className="space-y-3">
             <h3 className="text-lg font-semibold">Products</h3>
             <ul className="space-y-3">
-              <li><Link href="/products/category/lighters" className="text-muted-foreground hover:text-foreground">Stylized Lighters</Link></li>
-              <li><Link href="/products/new" className="text-muted-foreground hover:text-foreground">New Arrivals</Link></li>
-              <li><Link href="/products/bestsellers" className="text-muted-foreground hover:text-foreground">Best Sellers</Link></li>
+              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => navigate('/products/category/lighters')}>Stylized Lighters</li>
+              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => navigate('/products/new')}>New Arrivals</li>
+              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => navigate('/products/bestsellers')}>Best Sellers</li>
             </ul>
           </div>
 
           <div className="space-y-3">
             <h3 className="text-lg font-semibold">Contact</h3>
             <ul className="space-y-3">
-              <li><Link href="/contact" className="text-muted-foreground hover:text-foreground">Contact Us</Link></li>
+              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => navigate('/contact')}>Contact Us</li>
               <li><p className="text-muted-foreground">WhatsApp Support<br/>+919373395733</p></li>
-              <li><Link href="/support" className="text-muted-foreground hover:text-foreground">Customer Support</Link></li>
+              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => navigate('/support')}>Customer Support</li>
             </ul>
           </div>
 
           <div className="space-y-3">
             <h3 className="text-lg font-semibold">Blog</h3>
             <ul className="space-y-3">
-              <li><Link href="/blog/latest" className="text-muted-foreground hover:text-foreground">Latest Posts</Link></li>
-              <li><Link href="/blog/guides" className="text-muted-foreground hover:text-foreground">Style Guides</Link></li>
-              <li><Link href="/blog/collections" className="text-muted-foreground hover:text-foreground">Collections</Link></li>
+              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => navigate('/blog/latest')}>Latest Posts</li>
+              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => navigate('/blog/guides')}>Style Guides</li>
+              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => navigate('/blog/collections')}>Collections</li>
             </ul>
           </div>
 
