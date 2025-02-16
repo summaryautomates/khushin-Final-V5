@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "wouter";
+import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ interface PaymentDetails {
 }
 
 export default function CheckoutPayment() {
-  const [location, navigate] = useLocation();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const orderRef = new URLSearchParams(window.location.search).get('ref');
   const { clearCart } = useCart();
@@ -33,7 +33,7 @@ export default function CheckoutPayment() {
 
   useEffect(() => {
     if (!orderRef) {
-      navigate('/cart');
+      setLocation('/cart');
       toast({
         title: "Error",
         description: "Invalid payment session. Please try again.",
@@ -41,7 +41,7 @@ export default function CheckoutPayment() {
       });
       return;
     }
-  }, [orderRef, navigate, toast]);
+  }, [orderRef, setLocation, toast]);
 
   useEffect(() => {
     if (paymentDetails) {
@@ -69,9 +69,9 @@ export default function CheckoutPayment() {
   useEffect(() => {
     if (paymentStatus === 'completed') {
       clearCart();
-      navigate(`/checkout/success?ref=${orderRef}`);
+      setLocation(`/checkout/success?ref=${orderRef}`);
     }
-  }, [paymentStatus, clearCart, orderRef, navigate]);
+  }, [paymentStatus, clearCart, orderRef, setLocation]);
 
   const handlePaymentStatusUpdate = async (newStatus: 'completed' | 'failed') => {
     if (isUpdatingStatus) return;
@@ -119,7 +119,7 @@ export default function CheckoutPayment() {
               <p className="text-muted-foreground">
                 There was an error loading your payment details. Please try again.
               </p>
-              <Button onClick={() => navigate('/cart')}>
+              <Button onClick={() => setLocation('/cart')}>
                 Return to Cart
               </Button>
             </div>
@@ -186,7 +186,7 @@ export default function CheckoutPayment() {
         <CardFooter className="flex justify-between">
           <Button 
             variant="outline" 
-            onClick={() => navigate('/cart')}
+            onClick={() => setLocation('/cart')}
             disabled={paymentStatus === 'completed' || isUpdatingStatus}
           >
             Back to Cart
