@@ -18,14 +18,8 @@ import Warranty from "@/pages/support/warranty";
 import Shipping from "@/pages/support/shipping";
 import FAQs from "@/pages/support/faqs";
 import Customize from "@/pages/customize";
-
-// Temporary placeholder for Blog
-const Blog = () => (
-  <div className="container py-20 min-h-screen">
-    <h1 className="text-3xl font-bold mb-8">Blog</h1>
-    <p>Coming soon...</p>
-  </div>
-);
+import CheckoutSuccess from "@/pages/checkout-success";
+import CheckoutPayment from "@/pages/checkout-payment";
 
 function App() {
   return (
@@ -39,7 +33,8 @@ function App() {
               <Route path="/products" component={Products} />
               <Route path="/product/:id" component={Product} />
               <Route path="/cart" component={Cart} />
-              <Route path="/blog" component={Blog} />
+              <Route path="/checkout/payment" component={CheckoutPayment} />
+              <Route path="/checkout/success" component={CheckoutSuccess} />
               <Route path="/contact" component={Contact} />
               <Route path="/customize" component={Customize} />
               <Route path="/faqs" component={FAQs} />
