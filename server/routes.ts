@@ -1,3 +1,4 @@
+
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -5,41 +6,50 @@ import { insertContactMessageSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Products routes
-  app.get("/api/products", async (_req, res) => {
-    const products = await storage.getProducts();
-    res.json(products);
-  });
+  // Products API
+  const productsRouter = {
+    getAll: async (_req, res) => {
+      const products = await storage.getProducts();
+      res.json(products);
+    },
 
-  app.get("/api/products/:id", async (req, res) => {
-    const id = parseInt(req.params.id);
-    const product = await storage.getProduct(id);
-    if (!product) {
-      res.status(404).json({ message: "Product not found" });
-      return;
+    getById: async (req, res) => {
+      const id = parseInt(req.params.id);
+      const product = await storage.getProduct(id);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      res.json(product);
+    },
+
+    getByCategory: async (req, res) => {
+      const products = await storage.getProductsByCategory(req.params.category);
+      res.json(products);
     }
-    res.json(product);
-  });
+  };
 
-  app.get("/api/products/category/:category", async (req, res) => {
-    const products = await storage.getProductsByCategory(req.params.category);
-    res.json(products);
-  });
+  // Blog API
+  const blogRouter = {
+    getAll: async (_req, res) => {
+      const posts = await storage.getBlogPosts();
+      res.json(posts);
+    },
 
-  // Blog routes
-  app.get("/api/blog", async (_req, res) => {
-    const posts = await storage.getBlogPosts();
-    res.json(posts);
-  });
-
-  app.get("/api/blog/:slug", async (req, res) => {
-    const post = await storage.getBlogPost(req.params.slug);
-    if (!post) {
-      res.status(404).json({ message: "Blog post not found" });
-      return;
+    getBySlug: async (req, res) => {
+      const post = await storage.getBlogPost(req.params.slug);
+      if (!post) {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+      res.json(post);
     }
-    res.json(post);
-  });
+  };
+
+  // Register routes
+  app.get("/api/products", productsRouter.getAll);
+  app.get("/api/products/:id", productsRouter.getById);
+  app.get("/api/products/category/:category", productsRouter.getByCategory);
+  app.get("/api/blog", blogRouter.getAll);
+  app.get("/api/blog/:slug", blogRouter.getBySlug);
 
   // Contact route
   app.post("/api/contact", async (req, res) => {
@@ -49,13 +59,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(message);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ message: "Invalid input", errors: error.errors });
-        return;
+        return res.status(400).json({ 
+          message: "Invalid input", 
+          errors: error.errors 
+        });
       }
       throw error;
     }
   });
 
-  const httpServer = createServer(app);
-  return httpServer;
+  return createServer(app);
 }
