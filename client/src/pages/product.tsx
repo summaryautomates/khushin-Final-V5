@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -33,21 +34,21 @@ export default function ProductPage() {
     <div className="container py-12">
       <div className="grid gap-12 md:grid-cols-2">
         <div className="space-y-4">
-          <div className="aspect-square overflow-hidden rounded-lg border group">
+          <div className="aspect-square overflow-hidden rounded-lg border bg-zinc-100">
             <img
               src={product.images[0]}
               alt={product.name}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+              className="h-full w-full object-contain p-4"
             />
           </div>
           {product.images.slice(1).length > 0 && (
             <div className="grid grid-cols-4 gap-4">
               {product.images.slice(1).map((image, i) => (
-                <div key={i} className="aspect-square overflow-hidden rounded-lg border">
+                <div key={i} className="aspect-square overflow-hidden rounded-lg border bg-zinc-100">
                   <img
                     src={image}
                     alt={`${product.name} view ${i + 2}`}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-contain p-2"
                   />
                 </div>
               ))}
@@ -79,7 +80,7 @@ export default function ProductPage() {
               <Truck className="h-5 w-5 text-primary" />
               <div>
                 <h4 className="font-semibold">Free Shipping</h4>
-                <p className="text-sm text-muted-foreground">On orders over $100</p>
+                <p className="text-sm text-muted-foreground">On orders over ₹5000</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
