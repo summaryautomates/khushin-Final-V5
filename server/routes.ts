@@ -55,12 +55,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ message: "Product not found" });
     }
     const updatedImages = [...product.images, "https://m.media-amazon.com/images/I/814byfcwBVL._SX679_.jpg"];
-    // Update product images
-    const updatedProduct = await db.update(products)
-      .set({ images: updatedImages })
-      .where(eq(products.id, id))
-      .returning();
-    res.json(updatedProduct[0]);
+    const updatedProduct = await storage.updateProduct(id, { images: updatedImages });
+    res.json(updatedProduct);
   });
   app.get("/api/blog", blogRouter.getAll);
   app.get("/api/blog/:slug", blogRouter.getBySlug);
