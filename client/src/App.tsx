@@ -20,6 +20,7 @@ import FAQs from "@/pages/support/faqs";
 import Customize from "@/pages/customize";
 import CheckoutSuccess from "@/pages/checkout-success";
 import CheckoutPayment from "@/pages/checkout-payment";
+import Orders from "@/pages/orders";
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
               <Route path="/warranty" component={Warranty} />
               <Route path="/shipping" component={Shipping} />
               <Route path="/returns" component={Returns} />
+              <Route path="/orders" component={Orders} />
               <Route component={NotFound} />
             </Switch>
           </main>
