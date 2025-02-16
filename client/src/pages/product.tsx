@@ -1,9 +1,8 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/products";
-import { Truck, Shield, RefreshCcw } from "lucide-react";
+import { Truck, Shield, RefreshCcw, CheckCircle } from "lucide-react";
 import type { Product } from "@shared/schema";
 
 export default function ProductPage() {
@@ -70,6 +69,14 @@ export default function ProductPage() {
           </div>
 
           <div className="space-y-4">
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-4">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              <span>100% Authentic Guarantee</span>
+              <Shield className="h-4 w-4 ml-4 text-primary" />
+              <span>Secure Transaction</span>
+              <Truck className="h-4 w-4 ml-4" />
+              <span>Fast Delivery</span>
+            </div>
             <Button size="lg" className="w-full">
               Add to Cart
             </Button>

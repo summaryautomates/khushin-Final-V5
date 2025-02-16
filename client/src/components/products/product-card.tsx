@@ -23,7 +23,10 @@ export function ProductCard({ product }: ProductCardProps) {
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="overflow-hidden border-none shadow-none group bg-white/[0.02] backdrop-blur-sm hover:bg-white/[0.05] transition-all duration-500">
+      <Card className="group relative overflow-hidden transition-shadow hover:shadow-lg bg-white/[0.02] backdrop-blur-sm hover:bg-white/[0.05] transition-all duration-500">
+        <div className="absolute top-2 right-2 z-20 rounded-full bg-green-500/90 px-2 py-1 text-xs text-white">
+          Verified Product
+        </div>
         <CardHeader className="p-0">
           <div className="aspect-square overflow-hidden bg-zinc-900">
             <motion.img
