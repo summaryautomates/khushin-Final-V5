@@ -15,17 +15,10 @@ import Returns from "@/pages/support/returns";
 import Warranty from "@/pages/support/warranty";
 import Shipping from "@/pages/support/shipping";
 
-// Temporary placeholder for Blog and FAQs
+// Temporary placeholder for Blog
 const Blog = () => (
   <div className="container py-20 min-h-screen">
     <h1 className="text-3xl font-bold mb-8">Blog</h1>
-    <p>Coming soon...</p>
-  </div>
-);
-
-const FAQs = () => (
-  <div className="container py-20 min-h-screen">
-    <h1 className="text-3xl font-bold mb-8">Frequently Asked Questions</h1>
     <p>Coming soon...</p>
   </div>
 );
@@ -42,7 +35,6 @@ function App() {
             <Route path="/product/:id" component={Product} />
             <Route path="/blog" component={Blog} />
             <Route path="/contact" component={Contact} />
-            <Route path="/faqs" component={FAQs} />
             <Route path="/warranty" component={Warranty} />
             <Route path="/shipping" component={Shipping} />
             <Route path="/returns" component={Returns} />
