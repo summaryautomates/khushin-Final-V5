@@ -35,6 +35,11 @@ export default function ProductPage() {
     addItem(product);
   };
 
+  const handleBuyNow = () => {
+    addItem(product);
+    window.location.href = '/cart?checkout=true';
+  };
+
   return (
     <div className="container py-12">
       <div className="grid gap-12 md:grid-cols-2">
@@ -75,9 +80,14 @@ export default function ProductPage() {
           </div>
 
           <div className="space-y-4">
-            <Button size="lg" className="w-full" onClick={handleAddToCart}>
-              Add to Cart
-            </Button>
+            <div className="grid grid-cols-2 gap-4">
+              <Button size="lg" variant="outline" className="w-full" onClick={handleAddToCart}>
+                Add to Cart
+              </Button>
+              <Button size="lg" className="w-full" onClick={handleBuyNow}>
+                Buy Now
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-6 rounded-lg border p-6">

@@ -19,7 +19,11 @@ export default function Cart() {
   const { state, removeItem, updateQuantity } = useCart();
   const { toast } = useToast();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [showShippingForm, setShowShippingForm] = useState(false);
+  const [showShippingForm, setShowShippingForm] = useState(() => {
+    // Show shipping form automatically if coming from "Buy Now"
+    const params = new URLSearchParams(window.location.search);
+    return params.get('checkout') === 'true';
+  });
   const [shippingAddress, setShippingAddress] = useState<ShippingFormData | null>(null);
 
   const subtotal = state.total;
