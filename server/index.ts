@@ -7,6 +7,7 @@ import session from 'express-session';
 import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import { Server } from 'http';
+import { AddressInfo } from 'net';
 
 // Basic Express setup with minimal middleware
 const app = express();
@@ -76,52 +77,80 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   res.status(err.status || 500).json({ message: err.message || 'Internal Server Error' });
 });
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 const startServer = async () => {
-  try {
-    // Try to use the default port first
-    const defaultPort = 5000;
-    log(`Starting server on port ${defaultPort}...`, 'server');
+  const WORKFLOW_PORT = 5000;
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 2000;
 
-    const server = createServer(app);
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      log(`Starting server attempt ${attempt}/${MAX_RETRIES} on port ${WORKFLOW_PORT}...`, 'server');
 
-    // Setup graceful shutdown
-    const shutdown = () => {
-      log('Shutting down gracefully...', 'server');
-      server.close(() => {
-        log('Server closed', 'server');
-        process.exit(0);
+      const server = createServer(app);
+
+      await new Promise<void>((resolve, reject) => {
+        const onError = (error: Error & { code?: string }) => {
+          server.removeListener('listening', onListening);
+          reject(error);
+        };
+
+        const onListening = () => {
+          server.removeListener('error', onError);
+          const address = server.address() as AddressInfo;
+          log(`Server is running on port ${address.port}`, 'server');
+          resolve();
+        };
+
+        server.once('error', onError);
+        server.once('listening', onListening);
+
+        server.listen(WORKFLOW_PORT, '0.0.0.0');
       });
-    };
 
-    process.on('SIGTERM', shutdown);
-    process.on('SIGINT', shutdown);
+      // Setup graceful shutdown
+      const shutdown = () => {
+        log('Shutting down gracefully...', 'server');
+        server.close(() => {
+          log('Server closed', 'server');
+          process.exit(0);
+        });
+      };
 
-    // Start the server first
-    await new Promise<void>((resolve) => {
-      server.listen(defaultPort, '0.0.0.0', () => {
-        log(`Server listening on port ${defaultPort}`, 'server');
-        resolve();
-      });
-    });
+      process.on('SIGTERM', shutdown);
+      process.on('SIGINT', shutdown);
 
-    // Setup Vite after server is running
-    if (process.env.NODE_ENV !== 'production') {
-      log('Setting up Vite...', 'server');
-      try {
-        await setupVite(app, server);
-        log('Vite setup completed successfully', 'server');
-      } catch (error) {
-        log(`Vite setup failed: ${error}`, 'server');
-        log('Falling back to static serving...', 'server');
+      // Setup Vite after server is running
+      if (process.env.NODE_ENV !== 'production') {
+        log('Setting up Vite development environment...', 'server');
+        try {
+          await setupVite(app, server);
+          log('Vite setup completed successfully', 'server');
+        } catch (error) {
+          log(`Vite setup failed: ${error}`, 'server');
+          log('Falling back to static serving...', 'server');
+          serveStatic(app);
+        }
+      } else {
+        log('Setting up static file serving for production...', 'server');
         serveStatic(app);
       }
-    } else {
-      log('Setting up static file serving...', 'server');
-      serveStatic(app);
+
+      return; // Server started successfully
+    } catch (err: any) {
+      if (err.code === 'EADDRINUSE') {
+        if (attempt === MAX_RETRIES) {
+          console.error(`Error: Port ${WORKFLOW_PORT} is still in use after ${MAX_RETRIES} attempts. Please ensure no other process is using this port.`);
+          process.exit(1);
+        }
+        log(`Port ${WORKFLOW_PORT} is in use, retrying in ${RETRY_DELAY}ms...`, 'server');
+        await sleep(RETRY_DELAY);
+      } else {
+        console.error('Failed to start server:', err);
+        process.exit(1);
+      }
     }
-  } catch (err) {
-    console.error('Failed to start server:', err);
-    process.exit(1);
   }
 };
 
