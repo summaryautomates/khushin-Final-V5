@@ -9,7 +9,7 @@ export const products = pgTable("products", {
   price: integer("price").notNull(),
   category: text("category").notNull(),
   images: text("images").array().notNull(),
-  customizable: boolean("customizable").default(false),
+  customizable: boolean("customizable").notNull().default(false),
   features: jsonb("features").notNull(),
 });
 
