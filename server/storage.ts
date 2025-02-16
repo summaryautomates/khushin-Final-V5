@@ -32,6 +32,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProduct(id: number): Promise<Product | undefined> {
+    if (isNaN(id)) return undefined;
     const [product] = await db.select().from(products).where(eq(products.id, id));
     return product;
   }

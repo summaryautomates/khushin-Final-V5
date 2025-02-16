@@ -76,72 +76,11 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   res.status(err.status || 500).json({ message: err.message || 'Internal Server Error' });
 });
 
-const findAvailablePort = async (startPort: number, maxAttempts: number = 5): Promise<number> => {
-  for (let port = startPort; port < startPort + maxAttempts; port++) {
-    log(`Checking port ${port}...`, 'server');
-
-    try {
-      const server = createServer();
-      const isAvailable = await new Promise<boolean>((resolve) => {
-        server.once('error', (err: any) => {
-          server.close();
-          if (err.code === 'EADDRINUSE') {
-            log(`Port ${port} is in use`, 'server');
-            resolve(false);
-          } else {
-            log(`Error checking port ${port}: ${err.message}`, 'server');
-            resolve(false);
-          }
-        });
-
-        server.listen(port, '0.0.0.0', () => {
-          server.close(() => {
-            log(`Port ${port} is available`, 'server');
-            resolve(true);
-          });
-        });
-      });
-
-      if (isAvailable) {
-        return port;
-      }
-    } catch (err) {
-      log(`Failed to check port ${port}: ${err}`, 'server');
-    }
-  }
-  throw new Error(`No available ports found after ${maxAttempts} attempts starting from ${startPort}`);
-};
-
-const setupServer = async (port: number, server: Server) => {
-  if (process.env.NODE_ENV !== 'production') {
-    log('Setting up Vite...', 'server');
-    try {
-      // Set a timeout for Vite setup
-      const viteSetupPromise = setupVite(app, server);
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Vite setup timeout')), 30000);
-      });
-
-      await Promise.race([viteSetupPromise, timeoutPromise]);
-      log('Vite setup completed successfully', 'server');
-    } catch (error) {
-      log(`Vite setup failed: ${error}`, 'server');
-      // If Vite setup fails, fall back to static serving
-      log('Falling back to static serving...', 'server');
-      serveStatic(app);
-    }
-  } else {
-    log('Setting up static file serving...', 'server');
-    serveStatic(app);
-  }
-};
-
 const startServer = async () => {
   try {
-    const defaultPort = parseInt(process.env.PORT || '5000', 10);
-    log(`Finding available port starting from ${defaultPort}...`, 'server');
-    const port = await findAvailablePort(defaultPort);
-    log(`Selected port ${port}`, 'server');
+    // Try to use the default port first
+    const defaultPort = 5000;
+    log(`Starting server on port ${defaultPort}...`, 'server');
 
     const server = createServer(app);
 
@@ -157,14 +96,29 @@ const startServer = async () => {
     process.on('SIGTERM', shutdown);
     process.on('SIGINT', shutdown);
 
+    // Start the server first
     await new Promise<void>((resolve) => {
-      server.listen(port, '0.0.0.0', () => {
-        log(`Server listening on port ${port}`, 'server');
+      server.listen(defaultPort, '0.0.0.0', () => {
+        log(`Server listening on port ${defaultPort}`, 'server');
         resolve();
       });
     });
 
-    await setupServer(port, server);
+    // Setup Vite after server is running
+    if (process.env.NODE_ENV !== 'production') {
+      log('Setting up Vite...', 'server');
+      try {
+        await setupVite(app, server);
+        log('Vite setup completed successfully', 'server');
+      } catch (error) {
+        log(`Vite setup failed: ${error}`, 'server');
+        log('Falling back to static serving...', 'server');
+        serveStatic(app);
+      }
+    } else {
+      log('Setting up static file serving...', 'server');
+      serveStatic(app);
+    }
   } catch (err) {
     console.error('Failed to start server:', err);
     process.exit(1);
