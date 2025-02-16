@@ -1,14 +1,15 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/products";
 import { Truck, Shield, RefreshCcw } from "lucide-react";
 import type { Product } from "@shared/schema";
+import { useCart } from "@/hooks/use-cart";
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:id");
   const id = params?.id;
+  const { addItem } = useCart();
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: [`/api/products/${id}`],
@@ -29,6 +30,10 @@ export default function ProductPage() {
       </div>
     );
   }
+
+  const handleAddToCart = () => {
+    addItem(product);
+  };
 
   return (
     <div className="container py-12">
@@ -70,7 +75,7 @@ export default function ProductPage() {
           </div>
 
           <div className="space-y-4">
-            <Button size="lg" className="w-full">
+            <Button size="lg" className="w-full" onClick={handleAddToCart}>
               Add to Cart
             </Button>
           </div>

@@ -4,6 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { CartProvider } from "@/hooks/use-cart";
 
 // Page imports
 import Home from "@/pages/home";
@@ -28,26 +29,28 @@ const Blog = () => (
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex-1">
-          <Switch>
-            <Route path="/" component={Home} />
-            <Route path="/products" component={Products} />
-            <Route path="/product/:id" component={Product} />
-            <Route path="/blog" component={Blog} />
-            <Route path="/contact" component={Contact} />
-            <Route path="/customize" component={Customize} />
-            <Route path="/faqs" component={FAQs} />
-            <Route path="/warranty" component={Warranty} />
-            <Route path="/shipping" component={Shipping} />
-            <Route path="/returns" component={Returns} />
-            <Route component={NotFound} />
-          </Switch>
-        </main>
-        <Footer />
-      </div>
-      <Toaster />
+      <CartProvider>
+        <div className="flex min-h-screen flex-col">
+          <Header />
+          <main className="flex-1">
+            <Switch>
+              <Route path="/" component={Home} />
+              <Route path="/products" component={Products} />
+              <Route path="/product/:id" component={Product} />
+              <Route path="/blog" component={Blog} />
+              <Route path="/contact" component={Contact} />
+              <Route path="/customize" component={Customize} />
+              <Route path="/faqs" component={FAQs} />
+              <Route path="/warranty" component={Warranty} />
+              <Route path="/shipping" component={Shipping} />
+              <Route path="/returns" component={Returns} />
+              <Route component={NotFound} />
+            </Switch>
+          </main>
+          <Footer />
+        </div>
+        <Toaster />
+      </CartProvider>
     </QueryClientProvider>
   );
 }

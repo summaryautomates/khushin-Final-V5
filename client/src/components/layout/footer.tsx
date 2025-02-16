@@ -4,34 +4,16 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import React, { useState } from "react";
 import {
-  Heart,
-  Search,
-  Gift,
-  Star,
-  Clock,
-  DollarSign,
-  Filter,
-  Sparkles,
-  ShieldCheck,
-  Truck,
-  Phone,
-  Mail,
   Instagram,
   Facebook,
   Twitter,
   Youtube,
   Linkedin,
-  Award,
-  Smile,
-  ThumbsUp,
-  Users,
-  Calendar
 } from "lucide-react";
 
 export function Footer() {
   const { toast } = useToast();
   const [email, setEmail] = useState("");
-  const [search, setSearch] = useState("");
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
