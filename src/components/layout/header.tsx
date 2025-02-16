@@ -1,28 +1,38 @@
 import React from "react";
 import { Link } from "wouter";
 
-const Header: React.FC = () => {
+const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         <div className="mr-4 flex">
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold">KHUSH.IN</span>
+          <Link href="/">
+            <span className="flex items-center space-x-2 cursor-pointer">
+              <span className="text-2xl font-bold">KHUSH.IN</span>
+            </span>
           </Link>
         </div>
         <nav className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
           <div className="flex items-center space-x-4">
-            <Link href="/products" className="text-sm font-medium transition-colors hover:text-primary">
-              Products
+            <Link href="/products">
+              <span className="text-sm font-medium transition-colors hover:text-primary cursor-pointer">
+                Products
+              </span>
             </Link>
-            <Link href="/customize" className="text-sm font-medium transition-colors hover:text-primary">
-              Customize
+            <Link href="/customize">
+              <span className="text-sm font-medium transition-colors hover:text-primary cursor-pointer">
+                Customize
+              </span>
             </Link>
-            <Link href="/blog" className="text-sm font-medium transition-colors hover:text-primary">
-              Blog
+            <Link href="/blog">
+              <span className="text-sm font-medium transition-colors hover:text-primary cursor-pointer">
+                Blog
+              </span>
             </Link>
-            <Link href="/contact" className="text-sm font-medium transition-colors hover:text-primary">
-              Contact
+            <Link href="/contact">
+              <span className="text-sm font-medium transition-colors hover:text-primary cursor-pointer">
+                Contact
+              </span>
             </Link>
           </div>
         </nav>

@@ -1,10 +1,8 @@
-import React from "react";
+import { Toaster as ToasterPrimitive } from "@/components/ui/toast";
 
 export function Toaster() {
   return (
-    <div className="fixed bottom-4 right-4 z-50">
-      {/* Toaster content will be added dynamically */}
-    </div>
+    <ToasterPrimitive />
   );
 }
 

@@ -4,9 +4,14 @@ import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
 
-// Middleware setup
+// Basic middleware setup
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Health check endpoint
+app.get("/health", (_req, res) => {
+  res.status(200).json({ status: "ok" });
+});
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -24,11 +29,9 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       const duration = Date.now() - start;
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
-
       log(logLine.length > 80 ? logLine.slice(0, 79) + "…" : logLine);
     }
   });
@@ -47,53 +50,50 @@ app.use((req, res, next) => {
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
-      res.status(status).json({ message });
       log(`Error: ${message}`);
+      res.status(status).json({ message });
     });
 
     const port = parseInt(process.env.PORT || "5000", 10);
     let currentPort = port;
-    let serverStarted = false;
+    let maxRetries = 3;
+    let retryCount = 0;
 
-    while (!serverStarted && currentPort < port + 3) {
-      try {
-        log(`Attempting to start server on port ${currentPort}`);
+    const startServer = () => {
+      log(`Attempting to start server on port ${currentPort}`);
 
-        // Setup middleware based on environment
+      server.listen(currentPort, "0.0.0.0", async () => {
+        log(`Server bound to port ${currentPort}`);
+
         if (app.get("env") === "development") {
-          log("Setting up Vite middleware");
-          await setupVite(app, server);
+          log("Initializing Vite middleware setup...");
+          try {
+            await setupVite(app, server);
+            log("Vite middleware setup completed successfully");
+          } catch (error) {
+            log(`Critical error in Vite setup: ${error}`);
+            process.exit(1);
+          }
         } else {
           log("Setting up static file serving");
           serveStatic(app);
         }
-
-        await new Promise<void>((resolve, reject) => {
-          server.listen(currentPort, "0.0.0.0")
-            .once('error', (err: any) => {
-              if (err.code === 'EADDRINUSE') {
-                log(`Port ${currentPort} is in use`);
-                currentPort++;
-                reject(err);
-              } else {
-                log(`Failed to start server: ${err}`);
-                reject(err);
-              }
-            })
-            .once('listening', () => {
-              serverStarted = true;
-              log(`Server successfully started on port ${currentPort}`);
-              resolve();
-            });
-        });
-      } catch (err) {
-        if (currentPort >= port + 3) {
-          throw new Error('Could not find an available port after 3 attempts');
+      }).on('error', (err: any) => {
+        if (err.code === 'EADDRINUSE' && retryCount < maxRetries) {
+          retryCount++;
+          currentPort = port + retryCount;
+          log(`Port ${currentPort - 1} is in use, trying port ${currentPort}`);
+          startServer();
+        } else {
+          log(`Fatal error starting server: ${err}`);
+          process.exit(1);
         }
-      }
-    }
+      });
+    };
+
+    startServer();
   } catch (err) {
-    console.error("Failed to start server:", err);
+    log(`Fatal error during server initialization: ${err}`);
     process.exit(1);
   }
 })();

@@ -1,10 +1,10 @@
-import React, { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ProductGrid from "@/components/products/product-grid";
 import { Link } from "wouter";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Stage } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
 import { Loader } from "@/components/ui/loader";
 
 // Separate ThreeJS scene component for better organization
@@ -13,16 +13,14 @@ const ThreeScene = () => {
     <Canvas>
       <Suspense fallback={<Loader />}>
         <ambientLight intensity={0.5} />
-        <Stage environment="city" intensity={0.6}>
-          <mesh>
-            <sphereGeometry args={[1, 32, 32]} />
-            <meshStandardMaterial 
-              color="#F5B041" 
-              metalness={0.8} 
-              roughness={0.2} 
-            />
-          </mesh>
-        </Stage>
+        <mesh>
+          <sphereGeometry args={[1, 32, 32]} />
+          <meshStandardMaterial 
+            color="#F5B041" 
+            metalness={0.8} 
+            roughness={0.2} 
+          />
+        </mesh>
         <OrbitControls 
           enableZoom={false} 
           autoRotate 
@@ -33,7 +31,7 @@ const ThreeScene = () => {
   );
 };
 
-export const Home = () => {
+function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [email, setEmail] = useState("");
 
@@ -109,6 +107,6 @@ export const Home = () => {
       </section>
     </div>
   );
-};
+}
 
 export default Home;
