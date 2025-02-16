@@ -1,4 +1,3 @@
-
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -25,7 +24,7 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       const duration = Date.now() - start;
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      
+
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
@@ -46,7 +45,7 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
     res.status(status).json({ message });
-    throw err;
+    log(`Error: ${message}`);
   });
 
   // Setup Vite in development
@@ -56,8 +55,31 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  const PORT = 5000;
-  server.listen(PORT, "0.0.0.0", () => {
-    log(`Server running on port ${PORT}`);
-  });
+  // Try different ports if default port is in use
+  const tryPort = (port: number): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      server.listen(port, "0.0.0.0")
+        .once('error', (err: any) => {
+          if (err.code === 'EADDRINUSE') {
+            log(`Port ${port} is in use, trying ${port + 1}`);
+            tryPort(port + 1).then(resolve).catch(reject);
+          } else {
+            reject(err);
+          }
+        })
+        .once('listening', () => {
+          log(`Server running on port ${port}`);
+          resolve();
+        });
+    });
+  };
+
+  // Start server on initial port (default 5000) or use PORT env variable
+  const initialPort = parseInt(process.env.PORT || "5000", 10);
+  try {
+    await tryPort(initialPort);
+  } catch (err) {
+    console.error("Failed to start server:", err);
+    process.exit(1);
+  }
 })();
