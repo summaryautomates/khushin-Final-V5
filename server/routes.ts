@@ -13,15 +13,48 @@ const shippingSchema = z.object({
   phone: z.string(),
 });
 
+// Payment status tracking (in-memory for demo)
+const paymentStore = new Map<string, {
+  status: 'pending' | 'completed' | 'failed',
+  details: {
+    upiId: string,
+    merchantName: string,
+    amount: number,
+    orderRef: string
+  }
+}>();
+
+// Order storage (in-memory for demo)
+const orderStore = new Map<string, {
+  orderRef: string,
+  status: 'pending' | 'completed' | 'failed',
+  total: number,
+  items: Array<{
+    productId: number,
+    quantity: number,
+    price: number,
+    name: string
+  }>,
+  shipping: {
+    fullName: string,
+    address: string,
+    city: string,
+    state: string,
+    pincode: string,
+    phone: string
+  },
+  createdAt: string
+}>();
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Products API
   const productsRouter = {
-    getAll: async (_req, res) => {
+    getAll: async (_req: any, res: any) => {
       const products = await storage.getProducts();
       res.json(products);
     },
 
-    getById: async (req, res) => {
+    getById: async (req: any, res: any) => {
       const id = parseInt(req.params.id);
       const product = await storage.getProduct(id);
       if (!product) {
@@ -30,7 +63,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(product);
     },
 
-    getByCategory: async (req, res) => {
+    getByCategory: async (req: any, res: any) => {
       const products = await storage.getProductsByCategory(req.params.category);
       res.json(products);
     }
@@ -56,25 +89,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate a unique order reference
       const orderRef = `ORD${Date.now()}${Math.random().toString(36).substring(2, 7)}`;
 
-      // Create payment details for QR code
+      // Create payment details
       const paymentDetails = {
         orderRef,
-        amount: total,
-        upiId: 'merchant@upi', // Replace with actual UPI ID
-        merchantName: 'KHUSH.IN'
+        upiId: process.env.MERCHANT_UPI_ID || 'merchant@upi',
+        merchantName: 'KHUSH.IN',
+        amount: total
       };
 
-      // Return order details with QR code payment information
+      // Store payment status
+      paymentStore.set(orderRef, {
+        status: 'pending',
+        details: paymentDetails
+      });
+
+      // Store order details
+      const orderItems = await Promise.all(items.map(async (item) => {
+        const product = await storage.getProduct(item.productId);
+        return {
+          productId: item.productId,
+          quantity: item.quantity,
+          price: product?.price || 0,
+          name: product?.name || 'Unknown Product'
+        };
+      }));
+
+      orderStore.set(orderRef, {
+        orderRef,
+        status: 'pending',
+        total,
+        items: orderItems,
+        shipping: validatedShipping,
+        createdAt: new Date().toISOString()
+      });
+
+      // Return order details with payment information
       res.json({
         orderRef,
         total,
-        paymentDetails,
         redirectUrl: `/checkout/payment?ref=${orderRef}`
       });
     } catch (error) {
       console.error('Checkout error:', error);
       res.status(500).json({ message: 'Error creating checkout session' });
     }
+  });
+
+  // Payment status API
+  app.get("/api/payment/:orderRef", (req, res) => {
+    const { orderRef } = req.params;
+    const payment = paymentStore.get(orderRef);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    res.json({
+      status: payment.status,
+      ...payment.details
+    });
+  });
+
+  // Update payment status (for demo purposes)
+  app.post("/api/payment/:orderRef/status", (req, res) => {
+    const { orderRef } = req.params;
+    const { status } = req.body;
+
+    const payment = paymentStore.get(orderRef);
+    const order = orderStore.get(orderRef);
+
+    if (!payment || !order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (!['pending', 'completed', 'failed'].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    // Update both payment and order status
+    payment.status = status;
+    order.status = status;
+
+    paymentStore.set(orderRef, payment);
+    orderStore.set(orderRef, order);
+
+    res.json({ status });
   });
 
   // Helper function to calculate subtotal
@@ -102,13 +201,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(message);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: "Invalid input", 
-          errors: error.errors 
+        return res.status(400).json({
+          message: "Invalid input",
+          errors: error.errors
         });
       }
       throw error;
     }
+  });
+
+  // Orders API endpoint
+  app.get("/api/orders", (_req, res) => {
+    const orders = Array.from(orderStore.values());
+    res.json(orders.sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    ));
   });
 
   return createServer(app);
