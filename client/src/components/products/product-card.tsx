@@ -17,28 +17,36 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   return (
-    <Card className="overflow-hidden">
+    <Card className="group overflow-hidden transition-all duration-300 hover:shadow-lg">
       <CardHeader className="p-0">
-        <div className="aspect-square overflow-hidden">
+        <div className="aspect-square overflow-hidden bg-muted">
           <img
             src={product.images[0]}
             alt={product.name}
-            className="h-full w-full object-cover transition-transform hover:scale-105"
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         </div>
       </CardHeader>
-      <CardContent className="p-4">
-        <CardTitle className="line-clamp-1">{product.name}</CardTitle>
-        <CardDescription className="line-clamp-2 mt-2">
+      <CardContent className="space-y-2.5 p-6">
+        <CardTitle className="line-clamp-1 text-lg font-semibold tracking-tight">
+          {product.name}
+        </CardTitle>
+        <CardDescription className="line-clamp-2">
           {product.description}
         </CardDescription>
-        <div className="mt-4 font-semibold">
+        <div className="text-lg font-medium">
           {formatPrice(product.price)}
         </div>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className="p-6 pt-0">
         <Link href={`/product/${product.id}`}>
-          <Button className="w-full">View Details</Button>
+          <Button
+            className="w-full transition-colors hover:bg-primary/90"
+            variant="default"
+          >
+            View Details
+          </Button>
         </Link>
       </CardFooter>
     </Card>
