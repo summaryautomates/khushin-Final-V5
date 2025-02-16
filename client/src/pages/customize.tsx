@@ -1,0 +1,168 @@
+import { useState } from "react";
+import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+
+export default function Customize() {
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [selectedColor, setSelectedColor] = useState("#000000");
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [customText, setCustomText] = useState("");
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please upload an image smaller than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setUploadedImage(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-12">
+      <h1 className="text-4xl font-bold mb-8">Customize Your Product</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Preview</CardTitle>
+              <CardDescription>See how your customization looks</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
+                {uploadedImage ? (
+                  <img
+                    src={uploadedImage}
+                    alt="Preview"
+                    className="max-w-full max-h-full object-contain"
+                  />
+                ) : (
+                  <p className="text-muted-foreground">
+                    Customization preview will appear here
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div>
+          <Tabs defaultValue="upload" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="upload">Upload Design</TabsTrigger>
+              <TabsTrigger value="text">Add Text</TabsTrigger>
+              <TabsTrigger value="color">Color</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="upload">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Upload Your Design</CardTitle>
+                  <CardDescription>
+                    Upload an image to customize your product
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Label htmlFor="image">Image</Label>
+                  <Input
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="text">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Add Custom Text</CardTitle>
+                  <CardDescription>
+                    Add text to your product
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Label htmlFor="text">Custom Text</Label>
+                  <Input
+                    id="text"
+                    value={customText}
+                    onChange={(e) => setCustomText(e.target.value)}
+                    placeholder="Enter your text here"
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="color">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Choose Color</CardTitle>
+                  <CardDescription>
+                    Select a color for your product
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Label htmlFor="color">Color</Label>
+                  <Input
+                    id="color"
+                    type="color"
+                    value={selectedColor}
+                    onChange={(e) => setSelectedColor(e.target.value)}
+                    className="h-10 w-full"
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+
+          <div className="mt-8 space-y-4">
+            <Button 
+              className="w-full" 
+              size="lg"
+              onClick={() => {
+                toast({
+                  title: "Design saved",
+                  description: "Your customization has been saved",
+                });
+                setLocation("/products");
+              }}
+            >
+              Save Design
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => setLocation("/products")}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

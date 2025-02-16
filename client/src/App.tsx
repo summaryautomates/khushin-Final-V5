@@ -11,8 +11,11 @@ import Products from "@/pages/products";
 import Product from "@/pages/product";
 import Contact from "@/pages/contact";
 import NotFound from "@/pages/not-found";
+import Returns from "@/pages/support/returns";
+import Warranty from "@/pages/support/warranty";
+import Shipping from "@/pages/support/shipping";
 
-// Create placeholder components for support pages until they're implemented
+// Temporary placeholder for Blog and FAQs
 const Blog = () => (
   <div className="container py-20 min-h-screen">
     <h1 className="text-3xl font-bold mb-8">Blog</h1>
@@ -23,27 +26,6 @@ const Blog = () => (
 const FAQs = () => (
   <div className="container py-20 min-h-screen">
     <h1 className="text-3xl font-bold mb-8">Frequently Asked Questions</h1>
-    <p>Coming soon...</p>
-  </div>
-);
-
-const Warranty = () => (
-  <div className="container py-20 min-h-screen">
-    <h1 className="text-3xl font-bold mb-8">Warranty Information</h1>
-    <p>Coming soon...</p>
-  </div>
-);
-
-const Shipping = () => (
-  <div className="container py-20 min-h-screen">
-    <h1 className="text-3xl font-bold mb-8">Shipping Information</h1>
-    <p>Coming soon...</p>
-  </div>
-);
-
-const Returns = () => (
-  <div className="container py-20 min-h-screen">
-    <h1 className="text-3xl font-bold mb-8">Returns Policy</h1>
     <p>Coming soon...</p>
   </div>
 );
