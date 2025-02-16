@@ -64,6 +64,8 @@ export function Footer() {
             <ul className="space-y-3">
               <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => window.location.href = '/contact'}>Contact Us</li>
               <li><p className="text-muted-foreground">WhatsApp Support<br/>+919373395733</p></li>
+              <li><p className="text-muted-foreground">Email Support<br/>support@khush.in</p></li>
+              <li><p className="text-muted-foreground">Address<br/>123 Fashion Street<br/>Mumbai, India</p></li>
               <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => window.location.href = '/support'}>Customer Support</li>
             </ul>
           </div>
