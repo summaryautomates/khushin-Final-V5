@@ -7,7 +7,6 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { categories } from "@/lib/products";
 
 export function Header() {
   return (
@@ -23,29 +22,8 @@ export function Header() {
                 COLLECTION
               </Link>
             </NavigationMenuItem>
-            {categories.map((category) => (
-              <NavigationMenuItem key={category.id}>
-                <Link 
-                  href={`/products/category/${category.id}`}
-                  className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-colors"}
-                >
-                  {category.name.toUpperCase()}
-                </Link>
-              </NavigationMenuItem>
-            ))}
             <NavigationMenuItem>
-              <Link 
-                href="/blog"
-                className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-colors"}
-              >
-                JOURNAL
-              </Link>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <Link 
-                href="/contact"
-                className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-colors"}
-              >
+              <Link href="/contact" className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-colors"}>
                 CONTACT
               </Link>
             </NavigationMenuItem>
