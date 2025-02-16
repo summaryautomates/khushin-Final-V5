@@ -23,28 +23,28 @@ export function ProductCard({ product }: ProductCardProps) {
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="overflow-hidden border-none shadow-none group bg-zinc-900/50 backdrop-blur-lg">
+      <Card className="overflow-hidden border-none shadow-none group bg-white/[0.02] backdrop-blur-sm">
         <CardHeader className="p-0">
-          <div className="aspect-square overflow-hidden bg-zinc-800">
+          <div className="aspect-square overflow-hidden bg-zinc-900">
             <motion.img
               src={product.images[0]}
               alt={product.name}
-              className="h-full w-full object-cover"
-              whileHover={{ scale: 1.05 }}
+              className="h-full w-full object-cover opacity-90"
+              whileHover={{ scale: 1.03 }}
               transition={{ duration: 0.6 }}
             />
           </div>
         </CardHeader>
         <CardContent className="p-6 text-center">
-          <CardTitle className="font-extralight text-xl tracking-wide text-white">
+          <CardTitle className="font-extralight text-lg tracking-widest text-white">
             {product.name}
           </CardTitle>
-          <CardDescription className="mt-3 text-sm leading-relaxed text-zinc-400">
+          <CardDescription className="mt-3 text-sm leading-relaxed text-zinc-400 tracking-wide">
             {product.description}
           </CardDescription>
           <motion.div 
-            className="mt-4 font-light text-lg text-white"
-            whileHover={{ scale: 1.05 }}
+            className="mt-4 font-light text-lg text-white tracking-wider"
+            whileHover={{ scale: 1.02 }}
           >
             {formatPrice(product.price)}
           </motion.div>
@@ -53,9 +53,9 @@ export function ProductCard({ product }: ProductCardProps) {
           <Link href={`/product/${product.id}`}>
             <Button 
               variant="outline" 
-              className="w-full font-light tracking-wide text-white border-white/20 hover:bg-white/10 transition-all duration-300"
+              className="w-full font-extralight tracking-widest text-white border-white/10 hover:bg-white/5 transition-all duration-300"
             >
-              View Details
+              Details
             </Button>
           </Link>
         </CardFooter>
