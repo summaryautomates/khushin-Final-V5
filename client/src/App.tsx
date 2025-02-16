@@ -10,6 +10,7 @@ import { CartProvider } from "@/hooks/use-cart";
 import Home from "@/pages/home";
 import Products from "@/pages/products";
 import Product from "@/pages/product";
+import Cart from "@/pages/cart";
 import Contact from "@/pages/contact";
 import NotFound from "@/pages/not-found";
 import Returns from "@/pages/support/returns";
@@ -37,6 +38,7 @@ function App() {
               <Route path="/" component={Home} />
               <Route path="/products" component={Products} />
               <Route path="/product/:id" component={Product} />
+              <Route path="/cart" component={Cart} />
               <Route path="/blog" component={Blog} />
               <Route path="/contact" component={Contact} />
               <Route path="/customize" component={Customize} />

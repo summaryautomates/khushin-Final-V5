@@ -7,13 +7,13 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { ShoppingCart } from "lucide-react";
 import { categories } from "@/lib/products";
+import { ShoppingCart } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 
 export function Header() {
   const { state } = useCart();
-  const cartItemCount = state.items.reduce((total, item) => total + item.quantity, 0);
+  const cartItemCount = state.items.length;
 
   return (
     <header className="fixed top-0 z-50 w-full bg-black/95 backdrop-blur supports-[backdrop-filter]:bg-black/60">
@@ -61,7 +61,7 @@ export function Header() {
             <Button variant="ghost" size="icon" className="relative">
               <ShoppingCart className="h-5 w-5 text-white" />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-white">
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground w-5 h-5 rounded-full text-xs flex items-center justify-center">
                   {cartItemCount}
                 </span>
               )}

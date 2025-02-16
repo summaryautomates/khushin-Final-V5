@@ -167,7 +167,7 @@ const startServer = async () => {
     await registerRoutes(app);
     console.timeEnd('Route registration');
 
-    const startPort = parseInt(process.env.PORT || '5000', 10);
+    const startPort = parseInt(process.env.PORT || '5001', 10);
     console.log('Finding available port starting from', startPort);
     const port = await findAvailablePort(startPort);
 
