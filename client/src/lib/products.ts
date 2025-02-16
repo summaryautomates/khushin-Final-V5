@@ -1,7 +1,7 @@
 import type { Product } from "@shared/schema";
 
 export const categories = [
-  { id: "lighters", name: "Stylized Lighters" },
+  { id: "lighters", name: "Luxury Lighters" },
   { id: "refueling", name: "Refueling Solutions" }
 ] as const;
 

@@ -35,10 +35,10 @@ export function Header() {
             ))}
             <NavigationMenuItem>
               <Link 
-                href="/blog"
+                href="/customize"
                 className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-colors"}
               >
-                JOURNAL
+                CUSTOMIZE
               </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>

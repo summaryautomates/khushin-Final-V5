@@ -4,8 +4,37 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/products/product-grid";
 import type { Product } from "@shared/schema";
+import { Input } from "@/components/ui/input";
+import { 
+  Heart, 
+  Search, 
+  Gift, 
+  Star, 
+  Clock,
+  DollarSign,
+  Filter,
+  Sparkles,
+  ShieldCheck,
+  Truck,
+  CreditCard,
+  Phone,
+  Mail,
+  Instagram,
+  Facebook,
+  Twitter,
+  Youtube,
+  Lock,
+  Award,
+  Smile,
+  ThumbsUp,
+  Users,
+  Calendar
+} from "lucide-react";
+import { useState } from "react";
+
 
 export default function Home() {
+  const [searchQuery, setSearchQuery] = useState("");
   const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
@@ -69,20 +98,40 @@ export default function Home() {
               Exclusive luxury lighters - The perfect gift to light up their smile.
             </motion.p>
 
-            <motion.div 
+          <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.5, duration: 0.8 }}
               className="mt-16"
             >
-              <Link href="/products">
-                <Button 
-                  size="lg" 
-                  className="text-lg px-12 py-8 bg-white/5 backdrop-blur-lg border border-white/10 text-white hover:bg-white/10 transition-all duration-500 hover:scale-105"
-                >
-                  Explore Collection
-                </Button>
-              </Link>
+             <div className="flex gap-2">
+               <Input
+                 value={searchQuery}
+                 onChange={(e) => setSearchQuery(e.target.value)}
+                 placeholder="Search our luxury collection..."
+                 className="border-primary/20 rounded-full flex-grow w-[180px]"
+               />
+               <Button variant="secondary" className="rounded-full">
+                 <Search className="w-4 h-4 rounded-full" />
+               </Button>
+             </div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.8 }}
+              className="flex flex-wrap justify-center gap-4"
+            >
+          
+              <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
+                <Star className="w-4 h-4" /> Premium Collection
+              </Button>
+              <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
+                <Clock className="w-4 h-4" /> Express Delivery
+              </Button>
+              <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
+                <Calendar className="w-4 h-4" /> Book Experience
+              </Button>
+            </motion.div>
             </motion.div>
           </motion.div>
         </motion.div>
@@ -122,37 +171,26 @@ export default function Home() {
       </section>
 
       {/* Brand Statement */}
-      <section className="py-32 bg-black text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-zinc-900/20 via-black to-black" />
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="container relative z-10"
-        >
-          <div className="max-w-3xl mx-auto text-center">
-            <motion.h2 
-              initial={{ letterSpacing: "0.3em", opacity: 0 }}
-              whileInView={{ letterSpacing: "0.2em", opacity: 1 }}
-              transition={{ duration: 1 }}
-              viewport={{ once: true }}
-              className="text-4xl md:text-5xl font-extralight mb-12 tracking-wider"
-            >
-              Heritage
-            </motion.h2>
-            <motion.p 
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.8 }}
-              viewport={{ once: true }}
-              className="text-xl text-zinc-400 leading-relaxed tracking-wide"
-            >
-              KHUSH.IN embodies the essence of modern luxury. 
-              Each piece is thoughtfully crafted to elevate your lifestyle.
-            </motion.p>
-          </div>
-        </motion.div>
+      <section className="py-20 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="bg-primary/10 rounded-2xl p-8 md:p-12 border border-primary/20"
+          >
+            <Clock className="w-12 h-12 text-primary mx-auto mb-6" />
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">
+              Express Delivery Available
+            </h2>
+            <p className="text-muted-foreground mb-6">
+              Premium same-day delivery service for last-minute luxury gifts
+            </p>
+            <Button size="lg" className="bg-primary/90 hover:bg-primary rounded-full">
+              Browse Instant Gifts
+            </Button>
+          </motion.div>
+        </div>
       </section>
     </div>
   );

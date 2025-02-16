@@ -14,6 +14,8 @@ import NotFound from "@/pages/not-found";
 import Returns from "@/pages/support/returns";
 import Warranty from "@/pages/support/warranty";
 import Shipping from "@/pages/support/shipping";
+import FAQs from "@/pages/support/faqs";
+import Customize from "@/pages/customize";
 
 // Temporary placeholder for Blog
 const Blog = () => (
@@ -35,6 +37,8 @@ function App() {
             <Route path="/product/:id" component={Product} />
             <Route path="/blog" component={Blog} />
             <Route path="/contact" component={Contact} />
+            <Route path="/customize" component={Customize} />
+            <Route path="/faqs" component={FAQs} />
             <Route path="/warranty" component={Warranty} />
             <Route path="/shipping" component={Shipping} />
             <Route path="/returns" component={Returns} />

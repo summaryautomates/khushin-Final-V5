@@ -4,6 +4,31 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Shield, Lock, CreditCard } from "lucide-react";
+import { 
+  Heart, 
+  Search, 
+  Gift, 
+  Star, 
+  Clock,
+  DollarSign,
+  Filter,
+  Sparkles,
+  ShieldCheck,
+  Truck,
+  Phone,
+  Mail,
+  Instagram,
+  Facebook,
+  Twitter,
+  Youtube,
+  Linkedin,
+  Award,
+  Smile,
+  ThumbsUp,
+  Users,
+  Calendar
+} from "lucide-react";
+
 
 export function Footer() {
   const { toast } = useToast();
@@ -42,11 +67,11 @@ export function Footer() {
           </ul>
         </div>
         <div>
-          <h3 className="font-semibold mb-4">Connect</h3>
+          <h3 className="font-semibold mb-4">Customer Care</h3>
           <ul className="space-y-2">
-            <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer">Instagram</a></li>
+            {/* <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer">Instagram</a></li>
             <li><a href="https://facebook.com" target="_blank" rel="noopener noreferrer">Facebook</a></li>
-            <li><a href="https://twitter.com" target="_blank" rel="noopener noreferrer">Twitter</a></li>
+            <li><a href="https://twitter.com" target="_blank" rel="noopener noreferrer">Twitter</a></li> */}
             <li><a href="mailto:contact@ignite.co.in">Email</a></li>
             <li><a href="tel:+91-1800-123-4567">Toll Free: 1800-123-4567</a></li>
             <li><a href="https://wa.me/919898989898">WhatsApp Support</a></li>
@@ -62,8 +87,44 @@ export function Footer() {
           </ul>
         </div>
         <div>
-          <h3 className="font-semibold mb-4">Legal</h3>
-          <p className="text-sm text-gray-400">© 2025 Ignité, Inc.<br/>All rights reserved.</p>
+          <h3 className="font-semibold mb-4">Socials</h3>
+          <div className="flex gap-4"> 
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
+              <Button variant="ghost" size="icon">
+                <Instagram className="w-5 h-5" />
+              </Button>
+            </a>
+            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
+              <Button variant="ghost" size="icon">
+                <Facebook className="w-5 h-5" />
+              </Button>
+            </a>
+            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
+              <Button variant="ghost" size="icon">
+                <Twitter className="w-5 h-5" />
+              </Button>
+            </a>
+            <a href="https://youtube.com" target="_blank" rel="noopener noreferrer">
+              <Button variant="ghost" size="icon">
+                <Youtube className="w-5 h-5" />
+              </Button>
+            </a>
+
+            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
+              <Button variant="ghost" size="icon">
+                <Linkedin className="w-5 h-5" />
+              </Button>
+            </a>
+          </div>
+
+          <div className="space-y-3 text-muted-foreground text-sm">
+            <p>Subscribe to our store for exclusive offers</p>
+            <div className="flex gap-2 rounded-full">
+              <Input placeholder="Enter your email" className="border-primary/20 rounded-full" />
+              <Button variant="secondary" className="rounded-full">Subscribe</Button>
+            </div>
+          </div>
+        
         </div>
       </div>
     </footer>
