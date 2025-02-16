@@ -29,8 +29,8 @@ export default function Home() {
             className="max-w-4xl mx-auto text-center"
           >
             <h1 className="text-7xl md:text-8xl font-extralight tracking-tight mb-12">
-              <span className="block">Refined</span>
-              <span className="block mt-2">Elegance</span>
+              <span className="block">Make Your</span>
+              <span className="block mt-2">Loved One Happy!</span>
             </h1>
             <motion.p 
               initial={{ opacity: 0 }}
