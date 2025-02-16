@@ -9,11 +9,17 @@ import { Footer } from "@/components/layout/footer";
 import Home from "@/pages/home";
 import Products from "@/pages/products";
 import Product from "@/pages/product";
-import Blog from "@/pages/blog";
 import Contact from "@/pages/contact";
 import NotFound from "@/pages/not-found";
 
 // Create placeholder components for support pages until they're implemented
+const Blog = () => (
+  <div className="container py-20 min-h-screen">
+    <h1 className="text-3xl font-bold mb-8">Blog</h1>
+    <p>Coming soon...</p>
+  </div>
+);
+
 const FAQs = () => (
   <div className="container py-20 min-h-screen">
     <h1 className="text-3xl font-bold mb-8">Frequently Asked Questions</h1>
