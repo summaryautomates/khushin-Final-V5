@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/products/product-grid";
 import type { Product } from "@shared/schema";
 import { Input } from "@/components/ui/input";
+import React, { useState } from "react";
 import { 
   Heart, 
   Search, 
@@ -30,8 +31,6 @@ import {
   Users,
   Calendar
 } from "lucide-react";
-import { useState } from "react";
-
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,6 +41,13 @@ export default function Home() {
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.3], [1, 0.98]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery) {
+      window.location.href = `/products?search=${encodeURIComponent(searchQuery)}`;
+    }
+  };
 
   return (
     <div className="flex flex-col">
@@ -98,40 +104,45 @@ export default function Home() {
               Exclusive luxury lighters - The perfect gift to light up their smile.
             </motion.p>
 
-          <motion.div 
+            <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.5, duration: 0.8 }}
               className="mt-16"
             >
-             <div className="flex gap-2">
-               <Input
-                 value={searchQuery}
-                 onChange={(e) => setSearchQuery(e.target.value)}
-                 placeholder="Search our luxury collection..."
-                 className="border-primary/20 rounded-full flex-grow w-[180px]"
-               />
-               <Button variant="secondary" className="rounded-full">
-                 <Search className="w-4 h-4 rounded-full" />
-               </Button>
-             </div>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.8 }}
-              className="flex flex-wrap justify-center gap-4"
-            >
-          
-              <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
-                <Star className="w-4 h-4" /> Premium Collection
-              </Button>
-              <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
-                <Clock className="w-4 h-4" /> Express Delivery
-              </Button>
-              <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
-                <Calendar className="w-4 h-4" /> Book Experience
-              </Button>
-            </motion.div>
+              <form onSubmit={handleSearch} className="flex gap-2">
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search our luxury collection..."
+                  className="border-primary/20 rounded-full flex-grow w-[180px]"
+                />
+                <Button type="submit" variant="secondary" className="rounded-full">
+                  <Search className="w-4 h-4 rounded-full" />
+                </Button>
+              </form>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.8 }}
+                className="flex flex-wrap justify-center gap-4"
+              >
+                <Link href="/products/premium">
+                  <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
+                    <Star className="w-4 h-4" /> Premium Collection
+                  </Button>
+                </Link>
+                <Link href="/shipping">
+                  <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
+                    <Clock className="w-4 h-4" /> Express Delivery
+                  </Button>
+                </Link>
+                <Link href="/customize">
+                  <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
+                    <Calendar className="w-4 h-4" /> Book Experience
+                  </Button>
+                </Link>
+              </motion.div>
             </motion.div>
           </motion.div>
         </motion.div>
@@ -186,9 +197,11 @@ export default function Home() {
             <p className="text-muted-foreground mb-6">
               Premium same-day delivery service for last-minute luxury gifts
             </p>
-            <Button size="lg" className="bg-primary/90 hover:bg-primary rounded-full">
-              Browse Instant Gifts
-            </Button>
+            <Link href="/shipping">
+              <Button size="lg" className="bg-primary/90 hover:bg-primary rounded-full">
+                Browse Instant Gifts
+              </Button>
+            </Link>
           </motion.div>
         </div>
       </section>
