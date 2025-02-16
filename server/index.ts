@@ -138,7 +138,7 @@ const setupServer = async (port: number, server: Server) => {
 
 const startServer = async () => {
   try {
-    const defaultPort = parseInt(process.env.PORT || '5001', 10);
+    const defaultPort = parseInt(process.env.PORT || '5000', 10);
     log(`Finding available port starting from ${defaultPort}...`, 'server');
     const port = await findAvailablePort(defaultPort);
     log(`Selected port ${port}`, 'server');
@@ -164,7 +164,6 @@ const startServer = async () => {
       });
     });
 
-    // Setup server with timeout handling
     await setupServer(port, server);
   } catch (err) {
     console.error('Failed to start server:', err);
