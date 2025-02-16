@@ -15,8 +15,15 @@ export default function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="min-h-screen flex items-center justify-center bg-black text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-zinc-800/20 via-black to-black" />
+      <section className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="https://images.unsplash.com/photo-1586227740560-8cf2732c1531?q=80&w=2661&auto=format"
+            className="w-full h-full object-cover opacity-50"
+            alt="Hero background"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/80 to-black"></div>
+        </div>
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: [0, 1] }}

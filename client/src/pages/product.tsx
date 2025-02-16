@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -34,11 +33,11 @@ export default function ProductPage() {
     <div className="container py-12">
       <div className="grid gap-12 md:grid-cols-2">
         <div className="space-y-4">
-          <div className="aspect-square overflow-hidden rounded-lg border">
+          <div className="aspect-square overflow-hidden rounded-lg border group">
             <img
               src={product.images[0]}
               alt={product.name}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
             />
           </div>
           {product.images.slice(1).length > 0 && (
@@ -55,7 +54,7 @@ export default function ProductPage() {
             </div>
           )}
         </div>
-        
+
         <div className="space-y-8">
           <div>
             <h1 className="text-4xl font-bold">{product.name}</h1>
