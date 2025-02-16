@@ -1,5 +1,5 @@
 
-import { Link } from "wouter";
+import { Link, useNavigate } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
