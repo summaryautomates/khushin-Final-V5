@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "wouter";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -9,14 +9,13 @@ export function Footer() {
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [search, setSearch] = useState("");
-  const navigate = useNavigate();
-  const [location, setLocation] = useLocation();
+  const [location] = useLocation();
 
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (search) {
-      navigate(`/products?search=${encodeURIComponent(search)}`);
+      window.location.href = `/products?search=${encodeURIComponent(search)}`;
     }
   };
 
@@ -54,27 +53,27 @@ export function Footer() {
           <div className="space-y-3">
             <h3 className="text-lg font-semibold">Products</h3>
             <ul className="space-y-3">
-              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => navigate('/products/category/lighters')}>Stylized Lighters</li>
-              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => navigate('/products/new')}>New Arrivals</li>
-              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => navigate('/products/bestsellers')}>Best Sellers</li>
+              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => window.location.href = '/products/category/lighters'}>Stylized Lighters</li>
+              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => window.location.href = '/products/new'}>New Arrivals</li>
+              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => window.location.href = '/products/bestsellers'}>Best Sellers</li>
             </ul>
           </div>
 
           <div className="space-y-3">
             <h3 className="text-lg font-semibold">Contact</h3>
             <ul className="space-y-3">
-              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => navigate('/contact')}>Contact Us</li>
+              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => window.location.href = '/contact'}>Contact Us</li>
               <li><p className="text-muted-foreground">WhatsApp Support<br/>+919373395733</p></li>
-              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => navigate('/support')}>Customer Support</li>
+              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => window.location.href = '/support'}>Customer Support</li>
             </ul>
           </div>
 
           <div className="space-y-3">
             <h3 className="text-lg font-semibold">Blog</h3>
             <ul className="space-y-3">
-              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => navigate('/blog/latest')}>Latest Posts</li>
-              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => navigate('/blog/guides')}>Style Guides</li>
-              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => navigate('/blog/collections')}>Collections</li>
+              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => window.location.href = '/blog/latest'}>Latest Posts</li>
+              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => window.location.href = '/blog/guides'}>Style Guides</li>
+              <li className="text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => window.location.href = '/blog/collections'}>Collections</li>
             </ul>
           </div>
 
