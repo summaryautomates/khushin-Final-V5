@@ -11,8 +11,8 @@ import { categories } from "@/lib/products";
 
 export function Header() {
   return (
-    <header className="fixed top-0 z-50 w-full bg-black/95 backdrop-blur">
-      <div className="container flex h-24 items-center justify-between">
+    <header className="fixed top-0 z-50 w-full bg-black/95 backdrop-blur supports-[backdrop-filter]:bg-black/60">
+      <div className="container mx-auto px-4 flex h-20 items-center justify-between">
         <Link href="/" className="flex items-center space-x-2">
           <span className="text-2xl tracking-[0.2em] text-white">KHUSH.IN</span>
         </Link>

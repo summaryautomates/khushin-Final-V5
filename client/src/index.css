@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  @apply antialiased;
+}
+
+#root {
+  @apply min-h-screen;
+}
+
+main {
+  padding-top: 5rem;
+}
+
 @layer base {
   * {
     @apply border-border;
