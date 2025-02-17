@@ -38,4 +38,14 @@ export type BlogPost = typeof blogPosts.$inferSelect;
 export type ContactMessage = typeof contactMessages.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
+export const discountCodes = pgTable("discount_codes", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  discountPercent: integer("discount_percent").notNull(),
+  validUntil: text("valid_until").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+});
+
+export const insertDiscountCodeSchema = createInsertSchema(discountCodes).omit({ id: true });
+export type InsertDiscountCode = z.infer<typeof insertDiscountCodeSchema>;
 export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;

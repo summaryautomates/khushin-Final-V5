@@ -10,9 +10,15 @@ interface CartItem {
 interface CartState {
   items: CartItem[];
   total: number;
+  discount: {
+    code: string;
+    percent: number;
+  } | null;
 }
 
 type CartAction =
+  | { type: "SET_DISCOUNT"; payload: { code: string; percent: number } }
+  | { type: "CLEAR_DISCOUNT" }
   | { type: "ADD_ITEM"; payload: { product: Product; quantity?: number } }
   | { type: "REMOVE_ITEM"; payload: { productId: number } }
   | { type: "UPDATE_QUANTITY"; payload: { productId: number; quantity: number } }
@@ -94,6 +100,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       return {
         items: [],
         total: 0,
+        discount: null,
       };
 
     default:

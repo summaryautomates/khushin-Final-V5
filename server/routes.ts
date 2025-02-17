@@ -28,6 +28,21 @@ const paymentStore = new Map<string, {
   }
 }>();
 
+const discountStore = new Map<string, {
+  code: string,
+  discountPercent: number,
+  validUntil: string,
+  isActive: boolean
+}>();
+
+// Add some sample discount codes
+discountStore.set('WELCOME10', {
+  code: 'WELCOME10',
+  discountPercent: 10,
+  validUntil: '2025-12-31',
+  isActive: true
+});
+
 const orderStore = new Map<string, {
   orderRef: string,
   status: 'pending' | 'completed' | 'failed',
@@ -298,7 +313,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/products/:id", productsRouter.getById);
   app.get("/api/products/category/:category", productsRouter.getByCategory);
 
-  app.post("/api/contact", async (req, res) => {
+  app.post("/api/validate-discount", (req, res) => {
+  const { code } = req.body;
+  const discount = discountStore.get(code);
+
+  if (!discount || !discount.isActive || new Date(discount.validUntil) < new Date()) {
+    return res.status(400).json({
+      message: "Invalid or expired discount code"
+    });
+  }
+
+  res.json({
+    discountPercent: discount.discountPercent
+  });
+});
+
+app.post("/api/contact", async (req, res) => {
     try {
       const data = insertContactMessageSchema.parse(req.body);
       const message = await storage.createContactMessage(data);

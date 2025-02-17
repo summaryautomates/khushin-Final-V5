@@ -36,7 +36,42 @@ export default function Cart() {
     handleCheckout(data);
   };
 
-  const handleCheckout = async (shippingData?: ShippingFormData) => {
+  const handleDiscountSubmit = async () => {
+  try {
+    const response = await fetch('/api/validate-discount', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: discountCode })
+    });
+
+    if (!response.ok) {
+      toast({
+        title: "Error",
+        description: "Invalid discount code",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const { discountPercent } = await response.json();
+    toast({
+      description: `Discount code applied: ${discountPercent}% off`,
+    });
+    
+    // Apply discount to cart total
+    const discountAmount = (subtotal * discountPercent) / 100;
+    setDiscountedTotal(subtotal - discountAmount);
+  } catch (error) {
+    console.error('Error applying discount:', error);
+    toast({
+      title: "Error",
+      description: "Failed to apply discount code",
+      variant: "destructive"
+    });
+  }
+};
+
+const handleCheckout = async (shippingData?: ShippingFormData) => {
     try {
       setIsCheckingOut(true);
       const items = state.items.map(item => ({
@@ -261,7 +296,7 @@ export default function Cart() {
                       onChange={(e) => setDiscountCode(e.target.value)}
                       className="h-8 text-sm"
                     />
-                    <Button variant="outline" className="h-8">
+                    <Button variant="outline" className="h-8" onClick={handleDiscountSubmit}>
                       Apply
                     </Button>
                   </div>
