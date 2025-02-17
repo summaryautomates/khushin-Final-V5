@@ -57,7 +57,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json(products);
       } catch (error) {
         console.error('Error fetching products:', error);
-        res.status(500).json({ 
+        res.status(500).json({
           message: "Failed to fetch products",
           details: "An error occurred while retrieving the products"
         });
@@ -68,14 +68,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const id = Number(req.params.id);
         if (isNaN(id) || id < 1) {
-          return res.status(400).json({ 
+          return res.status(400).json({
             message: "Invalid product ID",
-            details: "Product ID must be a positive number" 
+            details: "Product ID must be a positive number"
           });
         }
         const product = await storage.getProduct(id);
         if (!product) {
-          return res.status(404).json({ 
+          return res.status(404).json({
             message: "Product not found",
             details: "The requested product does not exist"
           });
@@ -83,7 +83,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json(product);
       } catch (error) {
         console.error('Error fetching product:', error);
-        res.status(500).json({ 
+        res.status(500).json({
           message: "Failed to fetch product",
           details: "An error occurred while retrieving the product"
         });
@@ -96,7 +96,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json(products);
       } catch (error) {
         console.error('Error fetching products by category:', error);
-        res.status(500).json({ 
+        res.status(500).json({
           message: "Failed to fetch products",
           details: "An error occurred while retrieving the products for this category"
         });
@@ -162,6 +162,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/direct-checkout", async (req, res) => {
+    try {
+      const { items } = req.body;
+
+      if (!Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ message: "Invalid items array" });
+      }
+
+      const subtotal = await calculateSubtotal(items);
+      const shippingCost = subtotal >= 5000 ? 0 : 299;
+      const total = subtotal + shippingCost;
+
+      const orderRef = `ORD${Date.now()}${Math.random().toString(36).substring(2, 7)}`;
+
+      const paymentDetails = {
+        orderRef,
+        upiId: process.env.MERCHANT_UPI_ID || 'merchant@upi',
+        merchantName: 'KHUSH.IN',
+        amount: total
+      };
+
+      paymentStore.set(orderRef, {
+        status: 'pending',
+        details: paymentDetails
+      });
+
+      const orderItems = await Promise.all(items.map(async (item) => {
+        const product = await storage.getProduct(item.productId);
+        return {
+          productId: item.productId,
+          quantity: item.quantity,
+          price: product?.price || 0,
+          name: product?.name || 'Unknown Product'
+        };
+      }));
+
+      // For direct checkout, we'll create a minimal shipping entry
+      const defaultShipping = {
+        fullName: '',
+        address: '',
+        city: '',
+        state: '',
+        pincode: '',
+        phone: ''
+      };
+
+      orderStore.set(orderRef, {
+        orderRef,
+        status: 'pending',
+        total,
+        items: orderItems,
+        shipping: defaultShipping,
+        createdAt: new Date().toISOString()
+      });
+
+      res.json({
+        orderRef,
+        total,
+        redirectUrl: `/checkout/payment?ref=${orderRef}`
+      });
+    } catch (error) {
+      console.error('Direct checkout error:', error);
+      res.status(500).json({ message: 'Error creating checkout session' });
+    }
+  });
+
   app.get("/api/payment/:orderRef", (req, res) => {
     const { orderRef } = req.params;
     const payment = paymentStore.get(orderRef);
@@ -185,9 +251,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const order = orderStore.get(orderRef);
 
       if (!payment || !order) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Order not found",
-          details: "The specified order reference could not be found" 
+          details: "The specified order reference could not be found"
         });
       }
 
@@ -197,7 +263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       paymentStore.set(orderRef, payment);
       orderStore.set(orderRef, order);
 
-      res.json({ 
+      res.json({
         status: validatedBody.status,
         orderRef,
         updated: new Date().toISOString()
@@ -210,7 +276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       console.error('Payment status update error:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Internal server error",
         details: "Failed to update payment status"
       });

@@ -5,11 +5,14 @@ import { formatPrice } from "@/lib/products";
 import { Truck, Shield, RefreshCcw } from "lucide-react";
 import type { Product } from "@shared/schema";
 import { useCart } from "@/hooks/use-cart";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:id");
   const id = params?.id;
   const { addItem } = useCart();
+  const { toast } = useToast();
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: [`/api/products/${id}`],
@@ -33,11 +36,31 @@ export default function ProductPage() {
 
   const handleAddToCart = () => {
     addItem(product);
+    toast({
+      description: `${product.name} added to cart`,
+    });
   };
 
-  const handleBuyNow = () => {
-    addItem(product);
-    window.location.href = '/cart?checkout=true';
+  const handleBuyNow = async () => {
+    try {
+      const response = await apiRequest('POST', '/api/direct-checkout', {
+        items: [{
+          productId: product.id,
+          quantity: 1
+        }]
+      });
+      const { redirectUrl } = await response.json();
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast({
+        variant: "destructive",
+        title: "Checkout Failed",
+        description: "Could not process checkout. Please try again.",
+      });
+    }
   };
 
   return (
