@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 import { ShippingForm, type ShippingFormData } from "@/components/checkout/shipping-form";
+import { Input } from "@/components/ui/input";
 
 // Shipping cost calculation
 const calculateShippingCost = (subtotal: number): number => {
@@ -24,6 +25,7 @@ export default function Cart() {
     return params.get('checkout') === 'true';
   });
   const [shippingAddress, setShippingAddress] = useState<ShippingFormData | null>(null);
+  const [discountCode, setDiscountCode] = useState("");
 
   const subtotal = state.total;
   const shippingCost = calculateShippingCost(subtotal);
@@ -90,7 +92,7 @@ export default function Cart() {
   }
 
   return (
-    <div className="container py-8 min-h-screen max-w-7xl">
+    <div className="container py-4 min-h-screen max-w-7xl">
       {!showShippingForm ? (
         <div className="space-y-8">
           <h1 className="text-3xl font-bold">Shopping Cart</h1>
@@ -203,73 +205,84 @@ export default function Cart() {
           </div>
         </div>
       ) : (
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="space-y-8">
-            <div className="flex items-center space-x-4">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3">
               <Button
                 variant="ghost"
                 onClick={() => setShowShippingForm(false)}
-                className="px-0"
+                className="px-0 h-7 hover:bg-transparent"
               >
                 ← Return to cart
               </Button>
-              <div className="h-6 w-px bg-border" />
-              <span className="text-muted-foreground">Bhawar Sales Corporation</span>
+              <div className="h-5 w-px bg-border/60" />
+              <span className="text-sm text-muted-foreground">Bhawar Sales Corporation</span>
             </div>
 
-            <Card>
-              <CardContent className="p-6">
-                <ShippingForm onSubmit={handleShippingSubmit} isLoading={isCheckingOut} />
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              <ShippingForm onSubmit={handleShippingSubmit} isLoading={isCheckingOut} />
+            </div>
           </div>
 
-          <div className="lg:pl-8">
-            <div className="sticky top-24 space-y-6">
-              <div className="rounded-lg border bg-card">
-                <div className="p-6">
-                  <div className="space-y-4">
-                    {state.items.map((item) => (
-                      <div key={item.product.id} className="flex items-center gap-4">
-                        <div className="relative">
-                          <div className="w-16 h-16 rounded-lg border overflow-hidden bg-zinc-100">
-                            <img
-                              src={item.product.images[0]}
-                              alt={item.product.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs">
-                            {item.quantity}
-                          </div>
+          <div className="lg:pl-6">
+            <div className="sticky top-24 space-y-4">
+              <div className="rounded border bg-card">
+                <div className="p-3 space-y-3">
+                  {state.items.map((item) => (
+                    <div key={item.product.id} className="flex items-center gap-3">
+                      <div className="relative">
+                        <div className="w-14 h-14 rounded border overflow-hidden bg-zinc-50">
+                          <img
+                            src={item.product.images[0]}
+                            alt={item.product.name}
+                            className="w-full h-full object-contain p-2"
+                          />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium truncate">{item.product.name}</h3>
-                          <p className="text-sm text-muted-foreground">{formatPrice(item.product.price)}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium">{formatPrice(item.product.price * item.quantity)}</p>
+                        <div className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs">
+                          {item.quantity}
                         </div>
                       </div>
-                    ))}
-                  </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-medium truncate">{item.product.name}</h3>
+                        <p className="text-xs text-muted-foreground">{formatPrice(item.product.price)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">{formatPrice(item.product.price * item.quantity)}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="border-t p-6 space-y-4">
-                  <div className="flex justify-between text-sm">
-                    <span>Subtotal</span>
-                    <span>{formatPrice(subtotal)}</span>
+
+                <div className="border-t p-3 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder="Discount code"
+                      value={discountCode}
+                      onChange={(e) => setDiscountCode(e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                    <Button variant="outline" className="h-8">
+                      Apply
+                    </Button>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Shipping</span>
-                    {subtotal >= 5000 ? (
-                      <span className="text-green-600">Free</span>
-                    ) : (
-                      <span>{formatPrice(shippingCost)}</span>
-                    )}
-                  </div>
-                  <div className="flex justify-between font-medium">
-                    <span>Total</span>
-                    <span>{formatPrice(total)}</span>
+
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-sm">
+                      <span>Subtotal</span>
+                      <span>{formatPrice(subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Shipping</span>
+                      {subtotal >= 5000 ? (
+                        <span className="text-green-600">Free</span>
+                      ) : (
+                        <span>{formatPrice(shippingCost)}</span>
+                      )}
+                    </div>
+                    <div className="flex justify-between font-medium pt-1.5 border-t text-sm">
+                      <span>Total</span>
+                      <span>{formatPrice(total)}</span>
+                    </div>
                   </div>
                 </div>
               </div>
