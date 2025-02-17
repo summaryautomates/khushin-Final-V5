@@ -321,5 +321,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ));
   });
 
+  app.use("/api/auth/*", authHandler); // Added auth middleware
+
+  app.get("/api/health", (_req, res) => {
+    res.send("OK");
+  });
+
   return createServer(app);
 }
