@@ -7,15 +7,12 @@ import type { Product } from "@shared/schema";
 import { useCart } from "@/hooks/use-cart";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useState } from "react";
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:id");
   const id = params?.id;
   const { addItem } = useCart();
   const { toast } = useToast();
-  const [selectedVariant, setSelectedVariant] = useState(null);
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: [`/api/products/${id}`],
@@ -110,144 +107,35 @@ export default function ProductPage() {
               <Button size="lg" variant="outline" className="w-full" onClick={handleAddToCart}>
                 Add to Cart
               </Button>
-              {/* Variants Selection */}
-            {product.variants.length > 0 && (
-              <div className="space-y-4 mb-6">
-                {product.variants.some(v => v.color) && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium">Color</h3>
-                    <div className="flex gap-2">
-                      {product.variants
-                        .filter((v, i, arr) => arr.findIndex(x => x.color === v.color) === i)
-                        .map((variant) => (
-                          <button
-                            key={variant.id}
-                            className={`w-8 h-8 rounded-full border-2 ${
-                              selectedVariant?.color === variant.color
-                                ? "border-primary"
-                                : "border-transparent"
-                            }`}
-                            style={{ backgroundColor: variant.color }}
-                            onClick={() => setSelectedVariant(variant)}
-                          />
-                        ))}
-                    </div>
-                  </div>
-                )}
-
-                {product.variants.some(v => v.size) && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium">Size</h3>
-                    <div className="flex gap-2">
-                      {product.variants
-                        .filter((v, i, arr) => arr.findIndex(x => x.size === v.size) === i)
-                        .map((variant) => (
-                          <button
-                            key={variant.id}
-                            className={`px-3 py-1 border rounded ${
-                              selectedVariant?.size === variant.size
-                                ? "border-primary bg-primary/10"
-                                : "border-gray-200"
-                            }`}
-                            onClick={() => setSelectedVariant(variant)}
-                          >
-                            {variant.size}
-                          </button>
-                        ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <Button size="lg" className="w-full" onClick={handleBuyNow}>
-              Buy Now
-            </Button>
+              <Button size="lg" className="w-full" onClick={handleBuyNow}>
+                Buy Now
+              </Button>
+            </div>
           </div>
 
-          {/* Features Section */}
-          {product.features && product.features.length > 0 && (
-            <div className="mt-12">
-              <h2 className="text-2xl font-semibold mb-6">Features</h2>
-              <div className="grid gap-6 md:grid-cols-2">
-                {product.features.map((feature, index) => (
-                  <Card key={index} className="bg-white/[0.02] backdrop-blur-sm border-none">
-                    <CardHeader>
-                      {feature.icon && <span className="text-primary text-2xl">{feature.icon}</span>}
-                      <CardTitle className="text-lg font-medium">{feature.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-muted-foreground">{feature.description}</p>
-                    </CardContent>
-                  </Card>
-                ))}
+          <div className="space-y-6 rounded-lg border p-6">
+            <div className="flex items-center space-x-4">
+              <Truck className="h-5 w-5 text-primary" />
+              <div>
+                <h4 className="font-semibold">Free Shipping</h4>
+                <p className="text-sm text-muted-foreground">On orders over ₹5000</p>
               </div>
             </div>
-          )}
-
-          {/* Reviews Section */}
-          {product.reviews && product.reviews.length > 0 && (
-            <div className="mt-12">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-semibold">Customer Reviews</h2>
-                {product.averageRating && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <span
-                          key={star}
-                          className={`text-lg ${
-                            star <= product.averageRating!
-                              ? "text-yellow-400"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          ★
-                        </span>
-                      ))}
-                    </div>
-                    <span className="text-sm text-muted-foreground">
-                      ({product.reviews.length} reviews)
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-6">
-                {product.reviews.map((review) => (
-                  <Card key={review.id} className="bg-white/[0.02] backdrop-blur-sm border-none">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle className="text-base font-medium">
-                            {review.userName}
-                          </CardTitle>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(review.date).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div className="flex">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <span
-                              key={star}
-                              className={`text-sm ${
-                                star <= review.rating ? "text-yellow-400" : "text-gray-300"
-                              }`}
-                            >
-                              ★
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-muted-foreground">{review.comment}</p>
-                    </CardContent>
-                  </Card>
-                ))}
+            <div className="flex items-center space-x-4">
+              <Shield className="h-5 w-5 text-primary" />
+              <div>
+                <h4 className="font-semibold">Secure Shopping</h4>
+                <p className="text-sm text-muted-foreground">Protected by SSL</p>
               </div>
             </div>
-          )}
+            <div className="flex items-center space-x-4">
+              <RefreshCcw className="h-5 w-5 text-primary" />
+              <div>
+                <h4 className="font-semibold">Easy Returns</h4>
+                <p className="text-sm text-muted-foreground">30-day return policy</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
