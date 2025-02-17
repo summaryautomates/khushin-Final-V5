@@ -17,7 +17,7 @@ const calculateShippingCost = (subtotal: number): number => {
 };
 
 export default function Cart() {
-  const { state, removeItem, updateQuantity } = useCart();
+  const { state, removeItem, updateQuantity, updateGiftWrap } = useCart();
   const { toast } = useToast();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [showShippingForm, setShowShippingForm] = useState(() => {
@@ -29,7 +29,7 @@ export default function Cart() {
 
   const subtotal = state.total;
   const shippingCost = calculateShippingCost(subtotal);
-  const total = subtotal + shippingCost;
+  const total = subtotal + shippingCost + (state.giftWrap.cost || 0);
 
   const handleShippingSubmit = async (data: ShippingFormData) => {
     setShippingAddress(data);
@@ -57,7 +57,7 @@ export default function Cart() {
     toast({
       description: `Discount code applied: ${discountPercent}% off`,
     });
-    
+
     // Apply discount to cart total
     const discountAmount = (subtotal * discountPercent) / 100;
     setDiscountedTotal(subtotal - discountAmount);
@@ -82,6 +82,7 @@ const handleCheckout = async (shippingData?: ShippingFormData) => {
       const checkoutData = {
         items,
         shipping: shippingData || shippingAddress,
+        giftWrap: state.giftWrap
       };
 
       const response = await apiRequest('POST', '/api/checkout', checkoutData);
@@ -206,10 +207,77 @@ const handleCheckout = async (shippingData?: ShippingFormData) => {
                   <CardTitle>Order Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div className="space-y-4 border-b pb-4">
+                    <h3 className="font-medium">Gift Wrapping Options</h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            name="gift-wrap"
+                            value="none"
+                            checked={!state.giftWrap.type}
+                            onChange={() => updateGiftWrap(null, 0)}
+                            className="rounded-full"
+                          />
+                          <span>No gift wrap</span>
+                        </label>
+                        <span>Free</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            name="gift-wrap"
+                            value="standard"
+                            checked={state.giftWrap.type === 'standard'}
+                            onChange={() => updateGiftWrap('standard', 199)}
+                            className="rounded-full"
+                          />
+                          <span>Standard Wrap</span>
+                        </label>
+                        <span>{formatPrice(199)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            name="gift-wrap"
+                            value="premium"
+                            checked={state.giftWrap.type === 'premium'}
+                            onChange={() => updateGiftWrap('premium', 399)}
+                            className="rounded-full"
+                          />
+                          <span>Premium Wrap</span>
+                        </label>
+                        <span>{formatPrice(399)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            name="gift-wrap"
+                            value="luxury"
+                            checked={state.giftWrap.type === 'luxury'}
+                            onChange={() => updateGiftWrap('luxury', 699)}
+                            className="rounded-full"
+                          />
+                          <span>Luxury Gift Box</span>
+                        </label>
+                        <span>{formatPrice(699)}</span>
+                      </div>
+                    </div>
+                  </div>
                   <div className="flex justify-between">
                     <span>Subtotal</span>
                     <span>{formatPrice(subtotal)}</span>
                   </div>
+                  {state.giftWrap.type && (
+                    <div className="flex justify-between text-sm">
+                      <span>Gift Wrapping ({state.giftWrap.type})</span>
+                      <span>{formatPrice(state.giftWrap.cost)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>Shipping</span>
                     {subtotal >= 5000 ? (

@@ -10,6 +10,10 @@ interface CartItem {
 interface CartState {
   items: CartItem[];
   total: number;
+  giftWrap: {
+    type: 'standard' | 'premium' | 'luxury' | null;
+    cost: number;
+  };
   discount: {
     code: string;
     percent: number;
@@ -108,9 +112,16 @@ function cartReducer(state: CartState, action: CartAction): CartState {
   }
 }
 
-function calculateTotal(items: CartItem[]): number {
-  return items.reduce((total, item) => total + item.product.price * item.quantity, 0);
+function calculateTotal(items: CartItem[], giftWrapCost: number = 0): number {
+  const itemsTotal = items.reduce((total, item) => total + item.product.price * item.quantity, 0);
+  return itemsTotal + giftWrapCost;
 }
+
+type GiftWrapType = 'standard' | 'premium' | 'luxury' | null;
+
+const updateGiftWrap = (type: GiftWrapType, cost: number) => {
+  dispatch({ type: "UPDATE_GIFT_WRAP", payload: { type, cost } });
+};
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, { items: [], total: 0 });
