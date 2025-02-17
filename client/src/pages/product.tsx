@@ -1,24 +1,22 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/products";
-import { Truck, Shield, RefreshCcw } from "lucide-react";
-import type { Product } from "@shared/schema";
-import { useCart } from "@/hooks/use-cart";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useState } from "react";
+import { useCart } from "@/hooks/use-cart";
+import { useToast } from "@/hooks/use-toast";
+import type { Product } from "@shared/schema";
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:id");
-  const id = params?.id;
   const { addItem } = useCart();
   const { toast } = useToast();
-  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [selectedVariant, setSelectedVariant] = useState<any>(null);
 
   const { data: product, isLoading } = useQuery<Product>({
-    queryKey: [`/api/products/${id}`],
+    queryKey: [`/api/products/${params?.id}`],
   });
 
   if (isLoading) {
@@ -46,11 +44,17 @@ export default function ProductPage() {
 
   const handleBuyNow = async () => {
     try {
-      const response = await apiRequest('POST', '/api/direct-checkout', {
-        items: [{
-          productId: product.id,
-          quantity: 1
-        }]
+      const response = await fetch('/api/direct-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items: [{
+            productId: product.id,
+            quantity: 1
+          }]
+        })
       });
       const { redirectUrl } = await response.json();
       if (redirectUrl) {
@@ -105,67 +109,64 @@ export default function ProductPage() {
             <p>{product.description}</p>
           </div>
 
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <Button size="lg" variant="outline" className="w-full" onClick={handleAddToCart}>
-                Add to Cart
-              </Button>
-              {/* Variants Selection */}
-            {product.variants.length > 0 && (
-              <div className="space-y-4 mb-6">
-                {product.variants.some(v => v.color) && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium">Color</h3>
-                    <div className="flex gap-2">
-                      {product.variants
-                        .filter((v, i, arr) => arr.findIndex(x => x.color === v.color) === i)
-                        .map((variant) => (
-                          <button
-                            key={variant.id}
-                            className={`w-8 h-8 rounded-full border-2 ${
-                              selectedVariant?.color === variant.color
-                                ? "border-primary"
-                                : "border-transparent"
-                            }`}
-                            style={{ backgroundColor: variant.color }}
-                            onClick={() => setSelectedVariant(variant)}
-                          />
-                        ))}
-                    </div>
+          {product.variants && product.variants.length > 0 && (
+            <div className="space-y-4">
+              {product.variants.some(v => v.color) && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium">Color</h3>
+                  <div className="flex gap-2">
+                    {product.variants
+                      .filter((v, i, arr) => arr.findIndex(x => x.color === v.color) === i)
+                      .map((variant) => (
+                        <button
+                          key={variant.id}
+                          className={`w-8 h-8 rounded-full border-2 ${
+                            selectedVariant?.color === variant.color
+                              ? "border-primary"
+                              : "border-transparent"
+                          }`}
+                          style={{ backgroundColor: variant.color }}
+                          onClick={() => setSelectedVariant(variant)}
+                        />
+                      ))}
                   </div>
-                )}
+                </div>
+              )}
 
-                {product.variants.some(v => v.size) && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium">Size</h3>
-                    <div className="flex gap-2">
-                      {product.variants
-                        .filter((v, i, arr) => arr.findIndex(x => x.size === v.size) === i)
-                        .map((variant) => (
-                          <button
-                            key={variant.id}
-                            className={`px-3 py-1 border rounded ${
-                              selectedVariant?.size === variant.size
-                                ? "border-primary bg-primary/10"
-                                : "border-gray-200"
-                            }`}
-                            onClick={() => setSelectedVariant(variant)}
-                          >
-                            {variant.size}
-                          </button>
-                        ))}
-                    </div>
+              {product.variants.some(v => v.size) && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium">Size</h3>
+                  <div className="flex gap-2">
+                    {product.variants
+                      .filter((v, i, arr) => arr.findIndex(x => x.size === v.size) === i)
+                      .map((variant) => (
+                        <button
+                          key={variant.id}
+                          className={`px-3 py-1 border rounded ${
+                            selectedVariant?.size === variant.size
+                              ? "border-primary bg-primary/10"
+                              : "border-gray-200"
+                          }`}
+                          onClick={() => setSelectedVariant(variant)}
+                        >
+                          {variant.size}
+                        </button>
+                      ))}
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
+          )}
 
+          <div className="grid grid-cols-2 gap-4">
+            <Button size="lg" variant="outline" className="w-full" onClick={handleAddToCart}>
+              Add to Cart
+            </Button>
             <Button size="lg" className="w-full" onClick={handleBuyNow}>
               Buy Now
             </Button>
           </div>
 
-          {/* Features Section */}
           {product.features && product.features.length > 0 && (
             <div className="mt-12">
               <h2 className="text-2xl font-semibold mb-6">Features</h2>
@@ -185,7 +186,6 @@ export default function ProductPage() {
             </div>
           )}
 
-          {/* Reviews Section */}
           {product.reviews && product.reviews.length > 0 && (
             <div className="mt-12">
               <div className="flex items-center justify-between mb-6">
