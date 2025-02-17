@@ -23,7 +23,8 @@ import Customize from "@/pages/customize";
 import CheckoutSuccess from "@/pages/checkout-success";
 import CheckoutPayment from "@/pages/checkout-payment";
 import Orders from "@/pages/orders";
-import Refueling from "@/pages/refueling";
+import Refueling from "@/pages/refueling"; // Import the new page component
+
 
 function App() {
   return (
@@ -34,22 +35,22 @@ function App() {
             <Header />
             <main className="flex-1">
               <Switch>
-                <Route path="/">{Home}</Route>
-                <Route path="/products">{Products}</Route>
-                <Route path="/product/:id">{Product}</Route>
-                <Route path="/cart">{Cart}</Route>
-                <Route path="/checkout/payment">{CheckoutPayment}</Route>
-                <Route path="/checkout/success">{CheckoutSuccess}</Route>
-                <Route path="/contact">{Contact}</Route>
-                <Route path="/customize">{Customize}</Route>
-                <Route path="/faqs">{FAQs}</Route>
-                <Route path="/warranty">{Warranty}</Route>
-                <Route path="/shipping">{Shipping}</Route>
-                <Route path="/returns">{Returns}</Route>
-                <Route path="/orders">{Orders}</Route>
-                <Route path="/test-error">{TestError}</Route>
-                <Route path="/refueling">{Refueling}</Route>
-                <Route>{NotFound}</Route>
+                <Route path="/" component={Home} />
+                <Route path="/products" component={Products} />
+                <Route path="/product/:id" component={Product} />
+                <Route path="/cart" component={Cart} />
+                <Route path="/checkout/payment" component={CheckoutPayment} />
+                <Route path="/checkout/success" component={CheckoutSuccess} />
+                <Route path="/contact" component={Contact} />
+                <Route path="/customize" component={Customize} />
+                <Route path="/faqs" component={FAQs} />
+                <Route path="/warranty" component={Warranty} />
+                <Route path="/shipping" component={Shipping} />
+                <Route path="/returns" component={Returns} />
+                <Route path="/orders" component={Orders} />
+                <Route path="/test-error" component={TestError} />
+                <Route path="/refueling" component={Refueling} /> {/* Add the refueling route */}
+                <Route component={NotFound} />
               </Switch>
             </main>
             <Footer />
