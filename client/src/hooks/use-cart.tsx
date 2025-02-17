@@ -26,6 +26,7 @@ type CartAction =
   | { type: "ADD_ITEM"; payload: { product: Product; quantity?: number } }
   | { type: "REMOVE_ITEM"; payload: { productId: number } }
   | { type: "UPDATE_QUANTITY"; payload: { productId: number; quantity: number } }
+  | { type: "UPDATE_GIFT_WRAP"; payload: { type: GiftWrapType; cost: number } }
   | { type: "CLEAR_CART" };
 
 interface CartContextType {
@@ -100,10 +101,20 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       };
     }
 
+    case "UPDATE_GIFT_WRAP":
+      return {
+        ...state,
+        giftWrap: {
+          type: action.payload.type,
+          cost: action.payload.cost
+        }
+      };
+
     case "CLEAR_CART":
       return {
         items: [],
         total: 0,
+        giftWrap: { type: null, cost: 0 },
         discount: null,
       };
 
@@ -124,7 +135,12 @@ const updateGiftWrap = (type: GiftWrapType, cost: number) => {
 };
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(cartReducer, { items: [], total: 0 });
+  const [state, dispatch] = useReducer(cartReducer, {
+    items: [],
+    total: 0,
+    giftWrap: { type: null, cost: 0 },
+    discount: null
+  });
   const { toast } = useToast();
 
   const addItem = (product: Product, quantity = 1) => {
