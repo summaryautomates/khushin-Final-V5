@@ -1,16 +1,15 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
-import { Button } from "@/components/ui/button";
-import { formatPrice } from "@/lib/products";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { formatPrice } from "@/lib/products";
+import type { Product } from "@shared/schema";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
-import type { Product } from "@shared/schema";
 
 export default function ProductPage() {
-  const [, params] = useRoute("/product/:id");
+  const [, params] = useRoute<{ id: string }>("/product/:id");
   const { addItem } = useCart();
   const { toast } = useToast();
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
@@ -21,16 +20,16 @@ export default function ProductPage() {
 
   if (isLoading) {
     return (
-      <div className="container flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading product details...</div>
+      <div className="container py-12">
+        <div className="text-center">Loading product...</div>
       </div>
     );
   }
 
   if (!product) {
     return (
-      <div className="container flex min-h-screen items-center justify-center">
-        <div className="text-lg">Product not found</div>
+      <div className="container py-12">
+        <div className="text-center">Product not found</div>
       </div>
     );
   }
@@ -109,6 +108,7 @@ export default function ProductPage() {
             <p>{product.description}</p>
           </div>
 
+          {/* Variants Selection */}
           {product.variants && product.variants.length > 0 && (
             <div className="space-y-4">
               {product.variants.some(v => v.color) && (
@@ -167,6 +167,7 @@ export default function ProductPage() {
             </Button>
           </div>
 
+          {/* Features Section */}
           {product.features && product.features.length > 0 && (
             <div className="mt-12">
               <h2 className="text-2xl font-semibold mb-6">Features</h2>
@@ -185,7 +186,6 @@ export default function ProductPage() {
               </div>
             </div>
           )}
-
           {product.reviews && product.reviews.length > 0 && (
             <div className="mt-12">
               <div className="flex items-center justify-between mb-6">
