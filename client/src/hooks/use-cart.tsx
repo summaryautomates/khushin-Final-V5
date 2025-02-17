@@ -34,6 +34,7 @@ interface CartContextType {
   addItem: (product: Product, quantity?: number) => void;
   removeItem: (productId: number) => void;
   updateQuantity: (productId: number, quantity: number) => void;
+  updateGiftWrap: (type: GiftWrapType, cost: number) => void;
   clearCart: () => void;
 }
 
@@ -130,10 +131,6 @@ function calculateTotal(items: CartItem[], giftWrapCost: number = 0): number {
 
 type GiftWrapType = 'standard' | 'premium' | 'luxury' | null;
 
-const updateGiftWrap = (type: GiftWrapType, cost: number) => {
-  dispatch({ type: "UPDATE_GIFT_WRAP", payload: { type, cost } });
-};
-
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, {
     items: [],
@@ -162,6 +159,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "CLEAR_CART" });
   };
 
+  const updateGiftWrap = (type: GiftWrapType, cost: number) => {
+    dispatch({ type: "UPDATE_GIFT_WRAP", payload: { type, cost } });
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -169,6 +170,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         addItem,
         removeItem,
         updateQuantity,
+        updateGiftWrap,
         clearCart,
       }}
     >
