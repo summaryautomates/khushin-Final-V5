@@ -23,6 +23,7 @@ import Customize from "@/pages/customize";
 import CheckoutSuccess from "@/pages/checkout-success";
 import CheckoutPayment from "@/pages/checkout-payment";
 import Orders from "@/pages/orders";
+import OrderDetails from "@/pages/order-details";
 import Refueling from "@/pages/refueling";
 import EventOrganizer from "@/pages/event-organizer";
 
@@ -46,6 +47,7 @@ function App() {
                 <Route path="/customize" component={Customize} />
                 <Route path="/refueling" component={Refueling} />
                 <Route path="/orders" component={Orders} />
+                <Route path="/orders/:orderRef" component={OrderDetails} />
                 <Route path="/faqs" component={FAQs} />
                 <Route path="/warranty" component={Warranty} />
                 <Route path="/shipping" component={Shipping} />
