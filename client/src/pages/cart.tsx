@@ -171,7 +171,7 @@ export default function Cart() {
                         <div className="flex-1">
                           <h3 className="font-semibold">{item.product.name}</h3>
                           <div className="mt-4 flex items-center space-x-4">
-                            <div className="flex items-center border rounded-lg overflow-hidden">
+                            <div className="flex items-center border rounded-lg p-1"> {/* Added padding and a border */}
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -194,7 +194,7 @@ export default function Cart() {
                                       handleQuantityChange(item.product.id, num);
                                     }
                                   }}
-                                  className="w-full h-8 text-center border-none focus:ring-0 focus:outline-none"
+                                  className="w-full h-8 text-center border-none focus:ring-0 focus:outline-none bg-transparent text-foreground hover:bg-accent/50 transition-colors"
                                   min="1"
                                   max="99"
                                 />
@@ -217,7 +217,8 @@ export default function Cart() {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
-                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">Adjust quantity or remove item</p> {/* Added subtle instruction */}
+                        </div>
                         <div className="text-right">
                           <p className="font-semibold">
                             {formatPrice(item.product.price * item.quantity)}
