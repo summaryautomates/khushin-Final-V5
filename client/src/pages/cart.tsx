@@ -88,6 +88,12 @@ export default function Cart() {
 
   const handleCheckout = async (shippingData?: ShippingFormData) => {
     try {
+      if (!shippingData && !shippingAddress) {
+        // If no shipping data, show the shipping form instead of proceeding with checkout
+        setShowShippingForm(true);
+        return;
+      }
+
       setIsCheckingOut(true);
       const items = cart.items.map(item => ({
         productId: item.product.id,
