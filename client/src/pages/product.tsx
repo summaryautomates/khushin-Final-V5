@@ -68,7 +68,7 @@ export default function ProductPage() {
         {/* Left Section: Product Images & 3D Model */}
         <div className="space-y-4">
           <div className="aspect-square overflow-hidden rounded-lg border bg-zinc-900 relative">
-            {product.category === "lighters" ? (
+            {product.name.toLowerCase().includes('vintage') || product.name.toLowerCase().includes('lighter') ? (
               <div className="absolute inset-0">
                 <ModelViewer
                   modelUrl="/attached_assets/zippo_lighter.glb"
