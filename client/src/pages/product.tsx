@@ -8,6 +8,7 @@ import { useCart } from "@/hooks/use-cart";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ShareButtons } from "@/components/products/share-buttons";
+import { ModelViewer } from "@/components/model-viewer/model-viewer";
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:id");
@@ -77,7 +78,7 @@ export default function ProductPage() {
           </div>
           {product.category === "lighters" && (
             <div className="mt-4 rounded-lg border overflow-hidden bg-zinc-100">
-              <ModelViewer modelUrl="/zippo_lighter.glb" />
+              <ModelViewer modelUrl="/attached_assets/zippo_lighter.glb" />
             </div>
           )}
           {product.images.slice(1).length > 0 && (

@@ -28,7 +28,7 @@ app.use((req, res, next) => {
 const startServer = async () => {
   try {
     log('Starting server...', 'server');
-    const port = 5000; // Using Replit's common port
+    const port = Number(process.env.PORT) || 5001; // Changed to use PORT env var with fallback to 5001
     log(`Attempting to bind to port ${port}...`, 'server');
 
     const server = await registerRoutes(app);
