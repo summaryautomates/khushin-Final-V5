@@ -30,16 +30,14 @@ const Refueling = () => {
           transition={{ duration: 1 }}
           className="container relative z-10 px-4"
         >
-          <Link href="/refueling"> {/* Wrap the h1 in the Link component */}
           <motion.h1 
             initial={{ letterSpacing: "0.2em", opacity: 0 }}
             animate={{ letterSpacing: "0.1em", opacity: 1 }}
             transition={{ duration: 1.5, delay: 0.3 }}
-            className="text-5xl md:text-6xl font-extralight mb-6 tracking-wider text-center"
+            className="text-5xl md:text-6xl font-extralight mb-6 tracking-wider text-center hover:text-primary transition-colors cursor-pointer"
           >
-            Refueling Solutions
+            <Link href="/refueling">Refueling Solutions</Link>
           </motion.h1>
-          </Link> {/* Close the Link component */}
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
