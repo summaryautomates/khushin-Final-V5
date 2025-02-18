@@ -46,13 +46,13 @@ export default function ProductPage() {
 
   const handleBuyNow = async () => {
     try {
-      const response = await apiRequest("POST", "/api/direct-checkout", {
-        items: [{ productId: product.id, quantity: 1 }],
+      // Add the product to cart first
+      addItem(product);
+      // Redirect to cart page with checkout form displayed
+      window.location.href = '/cart';
+      toast({
+        description: "Product added to cart. Proceeding to checkout.",
       });
-      const { redirectUrl } = await response.json();
-      if (redirectUrl) {
-        window.location.href = redirectUrl;
-      }
     } catch (error) {
       console.error("Checkout error:", error);
       toast({
@@ -154,9 +154,9 @@ export default function ProductPage() {
       </div>
 
       <div className="mt-16">
-        <SimilarProducts 
-          currentProductId={product.id} 
-          category={product.category} 
+        <SimilarProducts
+          currentProductId={product.id}
+          category={product.category}
         />
       </div>
     </div>
