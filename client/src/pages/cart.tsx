@@ -183,14 +183,16 @@ export default function Cart() {
                               </Button>
                               <div className="relative w-12">
                                 <input
-                                  type="text"
+                                  type="number"
                                   inputMode="numeric"
                                   pattern="[0-9]*"
                                   value={item.quantity}
                                   onChange={(e) => {
                                     const val = e.target.value.replace(/[^0-9]/g, '');
                                     const num = parseInt(val) || 1;
-                                    handleQuantityChange(item.product.id, num);
+                                    if (num >= 1 && num <= 99) {
+                                      handleQuantityChange(item.product.id, num);
+                                    }
                                   }}
                                   className="w-full h-8 text-center border-none focus:ring-0 focus:outline-none"
                                   min="1"
@@ -215,7 +217,7 @@ export default function Cart() {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
-                        </div>
+                          </div>
                         <div className="text-right">
                           <p className="font-semibold">
                             {formatPrice(item.product.price * item.quantity)}
