@@ -37,56 +37,45 @@ app.use((req, res, next) => {
 const startServer = async () => {
   try {
     log('Starting server...', 'server');
-    // Use environment variable PORT with fallback to 5000 (workflow expected port)
-    const preferredPort = process.env.PORT ? parseInt(process.env.PORT) : 5000;
-    // Include both 3000 and 5000 series ports in fallbacks
-    const fallbackPorts = [3000, 3001, 5000, 5001, 5002];
 
-    const server = await registerRoutes(app);
+    // Define ports to try in order
+    const ports = [5000, 3000, 3001, 5001, 5002];
+    let server;
+    let bound = false;
 
-    // Try to bind to the preferred port first
-    try {
-      await new Promise((resolve, reject) => {
-        server.listen(preferredPort, '0.0.0.0', () => {
-          const address = server.address() as AddressInfo;
-          log(`Server successfully bound to preferred port ${address.port}`, 'server');
-          resolve(true);
-        }).on('error', (err) => {
-          log(`Could not bind to preferred port ${preferredPort}, trying fallback ports`, 'server');
-          reject(err);
-        });
-      });
-    } catch (error) {
-      // If preferred port fails, try fallback ports
-      let bound = false;
-      for (const port of fallbackPorts) {
-        if (port === preferredPort) continue; // Skip if it's the same as preferred port
-        try {
-          await new Promise((resolve, reject) => {
-            server.listen(port, '0.0.0.0', () => {
-              const address = server.address() as AddressInfo;
-              log(`Server successfully bound to fallback port ${address.port}`, 'server');
-              bound = true;
-              resolve(true);
-            }).on('error', reject);
+    // Try each port in sequence
+    for (const port of ports) {
+      try {
+        server = await registerRoutes(app);
+        await new Promise<void>((resolve, reject) => {
+          server.listen(port, '0.0.0.0', () => {
+            const address = server.address() as AddressInfo;
+            log(`Server successfully started on port ${address.port}`, 'server');
+            bound = true;
+            resolve();
+          }).on('error', (err) => {
+            log(`Could not bind to port ${port}, trying next port`, 'server');
+            reject(err);
           });
-          if (bound) break;
-        } catch (error) {
-          log(`Failed to bind to port ${port}, trying next port`, 'server');
-          continue;
+        });
+        if (bound) break;
+      } catch (error) {
+        if (ports.indexOf(port) === ports.length - 1) {
+          throw new Error('No available ports found');
         }
+        continue;
       }
+    }
 
-      if (!bound) {
-        throw new Error('No available ports found');
-      }
+    if (!bound || !server) {
+      throw new Error('Failed to start server on any port');
     }
 
     log(`Server started in ${process.env.NODE_ENV || 'development'} mode`, 'server');
 
     // Setup Vite after server is running
     if (process.env.NODE_ENV !== 'production') {
-      setupVite(app, server)
+      await setupVite(app, server)
         .then(() => log('Vite setup complete', 'server'))
         .catch(error => {
           log(`Vite setup error: ${error}`, 'server');

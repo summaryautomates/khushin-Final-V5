@@ -47,10 +47,9 @@ export default function Cart() {
   const shippingCost = calculateShippingCost(subtotal, shippingMethod);
   const total = subtotal + shippingCost + (cart.giftWrap.cost || 0);
 
-  const handleQuantityChange = (productId: string, newQuantity: string) => {
-    const quantity = parseInt(newQuantity);
-    if (quantity >= 1 && quantity <= 99) {
-      cart.updateQuantity(productId, quantity);
+  const handleQuantityChange = (productId: string, newQuantity: number) => {
+    if (newQuantity >= 1 && newQuantity <= 99) {
+      cart.updateQuantity(productId, newQuantity);
     }
   };
 
@@ -198,7 +197,7 @@ export default function Cart() {
                                 variant="ghost"
                                 size="icon"
                                 className="rounded-none h-8 w-8 hover:bg-gray-100"
-                                onClick={() => handleQuantityChange(item.product.id, (item.quantity - 1).toString())}
+                                onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
                                 disabled={item.quantity <= 1}
                               >
                                 <Minus className="h-3 w-3" />
@@ -213,7 +212,7 @@ export default function Cart() {
                                     const val = e.target.value.replace(/[^0-9]/g, '');
                                     const num = parseInt(val) || 1;
                                     if (num >= 1 && num <= 99) {
-                                      handleQuantityChange(item.product.id, num.toString());
+                                      handleQuantityChange(item.product.id, num);
                                     }
                                   }}
                                   className="w-full h-8 text-center border-none focus:ring-0 focus:outline-none bg-transparent text-foreground hover:bg-accent/50 transition-colors"
@@ -225,7 +224,7 @@ export default function Cart() {
                                 variant="ghost"
                                 size="icon"
                                 className="rounded-none h-8 w-8 hover:bg-gray-100"
-                                onClick={() => handleQuantityChange(item.product.id, (item.quantity + 1).toString())}
+                                onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
                               >
                                 <Plus className="h-3 w-3" />
                               </Button>
