@@ -7,70 +7,44 @@ import { Truck, Clock, Shield, MapPin, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-
-// Mock cart data
-const mockCartItems: CartItemData[] = [
-  {
-    id: "1",
-    name: "Premium Gold Plated Thali Set",
-    price: 2500,
-    quantity: 1,
-    image: "/products/thali-set.jpg"
-  },
-  {
-    id: "2",
-    name: "Designer Wedding Card (Pack of 100)",
-    price: 1500,
-    quantity: 1,
-    image: "/products/wedding-card.jpg"
-  },
-  {
-    id: "3",
-    name: "Traditional Brass Lamp",
-    price: 500,
-    quantity: 1,
-    image: "/products/brass-lamp.jpg"
-  }
-];
+import { useCart } from "@/hooks/use-cart";
 
 export default function Cart() {
   const [showShippingForm, setShowShippingForm] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string | undefined>();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [shippingMethod, setShippingMethod] = useState<'standard' | 'express' | 'international'>('standard');
-  const [cartItems, setCartItems] = useState<CartItemData[]>(mockCartItems);
   const [deliverySchedule, setDeliverySchedule] = useState<{
     date: string;
     timeSlot: string;
   } | null>(null);
 
   const { toast } = useToast();
+  const { items, total, updateQuantity, removeItem, isLoading } = useCart();
+
+  const cartItems: CartItemData[] = items.map(item => ({
+    id: item.product.id.toString(),
+    name: item.product.name,
+    price: item.product.price,
+    quantity: item.quantity,
+    image: item.product.image || '/placeholder.jpg',
+    description: item.product.description,
+    sku: item.product.sku
+  }));
 
   const handleUpdateQuantity = (id: string, quantity: number) => {
     if (quantity === 0) {
       handleRemoveItem(id);
       return;
     }
-    setCartItems(items =>
-      items.map(item =>
-        item.id === id ? { ...item, quantity } : item
-      )
-    );
+    updateQuantity(parseInt(id), quantity);
   };
 
   const handleRemoveItem = (id: string) => {
-    setCartItems(items => items.filter(item => item.id !== id));
-    toast({
-      title: "Item removed",
-      description: "The item has been removed from your cart",
-    });
+    removeItem(parseInt(id));
   };
 
-  const calculateTotal = () => {
-    return cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  };
-
-  const cartTotal = calculateTotal();
+  const cartTotal = total;
   const shippingCost = cartTotal >= 5000 ? 0 : 599;
   const orderTotal = cartTotal + shippingCost;
 
@@ -102,6 +76,14 @@ export default function Cart() {
     // Add your checkout logic here
     setIsCheckingOut(false);
   };
+
+  if (isLoading) {
+    return (
+      <div className="container py-8 min-h-screen flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8 min-h-screen max-w-7xl mx-auto px-4">
