@@ -8,7 +8,7 @@ import { useCart } from "@/hooks/use-cart";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ShareButtons } from "@/components/products/share-buttons";
-import { ModelViewer } from "@/components/model-viewer/model-viewer";
+import { ModelViewer } from "@/components/model-viewer/ModelViewer";
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:id");
@@ -67,16 +67,20 @@ export default function ProductPage() {
       <div className="grid gap-12 md:grid-cols-2">
         {/* Left Section: Product Images & 3D Model */}
         <div className="space-y-4">
-          <div className="aspect-square overflow-hidden rounded-lg border bg-zinc-100 relative">
-            <img
-              src={product.images[0]}
-              alt={product.name}
-              className="h-full w-full object-contain p-4"
-            />
-            {product.category === "lighters" && (
-              <div className="absolute inset-0 flex items-center justify-center bg-opacity-50">
-                <ModelViewer modelUrl="/attached_assets/zippo_lighter.glb" />
+          <div className="aspect-square overflow-hidden rounded-lg border bg-zinc-900 relative">
+            {product.category === "lighters" ? (
+              <div className="absolute inset-0">
+                <ModelViewer
+                  modelUrl="/attached_assets/zippo_lighter.glb"
+                  className="h-full"
+                />
               </div>
+            ) : (
+              <img
+                src={product.images[0]}
+                alt={product.name}
+                className="h-full w-full object-contain p-4"
+              />
             )}
           </div>
 
