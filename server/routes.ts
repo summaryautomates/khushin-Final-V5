@@ -189,7 +189,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         total,
         items: orderItems,
         shipping: validatedShipping,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        trackingNumber: `TRK${Date.now()}${Math.random().toString(36).substring(2, 5)}`,
+        trackingStatus: 'Order Confirmed',
+        estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days from now
       });
 
       res.json({
@@ -255,7 +258,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         total,
         items: orderItems,
         shipping: defaultShipping,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        trackingNumber: `TRK${Date.now()}${Math.random().toString(36).substring(2, 5)}`,
+        trackingStatus: 'Order Confirmed',
+        estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days from now
       });
 
       res.json({
