@@ -40,7 +40,7 @@ export default function Cart() {
   const shippingCost = calculateShippingCost(subtotal, shippingMethod);
   const total = subtotal + shippingCost + (cart.giftWrap.cost || 0);
 
-  const handleQuantityChange = (productId: number, newQuantity: number) => {
+  const handleQuantityChange = (productId: string, newQuantity: number) => {
     if (newQuantity >= 1 && newQuantity <= 99) {
       cart.updateQuantity(productId, newQuantity);
     }
@@ -176,7 +176,7 @@ export default function Cart() {
                                 variant="ghost"
                                 size="icon"
                                 className="rounded-none h-8 w-8 hover:bg-gray-100"
-                                onClick={() => handleQuantityChange(parseInt(item.product.id), item.quantity - 1)}
+                                onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
                                 disabled={item.quantity <= 1}
                               >
                                 <Minus className="h-3 w-3" />
@@ -190,7 +190,7 @@ export default function Cart() {
                                   onChange={(e) => {
                                     const val = e.target.value.replace(/[^0-9]/g, '');
                                     const num = parseInt(val) || 1;
-                                    handleQuantityChange(parseInt(item.product.id), num);
+                                    handleQuantityChange(item.product.id, num);
                                   }}
                                   className="w-full h-8 text-center border-none focus:ring-0 focus:outline-none"
                                   min="1"
@@ -201,7 +201,7 @@ export default function Cart() {
                                 variant="ghost"
                                 size="icon"
                                 className="rounded-none h-8 w-8 hover:bg-gray-100"
-                                onClick={() => handleQuantityChange(parseInt(item.product.id), item.quantity + 1)}
+                                onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
                               >
                                 <Plus className="h-3 w-3" />
                               </Button>

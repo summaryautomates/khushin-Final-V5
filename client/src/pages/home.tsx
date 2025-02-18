@@ -1,15 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/products/product-grid";
 import type { Product } from "@shared/schema";
 import { Input } from "@/components/ui/input";
-import { 
-  Heart, 
-  Search, 
-  Gift, 
-  Star, 
+import {
+  Heart,
+  Search,
+  Gift,
+  Star,
   Clock,
   DollarSign,
   Filter,
@@ -34,6 +34,7 @@ import { useState } from "react";
 
 
 export default function Home() {
+  const [location, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -42,6 +43,10 @@ export default function Home() {
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.3], [1, 0.98]);
+
+  const handleBookExperience = () => {
+    setLocation('/customize');
+  };
 
   return (
     <div className="flex flex-col">
@@ -53,7 +58,7 @@ export default function Home() {
             animate={{ scale: 1, opacity: 0.5 }}
             transition={{ duration: 1.5 }}
           >
-            <img 
+            <img
               src="https://images.unsplash.com/photo-1586227740560-8cf2732c1531?q=80&w=2661&auto=format"
               className="w-full h-full object-cover"
               alt="Hero background"
@@ -62,24 +67,24 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black"></div>
         </div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: [0, 0.05, 0.1] }}
           transition={{ duration: 2, times: [0, 0.5, 1] }}
           className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"
         />
 
-        <motion.div 
+        <motion.div
           style={{ opacity, scale }}
           className="container relative z-10"
         >
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.5 }}
             className="max-w-4xl mx-auto text-center"
           >
-            <motion.h1 
+            <motion.h1
               initial={{ letterSpacing: "0.2em", opacity: 0 }}
               animate={{ letterSpacing: "0.1em", opacity: 1 }}
               transition={{ duration: 1.5, delay: 0.8 }}
@@ -89,7 +94,7 @@ export default function Home() {
               <span className="block mt-2">Loved One Happy!</span>
             </motion.h1>
 
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.2, duration: 0.8 }}
@@ -98,40 +103,47 @@ export default function Home() {
               Exclusive luxury lighters - The perfect gift to light up their smile.
             </motion.p>
 
-          <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.5, duration: 0.8 }}
               className="mt-16"
             >
-             <div className="flex gap-2">
-               <Input
-                 value={searchQuery}
-                 onChange={(e) => setSearchQuery(e.target.value)}
-                 placeholder="Search our luxury collection..."
-                 className="border-primary/20 rounded-full flex-grow w-[180px]"
-               />
-               <Button variant="secondary" className="rounded-full">
-                 <Search className="w-4 h-4 rounded-full" />
-               </Button>
-             </div>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.8 }}
-              className="flex flex-wrap justify-center gap-4"
-            >
-          
-              <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
-                <Star className="w-4 h-4" /> Premium Collection
-              </Button>
-              <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
-                <Clock className="w-4 h-4" /> Express Delivery
-              </Button>
-              <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
-                <Calendar className="w-4 h-4" /> Book Experience
-              </Button>
-            </motion.div>
+              <div className="flex flex-col gap-4 items-center">
+                <div className="flex gap-2">
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search our luxury collection..."
+                    className="border-primary/20 rounded-full flex-grow w-[180px]"
+                  />
+                  <Button variant="secondary" className="rounded-full">
+                    <Search className="w-4 h-4 rounded-full" />
+                  </Button>
+                </div>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.8 }}
+                  className="flex flex-wrap justify-center gap-4"
+                >
+
+                  <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
+                    <Star className="w-4 h-4" /> Premium Collection
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
+                    <Clock className="w-4 h-4" /> Express Delivery
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 mt-3 rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
+                    onClick={handleBookExperience}
+                  >
+                    <Calendar className="w-4 h-4" /> Book Experience
+                  </Button>
+                </motion.div>
+              </div>
             </motion.div>
           </motion.div>
         </motion.div>
@@ -139,14 +151,14 @@ export default function Home() {
 
       {/* Featured Products */}
       <section className="py-32 bg-zinc-950">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
           className="container"
         >
-          <motion.h2 
+          <motion.h2
             initial={{ letterSpacing: "0.3em", opacity: 0 }}
             whileInView={{ letterSpacing: "0.2em", opacity: 1 }}
             transition={{ duration: 1 }}
@@ -157,7 +169,7 @@ export default function Home() {
           </motion.h2>
 
           {isLoading ? (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="text-center text-zinc-400"
