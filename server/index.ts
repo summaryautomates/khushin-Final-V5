@@ -3,6 +3,7 @@ import { log } from "./vite";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
 import { AddressInfo } from 'net';
+import { Server } from 'http';
 
 const app = express();
 
@@ -40,7 +41,7 @@ const startServer = async () => {
 
     // Define ports to try in order
     const ports = [5000, 3000, 3001, 5001, 5002];
-    let server;
+    let server: Server | undefined;
     let bound = false;
 
     // Try each port in sequence
@@ -48,12 +49,12 @@ const startServer = async () => {
       try {
         server = await registerRoutes(app);
         await new Promise<void>((resolve, reject) => {
-          server.listen(port, '0.0.0.0', () => {
-            const address = server.address() as AddressInfo;
+          server!.listen(port, '0.0.0.0', () => {
+            const address = server!.address() as AddressInfo;
             log(`Server successfully started on port ${address.port}`, 'server');
             bound = true;
             resolve();
-          }).on('error', (err) => {
+          }).on('error', (err: Error) => {
             log(`Could not bind to port ${port}, trying next port`, 'server');
             reject(err);
           });
