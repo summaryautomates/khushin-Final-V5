@@ -77,6 +77,7 @@ export function Header() {
                 className="relative group hover:bg-white/5 transition-colors duration-300"
               >
                 <ClockIcon className="h-5 w-5 text-white group-hover:scale-110 transition-transform duration-300" />
+                <span className="sr-only">Past Orders</span>
               </Button>
             </Link>
             <Link href="/cart">
@@ -86,6 +87,7 @@ export function Header() {
                 className="relative group hover:bg-white/5 transition-colors duration-300"
               >
                 <ShoppingCart className="h-5 w-5 text-white group-hover:scale-110 transition-transform duration-300" />
+                <span className="sr-only">Shopping Cart</span>
                 {!cart.isLoading && cartItemCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground w-5 h-5 rounded-full text-xs flex items-center justify-center animate-in slide-in-from-top-2 duration-300">
                     {cartItemCount}
