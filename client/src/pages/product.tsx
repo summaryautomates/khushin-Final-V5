@@ -45,18 +45,15 @@ export default function ProductPage() {
 
   const handleBuyNow = async () => {
     try {
-      const response = await apiRequest('POST', '/api/direct-checkout', {
-        items: [{
-          productId: product.id,
-          quantity: 1
-        }]
+      const response = await apiRequest("POST", "/api/direct-checkout", {
+        items: [{ productId: product.id, quantity: 1 }],
       });
       const { redirectUrl } = await response.json();
       if (redirectUrl) {
         window.location.href = redirectUrl;
       }
     } catch (error) {
-      console.error('Checkout error:', error);
+      console.error("Checkout error:", error);
       toast({
         variant: "destructive",
         title: "Checkout Failed",
@@ -68,20 +65,23 @@ export default function ProductPage() {
   return (
     <div className="container py-12">
       <div className="grid gap-12 md:grid-cols-2">
+        {/* Left Section: Product Images & 3D Model */}
         <div className="space-y-4">
-          <div className="aspect-square overflow-hidden rounded-lg border bg-zinc-100">
+          <div className="aspect-square overflow-hidden rounded-lg border bg-zinc-100 relative">
             <img
               src={product.images[0]}
               alt={product.name}
               className="h-full w-full object-contain p-4"
             />
+            {product.category === "lighters" && (
+              <div className="absolute inset-0 flex items-center justify-center bg-opacity-50">
+                <ModelViewer modelUrl="/attached_assets/zippo_lighter.glb" />
+              </div>
+            )}
           </div>
-          {product.category === "lighters" && (
-            <div className="mt-4 rounded-lg border overflow-hidden bg-zinc-100">
-              <ModelViewer modelUrl="/attached_assets/zippo_lighter.glb" />
-            </div>
-          )}
-          {product.images.slice(1).length > 0 && (
+
+          {/* Additional Product Images */}
+          {product.images.length > 1 && (
             <div className="grid grid-cols-4 gap-4 mt-4">
               {product.images.slice(1).map((image, i) => (
                 <div key={i} className="aspect-square overflow-hidden rounded-lg border bg-zinc-100">
@@ -96,6 +96,7 @@ export default function ProductPage() {
           )}
         </div>
 
+        {/* Right Section: Product Details */}
         <div className="space-y-8">
           <div className="flex items-center justify-between">
             <div>
@@ -112,11 +113,13 @@ export default function ProductPage() {
             />
           </div>
 
+          {/* Product Description */}
           <div className="prose max-w-none">
             <h3 className="text-lg font-semibold">Description</h3>
             <p>{product.description}</p>
           </div>
 
+          {/* Buy & Add to Cart Buttons */}
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <Button size="lg" variant="outline" className="w-full" onClick={handleAddToCart}>
@@ -128,6 +131,7 @@ export default function ProductPage() {
             </div>
           </div>
 
+          {/* Shipping, Security, and Return Info */}
           <div className="space-y-6 rounded-lg border p-6">
             <div className="flex items-center space-x-4">
               <Truck className="h-5 w-5 text-primary" />
