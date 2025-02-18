@@ -4,6 +4,18 @@ import { storage } from "./storage";
 import { insertContactMessageSchema, insertReturnRequestSchema, insertCartItemSchema } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { WebSocketServer, WebSocket } from 'ws';
+import {
+  insertOrderSchema,
+  insertOrderStatusHistorySchema
+} from "@shared/schema";
+
+// Custom interface for our WebSocket with order tracking
+interface OrderTrackingWebSocket extends WebSocket {
+  orderRef?: string;
+}
+
+// Rest of the imports and schema definitions remain unchanged...
 
 const shippingSchema = z.object({
   fullName: z.string(),
@@ -607,5 +619,172 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  return createServer(app);
+  // Enhanced order endpoints
+  app.post("/api/orders", async (req, res) => {
+    try {
+      const userId = req.headers['x-user-id'] as string || 'anonymous';
+      const orderData = insertOrderSchema.parse({ ...req.body, userId });
+
+      const order = await storage.createOrder(orderData);
+
+      // Create initial status history
+      await storage.addOrderStatusHistory({
+        orderId: order.id,
+        status: order.status,
+        location: 'Order Processing Center',
+        description: 'Order received and confirmed'
+      });
+
+      res.status(201).json(order);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Invalid input",
+          details: fromZodError(error).message
+        });
+      }
+      console.error('Order creation error:', error);
+      res.status(500).json({
+        message: "Failed to create order",
+        details: "An error occurred while creating the order"
+      });
+    }
+  });
+
+  app.get("/api/orders/:orderRef", async (req, res) => {
+    try {
+      const { orderRef } = req.params;
+      const order = await storage.getOrder(orderRef);
+
+      if (!order) {
+        return res.status(404).json({
+          message: "Order not found",
+          details: "The specified order reference could not be found"
+        });
+      }
+
+      const statusHistory = await storage.getOrderStatusHistory(order.id);
+
+      res.json({
+        ...order,
+        statusHistory
+      });
+    } catch (error) {
+      console.error('Order fetch error:', error);
+      res.status(500).json({
+        message: "Failed to fetch order",
+        details: "An error occurred while retrieving the order"
+      });
+    }
+  });
+
+  app.get("/api/orders/user/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const orders = await storage.getOrdersByUserId(userId);
+      res.json(orders);
+    } catch (error) {
+      console.error('User orders fetch error:', error);
+      res.status(500).json({
+        message: "Failed to fetch orders",
+        details: "An error occurred while retrieving the orders"
+      });
+    }
+  });
+
+  app.patch("/api/orders/:orderRef/status", async (req, res) => {
+    try {
+      const { orderRef } = req.params;
+      const { status, trackingNumber, location, description } = req.body;
+
+      const order = await storage.updateOrderStatus(orderRef, status, trackingNumber);
+
+      if (!order) {
+        return res.status(404).json({
+          message: "Order not found",
+          details: "The specified order reference could not be found"
+        });
+      }
+
+      // Add status history
+      await storage.addOrderStatusHistory({
+        orderId: order.id,
+        status,
+        location,
+        description
+      });
+
+      // Notify connected clients about the status update
+      const statusUpdate = {
+        type: 'ORDER_STATUS_UPDATE',
+        orderRef,
+        status,
+        timestamp: new Date().toISOString()
+      };
+
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          const orderTrackingClient = client as OrderTrackingWebSocket;
+          // Only send updates to clients subscribed to this order
+          if (orderTrackingClient.orderRef === orderRef) {
+            client.send(JSON.stringify(statusUpdate));
+          }
+        }
+      });
+
+      res.json(order);
+    } catch (error) {
+      console.error('Order status update error:', error);
+      res.status(500).json({
+        message: "Failed to update order status",
+        details: "An error occurred while updating the order status"
+      });
+    }
+  });
+
+  // Create HTTP server
+  const server = createServer(app);
+
+  // Initialize WebSocket server for real-time updates
+  const wss = new WebSocketServer({ server, path: '/ws' });
+
+  wss.on('connection', (ws: OrderTrackingWebSocket) => {
+    console.log('Client connected to order tracking WebSocket');
+
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        if (data.type === 'SUBSCRIBE_ORDER') {
+          ws.orderRef = data.orderRef;
+          console.log(`Client subscribed to order: ${data.orderRef}`);
+
+          // Send initial subscription confirmation
+          ws.send(JSON.stringify({
+            type: 'SUBSCRIPTION_CONFIRMED',
+            orderRef: data.orderRef,
+            timestamp: new Date().toISOString()
+          }));
+        }
+      } catch (error) {
+        console.error('WebSocket message error:', error);
+        ws.send(JSON.stringify({
+          type: 'ERROR',
+          message: 'Invalid message format'
+        }));
+      }
+    });
+
+    ws.on('close', () => {
+      console.log('Client disconnected from order tracking WebSocket');
+    });
+
+    // Send welcome message
+    ws.send(JSON.stringify({
+      type: 'CONNECTED',
+      message: 'Connected to order tracking service',
+      timestamp: new Date().toISOString()
+    }));
+  });
+
+  return server;
 }

@@ -7,13 +7,19 @@ import {
   type InsertContactMessage,
   type CartItem,
   type InsertCartItem,
+  type Order,
+  type OrderStatusHistory,
+  type InsertOrder,
+  type InsertOrderStatusHistory,
   products,
   blogPosts,
   contactMessages,
   cartItems,
+  orders,
+  orderStatusHistory,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 
 export interface IStorage {
   // Products
@@ -34,6 +40,17 @@ export interface IStorage {
   updateCartItemQuantity(userId: string, productId: number, quantity: number): Promise<void>;
   removeCartItem(userId: string, productId: number): Promise<void>;
   clearCart(userId: string): Promise<void>;
+
+  // New Order methods
+  createOrder(order: InsertOrder): Promise<Order>;
+  getOrder(orderRef: string): Promise<Order | undefined>;
+  getOrdersByUserId(userId: string): Promise<Order[]>;
+  updateOrderStatus(orderRef: string, status: string, trackingNumber?: string): Promise<Order>;
+  updateOrderTracking(orderRef: string, trackingStatus: string, estimatedDelivery?: string): Promise<Order>;
+
+  // Order Status History methods
+  addOrderStatusHistory(history: InsertOrderStatusHistory): Promise<OrderStatusHistory>;
+  getOrderStatusHistory(orderId: number): Promise<OrderStatusHistory[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -103,6 +120,69 @@ export class DatabaseStorage implements IStorage {
 
   async clearCart(userId: string): Promise<void> {
     await db.delete(cartItems).where(eq(cartItems.userId, userId));
+  }
+
+  // Order methods
+  async createOrder(order: InsertOrder): Promise<Order> {
+    const [newOrder] = await db.insert(orders).values(order).returning();
+    return newOrder;
+  }
+
+  async getOrder(orderRef: string): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.orderRef, orderRef));
+    return order;
+  }
+
+  async getOrdersByUserId(userId: string): Promise<Order[]> {
+    return await db
+      .select()
+      .from(orders)
+      .where(eq(orders.userId, userId))
+      .orderBy(desc(orders.createdAt));
+  }
+
+  async updateOrderStatus(orderRef: string, status: string, trackingNumber?: string): Promise<Order> {
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({
+        status,
+        trackingNumber,
+        lastUpdated: new Date(),
+      })
+      .where(eq(orders.orderRef, orderRef))
+      .returning();
+    return updatedOrder;
+  }
+
+  async updateOrderTracking(
+    orderRef: string,
+    trackingStatus: string,
+    estimatedDelivery?: string
+  ): Promise<Order> {
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({
+        trackingStatus,
+        estimatedDelivery,
+        lastUpdated: new Date(),
+      })
+      .where(eq(orders.orderRef, orderRef))
+      .returning();
+    return updatedOrder;
+  }
+
+  // Order Status History methods
+  async addOrderStatusHistory(history: InsertOrderStatusHistory): Promise<OrderStatusHistory> {
+    const [newHistory] = await db.insert(orderStatusHistory).values(history).returning();
+    return newHistory;
+  }
+
+  async getOrderStatusHistory(orderId: number): Promise<OrderStatusHistory[]> {
+    return await db
+      .select()
+      .from(orderStatusHistory)
+      .where(eq(orderStatusHistory.orderId, orderId))
+      .orderBy(desc(orderStatusHistory.timestamp));
   }
 }
 
