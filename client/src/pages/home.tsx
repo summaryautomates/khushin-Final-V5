@@ -131,7 +131,12 @@ export default function Home() {
                   <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
                     <Star className="w-4 h-4" /> Premium Collection
                   </Button>
-                  <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-2 mt-3 rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
+                    onClick={() => setLocation('/express-delivery')}
+                  >
                     <Clock className="w-4 h-4" /> Express Delivery
                   </Button>
                   <Button
