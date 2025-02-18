@@ -1,545 +1,219 @@
-import { useCart } from "@/hooks/use-cart";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatPrice } from "@/lib/products";
-import { Minus, Plus, Trash2, Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 import { ShippingForm, type ShippingFormData } from "@/components/checkout/shipping-form";
 import { Input } from "@/components/ui/input";
 import { CitySelector } from "@/components/checkout/city-selector";
 import { DeliveryScheduler } from "@/components/checkout/delivery-scheduler";
-
-const calculateShippingCost = (subtotal: number, shippingMethod: 'standard' | 'express' | 'international' = 'standard'): number => {
-  if (subtotal >= 5000) return 0; // Free shipping over ₹5000
-
-  switch (shippingMethod) {
-    case 'express':
-      return 599;
-    case 'international':
-      return 1499; // Base rate for international shipping
-    default:
-      return 299; // Standard shipping
-  }
-};
+import { Truck, Clock, Shield, MapPin, Loader2, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Cart() {
-  const cart = useCart();
-  const { toast } = useToast();
+  const [showShippingForm, setShowShippingForm] = useState(false);
+  const [selectedCity, setSelectedCity] = useState<string | undefined>();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [showShippingForm, setShowShippingForm] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('checkout') === 'true';
-  });
-  const [shippingAddress, setShippingAddress] = useState<ShippingFormData | null>(null);
-  const [discountCode, setDiscountCode] = useState("");
-  const [discountedTotal, setDiscountedTotal] = useState<number | null>(null);
   const [shippingMethod, setShippingMethod] = useState<'standard' | 'express' | 'international'>('standard');
-  const [deliverySchedule, setDeliverySchedule] = useState<{ 
-    date: string; 
-    timeSlot: string; 
-  } | null>(null); 
+  const [deliverySchedule, setDeliverySchedule] = useState<{
+    date: string;
+    timeSlot: string;
+  } | null>(null);
 
+  const { toast } = useToast();
 
-  const subtotal = cart.total;
-  const shippingCost = calculateShippingCost(subtotal, shippingMethod);
-  const total = subtotal + shippingCost + (cart.giftWrap.cost || 0);
-
-  const handleQuantityChange = (productId: string, newQuantity: number) => {
-    if (newQuantity >= 1 && newQuantity <= 99) {
-      cart.updateQuantity(productId, newQuantity);
-    }
+  // Mock cart data - replace with actual cart state management
+  const cart = {
+    items: [],
+    total: 4500,
+    giftWrap: false
   };
 
-  const handleShippingSubmit = async (data: ShippingFormData) => {
-    setShippingAddress(data);
-    handleCheckout(data);
+  const handleCitySelect = (city: string) => {
+    setSelectedCity(city);
+    // Update shipping method to express for better UX
+    setShippingMethod('express');
   };
 
-  const handleDiscountSubmit = async () => {
-    try {
-      const response = await fetch('/api/validate-discount', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: discountCode })
-      });
-
-      if (!response.ok) {
-        toast({
-          title: "Error",
-          description: "Invalid discount code",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const { discountPercent } = await response.json();
+  const handleCheckout = async () => {
+    if (!selectedCity) {
       toast({
-        description: `Discount code applied: ${discountPercent}% off`,
-      });
-
-      // Apply discount to cart total
-      const discountAmount = (subtotal * discountPercent) / 100;
-      setDiscountedTotal(subtotal - discountAmount);
-    } catch (error) {
-      console.error('Error applying discount:', error);
-      toast({
-        title: "Error",
-        description: "Failed to apply discount code",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleCheckout = async (shippingData?: ShippingFormData) => {
-    try {
-      if (!shippingData && !shippingAddress) {
-        // If no shipping data, show the shipping form instead of proceeding with checkout
-        setShowShippingForm(true);
-        return;
-      }
-
-      setIsCheckingOut(true);
-      const items = cart.items.map(item => ({
-        productId: item.product.id,
-        quantity: item.quantity
-      }));
-
-      const checkoutData = {
-        items,
-        shipping: shippingData || shippingAddress,
-        shippingMethod: shippingMethod,
-        giftWrap: cart.giftWrap,
-        deliverySchedule 
-      };
-
-      const response = await apiRequest('POST', '/api/checkout', checkoutData);
-      const { redirectUrl } = await response.json();
-
-      if (redirectUrl) {
-        window.location.href = redirectUrl;
-      } else {
-        throw new Error('Invalid checkout response');
-      }
-    } catch (error) {
-      console.error('Checkout error:', error);
-      toast({
+        title: "Please select a delivery city",
+        description: "Select your city to continue with checkout",
         variant: "destructive",
-        title: "Checkout Failed",
-        description: "Could not process checkout. Please try again.",
       });
-    } finally {
-      setIsCheckingOut(false);
+      return;
     }
+
+    if (!deliverySchedule) {
+      toast({
+        title: "Please select delivery time",
+        description: "Choose your preferred delivery date and time slot",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCheckingOut(true);
+    // Add your checkout logic here
+    setIsCheckingOut(false);
   };
-
-  const cities = [
-    { id: 'mumbai', name: 'Mumbai' },
-    { id: 'pune', name: 'Pune' },
-    { id: 'delhi', name: 'Delhi' },
-    { id: 'hyderabad', name: 'Hyderabad' },
-  ];
-
-  if (cart.items.length === 0) {
-    return (
-      <div className="container py-20 min-h-screen">
-        <Card className="max-w-lg mx-auto">
-          <CardHeader>
-            <CardTitle>Your Cart is Empty</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Start shopping to add items to your cart.
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" className="w-full" asChild>
-              <a href="/products">Browse Products</a>
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="container py-4 min-h-screen max-w-7xl">
       {!showShippingForm ? (
-        <div className="space-y-8">
-          <h1 className="text-3xl font-bold">Shopping Cart</h1>
-          <div className="grid gap-8 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-4">
-              {cart.items.map((item) => (
-                <motion.div
-                  key={item.product.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Card>
-                    <CardContent className="p-6">
-                      <div className="flex gap-4">
-                        <div className="w-24 h-24 bg-zinc-100 rounded-lg overflow-hidden">
-                          <img
-                            src={item.product.images[0]}
-                            alt={item.product.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{item.product.name}</h3>
-                          <div className="mt-4 flex items-center space-x-4">
-                            <div className="flex items-center border rounded-lg p-1"> 
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="rounded-none h-8 w-8 hover:bg-gray-100"
-                                onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
-                                disabled={item.quantity <= 1}
-                              >
-                                <Minus className="h-3 w-3" />
-                              </Button>
-                              <div className="relative w-12">
-                                <input
-                                  type="number"
-                                  inputMode="numeric"
-                                  pattern="[0-9]*"
-                                  value={item.quantity}
-                                  onChange={(e) => {
-                                    const val = e.target.value.replace(/[^0-9]/g, '');
-                                    const num = parseInt(val) || 1;
-                                    if (num >= 1 && num <= 99) {
-                                      handleQuantityChange(item.product.id, num);
-                                    }
-                                  }}
-                                  className="w-full h-8 text-center border-none focus:ring-0 focus:outline-none bg-transparent text-foreground hover:bg-accent/50 transition-colors"
-                                  min="1"
-                                  max="99"
-                                />
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="rounded-none h-8 w-8 hover:bg-gray-100"
-                                onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
-                              >
-                                <Plus className="h-3 w-3" />
-                              </Button>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive hover:text-destructive/90"
-                              onClick={() => cart.removeItem(item.product.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-2">Adjust quantity or remove item</p> 
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold">
-                            {formatPrice(item.product.price * item.quantity)}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
+            <h1 className="text-2xl font-semibold">Shopping Cart</h1>
+            {/* Cart Items Here */}
+          </div>
 
-            <div>
-              <Card className="sticky top-24">
-                <CardHeader>
-                  <CardTitle>Order Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-4 border-b pb-4">
-                    <h3 className="font-medium">Gift Wrapping Options</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            name="gift-wrap"
-                            value="none"
-                            checked={!cart.giftWrap.type}
-                            onChange={() => cart.updateGiftWrap(null, 0)}
-                            className="rounded-full"
-                          />
-                          <span>No gift wrap</span>
-                        </label>
-                        <span>Free</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <label className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            name="gift-wrap"
-                            value="standard"
-                            checked={cart.giftWrap.type === 'standard'}
-                            onChange={() => cart.updateGiftWrap('standard', 199)}
-                            className="rounded-full"
-                          />
-                          <span>Standard Wrap</span>
-                        </label>
-                        <span>{formatPrice(199)}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <label className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            name="gift-wrap"
-                            value="premium"
-                            checked={cart.giftWrap.type === 'premium'}
-                            onChange={() => cart.updateGiftWrap('premium', 399)}
-                            className="rounded-full"
-                          />
-                          <span>Premium Wrap</span>
-                        </label>
-                        <span>{formatPrice(399)}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <label className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            name="gift-wrap"
-                            value="luxury"
-                            checked={cart.giftWrap.type === 'luxury'}
-                            onChange={() => cart.updateGiftWrap('luxury', 699)}
-                            className="rounded-full"
-                          />
-                          <span>Luxury Gift Box</span>
-                        </label>
-                        <span>{formatPrice(699)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="border-t pt-4 space-y-4">
-                    <div className="flex justify-between">
-                      <span>Subtotal</span>
-                      <span>{formatPrice(subtotal)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Shipping</span>
-                      {subtotal >= 5000 ? (
-                        <span className="text-green-600">Free</span>
-                      ) : (
-                        <span>{formatPrice(shippingCost)}</span>
-                      )}
-                    </div>
-                    <div className="flex justify-between font-semibold text-lg">
-                      <span>Total</span>
-                      <span>{formatPrice(discountedTotal || total)}</span>
-                    </div>
-                    <label className="flex items-center space-x-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="rounded border-gray-300 text-primary focus:ring-primary"
-                        required
-                      />
-                      <span className="text-sm text-muted-foreground">
-                        I agree with the terms and conditions
-                      </span>
-                    </label>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex flex-col">
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Order Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-4 border-b pb-4">
                   <Button
-                    className="w-full bg-yellow-400 hover:bg-yellow-500 text-black"
-                    onClick={() => handleCheckout()}
+                    variant="outline"
+                    className={`w-full h-16 relative overflow-hidden transition-all ${
+                      shippingMethod === 'express'
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'hover:border-primary'
+                    }`}
+                    onClick={() => {
+                      setShippingMethod('express');
+                      setShowShippingForm(true);
+                    }}
                   >
-                    CHECK OUT
+                    <div className="absolute inset-0 bg-primary/5" />
+                    <div className="relative flex items-center justify-between w-full">
+                      <div className="flex items-center gap-3">
+                        <Truck className={`h-6 w-6 ${
+                          shippingMethod === 'express' ? 'text-primary-foreground' : 'text-primary'
+                        }`} />
+                        <div className="text-left">
+                          <p className="font-semibold">Express Delivery</p>
+                          <p className="text-sm opacity-80">1-2 business days</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">
+                          {cart.total >= 5000 ? 'Free' : '₹599'}
+                        </p>
+                      </div>
+                    </div>
                   </Button>
-                </CardFooter>
-              </Card>
-            </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/5">
+                      <Clock className="h-4 w-4 text-primary" />
+                      <span>Fast Delivery</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/5">
+                      <Shield className="h-4 w-4 text-primary" />
+                      <span>Full Insurance</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order Summary Details */}
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Subtotal</span>
+                    <span>₹{cart.total}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Shipping</span>
+                    <span>{cart.total >= 5000 ? 'Free' : '₹599'}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold">
+                    <span>Total</span>
+                    <span>₹{cart.total + (cart.total >= 5000 ? 0 : 599)}</span>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button
+                  className="w-full"
+                  onClick={() => setShowShippingForm(true)}
+                  disabled={isCheckingOut}
+                >
+                  {isCheckingOut ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    'PROCEED TO CHECKOUT'
+                  )}
+                </Button>
+              </CardFooter>
+            </Card>
           </div>
         </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <Button
-                variant="ghost"
-                onClick={() => setShowShippingForm(false)}
-                className="px-0 h-7 hover:bg-transparent"
-              >
-                ← Return to cart
-              </Button>
-              <div className="h-5 w-px bg-border/60" />
-              <span className="text-sm text-muted-foreground">Bhawar Sales Corporation</span>
+            <Button
+              variant="ghost"
+              className="mb-4"
+              onClick={() => setShowShippingForm(false)}
+            >
+              ← Back to Cart
+            </Button>
+
+            <div className="rounded-lg border p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Delivery Location
+                </h3>
+                {selectedCity && (
+                  <span className="text-sm text-muted-foreground">
+                    Express delivery available
+                  </span>
+                )}
+              </div>
+              <CitySelector
+                selectedCity={selectedCity}
+                onCitySelect={handleCitySelect}
+              />
             </div>
 
-            <div className="space-y-4">
+            {selectedCity && (
               <div className="rounded-lg border p-4 space-y-4">
-                <h3 className="font-medium">Delivery Location</h3>
-                <CitySelector
-                  selectedCity={shippingAddress?.city?.toLowerCase()}
-                  onCitySelect={(city) => {
-                    // Update the shipping form with the selected city
-                    const cityName = cities.find(c => c.id === city)?.name || '';
-                    // Assuming ShippingForm uses a form library like react-hook-form
-                    // Replace 'form' with your actual form instance
-                    // form.setValue('city', cityName); 
-                  }}
-                />
-              </div>
-
-              <div className="rounded-lg border p-4 space-y-4">
-                <h3 className="font-medium">Delivery Schedule</h3>
+                <h3 className="font-medium flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Delivery Schedule
+                </h3>
                 <DeliveryScheduler
                   onScheduleSelect={(date, timeSlot) => {
-                    // Store delivery schedule in the checkout data
-                    setDeliverySchedule({ 
-                      date: date.toISOString(), 
-                      timeSlot 
+                    setDeliverySchedule({
+                      date: date.toISOString(),
+                      timeSlot
                     });
                   }}
                 />
               </div>
+            )}
 
-              <div className="rounded-lg border p-4 space-y-4">
-                <h3 className="font-medium">Shipping Method</h3>
-                <div className="space-y-3">
-                  <label className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-accent">
-                    <div className="flex items-center space-x-3">
-                      <input
-                        type="radio"
-                        name="shipping-method"
-                        value="standard"
-                        checked={shippingMethod === 'standard'}
-                        onChange={(e) => setShippingMethod('standard')}
-                        className="rounded-full"
-                      />
-                      <div>
-                        <p className="font-medium">Standard Shipping</p>
-                        <p className="text-sm text-muted-foreground">3-5 business days</p>
-                      </div>
-                    </div>
-                    <span className="font-medium">{subtotal >= 5000 ? 'Free' : formatPrice(299)}</span>
-                  </label>
-
-                  <label className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-accent">
-                    <div className="flex items-center space-x-3">
-                      <input
-                        type="radio"
-                        name="shipping-method"
-                        value="express"
-                        checked={shippingMethod === 'express'}
-                        onChange={(e) => setShippingMethod('express')}
-                        className="rounded-full"
-                      />
-                      <div>
-                        <p className="font-medium">Express Shipping</p>
-                        <p className="text-sm text-muted-foreground">1-2 business days</p>
-                      </div>
-                    </div>
-                    <span className="font-medium">{subtotal >= 5000 ? 'Free' : formatPrice(599)}</span>
-                  </label>
-
-                  <label className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-accent">
-                    <div className="flex items-center space-x-3">
-                      <input
-                        type="radio"
-                        name="shipping-method"
-                        value="international"
-                        checked={shippingMethod === 'international'}
-                        onChange={(e) => setShippingMethod('international')}
-                        className="rounded-full"
-                      />
-                      <div>
-                        <p className="font-medium">International Shipping</p>
-                        <p className="text-sm text-muted-foreground">7-14 business days</p>
-                      </div>
-                    </div>
-                    <span className="font-medium">Calculated at checkout</span>
-                  </label>
-                </div>
-
-                <div className="mt-4 p-3 bg-accent/50 rounded-lg">
-                  <h4 className="font-medium mb-2">Shipping Policies</h4>
-                  <ul className="text-sm space-y-1 text-muted-foreground">
-                    <li>• All orders are insured and tracked</li>
-                    <li>• Free shipping on orders over ₹5,000</li>
-                    <li>• Signature required for valuable items</li>
-                    <li>• Real-time tracking updates</li>
-                    <li>• Premium packaging for protection</li>
-                  </ul>
-                </div>
-              </div>
-
-              <ShippingForm onSubmit={handleShippingSubmit} isLoading={isCheckingOut} />
-            </div>
+            {selectedCity && deliverySchedule && (
+              <ShippingForm
+                onSubmit={(data) => {
+                  console.log('Shipping form data:', data);
+                  handleCheckout();
+                }}
+                isLoading={isCheckingOut}
+              />
+            )}
           </div>
 
-          <div className="lg:pl-6">
-            <div className="sticky top-24 space-y-4">
-              <div className="rounded border bg-card">
-                <div className="p-3 space-y-3">
-                  {cart.items.map((item) => (
-                    <div key={item.product.id} className="flex items-center gap-3">
-                      <div className="relative">
-                        <div className="w-14 h-14 rounded border overflow-hidden bg-zinc-50">
-                          <img
-                            src={item.product.images[0]}
-                            alt={item.product.name}
-                            className="w-full h-full object-contain p-2"
-                          />
-                        </div>
-                        <div className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs">
-                          {item.quantity}
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-medium truncate">{item.product.name}</h3>
-                        <p className="text-xs text-muted-foreground">{formatPrice(item.product.price)}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">{formatPrice(item.product.price * item.quantity)}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="border-t p-3 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      placeholder="Discount code"
-                      value={discountCode}
-                      onChange={(e) => setDiscountCode(e.target.value)}
-                      className="h-8 text-sm"
-                    />
-                    <Button variant="outline" className="h-8" onClick={handleDiscountSubmit}>
-                      Apply
-                    </Button>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between text-sm">
-                      <span>Subtotal</span>
-                      <span>{formatPrice(subtotal)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Shipping</span>
-                      {subtotal >= 5000 ? (
-                        <span className="text-green-600">Free</span>
-                      ) : (
-                        <span>{formatPrice(shippingCost)}</span>
-                      )}
-                    </div>
-                    <div className="flex justify-between font-medium pt-1.5 border-t text-sm">
-                      <span>Total</span>
-                      <span>{formatPrice(discountedTotal || total)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="lg:sticky lg:top-4 space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Order Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* Order summary content */}
+              </CardContent>
+            </Card>
           </div>
         </div>
       )}
