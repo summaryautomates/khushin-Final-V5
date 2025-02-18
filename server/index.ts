@@ -1,26 +1,22 @@
 import express from "express";
 import { log } from "./vite";
-import { AddressInfo } from 'net';
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
 import path from 'path';
 
 const app = express();
 
-// Only essential middleware
+// Basic middleware
 app.use(express.json());
 
-// Configure static file serving for assets with detailed logging
-app.use('/attached_assets', (req, res, next) => {
-  log(`Static asset request: ${req.url}`, 'static');
-  express.static('attached_assets', {
-    setHeaders: (res, filepath) => {
-      if (filepath.endsWith('.glb')) {
-        res.setHeader('Content-Type', 'model/gltf-binary');
-      }
+// Simple static file serving for GLB files
+app.use('/attached_assets', express.static('attached_assets', {
+  setHeaders: (res, filepath) => {
+    if (filepath.endsWith('.glb')) {
+      res.setHeader('Content-Type', 'model/gltf-binary');
     }
-  })(req, res, next);
-});
+  }
+}));
 
 // Basic health check
 app.get('/api/health', (_req, res) => {
@@ -41,7 +37,7 @@ app.use((req, res, next) => {
 const startServer = async () => {
   try {
     log('Starting server...', 'server');
-    const port = process.env.PORT || 5000; // Changed default port to 5000
+    const port = process.env.PORT || 5000;
 
     const server = await registerRoutes(app);
 
