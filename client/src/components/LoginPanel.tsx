@@ -64,21 +64,24 @@ export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
-        className="sm:max-w-[425px] h-[100dvh] sm:h-auto overflow-y-auto fixed right-0 top-0 sm:relative sm:right-auto sm:top-auto sm:rounded-lg bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+        className="sm:max-w-[425px] h-[100dvh] sm:h-auto overflow-y-auto fixed right-0 top-0 sm:relative sm:right-auto sm:top-auto sm:rounded-lg bg-gradient-to-br from-background/95 via-background/98 to-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 border-0 sm:border"
         aria-describedby="login-dialog-description"
       >
-        <DialogTitle>Login to your account</DialogTitle>
+        <DialogTitle>Welcome Back</DialogTitle>
         <DialogDescription id="login-dialog-description" className="sr-only">
           Enter your email and password to access your KHUSH.IN account
         </DialogDescription>
 
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-semibold tracking-tight">LOGIN</h2>
+          <div className="space-y-1.5">
+            <h2 className="text-2xl font-light tracking-tight">LOGIN</h2>
+            <p className="text-sm text-muted-foreground">Please sign in to continue</p>
+          </div>
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={onClose} 
-            className="hover:bg-background/80" 
+            className="hover:bg-background/80 transition-colors duration-200" 
             aria-label="Close login panel"
           >
             <X className="h-4 w-4" />
@@ -92,18 +95,20 @@ export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email<span className="text-red-500" aria-hidden="true">*</span></FormLabel>
+                  <FormLabel className="text-sm font-medium">
+                    Email<span className="text-red-500 ml-0.5" aria-hidden="true">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input 
                       {...field} 
                       type="email" 
                       disabled={isLoading}
-                      className="bg-background/50 backdrop-blur-sm"
+                      className="bg-background/50 backdrop-blur-sm border-muted-foreground/20 focus:border-primary/50 transition-all duration-200 h-11"
                       placeholder="Enter your email"
                       aria-required="true" 
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-xs" />
                 </FormItem>
               )}
             />
@@ -113,25 +118,27 @@ export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password<span className="text-red-500" aria-hidden="true">*</span></FormLabel>
+                  <FormLabel className="text-sm font-medium">
+                    Password<span className="text-red-500 ml-0.5" aria-hidden="true">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input 
                       {...field} 
                       type="password" 
                       disabled={isLoading}
-                      className="bg-background/50 backdrop-blur-sm"
+                      className="bg-background/50 backdrop-blur-sm border-muted-foreground/20 focus:border-primary/50 transition-all duration-200 h-11"
                       placeholder="Enter your password"
                       aria-required="true" 
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-xs" />
                 </FormItem>
               )}
             />
 
             <Button 
               type="submit" 
-              className="w-full bg-black hover:bg-black/90 text-white font-medium tracking-wide"
+              className="w-full bg-black hover:bg-black/90 text-white font-medium tracking-wide h-11 transition-all duration-200 hover:shadow-lg"
               disabled={isLoading}
             >
               {isLoading ? "Signing in..." : "SIGN IN"}
@@ -139,18 +146,18 @@ export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
           </form>
         </Form>
 
-        <div className="mt-8 space-y-4">
+        <div className="mt-8 space-y-4 text-center">
           <button 
             onClick={() => handleNavigation("/register")} 
-            className="w-full text-center text-sm hover:underline"
+            className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
           >
-            New customer? Create your account
+            New customer? <span className="underline underline-offset-4">Create your account</span>
           </button>
           <button 
             onClick={() => handleNavigation("/forgot-password")} 
-            className="w-full text-center text-sm hover:underline"
+            className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
           >
-            Lost password? Recover password
+            Lost password? <span className="underline underline-offset-4">Recover password</span>
           </button>
         </div>
       </DialogContent>
