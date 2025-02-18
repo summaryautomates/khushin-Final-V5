@@ -7,6 +7,7 @@ import type { Product } from "@shared/schema";
 import { useCart } from "@/hooks/use-cart";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { ShareButtons } from "@/components/products/share-buttons";
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:id");
@@ -90,11 +91,19 @@ export default function ProductPage() {
         </div>
 
         <div className="space-y-8">
-          <div>
-            <h1 className="text-4xl font-bold">{product.name}</h1>
-            <p className="mt-4 text-3xl font-semibold text-primary">
-              {formatPrice(product.price)}
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold">{product.name}</h1>
+              <p className="mt-4 text-3xl font-semibold text-primary">
+                {formatPrice(product.price)}
+              </p>
+            </div>
+            <ShareButtons
+              url={window.location.href}
+              title={product.name}
+              description={product.description}
+              image={product.images[0]}
+            />
           </div>
 
           <div className="prose max-w-none">
