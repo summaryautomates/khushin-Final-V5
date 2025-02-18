@@ -37,8 +37,10 @@ app.use((req, res, next) => {
 const startServer = async () => {
   try {
     log('Starting server...', 'server');
-    const preferredPort = 5000;
-    const fallbackPorts = [5001, 5002, 5003, 5004];
+    // Use environment variable PORT with fallback to 5000 (workflow expected port)
+    const preferredPort = process.env.PORT ? parseInt(process.env.PORT) : 5000;
+    // Include both 3000 and 5000 series ports in fallbacks
+    const fallbackPorts = [3000, 3001, 5000, 5001, 5002];
 
     const server = await registerRoutes(app);
 
@@ -58,6 +60,7 @@ const startServer = async () => {
       // If preferred port fails, try fallback ports
       let bound = false;
       for (const port of fallbackPorts) {
+        if (port === preferredPort) continue; // Skip if it's the same as preferred port
         try {
           await new Promise((resolve, reject) => {
             server.listen(port, '0.0.0.0', () => {
