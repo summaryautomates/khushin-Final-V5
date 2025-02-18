@@ -3,11 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Droplet, Zap, Shield, Settings, ChevronRight } from "lucide-react";
 
-export default function Refueling() {
+const Refueling = () => {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="min-h-[60vh] flex items-center justify-center bg-black relative overflow-hidden">
+      <section className="min-h-[60vh] flex items-center justify-center bg-black relative overflow-hidden pt-20">
         <div className="absolute inset-0 z-0">
           <motion.div
             initial={{ scale: 1.1, opacity: 0 }}
@@ -194,3 +194,5 @@ export default function Refueling() {
     </div>
   );
 }
+
+export default Refueling;
