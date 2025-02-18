@@ -9,6 +9,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 import { ShippingForm, type ShippingFormData } from "@/components/checkout/shipping-form";
 import { Input } from "@/components/ui/input";
+import { CitySelector } from "@/components/checkout/city-selector";
+import { DeliveryScheduler } from "@/components/checkout/delivery-scheduler";
 
 const calculateShippingCost = (subtotal: number, shippingMethod: 'standard' | 'express' | 'international' = 'standard'): number => {
   if (subtotal >= 5000) return 0; // Free shipping over ₹5000
@@ -35,14 +37,20 @@ export default function Cart() {
   const [discountCode, setDiscountCode] = useState("");
   const [discountedTotal, setDiscountedTotal] = useState<number | null>(null);
   const [shippingMethod, setShippingMethod] = useState<'standard' | 'express' | 'international'>('standard');
+  const [deliverySchedule, setDeliverySchedule] = useState<{ 
+    date: string; 
+    timeSlot: string; 
+  } | null>(null); 
+
 
   const subtotal = cart.total;
   const shippingCost = calculateShippingCost(subtotal, shippingMethod);
   const total = subtotal + shippingCost + (cart.giftWrap.cost || 0);
 
-  const handleQuantityChange = (productId: string, newQuantity: number) => {
-    if (newQuantity >= 1 && newQuantity <= 99) {
-      cart.updateQuantity(productId, newQuantity);
+  const handleQuantityChange = (productId: string, newQuantity: string) => {
+    const quantity = parseInt(newQuantity);
+    if (quantity >= 1 && quantity <= 99) {
+      cart.updateQuantity(productId, quantity);
     }
   };
 
@@ -104,7 +112,8 @@ export default function Cart() {
         items,
         shipping: shippingData || shippingAddress,
         shippingMethod: shippingMethod,
-        giftWrap: cart.giftWrap
+        giftWrap: cart.giftWrap,
+        deliverySchedule 
       };
 
       const response = await apiRequest('POST', '/api/checkout', checkoutData);
@@ -126,6 +135,13 @@ export default function Cart() {
       setIsCheckingOut(false);
     }
   };
+
+  const cities = [
+    { id: 'mumbai', name: 'Mumbai' },
+    { id: 'pune', name: 'Pune' },
+    { id: 'delhi', name: 'Delhi' },
+    { id: 'hyderabad', name: 'Hyderabad' },
+  ];
 
   if (cart.items.length === 0) {
     return (
@@ -177,12 +193,12 @@ export default function Cart() {
                         <div className="flex-1">
                           <h3 className="font-semibold">{item.product.name}</h3>
                           <div className="mt-4 flex items-center space-x-4">
-                            <div className="flex items-center border rounded-lg p-1"> {/* Added padding and a border */}
+                            <div className="flex items-center border rounded-lg p-1"> 
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="rounded-none h-8 w-8 hover:bg-gray-100"
-                                onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
+                                onClick={() => handleQuantityChange(item.product.id, (item.quantity - 1).toString())}
                                 disabled={item.quantity <= 1}
                               >
                                 <Minus className="h-3 w-3" />
@@ -197,7 +213,7 @@ export default function Cart() {
                                     const val = e.target.value.replace(/[^0-9]/g, '');
                                     const num = parseInt(val) || 1;
                                     if (num >= 1 && num <= 99) {
-                                      handleQuantityChange(item.product.id, num);
+                                      handleQuantityChange(item.product.id, num.toString());
                                     }
                                   }}
                                   className="w-full h-8 text-center border-none focus:ring-0 focus:outline-none bg-transparent text-foreground hover:bg-accent/50 transition-colors"
@@ -209,7 +225,7 @@ export default function Cart() {
                                 variant="ghost"
                                 size="icon"
                                 className="rounded-none h-8 w-8 hover:bg-gray-100"
-                                onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
+                                onClick={() => handleQuantityChange(item.product.id, (item.quantity + 1).toString())}
                               >
                                 <Plus className="h-3 w-3" />
                               </Button>
@@ -223,7 +239,7 @@ export default function Cart() {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
-                          <p className="text-xs text-muted-foreground mt-2">Adjust quantity or remove item</p> {/* Added subtle instruction */}
+                          <p className="text-xs text-muted-foreground mt-2">Adjust quantity or remove item</p> 
                         </div>
                         <div className="text-right">
                           <p className="font-semibold">
@@ -361,6 +377,33 @@ export default function Cart() {
             </div>
 
             <div className="space-y-4">
+              <div className="rounded-lg border p-4 space-y-4">
+                <h3 className="font-medium">Delivery Location</h3>
+                <CitySelector
+                  selectedCity={shippingAddress?.city?.toLowerCase()}
+                  onCitySelect={(city) => {
+                    // Update the shipping form with the selected city
+                    const cityName = cities.find(c => c.id === city)?.name || '';
+                    // Assuming ShippingForm uses a form library like react-hook-form
+                    // Replace 'form' with your actual form instance
+                    // form.setValue('city', cityName); 
+                  }}
+                />
+              </div>
+
+              <div className="rounded-lg border p-4 space-y-4">
+                <h3 className="font-medium">Delivery Schedule</h3>
+                <DeliveryScheduler
+                  onScheduleSelect={(date, timeSlot) => {
+                    // Store delivery schedule in the checkout data
+                    setDeliverySchedule({ 
+                      date: date.toISOString(), 
+                      timeSlot 
+                    });
+                  }}
+                />
+              </div>
+
               <div className="rounded-lg border p-4 space-y-4">
                 <h3 className="font-medium">Shipping Method</h3>
                 <div className="space-y-3">
