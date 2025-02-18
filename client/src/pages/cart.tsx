@@ -40,7 +40,7 @@ export default function Cart() {
   const shippingCost = calculateShippingCost(subtotal, shippingMethod);
   const total = subtotal + shippingCost + (cart.giftWrap.cost || 0);
 
-  const handleQuantityChange = (productId: string, newQuantity: number) => {
+  const handleQuantityChange = (productId: number, newQuantity: number) => {
     if (newQuantity >= 1 && newQuantity <= 99) {
       cart.updateQuantity(productId, newQuantity);
     }
@@ -176,7 +176,7 @@ export default function Cart() {
                                 variant="ghost"
                                 size="icon"
                                 className="rounded-none h-8 w-8 hover:bg-gray-100"
-                                onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
+                                onClick={() => handleQuantityChange(parseInt(item.product.id), item.quantity - 1)}
                                 disabled={item.quantity <= 1}
                               >
                                 <Minus className="h-3 w-3" />
@@ -184,7 +184,7 @@ export default function Cart() {
                               <input
                                 type="number"
                                 value={item.quantity}
-                                onChange={(e) => handleQuantityChange(item.product.id, parseInt(e.target.value) || 1)}
+                                onChange={(e) => handleQuantityChange(parseInt(item.product.id), parseInt(e.target.value) || 1)}
                                 className="w-12 h-8 text-center border-none focus:ring-0"
                                 min="1"
                                 max="99"
@@ -193,7 +193,7 @@ export default function Cart() {
                                 variant="ghost"
                                 size="icon"
                                 className="rounded-none h-8 w-8 hover:bg-gray-100"
-                                onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
+                                onClick={() => handleQuantityChange(parseInt(item.product.id), item.quantity + 1)}
                               >
                                 <Plus className="h-3 w-3" />
                               </Button>
@@ -316,17 +316,10 @@ export default function Cart() {
                     </label>
                   </div>
                 </CardContent>
-                <CardFooter className="flex flex-col gap-3">
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setShowShippingForm(true)}
-                  >
-                    VIEW CART
-                  </Button>
+                <CardFooter className="flex flex-col">
                   <Button
                     className="w-full bg-yellow-400 hover:bg-yellow-500 text-black"
-                    onClick={() => setShowShippingForm(true)}
+                    onClick={() => handleCheckout()}
                   >
                     CHECK OUT
                   </Button>
