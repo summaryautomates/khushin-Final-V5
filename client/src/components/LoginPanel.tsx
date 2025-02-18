@@ -1,12 +1,14 @@
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Link } from "wouter"
+import { Link, useLocation } from "wouter"
 import { X } from "lucide-react"
+import { useState } from "react"
+import { useToast } from "@/hooks/use-toast"
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -21,6 +23,10 @@ interface LoginPanelProps {
 }
 
 export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
+  const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
+  const [_, setLocation] = useLocation()
+
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -30,17 +36,51 @@ export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
   })
 
   const onSubmit = async (data: LoginFormValues) => {
-    // TODO: Implement login logic
-    console.log(data)
+    try {
+      setIsLoading(true)
+      // TODO: Implement login logic with backend
+      console.log(data)
+      toast({
+        title: "Success",
+        description: "Logged in successfully",
+      })
+      onClose()
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to login. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleNavigation = (path: string) => {
+    onClose()
+    setLocation(path)
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[425px] h-screen sm:h-auto overflow-y-auto fixed right-0 top-0 rounded-l-lg">
-        <DialogTitle className="sr-only">Login to your account</DialogTitle>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold">LOGIN</h2>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close login panel">
+      <DialogContent 
+        className="sm:max-w-[425px] h-[100dvh] sm:h-auto overflow-y-auto fixed right-0 top-0 sm:relative sm:right-auto sm:top-auto sm:rounded-lg bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+        aria-describedby="login-dialog-description"
+      >
+        <DialogTitle>Login to your account</DialogTitle>
+        <DialogDescription id="login-dialog-description" className="sr-only">
+          Enter your email and password to access your KHUSH.IN account
+        </DialogDescription>
+
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-semibold tracking-tight">LOGIN</h2>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onClose} 
+            className="hover:bg-background/80" 
+            aria-label="Close login panel"
+          >
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -54,7 +94,14 @@ export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
                 <FormItem>
                   <FormLabel>Email<span className="text-red-500" aria-hidden="true">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} type="email" aria-required="true" />
+                    <Input 
+                      {...field} 
+                      type="email" 
+                      disabled={isLoading}
+                      className="bg-background/50 backdrop-blur-sm"
+                      placeholder="Enter your email"
+                      aria-required="true" 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -68,26 +115,43 @@ export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
                 <FormItem>
                   <FormLabel>Password<span className="text-red-500" aria-hidden="true">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} type="password" aria-required="true" />
+                    <Input 
+                      {...field} 
+                      type="password" 
+                      disabled={isLoading}
+                      className="bg-background/50 backdrop-blur-sm"
+                      placeholder="Enter your password"
+                      aria-required="true" 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <Button type="submit" className="w-full bg-yellow-400 hover:bg-yellow-500 text-black">
-              SIGN IN
+            <Button 
+              type="submit" 
+              className="w-full bg-black hover:bg-black/90 text-white font-medium tracking-wide"
+              disabled={isLoading}
+            >
+              {isLoading ? "Signing in..." : "SIGN IN"}
             </Button>
           </form>
         </Form>
 
-        <div className="mt-6 space-y-4">
-          <Link href="/register" className="block text-center text-sm">
+        <div className="mt-8 space-y-4">
+          <button 
+            onClick={() => handleNavigation("/register")} 
+            className="w-full text-center text-sm hover:underline"
+          >
             New customer? Create your account
-          </Link>
-          <Link href="/forgot-password" className="block text-center text-sm">
+          </button>
+          <button 
+            onClick={() => handleNavigation("/forgot-password")} 
+            className="w-full text-center text-sm hover:underline"
+          >
             Lost password? Recover password
-          </Link>
+          </button>
         </div>
       </DialogContent>
     </Dialog>

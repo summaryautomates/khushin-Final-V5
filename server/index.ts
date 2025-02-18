@@ -80,117 +80,62 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const startServer = async () => {
-  const PRIMARY_PORT = 5000;
-  const FALLBACK_PORTS = [5001, 5002, 5003, 5004];
-  const RETRY_DELAY = 1000;
-  const MAX_RETRIES = 3;
+  const PORT = 5001; // Changed to use 5001 directly
 
-  // First, try to start on the primary port
-  for (let retry = 0; retry < MAX_RETRIES; retry++) {
-    try {
-      log(`Attempting to start server on primary port ${PRIMARY_PORT}...`, 'server');
-      const server = createServer(app);
+  try {
+    log(`Starting server on port ${PORT}...`, 'server');
+    const server = createServer(app);
 
-      await new Promise<void>((resolve, reject) => {
-        const onError = (error: Error & { code?: string }) => {
-          server.removeListener('listening', onListening);
-          reject(error);
-        };
-
-        const onListening = () => {
-          server.removeListener('error', onError);
-          const address = server.address() as AddressInfo;
-          log(`Server is running on port ${address.port}`, 'server');
-          resolve();
-        };
-
-        server.once('error', onError);
-        server.once('listening', onListening);
-
-        server.listen(PRIMARY_PORT, '0.0.0.0');
-      });
-
-      // Setup graceful shutdown
-      const shutdown = () => {
-        log('Shutting down gracefully...', 'server');
-        server.close(() => {
-          log('Server closed', 'server');
-          process.exit(0);
-        });
+    await new Promise<void>((resolve, reject) => {
+      const onError = (error: Error & { code?: string }) => {
+        server.removeListener('listening', onListening);
+        reject(error);
       };
 
-      process.on('SIGTERM', shutdown);
-      process.on('SIGINT', shutdown);
+      const onListening = () => {
+        server.removeListener('error', onError);
+        const address = server.address() as AddressInfo;
+        log(`Server is running on port ${address.port}`, 'server');
+        resolve();
+      };
 
-      // Setup Vite after server is running
-      if (process.env.NODE_ENV !== 'production') {
-        log('Setting up Vite development environment...', 'server');
-        try {
-          await setupVite(app, server);
-          log('Vite setup completed successfully', 'server');
-        } catch (error) {
-          log(`Vite setup failed: ${error}`, 'server');
-          log('Falling back to static serving...', 'server');
-          serveStatic(app);
-        }
-      } else {
-        log('Setting up static file serving for production...', 'server');
-        serveStatic(app);
-      }
+      server.once('error', onError);
+      server.once('listening', onListening);
 
-      return; // Server started successfully
-    } catch (err: any) {
-      if (err.code === 'EADDRINUSE') {
-        if (retry === MAX_RETRIES - 1) {
-          // If we've exhausted retries on primary port, try fallback ports
-          log(`Unable to bind to primary port ${PRIMARY_PORT} after ${MAX_RETRIES} attempts, trying fallback ports...`, 'server');
-          break;
-        }
-        log(`Port ${PRIMARY_PORT} is in use, retrying in ${RETRY_DELAY}ms...`, 'server');
-        await sleep(RETRY_DELAY);
-      } else {
-        console.error('Failed to start server:', err);
-        process.exit(1);
-      }
-    }
-  }
+      server.listen(PORT, '0.0.0.0');
+    });
 
-  // If primary port fails, try fallback ports
-  for (const port of FALLBACK_PORTS) {
-    try {
-      log(`Attempting to start server on fallback port ${port}...`, 'server');
-      const server = createServer(app);
-
-      await new Promise<void>((resolve, reject) => {
-        server.once('error', reject);
-        server.once('listening', () => {
-          const address = server.address() as AddressInfo;
-          log(`Server is running on fallback port ${address.port}`, 'server');
-          resolve();
-        });
-        server.listen(port, '0.0.0.0');
+    // Setup graceful shutdown
+    const shutdown = () => {
+      log('Shutting down gracefully...', 'server');
+      server.close(() => {
+        log('Server closed', 'server');
+        process.exit(0);
       });
+    };
 
-      // Setup Vite
-      if (process.env.NODE_ENV !== 'production') {
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
+
+    // Setup Vite after server is running
+    if (process.env.NODE_ENV !== 'production') {
+      log('Setting up Vite development environment...', 'server');
+      try {
         await setupVite(app, server);
-      } else {
+        log('Vite setup completed successfully', 'server');
+      } catch (error) {
+        log(`Vite setup failed: ${error}`, 'server');
+        log('Falling back to static serving...', 'server');
         serveStatic(app);
       }
-
-      return; // Server started successfully on fallback port
-    } catch (err: any) {
-      if (err.code === 'EADDRINUSE') {
-        log(`Fallback port ${port} is in use, trying next port...`, 'server');
-        continue;
-      }
-      console.error(`Failed to start server on fallback port ${port}:`, err);
+    } else {
+      log('Setting up static file serving for production...', 'server');
+      serveStatic(app);
     }
+  } catch (err) {
+    console.error('Failed to start server:', err);
+    process.exit(1);
   }
-
-  // If we get here, all ports failed
-  console.error('Failed to start server on any available port');
-  process.exit(1);
 };
 
 startServer();
