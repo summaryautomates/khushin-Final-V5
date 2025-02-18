@@ -27,7 +27,7 @@ export default function Shipping() {
                     <div>
                       <h3 className="font-medium text-lg mb-2">Standard Shipping</h3>
                       <p className="text-zinc-400">3-5 business days</p>
-                      <p className="text-zinc-300 font-medium mt-1">$5.99</p>
+                      <p className="text-zinc-300 font-medium mt-1">₹299</p>
                     </div>
                   </div>
 
@@ -38,7 +38,7 @@ export default function Shipping() {
                     <div>
                       <h3 className="font-medium text-lg mb-2">Express Shipping</h3>
                       <p className="text-zinc-400">1-2 business days</p>
-                      <p className="text-zinc-300 font-medium mt-1">$12.99</p>
+                      <p className="text-zinc-300 font-medium mt-1">₹599</p>
                     </div>
                   </div>
 
@@ -69,7 +69,7 @@ export default function Shipping() {
                     <h3 className="font-medium text-lg mb-2">Our Guarantee</h3>
                     <ul className="list-disc pl-6 space-y-2 text-zinc-400">
                       <li>All orders are insured and tracked</li>
-                      <li>Free shipping on orders over $200</li>
+                      <li>Free shipping on orders over ₹5,000</li>
                       <li>Signature required for valuable items</li>
                       <li>Real-time tracking updates</li>
                       <li>Premium packaging for protection</li>
