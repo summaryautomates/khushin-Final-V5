@@ -182,8 +182,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to add item to cart:', error);
       toast({
-        variant: "destructive",
-        description: "Failed to add item to cart",
+        title: "Error",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive"
       });
     }
   };

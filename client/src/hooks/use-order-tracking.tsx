@@ -20,7 +20,7 @@ export function useOrderTracking(orderRef: string | null) {
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
-    
+
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
@@ -35,7 +35,7 @@ export function useOrderTracking(orderRef: string | null) {
     ws.onmessage = (event) => {
       try {
         const update: OrderUpdate = JSON.parse(event.data);
-        
+
         switch (update.type) {
           case 'ORDER_STATUS_UPDATE':
             setStatus(update.status || null);
@@ -44,21 +44,21 @@ export function useOrderTracking(orderRef: string | null) {
               description: `Order ${update.orderRef} status: ${update.status}`,
             });
             break;
-          
+
           case 'SUBSCRIPTION_CONFIRMED':
             toast({
               title: 'Order Tracking Active',
               description: `Now tracking order ${update.orderRef}`,
             });
             break;
-          
+
           case 'CONNECTED':
             toast({
               title: 'Connected',
               description: update.message,
             });
             break;
-          
+
           case 'ERROR':
             toast({
               title: 'Error',
@@ -79,7 +79,7 @@ export function useOrderTracking(orderRef: string | null) {
         description: 'Lost connection to order tracking service',
         variant: 'destructive',
       });
-      
+
       // Attempt to reconnect after 5 seconds
       setTimeout(connect, 5000);
     };
@@ -87,10 +87,11 @@ export function useOrderTracking(orderRef: string | null) {
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
       toast({
-        title: 'Connection Error',
-        description: 'Error connecting to order tracking service',
-        variant: 'destructive',
+        title: "Connection Error",
+        description: "Lost connection to order tracking. Retrying...",
+        variant: "destructive"
       });
+      setTimeout(connect, 5000); // Retry after 5 seconds
     };
 
     setSocket(ws);
@@ -101,7 +102,7 @@ export function useOrderTracking(orderRef: string | null) {
         ws.close();
       }
     };
-  }, [orderRef, toast]);
+  }, [orderRef, toast, connect]);
 
   useEffect(() => {
     const cleanup = connect();
