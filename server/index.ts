@@ -2,7 +2,6 @@ import express from "express";
 import { log } from "./vite";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
-import path from 'path';
 import { AddressInfo } from 'net';
 
 const app = express();
@@ -38,59 +37,61 @@ app.use((req, res, next) => {
 const startServer = async () => {
   try {
     log('Starting server...', 'server');
-    const ports = [5000, 5001, 5002, 5003, 5004]; // List of ports to try
-    const port = process.env.PORT || ports[0];
+    const preferredPort = 5000;
+    const fallbackPorts = [5001, 5002, 5003, 5004];
 
     const server = await registerRoutes(app);
 
-    // Function to try binding to a port
-    const tryPort = (portNumber: number): Promise<boolean> => {
-      return new Promise((resolve) => {
-        const tempServer = server.listen(portNumber, '0.0.0.0', () => {
-          tempServer.close(() => resolve(true));
-        }).on('error', () => resolve(false));
+    // Try to bind to the preferred port first
+    try {
+      await new Promise((resolve, reject) => {
+        server.listen(preferredPort, '0.0.0.0', () => {
+          const address = server.address() as AddressInfo;
+          log(`Server successfully bound to preferred port ${address.port}`, 'server');
+          resolve(true);
+        }).on('error', (err) => {
+          log(`Could not bind to preferred port ${preferredPort}, trying fallback ports`, 'server');
+          reject(err);
+        });
       });
-    };
-
-    // Try ports sequentially until one works
-    let selectedPort = port;
-    if (typeof port === 'string') {
-      selectedPort = parseInt(port, 10);
-    }
-
-    let portFound = await tryPort(selectedPort);
-    if (!portFound && !process.env.PORT) {
-      for (const fallbackPort of ports.slice(1)) {
-        portFound = await tryPort(fallbackPort);
-        if (portFound) {
-          selectedPort = fallbackPort;
-          break;
+    } catch (error) {
+      // If preferred port fails, try fallback ports
+      let bound = false;
+      for (const port of fallbackPorts) {
+        try {
+          await new Promise((resolve, reject) => {
+            server.listen(port, '0.0.0.0', () => {
+              const address = server.address() as AddressInfo;
+              log(`Server successfully bound to fallback port ${address.port}`, 'server');
+              bound = true;
+              resolve(true);
+            }).on('error', reject);
+          });
+          if (bound) break;
+        } catch (error) {
+          log(`Failed to bind to port ${port}, trying next port`, 'server');
+          continue;
         }
       }
-    }
 
-    if (!portFound) {
-      throw new Error('No available ports found');
-    }
-
-    server.listen(selectedPort, '0.0.0.0', () => {
-      const address = server.address() as AddressInfo;
-      log(`Server successfully bound to port ${address.port}`, 'server');
-      log(`Server started in ${process.env.NODE_ENV || 'development'} mode`, 'server');
-
-      // Setup Vite after server is running
-      if (process.env.NODE_ENV !== 'production') {
-        setupVite(app, server)
-          .then(() => log('Vite setup complete', 'server'))
-          .catch(error => {
-            log(`Vite setup error: ${error}`, 'server');
-            process.exit(1);
-          });
-      } else {
-        serveStatic(app);
+      if (!bound) {
+        throw new Error('No available ports found');
       }
-    });
+    }
 
+    log(`Server started in ${process.env.NODE_ENV || 'development'} mode`, 'server');
+
+    // Setup Vite after server is running
+    if (process.env.NODE_ENV !== 'production') {
+      setupVite(app, server)
+        .then(() => log('Vite setup complete', 'server'))
+        .catch(error => {
+          log(`Vite setup error: ${error}`, 'server');
+          process.exit(1);
+        });
+    } else {
+      serveStatic(app);
+    }
   } catch (error) {
     log(`Critical server error: ${error}`, 'server');
     process.exit(1);

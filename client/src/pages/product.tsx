@@ -9,6 +9,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ShareButtons } from "@/components/products/share-buttons";
 import { ModelViewer } from "@/components/model-viewer/model-viewer";
+import { SimilarProducts } from "@/components/products/similar-products";
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:id");
@@ -65,7 +66,6 @@ export default function ProductPage() {
   return (
     <div className="container py-12">
       <div className="grid gap-12 md:grid-cols-2">
-        {/* Left Section: Product Images & 3D Model */}
         <div className="space-y-4">
           <div className="aspect-square overflow-hidden rounded-lg border bg-zinc-100 relative">
             <img
@@ -80,7 +80,6 @@ export default function ProductPage() {
             )}
           </div>
 
-          {/* Additional Product Images */}
           {product.images.length > 1 && (
             <div className="grid grid-cols-4 gap-4 mt-4">
               {product.images.slice(1).map((image, i) => (
@@ -96,7 +95,6 @@ export default function ProductPage() {
           )}
         </div>
 
-        {/* Right Section: Product Details */}
         <div className="space-y-8">
           <div className="flex items-center justify-between">
             <div>
@@ -113,13 +111,11 @@ export default function ProductPage() {
             />
           </div>
 
-          {/* Product Description */}
           <div className="prose max-w-none">
             <h3 className="text-lg font-semibold">Description</h3>
             <p>{product.description}</p>
           </div>
 
-          {/* Buy & Add to Cart Buttons */}
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <Button size="lg" variant="outline" className="w-full" onClick={handleAddToCart}>
@@ -131,7 +127,6 @@ export default function ProductPage() {
             </div>
           </div>
 
-          {/* Shipping, Security, and Return Info */}
           <div className="space-y-6 rounded-lg border p-6">
             <div className="flex items-center space-x-4">
               <Truck className="h-5 w-5 text-primary" />
@@ -156,6 +151,13 @@ export default function ProductPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="mt-16">
+        <SimilarProducts 
+          currentProductId={product.id} 
+          category={product.category} 
+        />
       </div>
     </div>
   );
