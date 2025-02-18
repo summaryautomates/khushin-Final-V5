@@ -29,15 +29,29 @@ export const contactMessages = pgTable("contact_messages", {
   message: text("message").notNull(),
 });
 
+export const returnRequests = pgTable("return_requests", {
+  id: serial("id").primaryKey(),
+  orderRef: text("order_ref").notNull(),
+  reason: text("reason").notNull(),
+  status: text("status").notNull().default('pending'),
+  items: jsonb("items").notNull(),
+  additionalNotes: text("additional_notes"),
+  createdAt: text("created_at").notNull(),
+});
+
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({ id: true });
 export const insertContactMessageSchema = createInsertSchema(contactMessages).omit({ id: true });
+export const insertReturnRequestSchema = createInsertSchema(returnRequests).omit({ id: true });
 
 export type Product = typeof products.$inferSelect;
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type ContactMessage = typeof contactMessages.$inferSelect;
+export type ReturnRequest = typeof returnRequests.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
+export type InsertReturnRequest = z.infer<typeof insertReturnRequestSchema>;
+
 export const discountCodes = pgTable("discount_codes", {
   id: serial("id").primaryKey(),
   code: text("code").notNull().unique(),

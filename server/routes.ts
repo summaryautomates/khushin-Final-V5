@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertContactMessageSchema } from "@shared/schema";
+import { insertContactMessageSchema, insertReturnRequestSchema } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 
@@ -314,21 +314,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/products/category/:category", productsRouter.getByCategory);
 
   app.post("/api/validate-discount", (req, res) => {
-  const { code } = req.body;
-  const discount = discountStore.get(code);
+    const { code } = req.body;
+    const discount = discountStore.get(code);
 
-  if (!discount || !discount.isActive || new Date(discount.validUntil) < new Date()) {
-    return res.status(400).json({
-      message: "Invalid or expired discount code"
+    if (!discount || !discount.isActive || new Date(discount.validUntil) < new Date()) {
+      return res.status(400).json({
+        message: "Invalid or expired discount code"
+      });
+    }
+
+    res.json({
+      discountPercent: discount.discountPercent
     });
-  }
-
-  res.json({
-    discountPercent: discount.discountPercent
   });
-});
 
-app.post("/api/contact", async (req, res) => {
+  app.post("/api/contact", async (req, res) => {
     try {
       const data = insertContactMessageSchema.parse(req.body);
       const message = await storage.createContactMessage(data);
@@ -349,6 +349,100 @@ app.post("/api/contact", async (req, res) => {
     res.json(orders.sort((a, b) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     ));
+  });
+
+  // Add return requests store
+  const returnRequestStore = new Map<string, {
+    id: number,
+    orderRef: string,
+    reason: string,
+    status: 'pending' | 'approved' | 'rejected',
+    items: Array<{
+      productId: number,
+      quantity: number,
+      reason: string
+    }>,
+    additionalNotes?: string,
+    createdAt: string
+  }>();
+
+  // Create a return request
+  app.post("/api/returns", async (req, res) => {
+    try {
+      const data = insertReturnRequestSchema.parse(req.body);
+
+      // Verify that the order exists
+      const order = orderStore.get(data.orderRef);
+      if (!order) {
+        return res.status(404).json({
+          message: "Order not found",
+          details: "Cannot create return request for non-existent order"
+        });
+      }
+
+      // Only allow returns for completed orders
+      if (order.status !== 'completed') {
+        return res.status(400).json({
+          message: "Invalid order status",
+          details: "Can only create return requests for completed orders"
+        });
+      }
+
+      const returnRequest = {
+        id: returnRequestStore.size + 1,
+        ...data,
+        status: 'pending' as const,
+        createdAt: new Date().toISOString()
+      };
+
+      returnRequestStore.set(String(returnRequest.id), returnRequest);
+
+      res.status(201).json(returnRequest);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Invalid input",
+          errors: error.errors
+        });
+      }
+      throw error;
+    }
+  });
+
+  // Get return requests for an order
+  app.get("/api/returns/:orderRef", (req, res) => {
+    const { orderRef } = req.params;
+
+    const returns = Array.from(returnRequestStore.values())
+      .filter(r => r.orderRef === orderRef)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    res.json(returns);
+  });
+
+  // Update return request status (for admin purposes)
+  app.patch("/api/returns/:id/status", (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const returnRequest = returnRequestStore.get(id);
+    if (!returnRequest) {
+      return res.status(404).json({
+        message: "Return request not found"
+      });
+    }
+
+    if (!['pending', 'approved', 'rejected'].includes(status)) {
+      return res.status(400).json({
+        message: "Invalid status",
+        details: "Status must be one of: pending, approved, rejected"
+      });
+    }
+
+    returnRequest.status = status as 'pending' | 'approved' | 'rejected';
+    returnRequestStore.set(id, returnRequest);
+
+    res.json(returnRequest);
   });
 
   return createServer(app);
