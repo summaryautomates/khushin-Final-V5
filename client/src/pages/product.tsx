@@ -8,16 +8,7 @@ import { useCart } from "@/hooks/use-cart";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ShareButtons } from "@/components/products/share-buttons";
-import { ModelViewer } from "@/components/model-viewer/ModelViewer";
-import { ErrorBoundary } from "react-error-boundary";
-
-function FallbackComponent() {
-  return (
-    <div className="h-full w-full flex items-center justify-center bg-zinc-900 text-white">
-      <p>Error loading 3D model. Please try again later.</p>
-    </div>
-  );
-}
+import { ModelViewer } from "@/components/model-viewer/model-viewer";
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:id");
@@ -71,37 +62,29 @@ export default function ProductPage() {
     }
   };
 
-  const isLighter = product.name.toLowerCase().includes('vintage collection lighter');
-
   return (
     <div className="container py-12">
       <div className="grid gap-12 md:grid-cols-2">
         {/* Left Section: Product Images & 3D Model */}
         <div className="space-y-4">
-          <div className="aspect-square overflow-hidden rounded-lg border bg-zinc-900 relative">
-            {isLighter ? (
-              <div className="h-full w-full">
-                <ErrorBoundary FallbackComponent={FallbackComponent}>
-                  <ModelViewer
-                    modelUrl="/attached_assets/zippo_lighter.glb"
-                    className="h-full"
-                  />
-                </ErrorBoundary>
+          <div className="aspect-square overflow-hidden rounded-lg border bg-zinc-100 relative">
+            <img
+              src={product.images[0]}
+              alt={product.name}
+              className="h-full w-full object-contain p-4"
+            />
+            {product.category === "lighters" && (
+              <div className="absolute inset-0 flex items-center justify-center bg-opacity-50">
+                <ModelViewer modelUrl="/attached_assets/zippo_lighter.glb" />
               </div>
-            ) : (
-              <img
-                src={product.images[0]}
-                alt={product.name}
-                className="h-full w-full object-contain p-4"
-              />
             )}
           </div>
 
           {/* Additional Product Images */}
-          {!isLighter && product.images.length > 1 && (
+          {product.images.length > 1 && (
             <div className="grid grid-cols-4 gap-4 mt-4">
               {product.images.slice(1).map((image, i) => (
-                <div key={i} className="aspect-square overflow-hidden rounded-lg border bg-zinc-900">
+                <div key={i} className="aspect-square overflow-hidden rounded-lg border bg-zinc-100">
                   <img
                     src={image}
                     alt={`${product.name} view ${i + 2}`}
