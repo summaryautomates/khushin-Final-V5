@@ -34,7 +34,7 @@ export const returnRequests = pgTable("return_requests", {
   orderRef: text("order_ref").notNull(),
   reason: text("reason").notNull(),
   status: text("status").notNull().default('pending'),
-  items: jsonb("items").notNull(),
+  items: jsonb("items").$type<Array<{ productId: number; quantity: number; reason: string }>>().notNull(),
   additionalNotes: text("additional_notes"),
   createdAt: text("created_at").notNull(),
 });
