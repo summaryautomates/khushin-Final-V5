@@ -1,18 +1,44 @@
 import { useState } from "react";
 import { ShippingForm, type ShippingFormData } from "@/components/checkout/shipping-form";
-import { Input } from "@/components/ui/input";
 import { CitySelector } from "@/components/checkout/city-selector";
 import { DeliveryScheduler } from "@/components/checkout/delivery-scheduler";
-import { Truck, Clock, Shield, MapPin, Loader2, Trash2 } from "lucide-react";
+import { CartItem, type CartItemData } from "@/components/checkout/cart-item";
+import { Truck, Clock, Shield, MapPin, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+
+// Mock cart data
+const mockCartItems: CartItemData[] = [
+  {
+    id: "1",
+    name: "Premium Gold Plated Thali Set",
+    price: 2500,
+    quantity: 1,
+    image: "/products/thali-set.jpg"
+  },
+  {
+    id: "2",
+    name: "Designer Wedding Card (Pack of 100)",
+    price: 1500,
+    quantity: 1,
+    image: "/products/wedding-card.jpg"
+  },
+  {
+    id: "3",
+    name: "Traditional Brass Lamp",
+    price: 500,
+    quantity: 1,
+    image: "/products/brass-lamp.jpg"
+  }
+];
 
 export default function Cart() {
   const [showShippingForm, setShowShippingForm] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string | undefined>();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [shippingMethod, setShippingMethod] = useState<'standard' | 'express' | 'international'>('standard');
+  const [cartItems, setCartItems] = useState<CartItemData[]>(mockCartItems);
   const [deliverySchedule, setDeliverySchedule] = useState<{
     date: string;
     timeSlot: string;
@@ -20,16 +46,36 @@ export default function Cart() {
 
   const { toast } = useToast();
 
-  // Mock cart data - replace with actual cart state management
-  const cart = {
-    items: [],
-    total: 4500,
-    giftWrap: false
+  const handleUpdateQuantity = (id: string, quantity: number) => {
+    if (quantity === 0) {
+      handleRemoveItem(id);
+      return;
+    }
+    setCartItems(items =>
+      items.map(item =>
+        item.id === id ? { ...item, quantity } : item
+      )
+    );
   };
+
+  const handleRemoveItem = (id: string) => {
+    setCartItems(items => items.filter(item => item.id !== id));
+    toast({
+      title: "Item removed",
+      description: "The item has been removed from your cart",
+    });
+  };
+
+  const calculateTotal = () => {
+    return cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  };
+
+  const cartTotal = calculateTotal();
+  const shippingCost = cartTotal >= 5000 ? 0 : 599;
+  const orderTotal = cartTotal + shippingCost;
 
   const handleCitySelect = (city: string) => {
     setSelectedCity(city);
-    // Update shipping method to express for better UX
     setShippingMethod('express');
   };
 
@@ -63,10 +109,23 @@ export default function Cart() {
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-8">
             <h1 className="text-3xl font-semibold">Shopping Cart</h1>
-            {/* Cart Items Here */}
-            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
-              <p className="text-muted-foreground text-center">Your cart is empty</p>
-            </div>
+
+            {cartItems.length === 0 ? (
+              <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
+                <p className="text-muted-foreground text-center">Your cart is empty</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {cartItems.map(item => (
+                  <CartItem
+                    key={item.id}
+                    item={item}
+                    onUpdateQuantity={handleUpdateQuantity}
+                    onRemove={handleRemoveItem}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
@@ -101,7 +160,7 @@ export default function Cart() {
                       </div>
                       <div className="text-right">
                         <p className="font-medium text-lg">
-                          {cart.total >= 5000 ? 'Free' : '₹599'}
+                          {cartTotal >= 5000 ? 'Free' : '₹599'}
                         </p>
                       </div>
                     </div>
@@ -122,15 +181,15 @@ export default function Cart() {
                 <div className="space-y-3 pt-6 border-t">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>₹{cart.total}</span>
+                    <span>₹{cartTotal}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Shipping</span>
-                    <span>{cart.total >= 5000 ? 'Free' : '₹599'}</span>
+                    <span>{cartTotal >= 5000 ? 'Free' : '₹599'}</span>
                   </div>
                   <div className="flex justify-between text-lg font-semibold">
                     <span>Total</span>
-                    <span>₹{cart.total + (cart.total >= 5000 ? 0 : 599)}</span>
+                    <span>₹{orderTotal}</span>
                   </div>
                 </div>
               </CardContent>
@@ -139,7 +198,7 @@ export default function Cart() {
                   size="lg"
                   className="w-full"
                   onClick={() => setShowShippingForm(true)}
-                  disabled={isCheckingOut}
+                  disabled={isCheckingOut || cartItems.length === 0}
                 >
                   {isCheckingOut ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
@@ -217,18 +276,26 @@ export default function Cart() {
                 <CardTitle>Order Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
+                {cartItems.map(item => (
+                  <div key={item.id} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      {item.name} × {item.quantity}
+                    </span>
+                    <span>₹{item.price * item.quantity}</span>
+                  </div>
+                ))}
+                <div className="space-y-2 pt-4 border-t">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>₹{cart.total}</span>
+                    <span>₹{cartTotal}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Shipping</span>
-                    <span>{cart.total >= 5000 ? 'Free' : '₹599'}</span>
+                    <span>{cartTotal >= 5000 ? 'Free' : '₹599'}</span>
                   </div>
                   <div className="flex justify-between text-lg font-semibold">
                     <span>Total</span>
-                    <span>₹{cart.total + (cart.total >= 5000 ? 0 : 599)}</span>
+                    <span>₹{orderTotal}</span>
                   </div>
                 </div>
               </CardContent>
