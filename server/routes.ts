@@ -64,6 +64,17 @@ const orderStore = new Map<string, {
   createdAt: string
 }>();
 
+const returnRequestSchema = z.object({
+  orderRef: z.string(),
+  reason: z.string().min(10, "Please provide a detailed reason"),
+  items: z.array(z.object({
+    productId: z.number(),
+    quantity: z.number().min(1, "Quantity must be at least 1"),
+    reason: z.string().min(1, "Item-specific reason is required")
+  })).min(1, "At least one item must be selected"),
+  additionalNotes: z.string().optional().nullable()
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
   const productsRouter = {
     getAll: async (_req: any, res: any) => {
@@ -369,7 +380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a return request
   app.post("/api/returns", async (req, res) => {
     try {
-      const data = insertReturnRequestSchema.parse(req.body);
+      const data = returnRequestSchema.parse(req.body);
 
       // Verify that the order exists
       const order = orderStore.get(data.orderRef);
@@ -393,12 +404,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         orderRef: data.orderRef,
         reason: data.reason,
         status: 'pending' as const,
-        items: data.items as Array<{
-          productId: number;
-          quantity: number;
-          reason: string;
-        }>,
-        additionalNotes: data.additionalNotes,
+        items: data.items,
+        additionalNotes: data.additionalNotes || undefined,
         createdAt: new Date().toISOString()
       };
 
@@ -409,10 +416,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: "Invalid input",
-          errors: error.errors
+          details: fromZodError(error).message
         });
       }
-      throw error;
+      console.error('Return request error:', error);
+      res.status(500).json({
+        message: "Internal server error",
+        details: "Failed to create return request"
+      });
     }
   });
 

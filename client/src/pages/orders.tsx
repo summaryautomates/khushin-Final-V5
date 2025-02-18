@@ -56,8 +56,8 @@ const returnRequestSchema = z.object({
   reason: z.string().min(10, "Please provide a detailed reason for the return"),
   items: z.array(z.object({
     productId: z.number(),
-    quantity: z.number().min(1),
-    reason: z.string()
+    quantity: z.number().min(1, "Quantity must be at least 1"),
+    reason: z.string().min(1, "Please provide a reason for returning this item")
   })).min(1, "Please select at least one item to return"),
   additionalNotes: z.string().optional()
 });
@@ -101,14 +101,20 @@ function ReturnRequestDialog({ order }: { order: Order }) {
 
   const returnMutation = useMutation({
     mutationFn: async (data: ReturnRequestFormData) => {
+      const validItems = data.items.filter(item => item.quantity > 0);
+      if (validItems.length === 0) {
+        throw new Error("Please select at least one item to return");
+      }
+
       const response = await apiRequest('POST', '/api/returns', {
         ...data,
+        items: validItems,
         orderRef: order.orderRef
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to submit return request');
+        throw new Error(error.details || error.message || 'Failed to submit return request');
       }
 
       return response.json();
@@ -124,30 +130,14 @@ function ReturnRequestDialog({ order }: { order: Order }) {
     onError: (error: Error) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to submit return request",
+        description: error.message,
         variant: "destructive"
       });
     }
   });
 
   const onSubmit = (data: ReturnRequestFormData) => {
-    // Validate that at least one item has a quantity greater than 0
-    const hasItems = data.items.some(item => item.quantity > 0);
-    if (!hasItems) {
-      toast({
-        title: "Error",
-        description: "Please select at least one item to return",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Filter out items with quantity 0
-    const validItems = data.items.filter(item => item.quantity > 0);
-    returnMutation.mutate({
-      ...data,
-      items: validItems,
-    });
+    returnMutation.mutate(data);
   };
 
   return (
