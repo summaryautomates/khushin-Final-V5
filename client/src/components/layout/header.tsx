@@ -7,8 +7,7 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { categories } from "@/lib/products";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, ClockIcon } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 
 export function Header() {
@@ -32,28 +31,24 @@ export function Header() {
                   href="/products" 
                   className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"}
                 >
-                  COLLECTION
+                  COLLECTIONS
                 </Link>
               </NavigationMenuItem>
-              {categories.map((category) => (
-                <NavigationMenuItem key={category.id}>
-                  <Link 
-                    href={`/products/category/${category.id}`}
-                    className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"}
-                  >
-                    {category.name.toUpperCase()}
-                  </Link>
-                </NavigationMenuItem>
-              ))}
               <NavigationMenuItem>
-                <NavigationMenuLink asChild>
-                  <Link 
-                    href="/refueling"
-                    className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"}
-                  >
-                    REFUELING
-                  </Link>
-                </NavigationMenuLink>
+                <Link 
+                  href="/products/category/lighters"
+                  className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"}
+                >
+                  LUXURY LIGHTERS
+                </Link>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <Link 
+                  href="/refueling"
+                  className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"}
+                >
+                  REFUELING SOLUTIONS
+                </Link>
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <Link 
@@ -75,6 +70,15 @@ export function Header() {
           </NavigationMenu>
 
           <div className="flex items-center space-x-4">
+            <Link href="/orders">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="relative group hover:bg-white/5 transition-colors duration-300"
+              >
+                <ClockIcon className="h-5 w-5 text-white group-hover:scale-110 transition-transform duration-300" />
+              </Button>
+            </Link>
             <Link href="/cart">
               <Button 
                 variant="ghost" 

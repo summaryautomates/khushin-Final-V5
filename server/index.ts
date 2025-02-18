@@ -79,18 +79,19 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 
 const startServer = async () => {
   // Get port from environment variable with fallbacks and convert to number
-  const PORT = Number(process.env.PORT || process.env.REPL_PORT || 5000);
+  let PORT = Number(process.env.PORT || process.env.REPL_PORT || 0); // Using 0 to let OS assign port
 
   try {
-    log(`Starting server on port ${PORT}...`, 'server');
+    log(`Starting server...`, 'server');
     const server = createServer(app);
 
     await new Promise<void>((resolve, reject) => {
       const onError = (error: Error & { code?: string }) => {
         server.removeListener('listening', onListening);
         if (error.code === 'EADDRINUSE') {
-          log(`Port ${PORT} is already in use. Trying alternative port...`, 'server');
-          server.listen(0); // Let OS assign an available port
+          log(`Port ${PORT} is already in use, trying alternative port...`, 'server');
+          PORT = 0; // Let OS assign an available port
+          server.listen(PORT);
         } else {
           reject(error);
         }
@@ -106,7 +107,7 @@ const startServer = async () => {
       server.once('error', onError);
       server.once('listening', onListening);
 
-      server.listen(PORT);
+      server.listen(PORT, '0.0.0.0');
     });
 
     // Setup graceful shutdown
