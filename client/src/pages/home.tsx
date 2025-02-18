@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/products/product-grid";
@@ -34,7 +34,7 @@ import { useState } from "react";
 
 
 export default function Home() {
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -45,7 +45,7 @@ export default function Home() {
   const scale = useTransform(scrollYProgress, [0, 0.3], [1, 0.98]);
 
   const handleBookExperience = () => {
-    setLocation('/customize');
+    setLocation('/event-organizer');
   };
 
   return (
