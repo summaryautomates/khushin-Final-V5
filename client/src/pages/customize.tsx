@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useResponsive } from "@/hooks/use-responsive";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function Customize() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { isMobile, isTablet } = useResponsive();
   const [selectedColor, setSelectedColor] = useState("#000000");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [customText, setCustomText] = useState("");
@@ -41,12 +43,12 @@ export default function Customize() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold mb-8">Customize Your Product</h1>
+    <div className="container mx-auto px-4 py-6 md:py-12">
+      <h1 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8">Customize Your Product</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-          <Card className="mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
+        <div className={`${!isMobile ? 'sticky top-24' : ''}`}>
+          <Card className="mb-4 md:mb-8">
             <CardHeader>
               <CardTitle>Preview</CardTitle>
               <CardDescription>See how your customization looks</CardDescription>
@@ -60,7 +62,7 @@ export default function Customize() {
                     className="max-w-full max-h-full object-contain"
                   />
                 ) : (
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground text-center px-4">
                     Customization preview will appear here
                   </p>
                 )}
@@ -71,7 +73,7 @@ export default function Customize() {
 
         <div>
           <Tabs defaultValue="upload" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className={`grid w-full ${isMobile ? 'grid-cols-1' : 'grid-cols-3'} gap-2`}>
               <TabsTrigger value="upload">Upload Design</TabsTrigger>
               <TabsTrigger value="text">Add Text</TabsTrigger>
               <TabsTrigger value="color">Color</TabsTrigger>
@@ -92,6 +94,7 @@ export default function Customize() {
                     type="file"
                     accept="image/*"
                     onChange={handleImageUpload}
+                    className="mt-2"
                   />
                 </CardContent>
               </Card>
@@ -112,6 +115,7 @@ export default function Customize() {
                     value={customText}
                     onChange={(e) => setCustomText(e.target.value)}
                     placeholder="Enter your text here"
+                    className="mt-2"
                   />
                 </CardContent>
               </Card>
@@ -132,17 +136,17 @@ export default function Customize() {
                     type="color"
                     value={selectedColor}
                     onChange={(e) => setSelectedColor(e.target.value)}
-                    className="h-10 w-full"
+                    className="h-10 w-full mt-2"
                   />
                 </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
 
-          <div className="mt-8 space-y-4">
+          <div className="mt-6 md:mt-8 space-y-3 md:space-y-4">
             <Button 
               className="w-full" 
-              size="lg"
+              size={isMobile ? "default" : "lg"}
               onClick={() => {
                 toast({
                   title: "Design saved",
@@ -156,6 +160,7 @@ export default function Customize() {
             <Button 
               variant="outline" 
               className="w-full"
+              size={isMobile ? "default" : "lg"}
               onClick={() => setLocation("/products")}
             >
               Cancel

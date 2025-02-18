@@ -3,6 +3,7 @@ import { log } from "./vite";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
 import path from 'path';
+import { AddressInfo } from 'net';
 
 const app = express();
 
@@ -37,22 +38,42 @@ app.use((req, res, next) => {
 const startServer = async () => {
   try {
     log('Starting server...', 'server');
-    const port = process.env.PORT || 5000;
+    const ports = [5000, 5001, 5002, 5003, 5004]; // List of ports to try
+    const port = process.env.PORT || ports[0];
 
     const server = await registerRoutes(app);
 
-    // Add error handler for the server
-    server.on('error', (error: NodeJS.ErrnoException) => {
-      if (error.code === 'EADDRINUSE') {
-        log(`Port ${port} is already in use. Please try a different port.`, 'server');
-        process.exit(1);
-      } else {
-        log(`Server error: ${error.message}`, 'server');
-        process.exit(1);
-      }
-    });
+    // Function to try binding to a port
+    const tryPort = (portNumber: number): Promise<boolean> => {
+      return new Promise((resolve) => {
+        const tempServer = server.listen(portNumber, '0.0.0.0', () => {
+          tempServer.close(() => resolve(true));
+        }).on('error', () => resolve(false));
+      });
+    };
 
-    server.listen(port, '0.0.0.0', () => {
+    // Try ports sequentially until one works
+    let selectedPort = port;
+    if (typeof port === 'string') {
+      selectedPort = parseInt(port, 10);
+    }
+
+    let portFound = await tryPort(selectedPort);
+    if (!portFound && !process.env.PORT) {
+      for (const fallbackPort of ports.slice(1)) {
+        portFound = await tryPort(fallbackPort);
+        if (portFound) {
+          selectedPort = fallbackPort;
+          break;
+        }
+      }
+    }
+
+    if (!portFound) {
+      throw new Error('No available ports found');
+    }
+
+    server.listen(selectedPort, '0.0.0.0', () => {
       const address = server.address() as AddressInfo;
       log(`Server successfully bound to port ${address.port}`, 'server');
       log(`Server started in ${process.env.NODE_ENV || 'development'} mode`, 'server');
