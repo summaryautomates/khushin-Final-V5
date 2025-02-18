@@ -804,6 +804,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint to get all orders from store
+  app.get("/api/orders/debug", (_req, res) => {
+    const orders = Array.from(orderStore.values());
+    res.json(orders);
+  });
+
+  // Update existing orders with tracking info
+  app.post("/api/orders/debug/update-tracking", (_req, res) => {
+    orderStore.forEach((order, orderRef) => {
+      if (!order.trackingNumber) {
+        order.trackingNumber = `TRK${Date.now()}${Math.random().toString(36).substring(2, 5)}`;
+        order.trackingStatus = 'Order Confirmed';
+        const estimatedDelivery = new Date();
+        estimatedDelivery.setDate(estimatedDelivery.getDate() + 3);
+        order.estimatedDelivery = estimatedDelivery.toISOString();
+        orderStore.set(orderRef, order);
+      }
+    });
+
+    res.json({ message: "Orders updated with tracking information" });
+  });
+
+
   // Create HTTP server
   const server = createServer(app);
 
