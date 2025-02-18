@@ -3,11 +3,24 @@ import { log } from "./vite";
 import { AddressInfo } from 'net';
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
+import path from 'path';
 
 const app = express();
 
 // Only essential middleware
 app.use(express.json());
+
+// Configure static file serving for assets with detailed logging
+app.use('/attached_assets', (req, res, next) => {
+  log(`Static asset request: ${req.url}`, 'static');
+  express.static('attached_assets', {
+    setHeaders: (res, filepath) => {
+      if (filepath.endsWith('.glb')) {
+        res.setHeader('Content-Type', 'model/gltf-binary');
+      }
+    }
+  })(req, res, next);
+});
 
 // Basic health check
 app.get('/api/health', (_req, res) => {
@@ -24,79 +37,58 @@ app.use((req, res, next) => {
   next();
 });
 
-// Configure static file serving for assets
-app.use('/attached_assets', express.static('attached_assets'));
-
 // Start server with detailed logging and port fallback
 const startServer = async () => {
-  const tryPort = async (port: number): Promise<void> => {
-    try {
-      const server = await registerRoutes(app);
-
-      await new Promise<void>((resolve, reject) => {
-        server.once('error', (error: NodeJS.ErrnoException) => {
-          if (error.code === 'EADDRINUSE') {
-            log(`Port ${port} is in use, trying next port...`, 'server');
-            reject(error);
-          } else {
-            log(`Server error: ${error.message}`, 'server');
-            reject(error);
-          }
-        });
-
-        server.listen(port, '0.0.0.0', () => {
-          const address = server.address() as AddressInfo;
-          log(`Server successfully bound to port ${address.port}`, 'server');
-          log(`Server started in ${process.env.NODE_ENV || 'development'} mode`, 'server');
-
-          // Setup Vite after server is running
-          if (process.env.NODE_ENV !== 'production') {
-            setupVite(app, server)
-              .then(() => log('Vite setup complete', 'server'))
-              .catch(error => {
-                log(`Vite setup error: ${error}`, 'server');
-                process.exit(1);
-              });
-          } else {
-            serveStatic(app);
-          }
-          resolve();
-        });
-      });
-    } catch (error) {
-      if (error && (error as NodeJS.ErrnoException).code === 'EADDRINUSE') {
-        throw error; // Re-throw to try next port
-      }
-      log(`Failed to start server: ${error}`, 'server');
-      process.exit(1);
-    }
-  };
-
   try {
     log('Starting server...', 'server');
-    const configuredPort = process.env.PORT;
-    log(`Configured PORT env var: ${configuredPort}`, 'server');
+    const port = process.env.PORT || 5000; // Changed default port to 5000
 
-    const initialPort = Number(configuredPort) || 5000;
-    const maxRetries = 3;
+    const server = await registerRoutes(app);
 
-    for (let i = 0; i < maxRetries; i++) {
-      const port = initialPort + i;
-      try {
-        log(`Attempting to start server on port ${port}...`, 'server');
-        await tryPort(port);
-        return; // Server started successfully
-      } catch (error) {
-        if (i === maxRetries - 1) {
-          log(`Failed to bind to any port after ${maxRetries} attempts`, 'server');
-          process.exit(1);
-        }
+    // Add error handler for the server
+    server.on('error', (error: NodeJS.ErrnoException) => {
+      if (error.code === 'EADDRINUSE') {
+        log(`Port ${port} is already in use. Please try a different port.`, 'server');
+        process.exit(1);
+      } else {
+        log(`Server error: ${error.message}`, 'server');
+        process.exit(1);
       }
-    }
+    });
+
+    server.listen(port, '0.0.0.0', () => {
+      const address = server.address() as AddressInfo;
+      log(`Server successfully bound to port ${address.port}`, 'server');
+      log(`Server started in ${process.env.NODE_ENV || 'development'} mode`, 'server');
+
+      // Setup Vite after server is running
+      if (process.env.NODE_ENV !== 'production') {
+        setupVite(app, server)
+          .then(() => log('Vite setup complete', 'server'))
+          .catch(error => {
+            log(`Vite setup error: ${error}`, 'server');
+            process.exit(1);
+          });
+      } else {
+        serveStatic(app);
+      }
+    });
+
   } catch (error) {
     log(`Critical server error: ${error}`, 'server');
     process.exit(1);
   }
 };
+
+// Add process handlers for cleanup
+process.on('SIGTERM', () => {
+  log('SIGTERM received. Shutting down gracefully...', 'server');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  log('SIGINT received. Shutting down gracefully...', 'server');
+  process.exit(0);
+});
 
 startServer();
