@@ -26,6 +26,7 @@ import Orders from "@/pages/orders";
 import OrderDetails from "@/pages/order-details";
 import Refueling from "@/pages/refueling";
 import EventOrganizer from "@/pages/event-organizer";
+import ExpressDelivery from "@/pages/express-delivery";
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
                 <Route path="/shipping" component={Shipping} />
                 <Route path="/returns" component={Returns} />
                 <Route path="/event-organizer" component={EventOrganizer} />
+                <Route path="/express-delivery" component={ExpressDelivery} />
                 <Route path="/test-error" component={TestError} />
                 <Route component={NotFound} />
               </Switch>
