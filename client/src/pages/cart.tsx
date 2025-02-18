@@ -17,7 +17,7 @@ const calculateShippingCost = (subtotal: number): number => {
 };
 
 export default function Cart() {
-  const { state, removeItem, updateQuantity, updateGiftWrap } = useCart();
+  const cart = useCart();
   const { toast } = useToast();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [showShippingForm, setShowShippingForm] = useState(() => {
@@ -26,10 +26,11 @@ export default function Cart() {
   });
   const [shippingAddress, setShippingAddress] = useState<ShippingFormData | null>(null);
   const [discountCode, setDiscountCode] = useState("");
+  const [discountedTotal, setDiscountedTotal] = useState<number | null>(null);
 
-  const subtotal = state.total;
+  const subtotal = cart.total;
   const shippingCost = calculateShippingCost(subtotal);
-  const total = subtotal + shippingCost + (state.giftWrap.cost || 0);
+  const total = subtotal + shippingCost + (cart.giftWrap.cost || 0);
 
   const handleShippingSubmit = async (data: ShippingFormData) => {
     setShippingAddress(data);
@@ -37,44 +38,44 @@ export default function Cart() {
   };
 
   const handleDiscountSubmit = async () => {
-  try {
-    const response = await fetch('/api/validate-discount', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: discountCode })
-    });
+    try {
+      const response = await fetch('/api/validate-discount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: discountCode })
+      });
 
-    if (!response.ok) {
+      if (!response.ok) {
+        toast({
+          title: "Error",
+          description: "Invalid discount code",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const { discountPercent } = await response.json();
+      toast({
+        description: `Discount code applied: ${discountPercent}% off`,
+      });
+
+      // Apply discount to cart total
+      const discountAmount = (subtotal * discountPercent) / 100;
+      setDiscountedTotal(subtotal - discountAmount);
+    } catch (error) {
+      console.error('Error applying discount:', error);
       toast({
         title: "Error",
-        description: "Invalid discount code",
+        description: "Failed to apply discount code",
         variant: "destructive"
       });
-      return;
     }
+  };
 
-    const { discountPercent } = await response.json();
-    toast({
-      description: `Discount code applied: ${discountPercent}% off`,
-    });
-
-    // Apply discount to cart total
-    const discountAmount = (subtotal * discountPercent) / 100;
-    setDiscountedTotal(subtotal - discountAmount);
-  } catch (error) {
-    console.error('Error applying discount:', error);
-    toast({
-      title: "Error",
-      description: "Failed to apply discount code",
-      variant: "destructive"
-    });
-  }
-};
-
-const handleCheckout = async (shippingData?: ShippingFormData) => {
+  const handleCheckout = async (shippingData?: ShippingFormData) => {
     try {
       setIsCheckingOut(true);
-      const items = state.items.map(item => ({
+      const items = cart.items.map(item => ({
         productId: item.product.id,
         quantity: item.quantity
       }));
@@ -82,7 +83,7 @@ const handleCheckout = async (shippingData?: ShippingFormData) => {
       const checkoutData = {
         items,
         shipping: shippingData || shippingAddress,
-        giftWrap: state.giftWrap
+        giftWrap: cart.giftWrap
       };
 
       const response = await apiRequest('POST', '/api/checkout', checkoutData);
@@ -105,7 +106,7 @@ const handleCheckout = async (shippingData?: ShippingFormData) => {
     }
   };
 
-  if (state.items.length === 0) {
+  if (cart.items.length === 0) {
     return (
       <div className="container py-20 min-h-screen">
         <Card className="max-w-lg mx-auto">
@@ -134,7 +135,7 @@ const handleCheckout = async (shippingData?: ShippingFormData) => {
           <h1 className="text-3xl font-bold">Shopping Cart</h1>
           <div className="grid gap-8 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-4">
-              {state.items.map((item) => (
+              {cart.items.map((item) => (
                 <motion.div
                   key={item.product.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -162,7 +163,7 @@ const handleCheckout = async (shippingData?: ShippingFormData) => {
                               <Button
                                 variant="outline"
                                 size="icon"
-                                onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                                onClick={() => cart.updateQuantity(item.product.id, item.quantity - 1)}
                                 disabled={item.quantity <= 1}
                               >
                                 <Minus className="h-4 w-4" />
@@ -171,7 +172,7 @@ const handleCheckout = async (shippingData?: ShippingFormData) => {
                               <Button
                                 variant="outline"
                                 size="icon"
-                                onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                                onClick={() => cart.updateQuantity(item.product.id, item.quantity + 1)}
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
@@ -180,7 +181,7 @@ const handleCheckout = async (shippingData?: ShippingFormData) => {
                               variant="ghost"
                               size="icon"
                               className="text-destructive"
-                              onClick={() => removeItem(item.product.id)}
+                              onClick={() => cart.removeItem(item.product.id)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -216,8 +217,8 @@ const handleCheckout = async (shippingData?: ShippingFormData) => {
                             type="radio"
                             name="gift-wrap"
                             value="none"
-                            checked={!state.giftWrap.type}
-                            onChange={() => updateGiftWrap(null, 0)}
+                            checked={!cart.giftWrap.type}
+                            onChange={() => cart.updateGiftWrap(null, 0)}
                             className="rounded-full"
                           />
                           <span>No gift wrap</span>
@@ -230,8 +231,8 @@ const handleCheckout = async (shippingData?: ShippingFormData) => {
                             type="radio"
                             name="gift-wrap"
                             value="standard"
-                            checked={state.giftWrap.type === 'standard'}
-                            onChange={() => updateGiftWrap('standard', 199)}
+                            checked={cart.giftWrap.type === 'standard'}
+                            onChange={() => cart.updateGiftWrap('standard', 199)}
                             className="rounded-full"
                           />
                           <span>Standard Wrap</span>
@@ -244,8 +245,8 @@ const handleCheckout = async (shippingData?: ShippingFormData) => {
                             type="radio"
                             name="gift-wrap"
                             value="premium"
-                            checked={state.giftWrap.type === 'premium'}
-                            onChange={() => updateGiftWrap('premium', 399)}
+                            checked={cart.giftWrap.type === 'premium'}
+                            onChange={() => cart.updateGiftWrap('premium', 399)}
                             className="rounded-full"
                           />
                           <span>Premium Wrap</span>
@@ -258,8 +259,8 @@ const handleCheckout = async (shippingData?: ShippingFormData) => {
                             type="radio"
                             name="gift-wrap"
                             value="luxury"
-                            checked={state.giftWrap.type === 'luxury'}
-                            onChange={() => updateGiftWrap('luxury', 699)}
+                            checked={cart.giftWrap.type === 'luxury'}
+                            onChange={() => cart.updateGiftWrap('luxury', 699)}
                             className="rounded-full"
                           />
                           <span>Luxury Gift Box</span>
@@ -272,10 +273,10 @@ const handleCheckout = async (shippingData?: ShippingFormData) => {
                     <span>Subtotal</span>
                     <span>{formatPrice(subtotal)}</span>
                   </div>
-                  {state.giftWrap.type && (
+                  {cart.giftWrap.type && (
                     <div className="flex justify-between text-sm">
-                      <span>Gift Wrapping ({state.giftWrap.type})</span>
-                      <span>{formatPrice(state.giftWrap.cost)}</span>
+                      <span>Gift Wrapping ({cart.giftWrap.type})</span>
+                      <span>{formatPrice(cart.giftWrap.cost)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
@@ -294,7 +295,7 @@ const handleCheckout = async (shippingData?: ShippingFormData) => {
                   <div className="border-t pt-4">
                     <div className="flex justify-between font-semibold">
                       <span>Total</span>
-                      <span>{formatPrice(total)}</span>
+                      <span>{formatPrice(discountedTotal || total)}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -331,7 +332,7 @@ const handleCheckout = async (shippingData?: ShippingFormData) => {
             <div className="sticky top-24 space-y-4">
               <div className="rounded border bg-card">
                 <div className="p-3 space-y-3">
-                  {state.items.map((item) => (
+                  {cart.items.map((item) => (
                     <div key={item.product.id} className="flex items-center gap-3">
                       <div className="relative">
                         <div className="w-14 h-14 rounded border overflow-hidden bg-zinc-50">
@@ -384,7 +385,7 @@ const handleCheckout = async (shippingData?: ShippingFormData) => {
                     </div>
                     <div className="flex justify-between font-medium pt-1.5 border-t text-sm">
                       <span>Total</span>
-                      <span>{formatPrice(total)}</span>
+                      <span>{formatPrice(discountedTotal || total)}</span>
                     </div>
                   </div>
                 </div>

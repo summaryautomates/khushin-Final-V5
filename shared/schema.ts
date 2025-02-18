@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, jsonb, foreignKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -39,10 +39,21 @@ export const returnRequests = pgTable("return_requests", {
   createdAt: text("created_at").notNull(),
 });
 
+export const cartItems = pgTable("cart_items", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  productId: integer("product_id").notNull().references(() => products.id),
+  quantity: integer("quantity").notNull(),
+  giftWrapType: text("gift_wrap_type"),
+  giftWrapCost: integer("gift_wrap_cost").default(0),
+});
+
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({ id: true });
 export const insertContactMessageSchema = createInsertSchema(contactMessages).omit({ id: true });
 export const insertReturnRequestSchema = createInsertSchema(returnRequests).omit({ id: true });
+
+export const insertCartItemSchema = createInsertSchema(cartItems).omit({ id: true });
 
 export type Product = typeof products.$inferSelect;
 export type BlogPost = typeof blogPosts.$inferSelect;
@@ -51,6 +62,8 @@ export type ReturnRequest = typeof returnRequests.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
 export type InsertReturnRequest = z.infer<typeof insertReturnRequestSchema>;
+export type CartItem = typeof cartItems.$inferSelect;
+export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 
 export const discountCodes = pgTable("discount_codes", {
   id: serial("id").primaryKey(),

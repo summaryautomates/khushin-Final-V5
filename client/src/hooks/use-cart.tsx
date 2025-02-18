@@ -1,6 +1,7 @@
-import { createContext, useContext, useReducer, ReactNode } from "react";
+import { createContext, useContext, useReducer, useEffect, ReactNode } from "react";
 import { Product } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface CartItem {
   product: Product;
@@ -18,6 +19,7 @@ interface CartState {
     code: string;
     percent: number;
   } | null;
+  isLoading: boolean;
 }
 
 type CartAction =
@@ -27,51 +29,59 @@ type CartAction =
   | { type: "REMOVE_ITEM"; payload: { productId: number } }
   | { type: "UPDATE_QUANTITY"; payload: { productId: number; quantity: number } }
   | { type: "UPDATE_GIFT_WRAP"; payload: { type: GiftWrapType; cost: number } }
+  | { type: "SET_CART_ITEMS"; payload: CartItem[] }
+  | { type: "SET_LOADING"; payload: boolean }
   | { type: "CLEAR_CART" };
 
-interface CartContextType {
-  state: CartState;
-  addItem: (product: Product, quantity?: number) => void;
-  removeItem: (productId: number) => void;
-  updateQuantity: (productId: number, quantity: number) => void;
-  updateGiftWrap: (type: GiftWrapType, cost: number) => void;
-  clearCart: () => void;
+interface CartContextType extends CartState {
+  addItem: (product: Product, quantity?: number) => Promise<void>;
+  removeItem: (productId: number) => Promise<void>;
+  updateQuantity: (productId: number, quantity: number) => Promise<void>;
+  updateGiftWrap: (type: GiftWrapType, cost: number) => Promise<void>;
+  clearCart: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
+    case "SET_LOADING":
+      return { ...state, isLoading: action.payload };
+
+    case "SET_CART_ITEMS":
+      return {
+        ...state,
+        items: action.payload,
+        total: calculateTotal(action.payload),
+        isLoading: false,
+      };
+
     case "ADD_ITEM": {
       const existingItem = state.items.find(
         item => item.product.id === action.payload.product.id
       );
 
       if (existingItem) {
+        const newItems = state.items.map(item =>
+          item.product.id === action.payload.product.id
+            ? { ...item, quantity: item.quantity + (action.payload.quantity || 1) }
+            : item
+        );
         return {
           ...state,
-          items: state.items.map(item =>
-            item.product.id === action.payload.product.id
-              ? { ...item, quantity: item.quantity + (action.payload.quantity || 1) }
-              : item
-          ),
-          total: calculateTotal([
-            ...state.items.map(item =>
-              item.product.id === action.payload.product.id
-                ? { ...item, quantity: item.quantity + (action.payload.quantity || 1) }
-                : item
-            ),
-          ]),
+          items: newItems,
+          total: calculateTotal(newItems),
         };
       }
 
+      const newItems = [
+        ...state.items,
+        { product: action.payload.product, quantity: action.payload.quantity || 1 }
+      ];
       return {
         ...state,
-        items: [...state.items, { product: action.payload.product, quantity: action.payload.quantity || 1 }],
-        total: calculateTotal([
-          ...state.items,
-          { product: action.payload.product, quantity: action.payload.quantity || 1 },
-        ]),
+        items: newItems,
+        total: calculateTotal(newItems),
       };
     }
 
@@ -117,6 +127,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         total: 0,
         giftWrap: { type: null, cost: 0 },
         discount: null,
+        isLoading: false,
       };
 
     default:
@@ -124,9 +135,8 @@ function cartReducer(state: CartState, action: CartAction): CartState {
   }
 }
 
-function calculateTotal(items: CartItem[], giftWrapCost: number = 0): number {
-  const itemsTotal = items.reduce((total, item) => total + item.product.price * item.quantity, 0);
-  return itemsTotal + giftWrapCost;
+function calculateTotal(items: CartItem[]): number {
+  return items.reduce((total, item) => total + item.product.price * item.quantity, 0);
 }
 
 type GiftWrapType = 'standard' | 'premium' | 'luxury' | null;
@@ -136,37 +146,94 @@ export function CartProvider({ children }: { children: ReactNode }) {
     items: [],
     total: 0,
     giftWrap: { type: null, cost: 0 },
-    discount: null
+    discount: null,
+    isLoading: true,
   });
+
   const { toast } = useToast();
 
-  const addItem = (product: Product, quantity = 1) => {
-    dispatch({ type: "ADD_ITEM", payload: { product, quantity } });
-    toast({
-      description: `${product.name} added to cart`,
-    });
+  // Load cart items when the component mounts
+  useEffect(() => {
+    const loadCartItems = async () => {
+      try {
+        const response = await apiRequest('GET', '/api/cart');
+        const items = await response.json();
+        dispatch({ type: "SET_CART_ITEMS", payload: items });
+      } catch (error) {
+        console.error('Failed to load cart items:', error);
+        dispatch({ type: "SET_LOADING", payload: false });
+      }
+    };
+
+    loadCartItems();
+  }, []);
+
+  const addItem = async (product: Product, quantity = 1) => {
+    try {
+      await apiRequest('POST', '/api/cart', {
+        productId: product.id,
+        quantity,
+      });
+      dispatch({ type: "ADD_ITEM", payload: { product, quantity } });
+      toast({
+        description: `${product.name} added to cart`,
+      });
+    } catch (error) {
+      console.error('Failed to add item to cart:', error);
+      toast({
+        variant: "destructive",
+        description: "Failed to add item to cart",
+      });
+    }
   };
 
-  const removeItem = (productId: number) => {
-    dispatch({ type: "REMOVE_ITEM", payload: { productId } });
+  const removeItem = async (productId: number) => {
+    try {
+      await apiRequest('DELETE', `/api/cart/${productId}`);
+      dispatch({ type: "REMOVE_ITEM", payload: { productId } });
+    } catch (error) {
+      console.error('Failed to remove item from cart:', error);
+      toast({
+        variant: "destructive",
+        description: "Failed to remove item from cart",
+      });
+    }
   };
 
-  const updateQuantity = (productId: number, quantity: number) => {
-    dispatch({ type: "UPDATE_QUANTITY", payload: { productId, quantity } });
+  const updateQuantity = async (productId: number, quantity: number) => {
+    try {
+      await apiRequest('PATCH', `/api/cart/${productId}`, { quantity });
+      dispatch({ type: "UPDATE_QUANTITY", payload: { productId, quantity } });
+    } catch (error) {
+      console.error('Failed to update quantity:', error);
+      toast({
+        variant: "destructive",
+        description: "Failed to update quantity",
+      });
+    }
   };
 
-  const clearCart = () => {
-    dispatch({ type: "CLEAR_CART" });
+  const clearCart = async () => {
+    try {
+      await apiRequest('DELETE', '/api/cart');
+      dispatch({ type: "CLEAR_CART" });
+    } catch (error) {
+      console.error('Failed to clear cart:', error);
+      toast({
+        variant: "destructive",
+        description: "Failed to clear cart",
+      });
+    }
   };
 
-  const updateGiftWrap = (type: GiftWrapType, cost: number) => {
+  const updateGiftWrap = async (type: GiftWrapType, cost: number) => {
     dispatch({ type: "UPDATE_GIFT_WRAP", payload: { type, cost } });
   };
 
   return (
     <CartContext.Provider
       value={{
-        state,
+        ...state,
         addItem,
         removeItem,
         updateQuantity,
