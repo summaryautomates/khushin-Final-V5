@@ -73,7 +73,10 @@ const orderStore = new Map<string, {
     pincode: string,
     phone: string
   },
-  createdAt: string
+  createdAt: string,
+  trackingNumber?: string,
+  trackingStatus?: string,
+  estimatedDelivery?: string
 }>();
 
 const returnRequestSchema = z.object({
@@ -298,12 +301,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       payment.status = validatedBody.status;
       order.status = validatedBody.status;
 
+      // Add tracking information when payment is completed
+      if (validatedBody.status === 'completed') {
+        const trackingNumber = `TRK${Date.now()}${Math.random().toString(36).substring(2, 5)}`;
+        const estimatedDelivery = new Date();
+        estimatedDelivery.setDate(estimatedDelivery.getDate() + 3); // Delivery in 3 days
+
+        order.trackingNumber = trackingNumber;
+        order.trackingStatus = 'Order Confirmed';
+        order.estimatedDelivery = estimatedDelivery.toISOString();
+      }
+
       paymentStore.set(orderRef, payment);
       orderStore.set(orderRef, order);
 
       res.json({
         status: validatedBody.status,
         orderRef,
+        trackingNumber: order.trackingNumber,
+        trackingStatus: order.trackingStatus,
+        estimatedDelivery: order.estimatedDelivery,
         updated: new Date().toISOString()
       });
     } catch (error) {
@@ -738,6 +755,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         message: "Failed to update order status",
         details: "An error occurred while updating the order status"
+      });
+    }
+  });
+
+  // Add a test endpoint to update order status
+  app.post("/api/orders/:orderRef/test-update", async (req, res) => {
+    try {
+      const { orderRef } = req.params;
+      const order = orderStore.get(orderRef);
+
+      if (!order) {
+        return res.status(404).json({
+          message: "Order not found",
+          details: "The specified order reference could not be found"
+        });
+      }
+
+      // Update tracking status
+      order.trackingStatus = "Out for Delivery";
+      order.estimatedDelivery = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // Tomorrow
+      orderStore.set(orderRef, order);
+
+      // Broadcast update to WebSocket clients
+      const statusUpdate = {
+        type: 'ORDER_STATUS_UPDATE',
+        orderRef,
+        status: order.trackingStatus,
+        timestamp: new Date().toISOString()
+      };
+
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          const orderTrackingClient = client as OrderTrackingWebSocket;
+          if (orderTrackingClient.orderRef === orderRef) {
+            client.send(JSON.stringify(statusUpdate));
+          }
+        }
+      });
+
+      res.json(order);
+    } catch (error) {
+      console.error('Test update error:', error);
+      res.status(500).json({
+        message: "Failed to update order status",
+        details: "An error occurred while updating the test status"
       });
     }
   });
