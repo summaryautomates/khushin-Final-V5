@@ -8,64 +8,20 @@ import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import { Server } from 'http';
 import { AddressInfo } from 'net';
-import rateLimit from 'express-rate-limit';
-import csrf from 'csurf';
-import compression from 'compression';
 
 // Basic Express setup with minimal middleware
 const app = express();
+app.use(express.json());
+app.use(cors());
+app.use(cookieParser());
 
-// Enable compression
-app.use(compression());
-
-// Security middleware
-app.use(helmet({
-  contentSecurityPolicy: process.env.NODE_ENV === 'production',
-  crossOriginEmbedderPolicy: process.env.NODE_ENV === 'production',
-}));
-
-// CORS configuration
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? process.env.ALLOWED_ORIGINS?.split(',') || [] 
-    : true,
-  credentials: true,
-}));
-
-app.use(express.json({ limit: '10mb' }));
-app.use(cookieParser(process.env.COOKIE_SECRET || 'your-secret-key'));
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
-});
-
-app.use('/api/', limiter);
-
-// Session middleware with secure configuration
-const sessionConfig = {
+// Session middleware
+app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    sameSite: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
-};
-
-if (process.env.NODE_ENV === 'production') {
-  app.set('trust proxy', 1);
-  sessionConfig.cookie.secure = true;
-}
-
-app.use(session(sessionConfig));
-
-// CSRF protection for all non-GET requests
-app.use(csrf({ cookie: true }));
+  cookie: { secure: process.env.NODE_ENV === 'production' }
+}));
 
 // Performance monitoring middleware
 app.use((req, res, next) => {
@@ -74,23 +30,6 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (req.path.startsWith("/api")) {
       log(`${req.method} ${req.path} ${res.statusCode} in ${duration}ms`, 'server');
-
-      // Log slow requests
-      if (duration > 1000) {
-        performanceMetrics.slowRequests.push({
-          path: req.path,
-          duration,
-          timestamp: Date.now()
-        });
-
-        // Keep only the last 100 slow requests
-        if (performanceMetrics.slowRequests.length > 100) {
-          performanceMetrics.slowRequests.shift();
-        }
-      }
-
-      performanceMetrics.requestCount++;
-      performanceMetrics.totalResponseTime += duration;
     }
   });
   next();
@@ -129,46 +68,13 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-// CSRF token endpoint
-app.get('/api/csrf-token', (req, res) => {
-  res.json({ csrfToken: req.csrfToken() });
-});
-
 // Register API routes
 registerRoutes(app);
 
 // Error handling middleware
-app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
-  // Log error details
-  console.error('Error:', {
-    message: err.message,
-    stack: err.stack,
-    path: req.path,
-    method: req.method,
-    timestamp: new Date().toISOString()
-  });
-
-  // Handle CSRF token errors
-  if (err.code === 'EBADCSRFTOKEN') {
-    return res.status(403).json({
-      message: 'Invalid CSRF token. Please refresh the page and try again.'
-    });
-  }
-
-  // Handle rate limit errors
-  if (err.status === 429) {
-    return res.status(429).json({
-      message: 'Too many requests. Please try again later.'
-    });
-  }
-
-  // Send appropriate error response
-  res.status(err.status || 500).json({ 
-    message: process.env.NODE_ENV === 'production' 
-      ? 'An unexpected error occurred' 
-      : err.message || 'Internal Server Error',
-    ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
-  });
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  console.error('Error:', err);
+  res.status(err.status || 500).json({ message: err.message || 'Internal Server Error' });
 });
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -211,12 +117,6 @@ const startServer = async () => {
           log('Server closed', 'server');
           process.exit(0);
         });
-
-        // Force shutdown after 10 seconds
-        setTimeout(() => {
-          log('Forcing shutdown after timeout', 'server');
-          process.exit(1);
-        }, 10000);
       };
 
       process.on('SIGTERM', shutdown);
@@ -242,6 +142,7 @@ const startServer = async () => {
     } catch (err: any) {
       if (err.code === 'EADDRINUSE') {
         if (retry === MAX_RETRIES - 1) {
+          // If we've exhausted retries on primary port, try fallback ports
           log(`Unable to bind to primary port ${PRIMARY_PORT} after ${MAX_RETRIES} attempts, trying fallback ports...`, 'server');
           break;
         }

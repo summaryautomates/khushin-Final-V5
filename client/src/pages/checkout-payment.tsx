@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,12 +25,10 @@ export default function CheckoutPayment() {
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
-  const { data: paymentDetails, isLoading, error, refetch } = useQuery<PaymentDetails>({
+  const { data: paymentDetails, isLoading, error } = useQuery<PaymentDetails>({
     queryKey: [`/api/payment/${orderRef}`],
     enabled: !!orderRef,
     retry: 3,
-    staleTime: 0, // Always fetch fresh data
-    refetchInterval: 5000, // Poll every 5 seconds for status updates
   });
 
   useEffect(() => {
@@ -45,33 +43,28 @@ export default function CheckoutPayment() {
     }
   }, [orderRef, setLocation, toast]);
 
-  const generateQRCode = useCallback(async (details: PaymentDetails) => {
-    try {
-      const qrData = JSON.stringify({
-        pa: details.upiId,
-        pn: details.merchantName,
-        am: details.amount.toString(),
-        tr: details.orderRef,
-        tn: `Payment for order ${details.orderRef}`,
-      });
-
-      const url = await QRCode.toDataURL(qrData);
-      setQrCodeUrl(url);
-    } catch (err) {
-      console.error('QR Code generation failed:', err);
-      toast({
-        title: "Error",
-        description: "Failed to generate payment QR code. Please try again.",
-        variant: "destructive",
-      });
-    }
-  }, [toast]);
-
   useEffect(() => {
     if (paymentDetails) {
-      generateQRCode(paymentDetails);
+      const qrData = JSON.stringify({
+        pa: paymentDetails.upiId,
+        pn: paymentDetails.merchantName,
+        am: paymentDetails.amount.toString(),
+        tr: paymentDetails.orderRef,
+        tn: `Payment for order ${paymentDetails.orderRef}`,
+      });
+
+      QRCode.toDataURL(qrData)
+        .then(url => setQrCodeUrl(url))
+        .catch(err => {
+          console.error('QR Code generation failed:', err);
+          toast({
+            title: "Error",
+            description: "Failed to generate payment QR code. Please try again.",
+            variant: "destructive",
+          });
+        });
     }
-  }, [paymentDetails, generateQRCode]);
+  }, [paymentDetails, toast]);
 
   useEffect(() => {
     if (paymentStatus === 'completed') {
@@ -87,21 +80,15 @@ export default function CheckoutPayment() {
     try {
       const response = await fetch(`/api/payment/${orderRef}/status`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-        },
-        body: JSON.stringify({ status: newStatus }),
-        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
       });
 
       if (!response.ok) {
-        throw new Error(await response.text() || 'Failed to update payment status');
+        throw new Error('Failed to update payment status');
       }
 
       setPaymentStatus(newStatus);
-      await refetch(); // Refresh payment details
-
       if (newStatus === 'failed') {
         toast({
           title: "Payment Failed",
@@ -113,7 +100,7 @@ export default function CheckoutPayment() {
       console.error('Failed to update payment status:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update payment status. Please try again.",
+        description: "Failed to update payment status. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -130,7 +117,7 @@ export default function CheckoutPayment() {
               <XCircle className="h-12 w-12 text-destructive mx-auto" />
               <h2 className="text-xl font-semibold">Payment Error</h2>
               <p className="text-muted-foreground">
-                {error instanceof Error ? error.message : "There was an error loading your payment details."}
+                There was an error loading your payment details. Please try again.
               </p>
               <Button onClick={() => setLocation('/cart')}>
                 Return to Cart
@@ -157,27 +144,6 @@ export default function CheckoutPayment() {
     );
   }
 
-  if (!paymentDetails) {
-    return (
-      <div className="container py-20 min-h-screen">
-        <Card className="max-w-lg mx-auto">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              <XCircle className="h-12 w-12 text-destructive mx-auto" />
-              <h2 className="text-xl font-semibold">Payment Not Found</h2>
-              <p className="text-muted-foreground">
-                The payment session could not be found. Please try again.
-              </p>
-              <Button onClick={() => setLocation('/cart')}>
-                Return to Cart
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="container py-20 min-h-screen">
       <Card className="max-w-lg mx-auto">
@@ -197,7 +163,6 @@ export default function CheckoutPayment() {
             )}
           </div>
           <div className="text-center">
-            <p className="font-semibold">Amount: ₹{paymentDetails.amount.toFixed(2)}</p>
             <p className="font-semibold">Order Reference: {orderRef}</p>
             <p className="text-muted-foreground mt-2">
               Scan the QR code using any UPI app to complete your payment
