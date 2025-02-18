@@ -75,8 +75,13 @@ export default function ProductPage() {
               className="h-full w-full object-contain p-4"
             />
           </div>
+          {product.category === "lighters" && (
+            <div className="mt-4 rounded-lg border overflow-hidden bg-zinc-100">
+              <ModelViewer modelUrl="/zippo_lighter.glb" />
+            </div>
+          )}
           {product.images.slice(1).length > 0 && (
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-4 gap-4 mt-4">
               {product.images.slice(1).map((image, i) => (
                 <div key={i} className="aspect-square overflow-hidden rounded-lg border bg-zinc-100">
                   <img
