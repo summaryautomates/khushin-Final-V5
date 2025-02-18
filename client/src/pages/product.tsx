@@ -9,6 +9,15 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ShareButtons } from "@/components/products/share-buttons";
 import { ModelViewer } from "@/components/model-viewer/ModelViewer";
+import { ErrorBoundary } from "react-error-boundary";
+
+function FallbackComponent() {
+  return (
+    <div className="h-full w-full flex items-center justify-center bg-zinc-900 text-white">
+      <p>Error loading 3D model. Please try again later.</p>
+    </div>
+  );
+}
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:id");
@@ -62,18 +71,22 @@ export default function ProductPage() {
     }
   };
 
+  const isLighter = product.name.toLowerCase().includes('vintage collection lighter');
+
   return (
     <div className="container py-12">
       <div className="grid gap-12 md:grid-cols-2">
         {/* Left Section: Product Images & 3D Model */}
         <div className="space-y-4">
           <div className="aspect-square overflow-hidden rounded-lg border bg-zinc-900 relative">
-            {product.name.toLowerCase().includes('vintage') || product.name.toLowerCase().includes('lighter') ? (
-              <div className="absolute inset-0">
-                <ModelViewer
-                  modelUrl="/attached_assets/zippo_lighter.glb"
-                  className="h-full"
-                />
+            {isLighter ? (
+              <div className="h-full w-full">
+                <ErrorBoundary FallbackComponent={FallbackComponent}>
+                  <ModelViewer
+                    modelUrl="/attached_assets/zippo_lighter.glb"
+                    className="h-full"
+                  />
+                </ErrorBoundary>
               </div>
             ) : (
               <img
@@ -85,10 +98,10 @@ export default function ProductPage() {
           </div>
 
           {/* Additional Product Images */}
-          {product.images.length > 1 && (
+          {!isLighter && product.images.length > 1 && (
             <div className="grid grid-cols-4 gap-4 mt-4">
               {product.images.slice(1).map((image, i) => (
-                <div key={i} className="aspect-square overflow-hidden rounded-lg border bg-zinc-100">
+                <div key={i} className="aspect-square overflow-hidden rounded-lg border bg-zinc-900">
                   <img
                     src={image}
                     alt={`${product.name} view ${i + 2}`}
