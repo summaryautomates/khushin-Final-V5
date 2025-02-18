@@ -24,7 +24,7 @@ import CheckoutSuccess from "@/pages/checkout-success";
 import CheckoutPayment from "@/pages/checkout-payment";
 import Orders from "@/pages/orders";
 import Refueling from "@/pages/refueling";
-
+import EventOrganizer from "@/pages/event-organizer";
 
 function App() {
   return (
@@ -50,6 +50,7 @@ function App() {
                 <Route path="/warranty" component={Warranty} />
                 <Route path="/shipping" component={Shipping} />
                 <Route path="/returns" component={Returns} />
+                <Route path="/event-organizer" component={EventOrganizer} />
                 <Route path="/test-error" component={TestError} />
                 <Route component={NotFound} />
               </Switch>
