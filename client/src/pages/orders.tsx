@@ -92,7 +92,7 @@ function ReturnRequestDialog({ order }: { order: Order }) {
       reason: "",
       items: order.items.map(item => ({
         productId: item.productId,
-        quantity: 0, // Initialize with 0 to force user selection
+        quantity: 0,
         reason: ""
       })),
       additionalNotes: ""
@@ -180,6 +180,65 @@ function ReturnRequestDialog({ order }: { order: Order }) {
                 </FormItem>
               )}
             />
+
+            <div className="space-y-4">
+              <h4 className="font-medium">Select Items to Return</h4>
+              {order.items.map((item, index) => (
+                <div key={item.productId} className="space-y-2 p-4 border rounded-lg">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium">{item.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Original Quantity: {item.quantity}
+                      </p>
+                    </div>
+                    <p className="text-sm font-medium">
+                      {formatPrice(item.price)}
+                    </p>
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name={`items.${index}.quantity`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quantity to Return</FormLabel>
+                        <FormControl>
+                          <input
+                            type="number"
+                            min="0"
+                            max={item.quantity}
+                            className="w-20 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`items.${index}.reason`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Item-specific Reason</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Why are you returning this specific item?"
+                            className="h-20"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              ))}
+            </div>
+
             <FormField
               control={form.control}
               name="additionalNotes"
@@ -196,6 +255,7 @@ function ReturnRequestDialog({ order }: { order: Order }) {
                 </FormItem>
               )}
             />
+
             <div className="pt-4 space-x-2 flex justify-end">
               <Button
                 type="button"
