@@ -77,10 +77,9 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   res.status(err.status || 500).json({ message: err.message || 'Internal Server Error' });
 });
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
 const startServer = async () => {
-  const PORT = 5001; // Changed to use 5001 directly
+  // Get port from environment variable with fallbacks and convert to number
+  const PORT = Number(process.env.PORT || process.env.REPL_PORT || 5000);
 
   try {
     log(`Starting server on port ${PORT}...`, 'server');
@@ -89,7 +88,12 @@ const startServer = async () => {
     await new Promise<void>((resolve, reject) => {
       const onError = (error: Error & { code?: string }) => {
         server.removeListener('listening', onListening);
-        reject(error);
+        if (error.code === 'EADDRINUSE') {
+          log(`Port ${PORT} is already in use. Trying alternative port...`, 'server');
+          server.listen(0); // Let OS assign an available port
+        } else {
+          reject(error);
+        }
       };
 
       const onListening = () => {
@@ -102,7 +106,7 @@ const startServer = async () => {
       server.once('error', onError);
       server.once('listening', onListening);
 
-      server.listen(PORT, '0.0.0.0');
+      server.listen(PORT);
     });
 
     // Setup graceful shutdown
