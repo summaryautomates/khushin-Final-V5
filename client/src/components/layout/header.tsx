@@ -40,6 +40,14 @@ export function Header() {
             ))}
             <NavigationMenuItem>
               <Link 
+                href="/refueling"
+                className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-colors"}
+              >
+                REFUELING
+              </Link>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <Link 
                 href="/customize"
                 className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-colors"}
               >

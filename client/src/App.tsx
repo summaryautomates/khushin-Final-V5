@@ -23,7 +23,7 @@ import Customize from "@/pages/customize";
 import CheckoutSuccess from "@/pages/checkout-success";
 import CheckoutPayment from "@/pages/checkout-payment";
 import Orders from "@/pages/orders";
-import Refueling from "@/pages/refueling"; // Import the new page component
+import Refueling from "@/pages/refueling";
 
 
 function App() {
@@ -49,7 +49,7 @@ function App() {
                 <Route path="/returns" component={Returns} />
                 <Route path="/orders" component={Orders} />
                 <Route path="/test-error" component={TestError} />
-                <Route path="/refueling" component={Refueling} /> {/* Add the refueling route */}
+                <Route path="/refueling" component={Refueling} />
                 <Route component={NotFound} />
               </Switch>
             </main>
