@@ -10,10 +10,18 @@ import { useState } from "react";
 import { ShippingForm, type ShippingFormData } from "@/components/checkout/shipping-form";
 import { Input } from "@/components/ui/input";
 
-// Shipping cost calculation
-const calculateShippingCost = (subtotal: number): number => {
+// Updated shipping cost calculation
+const calculateShippingCost = (subtotal: number, shippingMethod: 'standard' | 'express' | 'international' = 'standard'): number => {
   if (subtotal >= 5000) return 0; // Free shipping over ₹5000
-  return 299; // Standard shipping cost
+
+  switch (shippingMethod) {
+    case 'express':
+      return 599;
+    case 'international':
+      return 1499; // Base rate for international shipping
+    default:
+      return 299; // Standard shipping
+  }
 };
 
 export default function Cart() {
@@ -27,9 +35,10 @@ export default function Cart() {
   const [shippingAddress, setShippingAddress] = useState<ShippingFormData | null>(null);
   const [discountCode, setDiscountCode] = useState("");
   const [discountedTotal, setDiscountedTotal] = useState<number | null>(null);
+  const [shippingMethod, setShippingMethod] = useState<'standard' | 'express' | 'international'>('standard');
 
   const subtotal = cart.total;
-  const shippingCost = calculateShippingCost(subtotal);
+  const shippingCost = calculateShippingCost(subtotal, shippingMethod);
   const total = subtotal + shippingCost + (cart.giftWrap.cost || 0);
 
   const handleShippingSubmit = async (data: ShippingFormData) => {
@@ -83,6 +92,7 @@ export default function Cart() {
       const checkoutData = {
         items,
         shipping: shippingData || shippingAddress,
+        shippingMethod: shippingMethod,
         giftWrap: cart.giftWrap
       };
 
@@ -324,6 +334,76 @@ export default function Cart() {
             </div>
 
             <div className="space-y-4">
+              <div className="rounded-lg border p-4 space-y-4">
+                <h3 className="font-medium">Shipping Method</h3>
+                <div className="space-y-3">
+                  <label className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-accent">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="radio"
+                        name="shipping-method"
+                        value="standard"
+                        checked={shippingMethod === 'standard'}
+                        onChange={(e) => setShippingMethod('standard')}
+                        className="rounded-full"
+                      />
+                      <div>
+                        <p className="font-medium">Standard Shipping</p>
+                        <p className="text-sm text-muted-foreground">3-5 business days</p>
+                      </div>
+                    </div>
+                    <span className="font-medium">{subtotal >= 5000 ? 'Free' : formatPrice(299)}</span>
+                  </label>
+
+                  <label className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-accent">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="radio"
+                        name="shipping-method"
+                        value="express"
+                        checked={shippingMethod === 'express'}
+                        onChange={(e) => setShippingMethod('express')}
+                        className="rounded-full"
+                      />
+                      <div>
+                        <p className="font-medium">Express Shipping</p>
+                        <p className="text-sm text-muted-foreground">1-2 business days</p>
+                      </div>
+                    </div>
+                    <span className="font-medium">{subtotal >= 5000 ? 'Free' : formatPrice(599)}</span>
+                  </label>
+
+                  <label className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-accent">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="radio"
+                        name="shipping-method"
+                        value="international"
+                        checked={shippingMethod === 'international'}
+                        onChange={(e) => setShippingMethod('international')}
+                        className="rounded-full"
+                      />
+                      <div>
+                        <p className="font-medium">International Shipping</p>
+                        <p className="text-sm text-muted-foreground">7-14 business days</p>
+                      </div>
+                    </div>
+                    <span className="font-medium">Calculated at checkout</span>
+                  </label>
+                </div>
+
+                <div className="mt-4 p-3 bg-accent/50 rounded-lg">
+                  <h4 className="font-medium mb-2">Shipping Policies</h4>
+                  <ul className="text-sm space-y-1 text-muted-foreground">
+                    <li>• All orders are insured and tracked</li>
+                    <li>• Free shipping on orders over ₹5,000</li>
+                    <li>• Signature required for valuable items</li>
+                    <li>• Real-time tracking updates</li>
+                    <li>• Premium packaging for protection</li>
+                  </ul>
+                </div>
+              </div>
+
               <ShippingForm onSubmit={handleShippingSubmit} isLoading={isCheckingOut} />
             </div>
           </div>
