@@ -390,8 +390,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const returnRequest = {
         id: returnRequestStore.size + 1,
-        ...data,
+        orderRef: data.orderRef,
+        reason: data.reason,
         status: 'pending' as const,
+        items: data.items,
+        additionalNotes: data.additionalNotes,
         createdAt: new Date().toISOString()
       };
 
