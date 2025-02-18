@@ -171,7 +171,7 @@ export default function Cart() {
                         <div className="flex-1">
                           <h3 className="font-semibold">{item.product.name}</h3>
                           <div className="mt-4 flex items-center space-x-4">
-                            <div className="flex items-center border rounded-full overflow-hidden">
+                            <div className="flex items-center border rounded-lg overflow-hidden">
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -181,14 +181,22 @@ export default function Cart() {
                               >
                                 <Minus className="h-3 w-3" />
                               </Button>
-                              <input
-                                type="number"
-                                value={item.quantity}
-                                onChange={(e) => handleQuantityChange(parseInt(item.product.id), parseInt(e.target.value) || 1)}
-                                className="w-12 h-8 text-center border-none focus:ring-0"
-                                min="1"
-                                max="99"
-                              />
+                              <div className="relative w-12">
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  value={item.quantity}
+                                  onChange={(e) => {
+                                    const val = e.target.value.replace(/[^0-9]/g, '');
+                                    const num = parseInt(val) || 1;
+                                    handleQuantityChange(parseInt(item.product.id), num);
+                                  }}
+                                  className="w-full h-8 text-center border-none focus:ring-0 focus:outline-none"
+                                  min="1"
+                                  max="99"
+                                />
+                              </div>
                               <Button
                                 variant="ghost"
                                 size="icon"
