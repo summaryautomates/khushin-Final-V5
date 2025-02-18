@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -37,13 +37,14 @@ export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[425px] h-screen sm:h-auto overflow-y-auto fixed right-0 top-0 rounded-l-lg">
+        <DialogTitle className="sr-only">Login to your account</DialogTitle>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold">LOGIN</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close login panel">
             <X className="h-4 w-4" />
           </Button>
         </div>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
@@ -51,9 +52,9 @@ export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email<span className="text-red-500">*</span></FormLabel>
+                  <FormLabel>Email<span className="text-red-500" aria-hidden="true">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} type="email" />
+                    <Input {...field} type="email" aria-required="true" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -65,9 +66,9 @@ export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password<span className="text-red-500">*</span></FormLabel>
+                  <FormLabel>Password<span className="text-red-500" aria-hidden="true">*</span></FormLabel>
                   <FormControl>
-                    <Input {...field} type="password" />
+                    <Input {...field} type="password" aria-required="true" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
