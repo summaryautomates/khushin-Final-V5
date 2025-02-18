@@ -92,7 +92,7 @@ function ReturnRequestDialog({ order }: { order: Order }) {
       reason: "",
       items: order.items.map(item => ({
         productId: item.productId,
-        quantity: item.quantity,
+        quantity: 0, // Initialize with 0 to force user selection
         reason: ""
       })),
       additionalNotes: ""
@@ -100,17 +100,15 @@ function ReturnRequestDialog({ order }: { order: Order }) {
   });
 
   const returnMutation = useMutation({
-    mutationFn: async (data: ReturnRequestFormData & { orderRef: string }) => {
-      const response = await fetch('/api/returns', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+    mutationFn: async (data: ReturnRequestFormData) => {
+      const response = await apiRequest('POST', '/api/returns', {
+        ...data,
+        orderRef: order.orderRef
       });
 
       if (!response.ok) {
-        throw new Error('Failed to submit return request');
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to submit return request');
       }
 
       return response.json();
@@ -118,24 +116,37 @@ function ReturnRequestDialog({ order }: { order: Order }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/returns/${order.orderRef}`] });
       toast({
-        title: "Return Request Submitted",
-        description: "We'll review your request and get back to you soon.",
+        title: "Success",
+        description: "Return request submitted successfully",
       });
       setIsOpen(false);
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to submit return request. Please try again.",
+        description: error.message || "Failed to submit return request",
         variant: "destructive"
       });
     }
   });
 
   const onSubmit = (data: ReturnRequestFormData) => {
+    // Validate that at least one item has a quantity greater than 0
+    const hasItems = data.items.some(item => item.quantity > 0);
+    if (!hasItems) {
+      toast({
+        title: "Error",
+        description: "Please select at least one item to return",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Filter out items with quantity 0
+    const validItems = data.items.filter(item => item.quantity > 0);
     returnMutation.mutate({
       ...data,
-      orderRef: order.orderRef
+      items: validItems,
     });
   };
 

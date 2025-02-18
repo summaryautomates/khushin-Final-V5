@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, useEffect, ReactNode } from "react";
+import { createContext, useContext, useReducer, useEffect, ReactNode, useState } from "react";
 import { Product } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -151,6 +151,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   });
 
   const { toast } = useToast();
+  const [isClearing, setIsClearing] = useState(false);
 
   // Load cart items when the component mounts
   useEffect(() => {
@@ -214,7 +215,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const clearCart = async () => {
+    if (isClearing) return; // Prevent multiple clear requests
     try {
+      setIsClearing(true);
       await apiRequest('DELETE', '/api/cart');
       dispatch({ type: "CLEAR_CART" });
     } catch (error) {
@@ -223,6 +226,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         variant: "destructive",
         description: "Failed to clear cart",
       });
+    } finally {
+      setIsClearing(false);
     }
   };
 
