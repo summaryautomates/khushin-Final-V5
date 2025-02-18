@@ -12,9 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 const shippingSchema = z.object({
+  fullName: z.string().min(2, "Full name is required"),
   email: z.string().email("Invalid email address"),
-  firstName: z.string().min(2, "First name is required"),
-  lastName: z.string().min(2, "Last name is required"),
   address: z.string().min(5, "Address is required"),
   apartment: z.string().optional(),
   city: z.string().min(2, "City is required"),
@@ -64,41 +63,22 @@ export function ShippingForm({ onSubmit, isLoading }: ShippingFormProps) {
         <div>
           <h2 className="text-sm font-medium mb-3">Delivery</h2>
 
-          <div className="grid grid-cols-2 gap-2">
-            <FormField
-              control={form.control}
-              name="firstName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input 
-                      placeholder="First name" 
-                      className="h-8 px-3 py-1"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="lastName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input 
-                      placeholder="Last name" 
-                      className="h-8 px-3 py-1"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="fullName"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input 
+                    placeholder="Full name" 
+                    className="h-8 px-3 py-1"
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <div className="space-y-2 mt-2">
             <FormField
