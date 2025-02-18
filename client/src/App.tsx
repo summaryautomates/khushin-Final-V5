@@ -2,7 +2,7 @@ import { Switch, Route } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
-import { Header } from "@/components/layout/header";
+import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/layout/footer";
 import { CartProvider } from "@/hooks/use-cart";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -32,7 +32,7 @@ function App() {
       <CartProvider>
         <ErrorBoundary>
           <div className="flex min-h-screen flex-col">
-            <Header />
+            <Navbar />
             <main className="flex-1">
               <Switch>
                 <Route path="/" component={Home} />
