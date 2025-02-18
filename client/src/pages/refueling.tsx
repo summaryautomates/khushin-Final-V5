@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Droplet, Zap, Shield, Settings, ChevronRight } from "lucide-react";
@@ -29,6 +30,7 @@ const Refueling = () => {
           transition={{ duration: 1 }}
           className="container relative z-10 px-4"
         >
+          <Link href="/refueling"> {/* Wrap the h1 in the Link component */}
           <motion.h1 
             initial={{ letterSpacing: "0.2em", opacity: 0 }}
             animate={{ letterSpacing: "0.1em", opacity: 1 }}
@@ -37,6 +39,7 @@ const Refueling = () => {
           >
             Refueling Solutions
           </motion.h1>
+          </Link> {/* Close the Link component */}
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -193,6 +196,6 @@ const Refueling = () => {
       </section>
     </div>
   );
-}
+};
 
 export default Refueling;
