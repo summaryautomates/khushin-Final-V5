@@ -8,6 +8,10 @@ export interface CartItemData {
   price: number;
   quantity: number;
   image: string;
+  // Add optional fields that might be needed for specific product types
+  description?: string;
+  category?: string;
+  sku?: string;
 }
 
 interface CartItemProps {
@@ -32,6 +36,12 @@ export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
         {/* Product Details */}
         <div className="flex-1">
           <h3 className="font-medium">{item.name}</h3>
+          {item.description && (
+            <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
+          )}
+          {item.sku && (
+            <p className="text-xs text-muted-foreground mt-1">SKU: {item.sku}</p>
+          )}
           <p className="text-lg font-semibold mt-1">₹{item.price}</p>
         </div>
 
