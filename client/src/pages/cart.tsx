@@ -10,7 +10,6 @@ import { useState } from "react";
 import { ShippingForm, type ShippingFormData } from "@/components/checkout/shipping-form";
 import { Input } from "@/components/ui/input";
 
-// Updated shipping cost calculation
 const calculateShippingCost = (subtotal: number, shippingMethod: 'standard' | 'express' | 'international' = 'standard'): number => {
   if (subtotal >= 5000) return 0; // Free shipping over ₹5000
 
@@ -40,6 +39,12 @@ export default function Cart() {
   const subtotal = cart.total;
   const shippingCost = calculateShippingCost(subtotal, shippingMethod);
   const total = subtotal + shippingCost + (cart.giftWrap.cost || 0);
+
+  const handleQuantityChange = (productId: string, newQuantity: number) => {
+    if (newQuantity >= 1 && newQuantity <= 99) {
+      cart.updateQuantity(productId, newQuantity);
+    }
+  };
 
   const handleShippingSubmit = async (data: ShippingFormData) => {
     setShippingAddress(data);
@@ -165,32 +170,38 @@ export default function Cart() {
                         </div>
                         <div className="flex-1">
                           <h3 className="font-semibold">{item.product.name}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {item.product.description}
-                          </p>
-                          <div className="mt-4 flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
+                          <div className="mt-4 flex items-center space-x-4">
+                            <div className="flex items-center border rounded-full overflow-hidden">
                               <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="icon"
-                                onClick={() => cart.updateQuantity(item.product.id, item.quantity - 1)}
+                                className="rounded-none h-8 w-8 hover:bg-gray-100"
+                                onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
                                 disabled={item.quantity <= 1}
                               >
-                                <Minus className="h-4 w-4" />
+                                <Minus className="h-3 w-3" />
                               </Button>
-                              <span className="w-8 text-center">{item.quantity}</span>
+                              <input
+                                type="number"
+                                value={item.quantity}
+                                onChange={(e) => handleQuantityChange(item.product.id, parseInt(e.target.value) || 1)}
+                                className="w-12 h-8 text-center border-none focus:ring-0"
+                                min="1"
+                                max="99"
+                              />
                               <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="icon"
-                                onClick={() => cart.updateQuantity(item.product.id, item.quantity + 1)}
+                                className="rounded-none h-8 w-8 hover:bg-gray-100"
+                                onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
                               >
-                                <Plus className="h-4 w-4" />
+                                <Plus className="h-3 w-3" />
                               </Button>
                             </div>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="text-destructive"
+                              className="text-destructive hover:text-destructive/90"
                               onClick={() => cart.removeItem(item.product.id)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -200,9 +211,6 @@ export default function Cart() {
                         <div className="text-right">
                           <p className="font-semibold">
                             {formatPrice(item.product.price * item.quantity)}
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {item.quantity} × {formatPrice(item.product.price)}
                           </p>
                         </div>
                       </div>
@@ -279,39 +287,48 @@ export default function Cart() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>{formatPrice(subtotal)}</span>
-                  </div>
-                  {cart.giftWrap.type && (
-                    <div className="flex justify-between text-sm">
-                      <span>Gift Wrapping ({cart.giftWrap.type})</span>
-                      <span>{formatPrice(cart.giftWrap.cost)}</span>
+                  <div className="border-t pt-4 space-y-4">
+                    <div className="flex justify-between">
+                      <span>Subtotal</span>
+                      <span>{formatPrice(subtotal)}</span>
                     </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span>Shipping</span>
-                    {subtotal >= 5000 ? (
-                      <span className="text-green-600">Free</span>
-                    ) : (
-                      <span>{formatPrice(shippingCost)}</span>
-                    )}
-                  </div>
-                  {subtotal < 5000 && (
-                    <p className="text-sm text-muted-foreground">
-                      Add {formatPrice(5000 - subtotal)} more for free shipping
-                    </p>
-                  )}
-                  <div className="border-t pt-4">
-                    <div className="flex justify-between font-semibold">
+                    <div className="flex justify-between">
+                      <span>Shipping</span>
+                      {subtotal >= 5000 ? (
+                        <span className="text-green-600">Free</span>
+                      ) : (
+                        <span>{formatPrice(shippingCost)}</span>
+                      )}
+                    </div>
+                    <div className="flex justify-between font-semibold text-lg">
                       <span>Total</span>
                       <span>{formatPrice(discountedTotal || total)}</span>
                     </div>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-300 text-primary focus:ring-primary"
+                        required
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        I agree with the terms and conditions
+                      </span>
+                    </label>
                   </div>
                 </CardContent>
-                <CardFooter>
-                  <Button className="w-full" onClick={() => setShowShippingForm(true)}>
-                    Proceed to Checkout
+                <CardFooter className="flex flex-col gap-3">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setShowShippingForm(true)}
+                  >
+                    VIEW CART
+                  </Button>
+                  <Button
+                    className="w-full bg-yellow-400 hover:bg-yellow-500 text-black"
+                    onClick={() => setShowShippingForm(true)}
+                  >
+                    CHECK OUT
                   </Button>
                 </CardFooter>
               </Card>
