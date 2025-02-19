@@ -17,13 +17,13 @@ export function NewsletterDialog() {
   };
 
   useEffect(() => {
-    const hasSeenDialog = localStorage.getItem('hasSeenNewsletterDialog');
-    if (!hasSeenDialog) {
-      const timer = setTimeout(() => {
+    const timer = setTimeout(() => {
+      const hasSeenDialog = localStorage.getItem('hasSeenNewsletterDialog');
+      if (hasSeenDialog !== 'true') {
         setOpen(true);
-      }, 7000);
-      return () => clearTimeout(timer);
-    }
+      }
+    }, 7000);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleSubscribe = (e: React.FormEvent) => {
