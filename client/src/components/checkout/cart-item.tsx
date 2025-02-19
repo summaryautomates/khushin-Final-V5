@@ -27,7 +27,11 @@ export function CartItem({
   const handleDecrement = () => {
     if (quantity > 1 && !isUpdating) {
       onUpdateQuantity(product.id, quantity - 1);
-    } else if (quantity === 1 && !isUpdating) {
+    }
+  };
+
+  const handleRemove = () => {
+    if (!isUpdating) {
       onRemove(product.id);
     }
   };
@@ -89,7 +93,7 @@ export function CartItem({
           variant="ghost"
           size="icon"
           className="h-8 w-8 text-muted-foreground hover:text-destructive"
-          onClick={() => onRemove(product.id)}
+          onClick={handleRemove}
           disabled={isUpdating}
         >
           {isUpdating ? (
