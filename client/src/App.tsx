@@ -6,7 +6,6 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { CartProvider } from "@/hooks/use-cart";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { TestError } from "@/components/test-error";
 
 // Page imports
 import Home from "@/pages/home";
@@ -60,7 +59,9 @@ function App() {
             </main>
             <Footer />
           </div>
-          <Toaster />
+          <ErrorBoundary fallback={<div className="fixed bottom-4 right-4 p-4 bg-destructive text-destructive-foreground rounded-md">Toast Error</div>}>
+            <Toaster />
+          </ErrorBoundary>
         </ErrorBoundary>
       </CartProvider>
     </QueryClientProvider>
