@@ -10,6 +10,7 @@ import { insertUserSchema } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { useState } from "react";
+import { UserCircle2 } from "lucide-react";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -79,13 +80,24 @@ export function AuthSheet() {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button 
+          variant="ghost" 
+          size="icon"
+          className="relative group hover:bg-white/10 transition-all duration-300"
+        >
+          <UserCircle2 className="h-5 w-5 text-white group-hover:scale-110 transition-transform duration-300" />
+          <span className="sr-only">Login</span>
+        </Button>
+      </SheetTrigger>
+
       <SheetContent side="right" className="w-[400px] sm:w-[540px] p-0">
         <Tabs defaultValue="login" className="h-full">
           <TabsList className="w-full rounded-none h-16 px-6">
             <TabsTrigger value="login" className="flex-1">Login</TabsTrigger>
             <TabsTrigger value="register" className="flex-1">Register</TabsTrigger>
           </TabsList>
-          
+
           <div className="px-6 py-4">
             <TabsContent value="login">
               <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
