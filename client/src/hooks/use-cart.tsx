@@ -155,6 +155,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [isClearing, setIsClearing] = useState(false);
 
+  // Load cart items whenever the user changes (login/logout)
   useEffect(() => {
     const loadCartItems = async () => {
       if (!user) {
@@ -162,18 +163,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      dispatch({ type: "SET_LOADING", payload: true });
       try {
         const response = await apiRequest('GET', '/api/cart');
         const items = await response.json();
         dispatch({ type: "SET_CART_ITEMS", payload: items });
       } catch (error) {
         console.error('Failed to load cart items:', error);
-        dispatch({ type: "SET_LOADING", payload: false });
+        dispatch({ type: "SET_CART_ITEMS", payload: [] });
+        toast({
+          variant: "destructive",
+          description: "Failed to load cart items. Please try again.",
+        });
       }
     };
 
     loadCartItems();
-  }, [user]);
+  }, [user, toast]);
 
   const addItem = async (product: Product, quantity = 1) => {
     if (!user) {
@@ -186,16 +192,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         quantity,
       });
       dispatch({ type: "ADD_ITEM", payload: { product, quantity } });
-      toast({
-        description: `${product.name} added to cart`,
-      });
     } catch (error) {
       console.error('Failed to add item to cart:', error);
       toast({
-        title: "Error",
+        variant: "destructive",
         description: "Failed to add item to cart. Please try again.",
-        variant: "destructive"
       });
+      throw error;
     }
   };
 
@@ -209,7 +212,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       console.error('Failed to remove item from cart:', error);
       toast({
         variant: "destructive",
-        description: "Failed to remove item from cart",
+        description: "Failed to remove item from cart. Please try again.",
       });
     }
   };
@@ -224,7 +227,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       console.error('Failed to update quantity:', error);
       toast({
         variant: "destructive",
-        description: "Failed to update quantity",
+        description: "Failed to update quantity. Please try again.",
       });
     }
   };
@@ -240,7 +243,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       console.error('Failed to clear cart:', error);
       toast({
         variant: "destructive",
-        description: "Failed to clear cart",
+        description: "Failed to clear cart. Please try again.",
       });
     } finally {
       setIsClearing(false);
