@@ -129,6 +129,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
           variant: "destructive",
           description: "Failed to load cart items. Please try again.",
         });
+      } finally {
+        dispatch({ type: "SET_LOADING", payload: false });
       }
     };
 
@@ -176,6 +178,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         variant: "destructive",
         description: error.message || "Failed to add item to cart. Please try again.",
       });
+    } finally {
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
@@ -204,6 +208,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         variant: "destructive",
         description: "Failed to remove item from cart. Please try again.",
       });
+    } finally {
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
@@ -223,12 +229,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const previousItems = [...state.items];
 
     try {
-      // Only update UI if it's a valid quantity
+      // For quantity 0, remove the item
       if (quantity === 0) {
         await removeItem(productId);
         return;
       }
 
+      dispatch({ type: "SET_LOADING", payload: true });
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers: {
@@ -250,15 +257,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "SET_CART_ITEMS", payload: items });
     } catch (error: any) {
       console.error('Failed to update quantity:', error);
-
-      // Rollback to previous state
       dispatch({ type: "SET_CART_ITEMS", payload: previousItems });
-
-      // Show appropriate error message
       toast({
         variant: "destructive",
         description: "Failed to update quantity. Please try again.",
       });
+    } finally {
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
@@ -290,6 +295,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         variant: "destructive",
         description: "Failed to clear cart. Please try again.",
       });
+    } finally {
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
