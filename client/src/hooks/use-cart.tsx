@@ -25,16 +25,11 @@ interface CartState {
 }
 
 type CartAction =
-  | { type: "SET_DISCOUNT"; payload: { code: string; percent: number } }
-  | { type: "CLEAR_DISCOUNT" }
-  | { type: "ADD_ITEM"; payload: { product: Product; quantity?: number } }
-  | { type: "REMOVE_ITEM"; payload: { productId: number } }
-  | { type: "UPDATE_QUANTITY"; payload: { productId: number; quantity: number } }
-  | { type: "UPDATE_GIFT_WRAP"; payload: { type: GiftWrapType; cost: number } }
   | { type: "SET_CART_ITEMS"; payload: CartItem[] }
   | { type: "SET_LOADING"; payload: boolean }
-  | { type: "CLEAR_CART" }
-  | { type: "SET_ERROR"; payload: string | null };
+  | { type: "SET_ERROR"; payload: string | null }
+  | { type: "UPDATE_GIFT_WRAP"; payload: { type: GiftWrapType; cost: number } }
+  | { type: "CLEAR_CART" };
 
 interface CartContextType extends CartState {
   addItem: (product: Product, quantity?: number) => Promise<void>;
@@ -60,63 +55,6 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         error: null,
       };
 
-    case "ADD_ITEM": {
-      const existingItem = state.items.find(
-        item => item.product.id === action.payload.product.id
-      );
-
-      let newItems;
-      if (existingItem) {
-        newItems = state.items.map(item =>
-          item.product.id === action.payload.product.id
-            ? { ...item, quantity: item.quantity + (action.payload.quantity || 1) }
-            : item
-        );
-      } else {
-        newItems = [
-          ...state.items,
-          { product: action.payload.product, quantity: action.payload.quantity || 1 }
-        ];
-      }
-
-      return {
-        ...state,
-        items: newItems,
-        total: calculateTotal(newItems),
-        error: null,
-        isLoading: false
-      };
-    }
-
-    case "REMOVE_ITEM": {
-      const newItems = state.items.filter(
-        item => item.product.id !== action.payload.productId
-      );
-      return {
-        ...state,
-        items: newItems,
-        total: calculateTotal(newItems),
-        error: null,
-      };
-    }
-
-    case "UPDATE_QUANTITY": {
-      if (action.payload.quantity < 1) {
-        return state;
-      }
-      const newItems = state.items.map(item =>
-        item.product.id === action.payload.productId
-          ? { ...item, quantity: action.payload.quantity }
-          : item
-      );
-      return {
-        ...state,
-        items: newItems,
-        total: calculateTotal(newItems),
-        error: null,
-      };
-    }
-
     case "UPDATE_GIFT_WRAP":
       return {
         ...state,
@@ -136,6 +74,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         isLoading: false,
         error: null,
       };
+
     case "SET_ERROR":
       return { ...state, error: action.payload, isLoading: false };
 
@@ -165,14 +104,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isClearing, setIsClearing] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
+    if (!user) {
+      dispatch({ type: "SET_CART_ITEMS", payload: [] });
+      return;
+    }
 
     const loadCartItems = async () => {
-      if (!user) {
-        dispatch({ type: "SET_CART_ITEMS", payload: [] });
-        return;
-      }
-
       dispatch({ type: "SET_LOADING", payload: true });
       try {
         const response = await apiRequest('GET', '/api/cart', undefined, {
@@ -180,33 +117,33 @@ export function CartProvider({ children }: { children: ReactNode }) {
             'x-user-id': user.id.toString()
           }
         });
-        const data = await response.json();
 
-        if (isMounted && Array.isArray(data)) {
-          dispatch({ type: "SET_CART_ITEMS", payload: data });
+        if (!response.ok) {
+          throw new Error('Failed to fetch cart items');
         }
+
+        const items = await response.json();
+        dispatch({ type: "SET_CART_ITEMS", payload: items });
       } catch (error: any) {
         console.error('Failed to load cart items:', error);
-        if (isMounted) {
-          dispatch({ type: "SET_ERROR", payload: error.message });
-        }
-      } finally {
-        if (isMounted) {
-          dispatch({ type: "SET_LOADING", payload: false });
-        }
+        dispatch({ type: "SET_ERROR", payload: error.message });
+        toast({
+          variant: "destructive",
+          description: "Failed to load cart items. Please try again.",
+        });
       }
     };
 
     loadCartItems();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [user]);
+  }, [user, toast]);
 
   const addItem = async (product: Product, quantity = 1) => {
     if (!user) {
-      throw new Error("AUTH_REQUIRED");
+      toast({
+        variant: "destructive",
+        description: "Please log in to add items to cart.",
+      });
+      return;
     }
 
     dispatch({ type: "SET_LOADING", payload: true });
@@ -224,16 +161,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
         throw new Error('Failed to add item to cart');
       }
 
-      const updatedCart = await response.json();
-
-      if (Array.isArray(updatedCart)) {
-        dispatch({ type: "SET_CART_ITEMS", payload: updatedCart });
-        toast({
-          description: `${product.name} added to cart`,
-        });
-      } else {
-        throw new Error('Invalid response format');
-      }
+      const items = await response.json();
+      dispatch({ type: "SET_CART_ITEMS", payload: items });
+      toast({
+        description: `${product.name} added to cart`,
+      });
     } catch (error: any) {
       console.error('Failed to add item to cart:', error);
       dispatch({ type: "SET_ERROR", payload: error.message });
@@ -241,9 +173,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         variant: "destructive",
         description: "Failed to add item to cart. Please try again.",
       });
-      throw error;
-    } finally {
-      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
@@ -262,13 +191,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         throw new Error('Failed to remove item from cart');
       }
 
-      const updatedCart = await response.json();
-
-      if (Array.isArray(updatedCart)) {
-        dispatch({ type: "SET_CART_ITEMS", payload: updatedCart });
-      } else {
-        throw new Error('Invalid response format');
-      }
+      const items = await response.json();
+      dispatch({ type: "SET_CART_ITEMS", payload: items });
     } catch (error: any) {
       console.error('Failed to remove item from cart:', error);
       dispatch({ type: "SET_ERROR", payload: error.message });
@@ -276,8 +200,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         variant: "destructive",
         description: "Failed to remove item from cart. Please try again.",
       });
-    } finally {
-      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
@@ -286,26 +208,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     dispatch({ type: "SET_LOADING", payload: true });
     try {
-      const response = await apiRequest('PATCH', `/api/cart/${productId}`, 
-        { quantity }, 
-        {
-          headers: {
-            'x-user-id': user.id.toString()
-          }
+      const response = await apiRequest('POST', '/api/cart', {
+        productId,
+        quantity,
+      }, {
+        headers: {
+          'x-user-id': user.id.toString()
         }
-      );
+      });
 
       if (!response.ok) {
         throw new Error('Failed to update quantity');
       }
 
-      const updatedCart = await response.json();
-
-      if (Array.isArray(updatedCart)) {
-        dispatch({ type: "SET_CART_ITEMS", payload: updatedCart });
-      } else {
-        throw new Error('Invalid response format');
-      }
+      const items = await response.json();
+      dispatch({ type: "SET_CART_ITEMS", payload: items });
     } catch (error: any) {
       console.error('Failed to update quantity:', error);
       dispatch({ type: "SET_ERROR", payload: error.message });
@@ -313,8 +230,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         variant: "destructive",
         description: "Failed to update quantity. Please try again.",
       });
-    } finally {
-      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
@@ -328,7 +243,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setIsClearing(true);
     dispatch({ type: "SET_LOADING", payload: true });
     try {
-      await apiRequest('DELETE', '/api/cart');
+      await apiRequest('DELETE', '/api/cart', undefined, {
+        headers: {
+          'x-user-id': user.id.toString()
+        }
+      });
       dispatch({ type: "CLEAR_CART" });
     } catch (error: any) {
       console.error('Failed to clear cart:', error);
@@ -339,7 +258,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       });
     } finally {
       setIsClearing(false);
-      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 

@@ -532,7 +532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(returnRequest);
   });
 
-  // Cart Routes
+  // Cart Routes (UPDATED)
   app.get("/api/cart", async (req, res) => {
     try {
       const userId = req.headers['x-user-id'];
@@ -543,25 +543,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const dbCartItems = await storage.getCartItems(userId.toString());
+      const cartItems = await storage.getCartItems(userId.toString());
 
-      // Fetch product details for each cart item
-      const cartItems = await Promise.all(
-        dbCartItems.map(async (item) => {
+      // Get product details for each cart item
+      const cartWithProducts = await Promise.all(
+        cartItems.map(async (item) => {
           const product = await storage.getProduct(item.productId);
-          if (!product) return null;
-
           return {
             product,
-            quantity: item.quantity,
+            quantity: item.quantity
           };
         })
       );
 
-      // Filter out any null items (where product wasn't found)
-      const validCartItems = cartItems.filter(item => item !== null);
-
-      res.json(validCartItems);
+      res.json(cartWithProducts.filter(item => item.product !== undefined));
     } catch (error) {
       console.error('Error fetching cart:', error);
       res.status(500).json({
@@ -571,7 +566,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update cart endpoints with better validation and error handling
   app.post("/api/cart", async (req, res) => {
     try {
       const userId = req.headers['x-user-id'];
@@ -582,8 +576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const data = insertCartItemSchema.parse({ ...req.body, userId: userId.toString() });
-      const { productId, quantity = 1 } = data;
+      const { productId, quantity = 1 } = req.body;
 
       // Validate the product exists
       const product = await storage.getProduct(productId);
@@ -594,113 +587,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Validate quantity
-      if (quantity < 1 || quantity > 10) {
-        return res.status(400).json({
-          message: "Invalid quantity",
-          details: "Quantity must be between 1 and 10"
-        });
-      }
+      // Add item to cart
+      await storage.addCartItem({
+        userId: userId.toString(),
+        productId,
+        quantity,
+        giftWrapType: null,
+        giftWrapCost: 0
+      });
 
-      // Check if item already exists in cart
-      const existingItems = await storage.getCartItems(userId.toString());
-      const existingItem = existingItems.find(item => item.productId === productId);
-
-      let updatedCart;
-      if (existingItem) {
-        // Update quantity instead of creating new item
-        const newQuantity = existingItem.quantity + quantity;
-        if (newQuantity > 10) {
-          return res.status(400).json({
-            message: "Quantity limit exceeded",
-            details: "Maximum quantity per item is 10"
-          });
-        }
-
-        await storage.updateCartItemQuantity(
-          userId.toString(),
-          productId,
-          newQuantity
-        );
-      } else {
-        // Add new item
-        await storage.addCartItem({
-          userId: userId.toString(),
-          productId,
-          quantity,
-          giftWrapType: null,
-          giftWrapCost: 0
-        });
-      }
-
-      // Fetch updated cart with product details
-      const dbCartItems = await storage.getCartItems(userId.toString());
-      updatedCart = await Promise.all(
-        dbCartItems.map(async (item) => {
+      // Get updated cart
+      const cartItems = await storage.getCartItems(userId.toString());
+      const cartWithProducts = await Promise.all(
+        cartItems.map(async (item) => {
           const product = await storage.getProduct(item.productId);
-          if (!product) return null;
           return {
             product,
-            quantity: item.quantity,
+            quantity: item.quantity
           };
         })
       );
 
-      res.json(updatedCart.filter(item => item !== null));
+      res.json(cartWithProducts.filter(item => item.product !== undefined));
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          message: "Invalid input",
-          details: fromZodError(error).message
-        });
-      }
       console.error('Error adding to cart:', error);
       res.status(500).json({
         message: "Failed to add item to cart",
-        details: "An error occurred while adding the item"
-      });
-    }
-  });
-
-  app.patch("/api/cart/:productId", async (req, res) => {
-    try {
-      const userId = req.headers['x-user-id'];
-      if (!userId) {
-        return res.status(401).json({
-          message: "Unauthorized",
-          details: "User ID is required"
-        });
-      }
-      const productId = parseInt(req.params.productId);
-      const { quantity } = req.body;
-
-      if (isNaN(productId)) {
-        return res.status(400).json({
-          message: "Invalid product ID",
-          details: "Product ID must be a number"
-        });
-      }
-
-      if (quantity < 0 || quantity > 10) {
-        return res.status(400).json({
-          message: "Invalid quantity",
-          details: "Quantity must be between 0 and 10"
-        });
-      }
-
-      if (quantity === 0) {
-        await storage.removeCartItem(userId.toString(), productId);
-      } else {
-        await storage.updateCartItemQuantity(userId.toString(), productId, quantity);
-      }
-
-      const updatedCart = await storage.getCartItems(userId.toString());
-      res.json(updatedCart);
-    } catch (error) {
-      console.error('Error updating cart:', error);
-      res.status(500).json({
-        message: "Failed to update cart",
-        details: "An error occurred while updating the item quantity"
+        details: error.message
       });
     }
   });
@@ -714,8 +627,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           details: "User ID is required"
         });
       }
-      const productId = parseInt(req.params.productId);
 
+      const productId = parseInt(req.params.productId);
       if (isNaN(productId)) {
         return res.status(400).json({
           message: "Invalid product ID",
@@ -724,16 +637,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await storage.removeCartItem(userId.toString(), productId);
-      const updatedCart = await storage.getCartItems(userId.toString());
-      res.json(updatedCart);
+
+      // Get updated cart
+      const cartItems = await storage.getCartItems(userId.toString());
+      const cartWithProducts = await Promise.all(
+        cartItems.map(async (item) => {
+          const product = await storage.getProduct(item.productId);
+          return {
+            product,
+            quantity: item.quantity
+          };
+        })
+      );
+
+      res.json(cartWithProducts.filter(item => item.product !== undefined));
     } catch (error) {
       console.error('Error removing from cart:', error);
       res.status(500).json({
         message: "Failed to remove item from cart",
-        details: "An error occurred while removing the item"
+        details: error.message
       });
     }
   });
+
 
   app.delete("/api/cart", async (req, res) => {
     try {

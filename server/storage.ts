@@ -92,12 +92,10 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(cartItems)
-      .where(eq(cartItems.userId, userId))
-      .leftJoin(products, eq(cartItems.productId, products.id));
+      .where(eq(cartItems.userId, userId));
   }
 
   async addCartItem(item: InsertCartItem): Promise<CartItem> {
-    // First check if the item already exists
     const [existingItem] = await db
       .select()
       .from(cartItems)
