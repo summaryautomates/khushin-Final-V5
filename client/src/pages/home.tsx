@@ -14,6 +14,8 @@ import {
   Clock,
   DollarSign,
   Filter,
+  Mic,
+  Camera,
   Sparkles,
   ShieldCheck,
   Truck,
@@ -37,9 +39,87 @@ import { useState } from "react";
 export default function Home() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isListening, setIsListening] = useState(false);
   const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const handleVoiceSearch = () => {
+    if ('webkitSpeechRecognition' in window) {
+      const recognition = new (window as any).webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setSearchQuery(transcript);
+        setIsListening(false);
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } else {
+      toast({
+        title: "Not Supported",
+        description: "Voice search is not supported in your browser",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleImageSearch = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const worker = await Tesseract.createWorker();
+      await worker.loadLanguage('eng');
+      await worker.initialize('eng');
+      const { data: { text } } = await worker.recognize(file);
+      await worker.terminate();
+
+      const cleanText = text.replace(/[^\w\s]/gi, '').trim();
+      if (cleanText) {
+        setSearchQuery(cleanText);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to process image",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getSuggestions = (query: string) => {
+    if (!products || !query) return [];
+    
+    const normalizedQuery = query.toLowerCase();
+    const productNames = products.map(p => p.name.toLowerCase());
+    
+    return productNames
+      .filter(name => name !== normalizedQuery && name.includes(normalizedQuery))
+      .slice(0, 3);
+  };
+
+  useEffect(() => {
+    const newSuggestions = getSuggestions(searchQuery);
+    setSuggestions(newSuggestions);
+  }, [searchQuery, products]);
 
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
@@ -112,16 +192,51 @@ export default function Home() {
               className="mt-16"
             >
               <div className="flex flex-col gap-4 items-center">
-                <div className="flex gap-2">
-                  <Input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search our luxury collection..."
-                    className="border-primary/20 rounded-full flex-grow w-[180px]"
-                  />
-                  <Button variant="secondary" className="rounded-full">
-                    <Search className="w-4 h-4 rounded-full" />
-                  </Button>
+                <div className="flex flex-col gap-2 w-full max-w-md">
+                  <div className="flex gap-2">
+                    <Input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search our luxury collection..."
+                      className="border-primary/20 rounded-full flex-grow"
+                    />
+                    <Button 
+                      variant="secondary" 
+                      className={`rounded-full ${isListening ? 'bg-red-500 hover:bg-red-600' : ''}`}
+                      onClick={handleVoiceSearch}
+                    >
+                      <Mic className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      className="rounded-full"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Camera className="w-4 h-4" />
+                    </Button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleImageSearch}
+                    />
+                  </div>
+                  {suggestions.length > 0 && (
+                    <div className="bg-background/80 backdrop-blur-sm border border-primary/20 rounded-lg p-2 space-y-1">
+                      <p className="text-sm text-muted-foreground px-2">Did you mean:</p>
+                      {suggestions.map((suggestion, index) => (
+                        <Button
+                          key={index}
+                          variant="ghost"
+                          className="w-full justify-start text-left"
+                          onClick={() => setSearchQuery(suggestion)}
+                        >
+                          {suggestion}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
