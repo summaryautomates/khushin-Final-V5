@@ -18,18 +18,28 @@ export function useOrderTracking(orderRef: string | null) {
   const connect = useCallback(() => {
     if (!orderRef) return;
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
+    console.log('Connecting to WebSocket:', wsUrl);
 
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
       setIsConnected(true);
+      console.log('WebSocket connected');
       // Subscribe to order updates
       ws.send(JSON.stringify({
         type: 'SUBSCRIBE_ORDER',
         orderRef
       }));
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      toast({
+        title: 'Connection Error',
+        description: 'Failed to connect to order tracking service',
+        variant: 'destructive'
+      });
     };
 
     ws.onmessage = (event) => {
