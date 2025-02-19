@@ -32,7 +32,7 @@ interface SearchHistory {
 
 export default function Products() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 50000]);
   const [category, setCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("name-asc");
   const [searchHistory, setSearchHistory] = useState<SearchHistory[]>([]);
@@ -64,7 +64,7 @@ export default function Products() {
   };
 
   useEffect(() => {
-    if (searchTerm || category !== "all" || priceRange[0] > 0 || priceRange[1] < 100000) {
+    if (searchTerm || category !== "all" || priceRange[0] > 0 || priceRange[1] < 50000) {
       const newHistory: SearchHistory = {
         term: searchTerm,
         category,
@@ -103,7 +103,7 @@ export default function Products() {
 
   const resetFilters = () => {
     setSearchTerm("");
-    setPriceRange([0, 100000]);
+    setPriceRange([0, 50000]);
     setCategory("all");
     setSortBy("name-asc");
   };
