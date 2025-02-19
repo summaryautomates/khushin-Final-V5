@@ -1,57 +1,115 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
-import * as schema from "@shared/schema";
-
-neonConfig.webSocketConstructor = ws;
-
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
-}
-
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle({ client: pool, schema });
 
 const products = [
   {
     id: 1,
-    name: "Classic Gold Lighter",
-    description: "Elegant gold-plated lighter with timeless design",
-    price: 299900,
+    name: "Regal Gold Essence",
+    description: "24K gold-plated luxury lighter with intricate Art Deco engravings and premium butane ignition system",
+    price: 499900,
     images: [
       "https://images.unsplash.com/photo-1675789652575-0a5dd196b4ba?w=800&q=90",
-      "https://images.unsplash.com/photo-1675789652363-e2f09f5e40d9?w=800&q=90",
-      "https://images.unsplash.com/photo-1675789652432-e85c0fc097a9?w=800&q=90"
+      "https://images.unsplash.com/photo-1675789652363-e2f09f5e40d9?w=800&q=90"
     ],
     category: "lighters"
   },
   {
-    id: 2, 
-    name: "Silver Diamond Edition",
-    description: "Premium silver lighter with diamond accents",
-    price: 499900,
+    id: 2,
+    name: "Platinum Diamond Elite",
+    description: "Platinum-coated lighter adorned with genuine diamonds, featuring windproof technology",
+    price: 799900,
     images: [
       "https://images.unsplash.com/photo-1675789652871-36b796381d11?w=800&q=90",
-      "https://images.unsplash.com/photo-1675789652903-e5e60f4bb19d?w=800&q=90",
-      "https://images.unsplash.com/photo-1675789652941-18dd1a7b2eba?w=800&q=90"
+      "https://images.unsplash.com/photo-1675789652903-e5e60f4bb19d?w=800&q=90"
     ],
     category: "lighters"
   },
   {
     id: 3,
-    name: "Premium Fuel Can",
-    description: "High-quality lighter fluid refill can",
-    price: 29900,
+    name: "Heritage Rose Gold",
+    description: "Rose gold lighter with vintage-inspired design and temperature-resistant ceramic coating",
+    price: 399900,
     images: [
       "https://images.unsplash.com/photo-1675789653233-a5e5bde363f7?w=800&q=90",
-      "https://images.unsplash.com/photo-1675789653295-20df7a1d5665?w=800&q=90",
-      "https://images.unsplash.com/photo-1675789653265-e0ad6d53f55c?w=800&q=90"
+      "https://images.unsplash.com/photo-1675789653295-20df7a1d5665?w=800&q=90"
+    ],
+    category: "lighters"
+  },
+  {
+    id: 4,
+    name: "Titanium Stealth Pro",
+    description: "Aircraft-grade titanium lighter with matte black finish and precision flame control",
+    price: 299900,
+    images: [
+      "https://images.unsplash.com/photo-1675789652575-0a5dd196b4ba?w=800&q=90",
+      "https://images.unsplash.com/photo-1675789652363-e2f09f5e40d9?w=800&q=90"
+    ],
+    category: "lighters"
+  },
+  {
+    id: 5,
+    name: "Silver Guilloche Edition",
+    description: "Sterling silver lighter featuring traditional guilloche engraving and double flame system",
+    price: 599900,
+    images: [
+      "https://images.unsplash.com/photo-1675789652871-36b796381d11?w=800&q=90",
+      "https://images.unsplash.com/photo-1675789652903-e5e60f4bb19d?w=800&q=90"
+    ],
+    category: "lighters"
+  },
+  {
+    id: 6,
+    name: "Premium Butane Refill Kit",
+    description: "Ultra-refined triple-filtered butane fuel with universal adapter set",
+    price: 49900,
+    images: [
+      "https://images.unsplash.com/photo-1675789653233-a5e5bde363f7?w=800&q=90",
+      "https://images.unsplash.com/photo-1675789653295-20df7a1d5665?w=800&q=90"
+    ],
+    category: "refueling"
+  },
+  {
+    id: 7,
+    name: "Master Service Kit",
+    description: "Complete lighter maintenance kit with premium tools and cleaning solutions",
+    price: 129900,
+    images: [
+      "https://images.unsplash.com/photo-1675789652575-0a5dd196b4ba?w=800&q=90",
+      "https://images.unsplash.com/photo-1675789652363-e2f09f5e40d9?w=800&q=90"
+    ],
+    category: "refueling"
+  },
+  {
+    id: 8,
+    name: "Elite Flint Pack",
+    description: "Premium replacement flints with brass housing, pack of 10",
+    price: 29900,
+    images: [
+      "https://images.unsplash.com/photo-1675789652871-36b796381d11?w=800&q=90",
+      "https://images.unsplash.com/photo-1675789652903-e5e60f4bb19d?w=800&q=90"
+    ],
+    category: "refueling"
+  },
+  {
+    id: 9,
+    name: "Luxury Travel Kit",
+    description: "Compact refueling and maintenance kit in genuine leather case",
+    price: 89900,
+    images: [
+      "https://images.unsplash.com/photo-1675789653233-a5e5bde363f7?w=800&q=90",
+      "https://images.unsplash.com/photo-1675789653295-20df7a1d5665?w=800&q=90"
+    ],
+    category: "refueling"
+  },
+  {
+    id: 10,
+    name: "Professional Wick Kit",
+    description: "Premium cotton wick replacements with installation tools",
+    price: 39900,
+    images: [
+      "https://images.unsplash.com/photo-1675789652575-0a5dd196b4ba?w=800&q=90",
+      "https://images.unsplash.com/photo-1675789652363-e2f09f5e40d9?w=800&q=90"
     ],
     category: "refueling"
   }
 ];
 
-//Example usage of the products array (this would be part of a larger application)
 console.log(products);
