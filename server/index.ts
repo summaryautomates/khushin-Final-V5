@@ -59,7 +59,8 @@ const startServer = async () => {
           hmr: {
             host: '0.0.0.0',
             port: 3000,
-            protocol: 'ws'
+            protocol: 'wss',
+            clientPort: 443
           }
         },
       });
