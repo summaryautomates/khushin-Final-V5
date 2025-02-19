@@ -73,11 +73,12 @@ export function Header() {
             <Link href="/orders">
               <Button 
                 variant="ghost" 
-                size="icon"
-                className="relative group hover:bg-white/5 transition-colors duration-300"
+                size="default"
+                className="relative group hover:bg-white/10 transition-all duration-300 border border-white/20 gap-2 backdrop-blur-sm"
               >
-                <ClockIcon className="h-5 w-5 text-white group-hover:scale-110 transition-transform duration-300" />
-                <span className="sr-only">Past Orders</span>
+                <ClockIcon className="h-5 w-5 text-white/90 group-hover:text-primary group-hover:scale-110 transition-all duration-300" />
+                <span className="text-white/90 font-light tracking-wide group-hover:text-primary transition-colors">Orders</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </Button>
             </Link>
             <Link href="/cart">
