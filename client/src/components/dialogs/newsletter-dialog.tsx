@@ -32,7 +32,15 @@ export function NewsletterDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog 
+      open={open} 
+      onOpenChange={(isOpen) => {
+        setOpen(isOpen);
+        if (!isOpen) {
+          localStorage.setItem('hasSeenNewsletterDialog', 'true');
+        }
+      }}
+    >
       <DialogContent className="sm:max-w-[425px] bg-white text-black">
         <button
           onClick={() => setOpen(false)}
