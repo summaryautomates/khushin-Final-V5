@@ -289,6 +289,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Update payment status endpoint with better validation and error handling
   app.post("/api/payment/:orderRef/status", (req, res) => {
     try {
       const { orderRef } = req.params;
@@ -305,6 +306,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Validate state transitions
+      if (payment.status === 'completed' && validatedBody.status !== 'completed') {
+        return res.status(400).json({
+          message: "Invalid status transition",
+          details: "Cannot change status of a completed payment"
+        });
+      }
+
+      if (payment.status === 'failed' && validatedBody.status !== 'pending') {
+        return res.status(400).json({
+          message: "Invalid status transition",
+          details: "Failed payments can only be retried with pending status"
+        });
+      }
+
       payment.status = validatedBody.status;
       order.status = validatedBody.status;
 
@@ -317,6 +333,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         order.trackingNumber = trackingNumber;
         order.trackingStatus = 'Order Confirmed';
         order.estimatedDelivery = estimatedDelivery.toISOString();
+
+        // Notify connected WebSocket clients
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            const orderTrackingClient = client as OrderTrackingWebSocket;
+            if (orderTrackingClient.orderRef === orderRef) {
+              client.send(JSON.stringify({
+                type: 'ORDER_STATUS_UPDATE',
+                orderRef,
+                status: order.trackingStatus,
+                timestamp: new Date().toISOString()
+              }));
+            }
+          }
+        });
       }
 
       paymentStore.set(orderRef, payment);
@@ -533,10 +564,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update cart endpoints with better validation and error handling
   app.post("/api/cart", async (req, res) => {
     try {
       const userId = req.headers['x-user-id'] as string || 'anonymous';
-      const { productId, quantity = 1 } = req.body;
+      const data = insertCartItemSchema.parse(req.body);
+      const { productId, quantity = 1 } = data;
 
       // Validate the product exists
       const product = await storage.getProduct(productId);
@@ -547,20 +580,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Validate quantity
+      if (quantity < 1) {
+        return res.status(400).json({
+          message: "Invalid quantity",
+          details: "Quantity must be at least 1"
+        });
+      }
+
       // Check if item already exists in cart
       const existingItems = await storage.getCartItems(userId);
       const existingItem = existingItems.find(item => item.productId === productId);
 
       if (existingItem) {
         // Update quantity instead of creating new item
+        const newQuantity = existingItem.quantity + quantity;
+        if (newQuantity > 10) {
+          return res.status(400).json({
+            message: "Quantity limit exceeded",
+            details: "Maximum quantity per item is 10"
+          });
+        }
+
         await storage.updateCartItemQuantity(
           userId,
           productId,
-          existingItem.quantity + quantity
+          newQuantity
         );
       } else {
         // Add new item
-        const cartItem = await storage.addCartItem({
+        await storage.addCartItem({
           userId,
           productId,
           quantity,
@@ -572,6 +621,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedCart = await storage.getCartItems(userId);
       res.json(updatedCart);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Invalid input",
+          details: fromZodError(error).message
+        });
+      }
       console.error('Error adding to cart:', error);
       res.status(500).json({
         message: "Failed to add item to cart",
@@ -593,7 +648,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      await storage.updateCartItemQuantity(userId, productId, quantity);
+      if (quantity < 0 || quantity > 10) {
+        return res.status(400).json({
+          message: "Invalid quantity",
+          details: "Quantity must be between 0 and 10"
+        });
+      }
+
+      if (quantity === 0) {
+        await storage.removeCartItem(userId, productId);
+      } else {
+        await storage.updateCartItemQuantity(userId, productId, quantity);
+      }
+
       const updatedCart = await storage.getCartItems(userId);
       res.json(updatedCart);
     } catch (error) {
@@ -841,16 +908,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const wss = new WebSocketServer({ server, path: '/ws' });
 
   wss.on('connection', (ws: OrderTrackingWebSocket) => {
-    console.log('Client connected to order tracking WebSocket');
+    const log = (msg: string) => console.log(`[${new Date().toISOString()}] ${msg}`);
+    log('Client connected to order tracking WebSocket');
+
+    // Add heartbeat mechanism
+    const pingInterval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.ping();
+      }
+    }, 30000);
+
+    ws.on('pong', () => {
+      // Client is alive
+    });
 
     ws.on('message', (message) => {
       try {
         const data = JSON.parse(message.toString());
         if (data.type === 'SUBSCRIBE_ORDER') {
           ws.orderRef = data.orderRef;
-          console.log(`Client subscribed to order: ${data.orderRef}`);
+          log(`Client subscribed to order: ${data.orderRef}`);
 
-          // Send initial subscription confirmation
+          // Send initial order status
+          const order = orderStore.get(data.orderRef);
+          if (order) {
+            ws.send(JSON.stringify({
+              type: 'ORDER_STATUS_UPDATE',
+              orderRef: data.orderRef,
+              status: order.trackingStatus,
+              timestamp: new Date().toISOString()
+            }));
+          }
+
+          // Send subscription confirmation
           ws.send(JSON.stringify({
             type: 'SUBSCRIPTION_CONFIRMED',
             orderRef: data.orderRef,
@@ -858,16 +948,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }));
         }
       } catch (error) {
-        console.error('WebSocket message error:', error);
+        log(`WebSocket message error: ${error}`);
         ws.send(JSON.stringify({
           type: 'ERROR',
-          message: 'Invalid message format'
+          message: 'Invalid message format',
+          timestamp: new Date().toISOString()
         }));
       }
     });
 
+    ws.on('error', (error) => {
+      log(`WebSocket error: ${error}`);
+    });
+
     ws.on('close', () => {
-      console.log('Client disconnected from order tracking WebSocket');
+      clearInterval(pingInterval);
+      log('Client disconnected from order tracking WebSocket');
     });
 
     // Send welcome message
