@@ -1,11 +1,11 @@
+
 import { Component, type ErrorInfo, type ReactNode } from "react";
-import { AlertCircle, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertDescription } from "@/components/ui/alert";
 
 interface Props {
-  children: ReactNode;
+  children?: ReactNode;
   fallback?: ReactNode;
 }
 
@@ -25,7 +25,6 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to console with full stack trace
     console.error('Uncaught error:', {
       error,
       componentStack: errorInfo.componentStack,
@@ -34,14 +33,12 @@ export class ErrorBoundary extends Component<Props, State> {
 
     this.setState({ errorInfo });
     
-    // Prevent unhandled rejections from propagating
     window.addEventListener('unhandledrejection', (event) => {
       event.preventDefault();
       console.error('Unhandled promise rejection:', event.reason);
     });
 
     if (process.env.NODE_ENV === 'production') {
-      // In production, log to a service or handle specially
       this.setState({ error: new Error('An unexpected error occurred') });
     }
   }
@@ -92,15 +89,6 @@ export class ErrorBoundary extends Component<Props, State> {
                 )}
               </AlertDescription>
             </CardContent>
-            <CardFooter className="flex justify-end gap-2">
-              <Button variant="outline" onClick={this.handleReset}>
-                Try Again
-              </Button>
-              <Button onClick={this.handleReload}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Reload Page
-              </Button>
-            </CardFooter>
           </Card>
         </div>
       );

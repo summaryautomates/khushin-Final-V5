@@ -9,10 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
 
-// ErrorBoundary component (placeholder - needs proper implementation)
-const ErrorBoundary = ({ children }) => {
-  return <>{children}</>;
-};
+import { ErrorBoundary } from "@/components/error-boundary";
 
 
 export default function Cart() {
