@@ -32,8 +32,7 @@ type CartAction =
   | { type: "UPDATE_GIFT_WRAP"; payload: { type: GiftWrapType; cost: number } }
   | { type: "CLEAR_CART" }
   | { type: "START_UPDATE"; payload: number }
-  | { type: "END_UPDATE"; payload: number }
-  | { type: "OPTIMISTIC_UPDATE_QUANTITY"; payload: { productId: number; quantity: number } };
+  | { type: "END_UPDATE"; payload: number };
 
 interface CartContextType extends CartState {
   addItem: (product: Product, quantity?: number) => Promise<void>;
@@ -57,18 +56,6 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         total: action.payload.reduce((total, item) => total + item.product.price * item.quantity, 0),
         isLoading: false,
         error: null,
-      };
-
-    case "OPTIMISTIC_UPDATE_QUANTITY":
-      const updatedItems = state.items.map(item =>
-        item.product.id === action.payload.productId
-          ? { ...item, quantity: action.payload.quantity }
-          : item
-      );
-      return {
-        ...state,
-        items: updatedItems,
-        total: updatedItems.reduce((total, item) => total + item.product.price * item.quantity, 0),
       };
 
     case "UPDATE_GIFT_WRAP":
@@ -133,8 +120,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const fetchCartItems = async () => {
     if (!user) return;
 
-    dispatch({ type: "SET_LOADING", payload: true });
     try {
+      dispatch({ type: "SET_LOADING", payload: true });
       const response = await fetch('/api/cart', {
         headers: {
           'x-user-id': user.id.toString()
@@ -149,6 +136,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "SET_CART_ITEMS", payload: items });
     } catch (error: any) {
       console.error('Failed to load cart items:', error);
+      dispatch({ type: "SET_ERROR", payload: "Failed to load cart items" });
       toast({
         variant: "destructive",
         description: "Failed to load cart items. Please try again.",
@@ -158,7 +146,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!user) {
-      dispatch({ type: "SET_CART_ITEMS", payload: [] });
+      dispatch({ type: "CLEAR_CART" });
       return;
     }
     fetchCartItems();
@@ -167,12 +155,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const updateQuantity = async (productId: number, quantity: number) => {
     if (!user) return;
 
-    // Prevent updates if there's already a pending update for this product
     if (state.pendingUpdates.has(productId)) {
       return;
     }
 
-    // Validate quantity
     if (quantity < 0 || quantity > 10) {
       toast({
         variant: "destructive",
@@ -181,24 +167,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // For quantity 0, remove the item
     if (quantity === 0) {
       await removeItem(productId);
       return;
     }
 
-    // Clear any existing timeout
-    if (updateTimeoutRef.current) {
-      clearTimeout(updateTimeoutRef.current);
-    }
-
-    // Optimistically update the UI
-    dispatch({ type: "OPTIMISTIC_UPDATE_QUANTITY", payload: { productId, quantity } });
     dispatch({ type: "START_UPDATE", payload: productId });
 
-    // Debounce the API call
-    updateTimeoutRef.current = setTimeout(async () => {
-      try {
+    try {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+
+      updateTimeoutRef.current = setTimeout(async () => {
         const response = await fetch('/api/cart', {
           method: 'POST',
           headers: {
@@ -215,20 +196,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
           throw new Error('Failed to update quantity');
         }
 
-        // Fetch latest cart state
         await fetchCartItems();
-      } catch (error: any) {
-        console.error('Failed to update quantity:', error);
-        // Refresh cart state from server on error
-        await fetchCartItems();
-        toast({
-          variant: "destructive",
-          description: "Failed to update quantity. Please try again.",
-        });
-      } finally {
-        dispatch({ type: "END_UPDATE", payload: productId });
-      }
-    }, 500); // 500ms debounce
+      }, 500);
+    } catch (error: any) {
+      console.error('Failed to update quantity:', error);
+      await fetchCartItems();
+      toast({
+        variant: "destructive",
+        description: "Failed to update quantity. Please try again.",
+      });
+    } finally {
+      dispatch({ type: "END_UPDATE", payload: productId });
+    }
   };
 
   const addItem = async (product: Product, quantity = 1) => {
@@ -286,7 +265,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    dispatch({ type: "OPTIMISTIC_UPDATE_QUANTITY", payload: { productId, quantity: 0 } });
     dispatch({ type: "START_UPDATE", payload: productId });
 
     try {
