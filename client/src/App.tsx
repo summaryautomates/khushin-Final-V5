@@ -35,28 +35,58 @@ function App() {
           <div className="min-h-screen flex flex-col bg-background">
             <Header />
             <main className="flex-1">
-              <div className="min-h-[calc(100vh-4rem)] w-full">
-                <Switch>
-                  <Route path="/" component={Home} />
-                  <Route path="/products" component={Products} />
-                  <Route path="/products/category/:category" component={Products} />
-                  <Route path="/product/:id" component={Product} />
-                  <Route path="/cart" component={Cart} />
-                  <Route path="/checkout/payment" component={CheckoutPayment} />
-                  <Route path="/checkout/success" component={CheckoutSuccess} />
-                  <Route path="/contact" component={Contact} />
-                  <Route path="/customize" component={Customize} />
-                  <Route path="/refueling" component={Refueling} />
-                  <Route path="/orders" component={Orders} />
-                  <Route path="/orders/:orderRef" component={OrderDetails} />
-                  <Route path="/faqs" component={FAQs} />
-                  <Route path="/warranty" component={Warranty} />
-                  <Route path="/shipping" component={Shipping} />
-                  <Route path="/returns" component={Returns} />
-                  <Route path="/event-organizer" component={EventOrganizer} />
-                  <Route path="/express-delivery" component={ExpressDelivery} />
-                  <Route component={NotFound} />
-                </Switch>
+              {/* Mobile View Container */}
+              <div className="md:hidden w-full">
+                <div className="px-4 py-3">
+                  <Switch>
+                    <Route path="/" component={Home} />
+                    <Route path="/products" component={Products} />
+                    <Route path="/products/category/:category" component={Products} />
+                    <Route path="/product/:id" component={Product} />
+                    <Route path="/cart" component={Cart} />
+                    <Route path="/checkout/payment" component={CheckoutPayment} />
+                    <Route path="/checkout/success" component={CheckoutSuccess} />
+                    <Route path="/contact" component={Contact} />
+                    <Route path="/customize" component={Customize} />
+                    <Route path="/refueling" component={Refueling} />
+                    <Route path="/orders" component={Orders} />
+                    <Route path="/orders/:orderRef" component={OrderDetails} />
+                    <Route path="/faqs" component={FAQs} />
+                    <Route path="/warranty" component={Warranty} />
+                    <Route path="/shipping" component={Shipping} />
+                    <Route path="/returns" component={Returns} />
+                    <Route path="/event-organizer" component={EventOrganizer} />
+                    <Route path="/express-delivery" component={ExpressDelivery} />
+                    <Route component={NotFound} />
+                  </Switch>
+                </div>
+              </div>
+
+              {/* Desktop View Container */}
+              <div className="hidden md:block w-full">
+                <div className="container mx-auto px-6 py-8 max-w-7xl">
+                  <Switch>
+                    <Route path="/" component={Home} />
+                    <Route path="/products" component={Products} />
+                    <Route path="/products/category/:category" component={Products} />
+                    <Route path="/product/:id" component={Product} />
+                    <Route path="/cart" component={Cart} />
+                    <Route path="/checkout/payment" component={CheckoutPayment} />
+                    <Route path="/checkout/success" component={CheckoutSuccess} />
+                    <Route path="/contact" component={Contact} />
+                    <Route path="/customize" component={Customize} />
+                    <Route path="/refueling" component={Refueling} />
+                    <Route path="/orders" component={Orders} />
+                    <Route path="/orders/:orderRef" component={OrderDetails} />
+                    <Route path="/faqs" component={FAQs} />
+                    <Route path="/warranty" component={Warranty} />
+                    <Route path="/shipping" component={Shipping} />
+                    <Route path="/returns" component={Returns} />
+                    <Route path="/event-organizer" component={EventOrganizer} />
+                    <Route path="/express-delivery" component={ExpressDelivery} />
+                    <Route component={NotFound} />
+                  </Switch>
+                </div>
               </div>
             </main>
             <Footer />
