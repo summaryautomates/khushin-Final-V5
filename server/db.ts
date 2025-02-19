@@ -1,5 +1,17 @@
+import { drizzle } from 'drizzle-orm/neon-http';
+import { neon, neonConfig } from '@neondatabase/serverless';
+import * as schema from '@shared/schema';
+import { WebSocket } from 'ws';
 
-const products = [
+// Enable WebSocket connections for better performance
+neonConfig.webSocketConstructor = WebSocket;
+const sql = neon(process.env.DATABASE_URL!);
+
+// Create the database instance with the correct configuration
+export const db = drizzle(sql, { schema });
+
+// Sample products data for reference
+export const sampleProducts = [
   {
     id: 1,
     name: "Regal Gold Essence",
@@ -9,7 +21,13 @@ const products = [
       "https://images.unsplash.com/photo-1675789652575-0a5dd196b4ba?w=800&q=90",
       "https://images.unsplash.com/photo-1675789652363-e2f09f5e40d9?w=800&q=90"
     ],
-    category: "lighters"
+    category: "lighters",
+    customizable: true,
+    features: {
+      material: "24K Gold Plated",
+      mechanism: "Premium Butane",
+      style: "Art Deco"
+    }
   },
   {
     id: 2,
@@ -111,5 +129,3 @@ const products = [
     category: "refueling"
   }
 ];
-
-console.log(products);
