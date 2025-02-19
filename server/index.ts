@@ -3,7 +3,8 @@ import fs from "fs";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 import { createServer as createHttpServer } from "http";
-import { createServer as createViteServer } from 'vite'; // Added Vite server creation
+import { createServer as createViteServer } from 'vite';
+import { WebSocket, WebSocketServer } from 'ws';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -36,6 +37,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// Error handling middleware
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Server error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
 // Start server with improved error handling
 const startServer = async () => {
   try {
@@ -44,6 +51,21 @@ const startServer = async () => {
     // Create HTTP server
     const server = createHttpServer(app);
 
+    // Create WebSocket server
+    const wss = new WebSocketServer({ server });
+
+    // WebSocket connection handling
+    wss.on('connection', (ws: WebSocket) => {
+      console.log('WebSocket client connected');
+
+      ws.on('error', (error) => {
+        console.error('WebSocket error:', error);
+      });
+
+      ws.on('close', () => {
+        console.log('WebSocket client disconnected');
+      });
+    });
 
     // Register routes
     console.log('Registering routes...');
@@ -57,12 +79,15 @@ const startServer = async () => {
         server: {
           middlewareMode: true,
           hmr: {
-            host: '0.0.0.0',
-            port: 3000,
-            protocol: 'wss',
-            clientPort: 443
+            server,
+            path: '/@vite/client',
+            timeout: 20000,
+            overlay: true,
+            clientPort: null,
+            host: '0.0.0.0'
           }
         },
+        appType: 'spa'
       });
       app.use(vite.middlewares);
       console.log('Vite setup complete');
@@ -95,5 +120,10 @@ const startServer = async () => {
     process.exit(1);
   }
 };
+
+// Handle uncaught promise rejections
+process.on('unhandledRejection', (error) => {
+  console.error('Unhandled promise rejection:', error);
+});
 
 startServer();
