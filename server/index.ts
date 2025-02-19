@@ -2,7 +2,9 @@ import express, { type Express } from "express";
 import fs from "fs";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
-import { createServer } from "http";
+import { createServer as createHttpServer } from "http";
+import { createServer as createViteServer } from 'vite'; // Added Vite server creation
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -40,7 +42,8 @@ const startServer = async () => {
     console.log('Starting server...');
 
     // Create HTTP server
-    const server = createServer(app);
+    const server = createHttpServer(app);
+
 
     // Register routes
     console.log('Registering routes...');
@@ -50,8 +53,17 @@ const startServer = async () => {
     // Setup Vite in development or serve static files in production
     if (process.env.NODE_ENV !== 'production') {
       console.log('Setting up Vite middleware...');
-      const { setupVite } = await import("./vite.ts");
-      await setupVite(app, server);
+      const vite = await createViteServer({
+        server: {
+          middlewareMode: true,
+          hmr: {
+            host: '0.0.0.0',
+            port: 3000,
+            protocol: 'ws'
+          }
+        },
+      });
+      app.use(vite.middlewares);
       console.log('Vite setup complete');
     } else {
       const { serveStatic } = await import("./vite.ts");
