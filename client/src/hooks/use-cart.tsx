@@ -175,29 +175,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "START_UPDATE", payload: productId });
 
     try {
-      if (updateTimeoutRef.current) {
-        clearTimeout(updateTimeoutRef.current);
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.id.toString()
+        },
+        body: JSON.stringify({
+          productId,
+          quantity,
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update quantity');
       }
 
-      updateTimeoutRef.current = setTimeout(async () => {
-        const response = await fetch('/api/cart', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-id': user.id.toString()
-          },
-          body: JSON.stringify({
-            productId,
-            quantity,
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to update quantity');
-        }
-
-        await fetchCartItems();
-      }, 500);
+      await fetchCartItems();
     } catch (error: any) {
       console.error('Failed to update quantity:', error);
       await fetchCartItems();
