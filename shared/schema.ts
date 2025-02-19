@@ -126,3 +126,38 @@ export type Order = typeof orders.$inferSelect;
 export type OrderStatusHistory = typeof orderStatusHistory.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type InsertOrderStatusHistory = z.infer<typeof insertOrderStatusHistorySchema>;
+
+export const loyaltyPoints = pgTable("loyalty_points", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  points: integer("points").notNull().default(0),
+  tier: text("tier").notNull().default('bronze'),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow()
+});
+
+export const referrals = pgTable("referrals", {
+  id: serial("id").primaryKey(),
+  referrerId: text("referrer_id").notNull(),
+  referredId: text("referred_id").notNull(),
+  status: text("status").notNull().default('pending'),
+  pointsAwarded: boolean("points_awarded").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow()
+});
+
+export const rewards = pgTable("rewards", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  pointsCost: integer("points_cost").notNull(),
+  type: text("type").notNull(), // 'discount', 'product', 'experience'
+  isActive: boolean("is_active").notNull().default(true),
+  validUntil: timestamp("valid_until")
+});
+
+export const insertLoyaltySchema = createInsertSchema(loyaltyPoints).omit({ id: true, lastUpdated: true });
+export const insertReferralSchema = createInsertSchema(referrals).omit({ id: true, createdAt: true });
+export const insertRewardSchema = createInsertSchema(rewards).omit({ id: true });
+
+export type LoyaltyPoints = typeof loyaltyPoints.$inferSelect;
+export type Referral = typeof referrals.$inferSelect;
+export type Reward = typeof rewards.$inferSelect;
