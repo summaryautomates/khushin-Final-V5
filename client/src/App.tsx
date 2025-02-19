@@ -32,10 +32,10 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <CartProvider>
         <ErrorBoundary>
-          <div className="flex min-h-screen flex-col bg-background">
+          <div className="min-h-screen flex flex-col bg-background">
             <Header />
-            <main className="flex-1 w-full">
-              <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-4 sm:py-6 lg:py-8">
+            <main className="flex-1">
+              <div className="min-h-[calc(100vh-4rem)] w-full">
                 <Switch>
                   <Route path="/" component={Home} />
                   <Route path="/products" component={Products} />
