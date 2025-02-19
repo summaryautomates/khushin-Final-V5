@@ -209,6 +209,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const updateQuantity = async (productId: number, quantity: number) => {
     if (!user) return;
+
+    // Validate quantity before making any changes
     if (quantity < 0 || quantity > 10) {
       toast({
         variant: "destructive",
@@ -217,14 +219,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const previousItems = state.items;
-
-    const updatedItems = state.items.map(item =>
-      item.product.id === productId ? { ...item, quantity } : item
-    );
-    dispatch({ type: "SET_CART_ITEMS", payload: updatedItems });
+    // Store previous state for rollback
+    const previousItems = [...state.items];
 
     try {
+      // Only update UI if it's a valid quantity
+      if (quantity === 0) {
+        await removeItem(productId);
+        return;
+      }
+
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers: {
@@ -247,13 +251,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error('Failed to update quantity:', error);
 
+      // Rollback to previous state
       dispatch({ type: "SET_CART_ITEMS", payload: previousItems });
 
+      // Show appropriate error message
       toast({
         variant: "destructive",
-        description: error.message === "Maximum quantity per item is 10"
-          ? "Maximum quantity per item is 10"
-          : "Failed to update quantity. Please try again.",
+        description: "Failed to update quantity. Please try again.",
       });
     }
   };

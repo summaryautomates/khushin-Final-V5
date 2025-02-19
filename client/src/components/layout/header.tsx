@@ -80,19 +80,20 @@ export function Header() {
           </NavigationMenu>
 
           <div className="flex items-center space-x-4">
-            <Link href="/orders">
-              <Button 
-                variant="ghost" 
-                size="default"
-                className="relative group hover:bg-white/10 transition-all duration-300 border border-white/20 gap-2 backdrop-blur-sm"
-              >
-                <ClockIcon className="h-5 w-5 text-white/90 group-hover:text-primary group-hover:scale-110 transition-all duration-300" />
-                <span className="text-white/90 font-light tracking-wide group-hover:text-primary transition-colors">Orders</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              </Button>
-            </Link>
+            {user && (
+              <Link href="/orders">
+                <Button 
+                  variant="ghost" 
+                  size="default"
+                  className="relative group hover:bg-white/10 transition-all duration-300 border border-white/20 gap-2 backdrop-blur-sm"
+                >
+                  <ClockIcon className="h-5 w-5 text-white/90 group-hover:text-primary group-hover:scale-110 transition-all duration-300" />
+                  <span className="text-white/90 font-light tracking-wide group-hover:text-primary transition-colors">Orders</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                </Button>
+              </Link>
+            )}
 
-            {/* Authentication Button */}
             {user ? (
               <Button 
                 variant="ghost" 
@@ -107,21 +108,23 @@ export function Header() {
               <AuthSheet />
             )}
 
-            <Link href="/cart">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="relative group hover:bg-white/5 transition-colors duration-300"
-              >
-                <ShoppingCart className="h-5 w-5 text-white group-hover:scale-110 transition-transform duration-300" />
-                <span className="sr-only">Shopping Cart</span>
-                {!cart.isLoading && cartItemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground w-5 h-5 rounded-full text-xs flex items-center justify-center animate-in slide-in-from-top-2 duration-300">
-                    {cartItemCount}
-                  </span>
-                )}
-              </Button>
-            </Link>
+            {user && (
+              <Link href="/cart">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="relative group hover:bg-white/5 transition-colors duration-300"
+                >
+                  <ShoppingCart className="h-5 w-5 text-white group-hover:scale-110 transition-transform duration-300" />
+                  <span className="sr-only">Shopping Cart</span>
+                  {!cart.isLoading && cartItemCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground w-5 h-5 rounded-full text-xs flex items-center justify-center animate-in slide-in-from-top-2 duration-300">
+                      {cartItemCount}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
