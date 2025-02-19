@@ -33,7 +33,9 @@ import {
   Users,
   Calendar
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import Tesseract from 'tesseract.js';
+import { toast } from "@/hooks/use-toast";
 
 
 export default function Home() {
