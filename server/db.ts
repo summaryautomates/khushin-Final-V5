@@ -5,12 +5,16 @@ import { WebSocket } from 'ws';
 
 // Enable WebSocket connections for better performance
 neonConfig.webSocketConstructor = WebSocket;
-const sql = neon(process.env.DATABASE_URL!);
 
-// Create the database instance with the correct configuration
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL must be set. Did you forget to provision a database?",
+  );
+}
+
+const sql = neon(process.env.DATABASE_URL!);
 export const db = drizzle(sql, { schema });
 
-// Sample products data for reference
 export const sampleProducts = [
   {
     id: 1,

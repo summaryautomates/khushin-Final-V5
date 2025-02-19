@@ -1,6 +1,7 @@
 import { pgTable, text, serial, integer, boolean, jsonb, foreignKey, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 // Add users table at the top since other tables might reference it
 export const users = pgTable("users", {
@@ -58,6 +59,17 @@ export const cartItems = pgTable("cart_items", {
   giftWrapType: text("gift_wrap_type"),
   giftWrapCost: integer("gift_wrap_cost").default(0),
 });
+
+export const cartItemsRelations = relations(cartItems, ({ one }) => ({
+  product: one(products, {
+    fields: [cartItems.productId],
+    references: [products.id],
+  }),
+}));
+
+export const productsRelations = relations(products, ({ many }) => ({
+  cartItems: many(cartItems),
+}));
 
 export const discountCodes = pgTable("discount_codes", {
   id: serial("id").primaryKey(),

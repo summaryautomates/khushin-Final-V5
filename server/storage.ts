@@ -89,11 +89,45 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCartItems(userId: string): Promise<CartItem[]> {
-    return await db.select().from(cartItems).where(eq(cartItems.userId, userId));
+    return await db
+      .select()
+      .from(cartItems)
+      .where(eq(cartItems.userId, userId))
+      .leftJoin(products, eq(cartItems.productId, products.id));
   }
 
   async addCartItem(item: InsertCartItem): Promise<CartItem> {
-    const [cartItem] = await db.insert(cartItems).values(item).returning();
+    // First check if the item already exists
+    const [existingItem] = await db
+      .select()
+      .from(cartItems)
+      .where(
+        and(
+          eq(cartItems.userId, item.userId),
+          eq(cartItems.productId, item.productId)
+        )
+      );
+
+    if (existingItem) {
+      // Update quantity instead
+      const newQuantity = existingItem.quantity + item.quantity;
+      if (newQuantity > 10) {
+        throw new Error("Maximum quantity per item is 10");
+      }
+
+      const [updatedItem] = await db
+        .update(cartItems)
+        .set({ quantity: newQuantity })
+        .where(eq(cartItems.id, existingItem.id))
+        .returning();
+      return updatedItem;
+    }
+
+    // Insert new item
+    const [cartItem] = await db
+      .insert(cartItems)
+      .values(item)
+      .returning();
     return cartItem;
   }
 
