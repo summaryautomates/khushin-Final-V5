@@ -17,3 +17,10 @@ export function formatPrice(price: number): string {
 export function getCategoryName(categoryId: string): string {
   return categories.find(c => c.id === categoryId)?.name || categoryId;
 }
+
+export function parsePostgresArray(arrayString: string | null): string[] {
+  if (!arrayString) return [];
+  // Remove the curly braces and split by comma
+  const cleanString = arrayString.replace(/[{}]/g, '');
+  return cleanString.split(',').map(item => item.trim());
+}
