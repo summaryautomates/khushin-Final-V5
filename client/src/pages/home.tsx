@@ -39,7 +39,6 @@ import type { Worker } from 'tesseract.js';
 import { toast } from "@/hooks/use-toast";
 
 
-
 export default function Home() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
@@ -354,6 +353,17 @@ export default function Home() {
             ) : (
               products && <ProductGrid products={products.slice(0, 4)} />
             )}
+
+            <div className="mt-12 text-center">
+              <Button
+                variant="outline"
+                size="lg"
+                className="rounded-full"
+                onClick={() => setLocation('/products')}
+              >
+                See More Products
+              </Button>
+            </div>
           </motion.div>
         </section>
 
