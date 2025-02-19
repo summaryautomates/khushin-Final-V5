@@ -8,9 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
-
 import { ErrorBoundary } from "@/components/error-boundary";
-
 
 export default function Cart() {
   const [showShippingForm, setShowShippingForm] = useState(false);
@@ -30,9 +28,8 @@ export default function Cart() {
     name: item.product.name,
     price: item.product.price,
     quantity: item.quantity,
-    image: item.product.image || '/placeholder.jpg',
-    description: item.product.description,
-    sku: item.product.sku
+    image: item.product.images[0] || '/placeholder.jpg', // Use first image from images array
+    description: item.product.description
   }));
 
   const handleUpdateQuantity = (id: string, quantity: number) => {
@@ -76,8 +73,18 @@ export default function Cart() {
     }
 
     setIsCheckingOut(true);
-    // Add your checkout logic here
-    setIsCheckingOut(false);
+    try {
+      // Add your checkout logic here
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast({
+        title: "Checkout Error",
+        description: "An error occurred during checkout. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingOut(false);
+    }
   };
 
   if (isLoading) {
