@@ -61,6 +61,7 @@ const startServer = async () => {
     // Start server on port 5000 to match workflow expectations
     const PORT = 5000;
     server.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running at http://0.0.0.0:${PORT}`);
       console.log(`Server listening on port ${PORT}`);
     });
 
