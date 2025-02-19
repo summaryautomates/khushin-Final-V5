@@ -5,6 +5,17 @@ import { setupVite, serveStatic } from "./vite";
 import { AddressInfo } from 'net';
 import { Server } from 'http';
 
+// Add process-level error handlers
+process.on('uncaughtException', err => {
+  console.error('Uncaught Exception:', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled Rejection:', err);
+  process.exit(1);
+});
+
 const app = express();
 
 // Basic middleware
@@ -44,89 +55,102 @@ const cleanup = (server: Server | null) => {
   }
 };
 
-// Start server with improved port handling
+// Start server with environment-aware port binding and fallback
 const startServer = async () => {
   try {
     log('Starting server...', 'server');
 
-    // Restore port 5000 as first option
-    const ports = [5000, 3000, 3001, 5001, 5002];
+    // Log environment details
+    console.log('Environment:', {
+      NODE_ENV: process.env.NODE_ENV,
+      PORT: process.env.PORT,
+      HOST: process.env.HOST
+    });
+
+    // Prioritize environment PORT, then try alternative ports
+    const portToTry = process.env.PORT ? [parseInt(process.env.PORT, 10)] : [5000, 3000, 3001, 5001];
     let server: Server | null = null;
     let boundPort: number | null = null;
 
-    // Register routes first
-    server = await registerRoutes(app);
+    try {
+      // Register routes first
+      console.log('Registering routes...');
+      server = await registerRoutes(app);
+      console.log('Routes registered successfully');
+    } catch (error) {
+      console.error('Failed to register routes:', error);
+      throw error;
+    }
 
-    // Try each port sequentially with proper cleanup
-    for (const port of ports) {
+    // Try ports sequentially
+    for (const port of portToTry) {
       try {
-        // Clean up any existing connections
-        cleanup(server);
-
         await new Promise<void>((resolve, reject) => {
           const timeoutId = setTimeout(() => {
             cleanup(server);
             reject(new Error(`Port binding timeout on port ${port}`));
-          }, 10000); // Increased timeout to 10 seconds
+          }, 10000);
 
           server!.listen(port, '0.0.0.0', async () => {
-  if (process.env.NODE_ENV !== 'production') {
-    // Allow Vite HMR connections
-    app.use((req, res, next) => {
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      next();
-    });
-  } // Modified to use 0.0.0.0
             clearTimeout(timeoutId);
             const address = server!.address() as AddressInfo;
-            boundPort = address.port;
-            log(`Server successfully bound to port ${boundPort}`, 'server');
+            boundPort = port;
+            console.log(`Server bound successfully to port ${port}`);
+            log(`Server successfully bound to port ${port}`, 'server');
             resolve();
           });
 
           server!.once('error', (err: NodeJS.ErrnoException) => {
             clearTimeout(timeoutId);
+            console.error(`Failed to bind to port ${port}:`, err.message);
             if (err.code === 'EADDRINUSE') {
-              log(`Port ${port} is in use, trying next port...`, 'server');
-              cleanup(server);
-              reject(err);
+              // If this is the environment-specified port, we should fail
+              if (process.env.PORT && port === parseInt(process.env.PORT, 10)) {
+                cleanup(server);
+                reject(new Error(`Environment-specified port ${port} is in use`));
+              }
+              // Otherwise, we'll try the next port
+              resolve();
             } else {
-              log(`Unexpected error while binding to port ${port}: ${err.message}`, 'server');
               cleanup(server);
               reject(err);
             }
           });
         });
 
-        // If we get here, we successfully bound to a port
-        break;
+        // If we successfully bound to a port, break the loop
+        if (boundPort) break;
       } catch (error) {
-        const isLastPort = ports.indexOf(port) === ports.length - 1;
-        log(`Failed to bind to port ${port}${isLastPort ? '' : ', trying next port...'}`, 'server');
-
-        if (isLastPort) {
-          throw new Error('All ports are in use, cannot start server');
+        // If this was the last port or an environment-specified port, throw
+        if (process.env.PORT || port === portToTry[portToTry.length - 1]) {
+          throw error;
         }
-        // Continue to next port
+        // Otherwise continue to next port
         continue;
       }
     }
 
     if (!boundPort || !server) {
-      throw new Error('Failed to start server on any port');
+      throw new Error('Failed to bind to any available port');
     }
 
     log(`Server started in ${process.env.NODE_ENV || 'development'} mode`, 'server');
 
     // Setup Vite after server is running
     if (process.env.NODE_ENV !== 'production') {
-      await setupVite(app, server)
-        .then(() => log('Vite setup complete', 'server'))
-        .catch(error => {
-          log(`Vite setup error: ${error}`, 'server');
-          cleanup(server);
-          process.exit(1);
-        });
+      try {
+        console.log('Setting up Vite...');
+        await setupVite(app, server)
+          .then(() => log('Vite setup complete', 'server'))
+          .catch(error => {
+            console.error('Vite setup error:', error);
+            cleanup(server);
+            process.exit(1);
+          });
+      } catch (error) {
+        console.error('Error during Vite setup:', error);
+        throw error;
+      }
     } else {
       serveStatic(app);
     }
@@ -142,6 +166,7 @@ const startServer = async () => {
     process.on('SIGINT', shutdownHandler);
 
   } catch (error) {
+    console.error('Critical server error:', error);
     log(`Critical server error: ${error}`, 'server');
     process.exit(1);
   }
