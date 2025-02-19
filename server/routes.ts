@@ -535,10 +535,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cart Routes
   app.get("/api/cart", async (req, res) => {
     try {
-      // For now, use a simple user identification
-      const userId = req.headers['x-user-id'] as string || 'anonymous';
+      const userId = req.headers['x-user-id'];
+      if (!userId) {
+        return res.status(401).json({
+          message: "Unauthorized",
+          details: "User ID is required"
+        });
+      }
 
-      const dbCartItems = await storage.getCartItems(userId);
+      const dbCartItems = await storage.getCartItems(userId.toString());
 
       // Fetch product details for each cart item
       const cartItems = await Promise.all(
@@ -569,8 +574,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update cart endpoints with better validation and error handling
   app.post("/api/cart", async (req, res) => {
     try {
-      const userId = req.headers['x-user-id'] as string || 'anonymous';
-      const data = insertCartItemSchema.parse(req.body);
+      const userId = req.headers['x-user-id'];
+      if (!userId) {
+        return res.status(401).json({
+          message: "Unauthorized",
+          details: "User ID is required"
+        });
+      }
+
+      const data = insertCartItemSchema.parse({ ...req.body, userId: userId.toString() });
       const { productId, quantity = 1 } = data;
 
       // Validate the product exists
@@ -583,17 +595,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Validate quantity
-      if (quantity < 1) {
+      if (quantity < 1 || quantity > 10) {
         return res.status(400).json({
           message: "Invalid quantity",
-          details: "Quantity must be at least 1"
+          details: "Quantity must be between 1 and 10"
         });
       }
 
       // Check if item already exists in cart
-      const existingItems = await storage.getCartItems(userId);
+      const existingItems = await storage.getCartItems(userId.toString());
       const existingItem = existingItems.find(item => item.productId === productId);
 
+      let updatedCart;
       if (existingItem) {
         // Update quantity instead of creating new item
         const newQuantity = existingItem.quantity + quantity;
@@ -605,14 +618,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         await storage.updateCartItemQuantity(
-          userId,
+          userId.toString(),
           productId,
           newQuantity
         );
       } else {
         // Add new item
         await storage.addCartItem({
-          userId,
+          userId: userId.toString(),
           productId,
           quantity,
           giftWrapType: null,
@@ -620,8 +633,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const updatedCart = await storage.getCartItems(userId);
-      res.json(updatedCart);
+      // Fetch updated cart with product details
+      const dbCartItems = await storage.getCartItems(userId.toString());
+      updatedCart = await Promise.all(
+        dbCartItems.map(async (item) => {
+          const product = await storage.getProduct(item.productId);
+          if (!product) return null;
+          return {
+            product,
+            quantity: item.quantity,
+          };
+        })
+      );
+
+      res.json(updatedCart.filter(item => item !== null));
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
@@ -639,7 +664,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/cart/:productId", async (req, res) => {
     try {
-      const userId = req.headers['x-user-id'] as string || 'anonymous';
+      const userId = req.headers['x-user-id'];
+      if (!userId) {
+        return res.status(401).json({
+          message: "Unauthorized",
+          details: "User ID is required"
+        });
+      }
       const productId = parseInt(req.params.productId);
       const { quantity } = req.body;
 
@@ -658,12 +689,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (quantity === 0) {
-        await storage.removeCartItem(userId, productId);
+        await storage.removeCartItem(userId.toString(), productId);
       } else {
-        await storage.updateCartItemQuantity(userId, productId, quantity);
+        await storage.updateCartItemQuantity(userId.toString(), productId, quantity);
       }
 
-      const updatedCart = await storage.getCartItems(userId);
+      const updatedCart = await storage.getCartItems(userId.toString());
       res.json(updatedCart);
     } catch (error) {
       console.error('Error updating cart:', error);
@@ -676,7 +707,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/cart/:productId", async (req, res) => {
     try {
-      const userId = req.headers['x-user-id'] as string || 'anonymous';
+      const userId = req.headers['x-user-id'];
+      if (!userId) {
+        return res.status(401).json({
+          message: "Unauthorized",
+          details: "User ID is required"
+        });
+      }
       const productId = parseInt(req.params.productId);
 
       if (isNaN(productId)) {
@@ -686,8 +723,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      await storage.removeCartItem(userId, productId);
-      const updatedCart = await storage.getCartItems(userId);
+      await storage.removeCartItem(userId.toString(), productId);
+      const updatedCart = await storage.getCartItems(userId.toString());
       res.json(updatedCart);
     } catch (error) {
       console.error('Error removing from cart:', error);
@@ -700,8 +737,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/cart", async (req, res) => {
     try {
-      const userId = req.headers['x-user-id'] as string || 'anonymous';
-      await storage.clearCart(userId);
+      const userId = req.headers['x-user-id'];
+      if (!userId) {
+        return res.status(401).json({
+          message: "Unauthorized",
+          details: "User ID is required"
+        });
+      }
+      await storage.clearCart(userId.toString());
       res.json([]);
     } catch (error) {
       console.error('Error clearing cart:', error);

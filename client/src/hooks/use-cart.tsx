@@ -175,7 +175,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       dispatch({ type: "SET_LOADING", payload: true });
       try {
-        const response = await apiRequest('GET', '/api/cart');
+        const response = await apiRequest('GET', '/api/cart', undefined, {
+          headers: {
+            'x-user-id': user.id.toString()
+          }
+        });
         const data = await response.json();
 
         if (isMounted && Array.isArray(data)) {
@@ -187,7 +191,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
           dispatch({ type: "SET_ERROR", payload: error.message });
         }
       } finally {
-        dispatch({ type: "SET_LOADING", payload: false });
+        if (isMounted) {
+          dispatch({ type: "SET_LOADING", payload: false });
+        }
       }
     };
 
@@ -208,19 +214,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const response = await apiRequest('POST', '/api/cart', {
         productId: product.id,
         quantity,
+      }, {
+        headers: {
+          'x-user-id': user.id.toString()
+        }
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to add item to cart');
+      }
 
       const updatedCart = await response.json();
 
       if (Array.isArray(updatedCart)) {
         dispatch({ type: "SET_CART_ITEMS", payload: updatedCart });
+        toast({
+          description: `${product.name} added to cart`,
+        });
       } else {
-        dispatch({ type: "ADD_ITEM", payload: { product, quantity } });
+        throw new Error('Invalid response format');
       }
-
-      toast({
-        description: `${product.name} added to cart`,
-      });
     } catch (error: any) {
       console.error('Failed to add item to cart:', error);
       dispatch({ type: "SET_ERROR", payload: error.message });
@@ -239,8 +252,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     dispatch({ type: "SET_LOADING", payload: true });
     try {
-      await apiRequest('DELETE', `/api/cart/${productId}`);
-      dispatch({ type: "REMOVE_ITEM", payload: { productId } });
+      const response = await apiRequest('DELETE', `/api/cart/${productId}`, undefined, {
+        headers: {
+          'x-user-id': user.id.toString()
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to remove item from cart');
+      }
+
+      const updatedCart = await response.json();
+
+      if (Array.isArray(updatedCart)) {
+        dispatch({ type: "SET_CART_ITEMS", payload: updatedCart });
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (error: any) {
       console.error('Failed to remove item from cart:', error);
       dispatch({ type: "SET_ERROR", payload: error.message });
@@ -258,8 +286,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     dispatch({ type: "SET_LOADING", payload: true });
     try {
-      await apiRequest('PATCH', `/api/cart/${productId}`, { quantity });
-      dispatch({ type: "UPDATE_QUANTITY", payload: { productId, quantity } });
+      const response = await apiRequest('PATCH', `/api/cart/${productId}`, 
+        { quantity }, 
+        {
+          headers: {
+            'x-user-id': user.id.toString()
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to update quantity');
+      }
+
+      const updatedCart = await response.json();
+
+      if (Array.isArray(updatedCart)) {
+        dispatch({ type: "SET_CART_ITEMS", payload: updatedCart });
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (error: any) {
       console.error('Failed to update quantity:', error);
       dispatch({ type: "SET_ERROR", payload: error.message });
