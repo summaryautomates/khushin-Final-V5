@@ -11,6 +11,18 @@ interface CartItemProps {
 }
 
 export function CartItem({ product, quantity, onUpdateQuantity, onRemove }: CartItemProps) {
+  const handleIncrement = () => {
+    onUpdateQuantity(product.id, quantity + 1);
+  };
+
+  const handleDecrement = () => {
+    if (quantity > 1) {
+      onUpdateQuantity(product.id, quantity - 1);
+    } else {
+      onRemove(product.id);
+    }
+  };
+
   return (
     <Card className="p-4">
       <div className="flex items-center gap-4">
@@ -38,7 +50,7 @@ export function CartItem({ product, quantity, onUpdateQuantity, onRemove }: Cart
             variant="outline"
             size="icon"
             className="h-8 w-8"
-            onClick={() => onUpdateQuantity(product.id, Math.max(0, quantity - 1))}
+            onClick={handleDecrement}
           >
             <Minus className="h-4 w-4" />
           </Button>
@@ -47,7 +59,7 @@ export function CartItem({ product, quantity, onUpdateQuantity, onRemove }: Cart
             variant="outline"
             size="icon"
             className="h-8 w-8"
-            onClick={() => onUpdateQuantity(product.id, quantity + 1)}
+            onClick={handleIncrement}
           >
             <Plus className="h-4 w-4" />
           </Button>

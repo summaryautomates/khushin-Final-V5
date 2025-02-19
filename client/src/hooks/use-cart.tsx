@@ -207,8 +207,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const updateQuantity = async (productId: number, quantity: number) => {
     if (!user) return;
+    if (quantity < 0) return;
 
-    dispatch({ type: "SET_LOADING", payload: true });
+    // Optimistically update the UI
+    const updatedItems = state.items.map(item =>
+      item.product.id === productId ? { ...item, quantity } : item
+    );
+    dispatch({ type: "SET_CART_ITEMS", payload: updatedItems });
+
     try {
       const response = await fetch('/api/cart', {
         method: 'POST',
@@ -230,6 +236,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "SET_CART_ITEMS", payload: items });
     } catch (error: any) {
       console.error('Failed to update quantity:', error);
+
+      // Revert the optimistic update
+      dispatch({ type: "SET_CART_ITEMS", payload: state.items });
+
       dispatch({ type: "SET_ERROR", payload: error.message });
       toast({
         variant: "destructive",
