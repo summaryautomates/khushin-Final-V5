@@ -1,7 +1,6 @@
-import { createContext, useContext, useReducer, useEffect, ReactNode, useState } from "react";
+import { createContext, useContext, useReducer, useEffect, ReactNode } from "react";
 import { Product } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 
 interface CartItem {
@@ -101,7 +100,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const { toast } = useToast();
   const { user } = useAuth();
-  const [isClearing, setIsClearing] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -112,7 +110,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const loadCartItems = async () => {
       dispatch({ type: "SET_LOADING", payload: true });
       try {
-        const response = await apiRequest('GET', '/api/cart', undefined, {
+        const response = await fetch('/api/cart', {
           headers: {
             'x-user-id': user.id.toString()
           }
@@ -148,13 +146,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     dispatch({ type: "SET_LOADING", payload: true });
     try {
-      const response = await apiRequest('POST', '/api/cart', {
-        productId: product.id,
-        quantity,
-      }, {
+      const response = await fetch('/api/cart', {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'x-user-id': user.id.toString()
-        }
+        },
+        body: JSON.stringify({
+          productId: product.id,
+          quantity,
+        })
       });
 
       if (!response.ok) {
@@ -181,7 +182,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     dispatch({ type: "SET_LOADING", payload: true });
     try {
-      const response = await apiRequest('DELETE', `/api/cart/${productId}`, undefined, {
+      const response = await fetch(`/api/cart/${productId}`, {
+        method: 'DELETE',
         headers: {
           'x-user-id': user.id.toString()
         }
@@ -208,13 +210,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     dispatch({ type: "SET_LOADING", payload: true });
     try {
-      const response = await apiRequest('POST', '/api/cart', {
-        productId,
-        quantity,
-      }, {
+      const response = await fetch('/api/cart', {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'x-user-id': user.id.toString()
-        }
+        },
+        body: JSON.stringify({
+          productId,
+          quantity,
+        })
       });
 
       if (!response.ok) {
@@ -238,16 +243,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const clearCart = async () => {
-    if (!user || isClearing) return;
+    if (!user) return;
 
-    setIsClearing(true);
     dispatch({ type: "SET_LOADING", payload: true });
     try {
-      await apiRequest('DELETE', '/api/cart', undefined, {
+      const response = await fetch('/api/cart', {
+        method: 'DELETE',
         headers: {
           'x-user-id': user.id.toString()
         }
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to clear cart');
+      }
+
       dispatch({ type: "CLEAR_CART" });
     } catch (error: any) {
       console.error('Failed to clear cart:', error);
@@ -256,8 +266,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         variant: "destructive",
         description: "Failed to clear cart. Please try again.",
       });
-    } finally {
-      setIsClearing(false);
     }
   };
 
