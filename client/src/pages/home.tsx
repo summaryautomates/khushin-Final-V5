@@ -35,7 +35,9 @@ import {
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { createWorker } from 'tesseract.js';
+import type { Worker } from 'tesseract.js';
 import { toast } from "@/hooks/use-toast";
+
 
 
 export default function Home() {
@@ -99,7 +101,7 @@ export default function Home() {
     }
 
     // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
       toast({
         title: "File Too Large",
@@ -115,50 +117,36 @@ export default function Home() {
         description: "Please wait while we analyze the image...",
       });
 
-      const worker = await createWorker({
-        logger: progress => {
-          console.log('OCR Progress:', progress);
-        },
-      });
+      const worker = await createWorker();
 
-      console.log('Worker created, loading...');
-      await worker.load();
-      console.log('Loading language...');
-      await worker.loadLanguage('eng');
-      console.log('Initializing...');
-      await worker.initialize('eng');
-      console.log('Starting recognition...');
+      try {
+        await worker.loadLanguage('eng');
+        await worker.initialize('eng');
 
-      const { data: { text } } = await worker.recognize(file);
-      console.log('Recognition completed:', text);
-      await worker.terminate();
+        const { data: { text } } = await worker.recognize(file);
 
-      const cleanText = text.replace(/[^\w\s]/gi, '').trim();
-      if (cleanText) {
-        setSearchQuery(cleanText);
-        toast({
-          title: "Image Processed",
-          description: "Text extracted successfully",
-        });
-      } else {
-        toast({
-          title: "No Text Found",
-          description: "Could not extract text from the image",
-          variant: "destructive",
-        });
+        const cleanText = text.replace(/[^\w\s]/gi, '').trim();
+        if (cleanText) {
+          setSearchQuery(cleanText);
+          toast({
+            title: "Image Processed",
+            description: "Text extracted successfully",
+          });
+        } else {
+          toast({
+            title: "No Text Found",
+            description: "Could not extract text from the image",
+            variant: "destructive",
+          });
+        }
+      } finally {
+        await worker.terminate();
       }
     } catch (error) {
       console.error('Image processing error:', error);
-      let errorMessage = "Failed to process image";
-
-      if (error instanceof Error) {
-        console.error('Error details:', error.message);
-        errorMessage = `Error: ${error.message}`;
-      }
-
       toast({
         title: "Processing Error",
-        description: errorMessage,
+        description: error instanceof Error ? error.message : "Failed to process image",
         variant: "destructive",
       });
     }

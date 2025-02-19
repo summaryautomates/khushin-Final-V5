@@ -11,30 +11,18 @@ export function NewsletterDialog() {
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log('NewsletterDialog mounted'); // Debug mount
-
-    // Check localStorage immediately
     const hasSeenDialog = localStorage.getItem('hasSeenNewsletterDialog');
-    console.log('Initial hasSeenDialog:', hasSeenDialog); // Debug localStorage
 
-    const timer = setTimeout(() => {
-      const currentHasSeenDialog = localStorage.getItem('hasSeenNewsletterDialog');
-      console.log('Timer executed, currentHasSeenDialog:', currentHasSeenDialog); // Debug timer
-
-      if (!currentHasSeenDialog) {
-        console.log('Opening newsletter dialog...'); // Debug opening
+    if (!hasSeenDialog) {
+      const timer = setTimeout(() => {
         setOpen(true);
-      }
-    }, 7000);
+      }, 7000);
 
-    return () => {
-      console.log('Cleaning up timer'); // Debug cleanup
-      clearTimeout(timer);
-    };
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   const closeDialog = () => {
-    console.log('Closing dialog and setting localStorage flag'); // Debug close
     localStorage.setItem('hasSeenNewsletterDialog', 'true');
     setOpen(false);
   };
@@ -44,7 +32,6 @@ export function NewsletterDialog() {
     if (!email) return;
 
     try {
-      // Here you would typically make an API call to subscribe the user
       toast({
         title: "Thanks for subscribing!",
         description: "You'll receive your 10% discount code via email shortly.",
@@ -63,6 +50,7 @@ export function NewsletterDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent 
         className="sm:max-w-[425px] h-auto overflow-y-auto sm:rounded-lg bg-gradient-to-br from-background/95 via-background/98 to-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 border border-primary/20"
+        aria-labelledby="newsletter-dialog-title"
         aria-describedby="newsletter-dialog-description"
       >
         <div className="relative p-6">
@@ -78,7 +66,7 @@ export function NewsletterDialog() {
 
           <div className="text-center space-y-4">
             <Sparkles className="w-8 h-8 mx-auto text-primary animate-pulse" />
-            <DialogTitle className="text-3xl font-light tracking-tight">
+            <DialogTitle id="newsletter-dialog-title" className="text-3xl font-light tracking-tight">
               Special Offer
             </DialogTitle>
             <DialogDescription id="newsletter-dialog-description">
