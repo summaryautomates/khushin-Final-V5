@@ -34,28 +34,30 @@ function App() {
         <ErrorBoundary>
           <div className="flex min-h-screen flex-col bg-background">
             <Header />
-            <main className="flex-1 w-full px-4 md:px-6 mx-auto max-w-7xl">
-              <Switch>
-                <Route path="/" component={Home} />
-                <Route path="/products" component={Products} />
-                <Route path="/products/category/:category" component={Products} />
-                <Route path="/product/:id" component={Product} />
-                <Route path="/cart" component={Cart} />
-                <Route path="/checkout/payment" component={CheckoutPayment} />
-                <Route path="/checkout/success" component={CheckoutSuccess} />
-                <Route path="/contact" component={Contact} />
-                <Route path="/customize" component={Customize} />
-                <Route path="/refueling" component={Refueling} />
-                <Route path="/orders" component={Orders} />
-                <Route path="/orders/:orderRef" component={OrderDetails} />
-                <Route path="/faqs" component={FAQs} />
-                <Route path="/warranty" component={Warranty} />
-                <Route path="/shipping" component={Shipping} />
-                <Route path="/returns" component={Returns} />
-                <Route path="/event-organizer" component={EventOrganizer} />
-                <Route path="/express-delivery" component={ExpressDelivery} />
-                <Route component={NotFound} />
-              </Switch>
+            <main className="flex-1 w-full">
+              <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-4 sm:py-6 lg:py-8">
+                <Switch>
+                  <Route path="/" component={Home} />
+                  <Route path="/products" component={Products} />
+                  <Route path="/products/category/:category" component={Products} />
+                  <Route path="/product/:id" component={Product} />
+                  <Route path="/cart" component={Cart} />
+                  <Route path="/checkout/payment" component={CheckoutPayment} />
+                  <Route path="/checkout/success" component={CheckoutSuccess} />
+                  <Route path="/contact" component={Contact} />
+                  <Route path="/customize" component={Customize} />
+                  <Route path="/refueling" component={Refueling} />
+                  <Route path="/orders" component={Orders} />
+                  <Route path="/orders/:orderRef" component={OrderDetails} />
+                  <Route path="/faqs" component={FAQs} />
+                  <Route path="/warranty" component={Warranty} />
+                  <Route path="/shipping" component={Shipping} />
+                  <Route path="/returns" component={Returns} />
+                  <Route path="/event-organizer" component={EventOrganizer} />
+                  <Route path="/express-delivery" component={ExpressDelivery} />
+                  <Route component={NotFound} />
+                </Switch>
+              </div>
             </main>
             <Footer />
           </div>
