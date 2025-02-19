@@ -188,6 +188,11 @@ export default function Home() {
     setLocation('/event-organizer');
   };
 
+  // Clear newsletter dialog flag when component mounts
+  useEffect(() => {
+    localStorage.removeItem('hasSeenNewsletterDialog');
+  }, []);
+
   return (
     <>
       <NewsletterDialog />
