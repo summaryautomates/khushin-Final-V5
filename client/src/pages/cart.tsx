@@ -1,11 +1,20 @@
 import { useState } from "react";
-import { ShippingForm, type ShippingFormData } from "@/components/checkout/shipping-form";
+import {
+  ShippingForm,
+  type ShippingFormData,
+} from "@/components/checkout/shipping-form";
 import { CitySelector } from "@/components/checkout/city-selector";
 import { DeliveryScheduler } from "@/components/checkout/delivery-scheduler";
-import { CartItem, type CartItemData } from "@/components/checkout/cart-item";
+import { CartItem } from "@/components/checkout/cart-item";
 import { Truck, Clock, Shield, MapPin, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -14,7 +23,9 @@ export default function Cart() {
   const [showShippingForm, setShowShippingForm] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string | undefined>();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [shippingMethod, setShippingMethod] = useState<'standard' | 'express' | 'international'>('standard');
+  const [shippingMethod, setShippingMethod] = useState<
+    "standard" | "express" | "international"
+  >("standard");
   const [deliverySchedule, setDeliverySchedule] = useState<{
     date: string;
     timeSlot: string;
@@ -23,25 +34,16 @@ export default function Cart() {
   const { toast } = useToast();
   const { items, total, updateQuantity, removeItem, isLoading } = useCart();
 
-  const cartItems: CartItemData[] = items.map(item => ({
-    id: item.product.id.toString(),
-    name: item.product.name,
-    price: item.product.price,
-    quantity: item.quantity,
-    image: item.product.images[0] || '/placeholder.jpg', // Use first image from images array
-    description: item.product.description
-  }));
-
-  const handleUpdateQuantity = (id: string, quantity: number) => {
+  const handleUpdateQuantity = (productId: number, quantity: number) => {
     if (quantity === 0) {
-      handleRemoveItem(id);
+      handleRemoveItem(productId);
       return;
     }
-    updateQuantity(parseInt(id), quantity);
+    updateQuantity(productId, quantity);
   };
 
-  const handleRemoveItem = (id: string) => {
-    removeItem(parseInt(id));
+  const handleRemoveItem = (productId: number) => {
+    removeItem(productId);
   };
 
   const cartTotal = total;
@@ -50,7 +52,7 @@ export default function Cart() {
 
   const handleCitySelect = (city: string) => {
     setSelectedCity(city);
-    setShippingMethod('express');
+    setShippingMethod("express");
   };
 
   const handleCheckout = async () => {
@@ -74,33 +76,33 @@ export default function Cart() {
 
     setIsCheckingOut(true);
     try {
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: cartItems.map(item => ({
-            productId: parseInt(item.id),
-            quantity: item.quantity
+          items: items.map((item) => ({
+            productId: item.product.id,
+            quantity: item.quantity,
           })),
           shipping: {
-            fullName: '',
-            address: '',
+            fullName: "",
+            address: "",
             city: selectedCity,
-            state: '',
-            pincode: '',
-            phone: ''
-          }
-        })
+            state: "",
+            pincode: "",
+            phone: "",
+          },
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Checkout failed');
+        throw new Error("Checkout failed");
       }
 
       const { redirectUrl } = await response.json();
       window.location.href = redirectUrl;
     } catch (error) {
-      console.error('Checkout error:', error);
+      console.error("Checkout error:", error);
       toast({
         title: "Checkout Error",
         description: "An error occurred during checkout. Please try again.",
@@ -127,16 +129,19 @@ export default function Cart() {
             <div className="lg:col-span-2 space-y-8">
               <h1 className="text-3xl font-semibold">Shopping Cart</h1>
 
-              {cartItems.length === 0 ? (
+              {items.length === 0 ? (
                 <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
-                  <p className="text-muted-foreground text-center">Your cart is empty</p>
+                  <p className="text-muted-foreground text-center">
+                    Your cart is empty
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {cartItems.map(item => (
+                  {items.map((item) => (
                     <CartItem
-                      key={item.id}
-                      item={item}
+                      key={item.product.id}
+                      product={item.product}
+                      quantity={item.quantity}
                       onUpdateQuantity={handleUpdateQuantity}
                       onRemove={handleRemoveItem}
                     />
@@ -155,29 +160,37 @@ export default function Cart() {
                     <Button
                       variant="outline"
                       className={`w-full h-20 relative overflow-hidden transition-all ${
-                        shippingMethod === 'express'
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'hover:border-primary'
+                        shippingMethod === "express"
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "hover:border-primary"
                       }`}
                       onClick={() => {
-                        setShippingMethod('express');
+                        setShippingMethod("express");
                         setShowShippingForm(true);
                       }}
                     >
                       <div className="absolute inset-0 bg-primary/5" />
                       <div className="relative flex items-center justify-between w-full px-4">
                         <div className="flex items-center gap-4">
-                          <Truck className={`h-8 w-8 ${
-                            shippingMethod === 'express' ? 'text-primary-foreground' : 'text-primary'
-                          }`} />
+                          <Truck
+                            className={`h-8 w-8 ${
+                              shippingMethod === "express"
+                                ? "text-primary-foreground"
+                                : "text-primary"
+                            }`}
+                          />
                           <div className="text-left">
-                            <p className="font-semibold text-lg">Express Delivery</p>
-                            <p className="text-sm opacity-80">1-2 business days</p>
+                            <p className="font-semibold text-lg">
+                              Express Delivery
+                            </p>
+                            <p className="text-sm opacity-80">
+                              1-2 business days
+                            </p>
                           </div>
                         </div>
                         <div className="text-right">
                           <p className="font-medium text-lg">
-                            {cartTotal >= 5000 ? 'Free' : '₹599'}
+                            {cartTotal >= 5000 ? "Free" : "₹599"}
                           </p>
                         </div>
                       </div>
@@ -202,7 +215,7 @@ export default function Cart() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Shipping</span>
-                      <span>{cartTotal >= 5000 ? 'Free' : '₹599'}</span>
+                      <span>{cartTotal >= 5000 ? "Free" : "₹599"}</span>
                     </div>
                     <div className="flex justify-between text-lg font-semibold">
                       <span>Total</span>
@@ -215,12 +228,12 @@ export default function Cart() {
                     size="lg"
                     className="w-full"
                     onClick={() => setShowShippingForm(true)}
-                    disabled={isCheckingOut || cartItems.length === 0}
+                    disabled={isCheckingOut || items.length === 0}
                   >
                     {isCheckingOut ? (
                       <Loader2 className="h-5 w-5 animate-spin" />
                     ) : (
-                      'PROCEED TO CHECKOUT'
+                      "PROCEED TO CHECKOUT"
                     )}
                   </Button>
                 </CardFooter>
@@ -267,7 +280,7 @@ export default function Cart() {
                     onScheduleSelect={(date, timeSlot) => {
                       setDeliverySchedule({
                         date: date.toISOString(),
-                        timeSlot
+                        timeSlot,
                       });
                     }}
                   />
@@ -278,7 +291,7 @@ export default function Cart() {
                 <div className="rounded-lg border p-6 bg-card">
                   <ShippingForm
                     onSubmit={(data) => {
-                      console.log('Shipping form data:', data);
+                      console.log("Shipping form data:", data);
                       handleCheckout();
                     }}
                     isLoading={isCheckingOut}
@@ -293,12 +306,15 @@ export default function Cart() {
                   <CardTitle>Order Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {cartItems.map(item => (
-                    <div key={item.id} className="flex justify-between text-sm">
+                  {items.map((item) => (
+                    <div
+                      key={item.product.id}
+                      className="flex justify-between text-sm"
+                    >
                       <span className="text-muted-foreground">
-                        {item.name} × {item.quantity}
+                        {item.product.name} × {item.quantity}
                       </span>
-                      <span>₹{item.price * item.quantity}</span>
+                      <span>₹{item.product.price * item.quantity}</span>
                     </div>
                   ))}
                   <div className="space-y-2 pt-4 border-t">
@@ -308,7 +324,7 @@ export default function Cart() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Shipping</span>
-                      <span>{cartTotal >= 5000 ? 'Free' : '₹599'}</span>
+                      <span>{cartTotal >= 5000 ? "Free" : "₹599"}</span>
                     </div>
                     <div className="flex justify-between text-lg font-semibold">
                       <span>Total</span>
