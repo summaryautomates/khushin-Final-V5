@@ -49,20 +49,26 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       staleTime: Infinity,
       retry: (failureCount, error) => {
-        if (error instanceof Error && error.message.includes('404')) {
+        if (error instanceof Error && (error.message.includes('404') || error.message.includes('401'))) {
           return false;
         }
         return failureCount < 3;
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      onError: (error) => {
+        console.error('Query error:', error);
+      }
     },
     mutations: {
       retry: (failureCount, error) => {
-        if (error instanceof Error && error.message.includes('404')) {
+        if (error instanceof Error && (error.message.includes('404') || error.message.includes('401'))) {
           return false;
         }
         return failureCount < 2;
       },
+      onError: (error) => {
+        console.error('Mutation error:', error);
+      }
     },
   },
 });

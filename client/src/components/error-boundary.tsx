@@ -33,10 +33,17 @@ export class ErrorBoundary extends Component<Props, State> {
 
     this.setState({ errorInfo });
     
-    window.addEventListener('unhandledrejection', (event) => {
+    const handleRejection = (event: PromiseRejectionEvent) => {
       event.preventDefault();
       console.error('Unhandled promise rejection:', event.reason);
-    });
+      this.setState({ 
+        hasError: true, 
+        error: new Error(event.reason?.message || 'Promise rejected') 
+      });
+    };
+
+    window.removeEventListener('unhandledrejection', handleRejection);
+    window.addEventListener('unhandledrejection', handleRejection);
 
     if (process.env.NODE_ENV === 'production') {
       this.setState({ error: new Error('An unexpected error occurred') });
