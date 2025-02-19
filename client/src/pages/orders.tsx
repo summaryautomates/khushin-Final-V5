@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatPrice } from "@/lib/products";
-import { Loader2, CheckCircle, XCircle, RotateCw } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, RotateCw, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -76,7 +76,7 @@ function OrderStatusBadge({ status }: { status: OrderStatus }) {
   return (
     <div className="flex items-center gap-2">
       <Icon className={`h-4 w-4 ${className}`} />
-      <span>{text}</span>
+      <span className="font-light">{text}</span>
     </div>
   );
 }
@@ -308,9 +308,9 @@ export default function Orders() {
 
   if (isLoading) {
     return (
-      <div className="container py-20 min-h-screen">
+      <div className="container py-20 min-h-screen bg-black/[0.96] backdrop-blur-sm">
         <div className="flex justify-center">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </div>
     );
@@ -318,13 +318,13 @@ export default function Orders() {
 
   if (!orders || orders.length === 0) {
     return (
-      <div className="container py-20 min-h-screen">
-        <Card className="max-w-lg mx-auto">
+      <div className="container py-20 min-h-screen bg-black/[0.96] backdrop-blur-sm">
+        <Card className="max-w-lg mx-auto border-none bg-white/[0.02] backdrop-blur-sm">
           <CardHeader>
-            <CardTitle>No Orders Found</CardTitle>
+            <CardTitle className="text-2xl font-light tracking-wide">No Orders Found</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground font-light">
               You haven't placed any orders yet.
             </p>
           </CardContent>
@@ -334,55 +334,74 @@ export default function Orders() {
   }
 
   return (
-    <div className="container py-20 min-h-screen">
-      <h1 className="text-3xl font-bold mb-8">Your Orders</h1>
+    <div className="container py-20 min-h-screen bg-black/[0.96] backdrop-blur-sm">
+      <h1 className="text-4xl font-light tracking-tight mb-8 text-white/90">Your Orders</h1>
       <div className="space-y-6">
         {orders.map((order) => (
-          <Card key={order.orderRef}>
+          <Card key={order.orderRef} className="border-none bg-white/[0.02] backdrop-blur-sm hover:bg-white/[0.04] transition-colors duration-300">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Order #{order.orderRef}</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Placed on {new Date(order.createdAt).toLocaleDateString()}
+                <CardTitle className="text-2xl font-light tracking-wide text-white/90">
+                  Order #{order.orderRef}
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-1 font-light">
+                  {new Date(order.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
                 </p>
               </div>
               <div className="flex items-center gap-4">
                 <OrderStatusBadge status={order.status} />
                 {order.status === 'completed' && (
-                  <ReturnRequestDialog order={order} />
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="ml-auto border-white/20 hover:bg-white/10"
+                  >
+                    <RotateCw className="mr-2 h-4 w-4" />
+                    Request Return
+                  </Button>
                 )}
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Items</h3>
-                  <div className="space-y-2">
-                    {order.items.map((item, index) => (
-                      <div key={index} className="flex justify-between">
-                        <span>
-                          {item.quantity}x {item.name}
-                        </span>
-                        <span>{formatPrice(item.price * item.quantity)}</span>
+              <div className="space-y-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div>
+                    <h3 className="font-light text-lg mb-4 flex items-center gap-2">
+                      <Package className="h-5 w-5 text-primary" />
+                      Order Details
+                    </h3>
+                    <div className="space-y-2">
+                      {order.items.map((item, index) => (
+                        <div key={index} className="flex justify-between text-sm font-light">
+                          <span className="text-white/80">
+                            {item.quantity}x {item.name}
+                          </span>
+                          <span className="text-white/90">{formatPrice(item.price * item.quantity)}</span>
+                        </div>
+                      ))}
+                      <div className="border-t border-white/10 mt-4 pt-4">
+                        <div className="flex justify-between font-light text-lg">
+                          <span>Total</span>
+                          <span className="text-primary">{formatPrice(order.total)}</span>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                  <div className="border-t mt-4 pt-4">
-                    <div className="flex justify-between font-semibold">
-                      <span>Total</span>
-                      <span>{formatPrice(order.total)}</span>
                     </div>
                   </div>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2">Shipping Details</h3>
-                  <div className="text-sm text-muted-foreground">
-                    <p>{order.shipping.fullName}</p>
-                    <p>{order.shipping.address}</p>
-                    <p>
-                      {order.shipping.city}, {order.shipping.state} {order.shipping.pincode}
-                    </p>
-                    <p>Phone: {order.shipping.phone}</p>
+
+                  <div>
+                    <h3 className="font-light text-lg mb-4">Shipping Details</h3>
+                    <div className="space-y-2 text-sm font-light text-white/80">
+                      <p>{order.shipping.fullName}</p>
+                      <p>{order.shipping.address}</p>
+                      <p>
+                        {order.shipping.city}, {order.shipping.state} {order.shipping.pincode}
+                      </p>
+                      <p>Phone: {order.shipping.phone}</p>
+                    </div>
                   </div>
                 </div>
                 <ReturnRequests orderRef={order.orderRef} />
