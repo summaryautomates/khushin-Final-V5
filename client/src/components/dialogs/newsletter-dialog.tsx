@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -12,11 +11,14 @@ export function NewsletterDialog() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setOpen(true);
-    }, 7000);
-
-    return () => clearTimeout(timer);
+    const hasSeenDialog = localStorage.getItem('hasSeenNewsletterDialog');
+    if(hasSeenDialog !== 'true'){
+        const timer = setTimeout(() => {
+          setOpen(true);
+        }, 7000);
+    
+        return () => clearTimeout(timer);
+    }
   }, []);
 
   const handleSubscribe = (e: React.FormEvent) => {
@@ -25,6 +27,7 @@ export function NewsletterDialog() {
       title: "Thanks for subscribing!",
       description: "You'll receive your 10% discount code via email shortly.",
     });
+    localStorage.setItem('hasSeenNewsletterDialog', 'true');
     setOpen(false);
   };
 
