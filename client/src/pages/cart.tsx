@@ -74,7 +74,31 @@ export default function Cart() {
 
     setIsCheckingOut(true);
     try {
-      // Add your checkout logic here
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cartItems.map(item => ({
+            productId: parseInt(item.id),
+            quantity: item.quantity
+          })),
+          shipping: {
+            fullName: '',
+            address: '',
+            city: selectedCity,
+            state: '',
+            pincode: '',
+            phone: ''
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Checkout failed');
+      }
+
+      const { redirectUrl } = await response.json();
+      window.location.href = redirectUrl;
     } catch (error) {
       console.error('Checkout error:', error);
       toast({
