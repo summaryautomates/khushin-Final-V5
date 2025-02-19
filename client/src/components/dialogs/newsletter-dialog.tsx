@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { X, Mail, Sparkles } from "lucide-react";
+import { X, Mail, Sparkles, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export function NewsletterDialog() {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -27,11 +28,34 @@ export function NewsletterDialog() {
     setOpen(false);
   };
 
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    if (!email) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address.",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    if (!validateEmail(email)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
     try {
+      // API call would go here
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated API delay
       toast({
         title: "Thanks for subscribing!",
         description: "You'll receive your 10% discount code via email shortly.",
@@ -39,10 +63,12 @@ export function NewsletterDialog() {
       closeDialog();
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to subscribe. Please try again.",
+        title: "Subscription Failed",
+        description: "Unable to subscribe at this time. Please try again later.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -50,6 +76,8 @@ export function NewsletterDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent 
         className="sm:max-w-[425px] h-auto overflow-y-auto sm:rounded-lg bg-gradient-to-br from-background/95 via-background/98 to-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 border border-primary/20"
+        role="dialog"
+        aria-modal="true"
         aria-labelledby="newsletter-dialog-title"
         aria-describedby="newsletter-dialog-description"
       >
@@ -65,7 +93,7 @@ export function NewsletterDialog() {
           </Button>
 
           <div className="text-center space-y-4">
-            <Sparkles className="w-8 h-8 mx-auto text-primary animate-pulse" />
+            <Sparkles className="w-8 h-8 mx-auto text-primary animate-pulse" aria-hidden="true" />
             <DialogTitle id="newsletter-dialog-title" className="text-3xl font-light tracking-tight">
               Special Offer
             </DialogTitle>
@@ -75,7 +103,7 @@ export function NewsletterDialog() {
 
             <form onSubmit={handleSubscribe} className="space-y-4 mt-6">
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" aria-hidden="true" />
                 <Input
                   type="email"
                   placeholder="Enter your email"
@@ -83,11 +111,23 @@ export function NewsletterDialog() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="pl-10 bg-background/50 backdrop-blur-sm border-muted-foreground/20 focus:border-primary/50 transition-all duration-200"
-                  aria-label="Email address for newsletter"
+                  aria-label="Email address for newsletter subscription"
+                  disabled={isLoading}
                 />
               </div>
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-                Get My 10% Off
+              <Button 
+                type="submit" 
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Subscribing...
+                  </>
+                ) : (
+                  "Get My 10% Off"
+                )}
               </Button>
             </form>
 
