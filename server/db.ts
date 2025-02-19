@@ -21,9 +21,9 @@ const products = [
     description: "Elegant gold-plated lighter with timeless design",
     price: 299900,
     images: [
-      "https://images.unsplash.com/photo-1619891669534-4466578464aa?w=800&q=90",
-      "https://images.unsplash.com/photo-1619891669531-da40c85bd785?w=800&q=90",
-      "https://images.unsplash.com/photo-1619891669537-7c3b68000d75?w=800&q=90"
+      "https://images.unsplash.com/photo-1681411576221-b909073c5ea7?w=800&q=90",
+      "https://images.unsplash.com/photo-1681411576391-741ba8f3a11c?w=800&q=90",
+      "https://images.unsplash.com/photo-1681411576485-60b58ce6b507?w=800&q=90"
     ],
     category: "lighters"
   },
@@ -33,9 +33,9 @@ const products = [
     description: "Premium silver lighter with diamond accents",
     price: 499900,
     images: [
-      "https://images.unsplash.com/photo-1587851981831-d2443e50f09d?w=800&q=90",
-      "https://images.unsplash.com/photo-1587851981825-40f52d2a61c8?w=800&q=90",
-      "https://images.unsplash.com/photo-1587851981822-2b6b53fdb50a?w=800&q=90"
+      "https://images.unsplash.com/photo-1681411576543-1dadf9b7129e?w=800&q=90",
+      "https://images.unsplash.com/photo-1681411576599-f31f65cadc3e?w=800&q=90",
+      "https://images.unsplash.com/photo-1681411576657-f54721f71b03?w=800&q=90"
     ],
     category: "lighters"
   },
@@ -45,8 +45,9 @@ const products = [
     description: "High-quality lighter fluid refill can",
     price: 29900,
     images: [
-      "https://images.unsplash.com/photo-1583947582886-f40c0c0c9a65?w=800&q=90",
-      "https://images.unsplash.com/photo-1583947582889-c2ce8614eea7?w=800&q=90"
+      "https://images.unsplash.com/photo-1681411576711-9c7745a77476?w=800&q=90",
+      "https://images.unsplash.com/photo-1681411576769-e8cf161e2d97?w=800&q=90",
+      "https://images.unsplash.com/photo-1681411576827-e8cf161e2d97?w=800&q=90"
     ],
     category: "refueling"
   }
