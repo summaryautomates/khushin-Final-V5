@@ -1,4 +1,3 @@
-
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,7 +31,7 @@ export class ErrorBoundary extends Component<Props, State> {
     });
 
     this.setState({ errorInfo });
-    
+
     const handleRejection = (event: PromiseRejectionEvent) => {
       event.preventDefault();
       console.error('Unhandled promise rejection:', event.reason);
@@ -59,67 +58,48 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   public render() {
-    if (this.state.hasError) {
-      if (this.props.fallback) {
-        return this.props.fallback;
-      }
-
-      return (
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold mb-4">Something went wrong</h2>
-            <p className="text-gray-600 mb-4">
-              {this.state.error?.message || 'An unexpected error occurred'}
-            </p>
-            <button
-              onClick={this.handleReload}
-              className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
-            >
-              Reload Page
-            </button>
-          </div>
-        </div>
-      );
-    }
-  }
-
-      return (
-        <div className="container py-12">
-          <Card className="max-w-2xl mx-auto">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-destructive" />
-                <CardTitle>Something went wrong</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <AlertDescription>
-                <p>An unexpected error occurred while rendering this component.</p>
-                {this.state.error && (
-                  <div className="mt-4 space-y-2">
-                    <p className="font-semibold">Error Details:</p>
-                    <p className="text-sm font-mono bg-muted/50 p-3 rounded-md overflow-x-auto">
-                      {this.state.error.message}
-                    </p>
-                    {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
-                      <details className="mt-2">
-                        <summary className="text-sm text-muted-foreground cursor-pointer">
-                          Component Stack
-                        </summary>
-                        <pre className="text-xs font-mono bg-muted/50 p-3 mt-2 rounded-md overflow-x-auto">
-                          {this.state.errorInfo.componentStack}
-                        </pre>
-                      </details>
-                    )}
-                  </div>
-                )}
-              </AlertDescription>
-            </CardContent>
-          </Card>
-        </div>
-      );
+    if (!this.state.hasError) {
+      return this.props.children;
     }
 
-    return this.props.children;
+    if (this.props.fallback) {
+      return this.props.fallback;
+    }
+
+    return (
+      <div className="container py-12">
+        <Card className="max-w-2xl mx-auto">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-destructive" />
+              <CardTitle>Something went wrong</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <AlertDescription>
+              <p>An unexpected error occurred while rendering this component.</p>
+              {this.state.error && (
+                <div className="mt-4 space-y-2">
+                  <p className="font-semibold">Error Details:</p>
+                  <p className="text-sm font-mono bg-muted/50 p-3 rounded-md overflow-x-auto">
+                    {this.state.error.message}
+                  </p>
+                  {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
+                    <details className="mt-2">
+                      <summary className="text-sm text-muted-foreground cursor-pointer">
+                        Component Stack
+                      </summary>
+                      <pre className="text-xs font-mono bg-muted/50 p-3 mt-2 rounded-md overflow-x-auto">
+                        {this.state.errorInfo.componentStack}
+                      </pre>
+                    </details>
+                  )}
+                </div>
+              )}
+            </AlertDescription>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 }
