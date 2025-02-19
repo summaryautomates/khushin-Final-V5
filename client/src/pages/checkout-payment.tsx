@@ -1,12 +1,14 @@
+
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Banknote, QrCode } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import QRCode from "qrcode";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface PaymentDetails {
   status: 'pending' | 'completed' | 'failed';
@@ -24,6 +26,7 @@ export default function CheckoutPayment() {
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'completed' | 'failed'>('pending');
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'upi' | 'cod'>('upi');
 
   const { data: paymentDetails, isLoading, error } = useQuery<PaymentDetails>({
     queryKey: [`/api/payment/${orderRef}`],
@@ -44,7 +47,7 @@ export default function CheckoutPayment() {
   }, [orderRef, setLocation, toast]);
 
   useEffect(() => {
-    if (paymentDetails) {
+    if (paymentDetails && paymentMethod === 'upi') {
       const qrData = JSON.stringify({
         pa: paymentDetails.upiId,
         pn: paymentDetails.merchantName,
@@ -64,7 +67,7 @@ export default function CheckoutPayment() {
           });
         });
     }
-  }, [paymentDetails, toast]);
+  }, [paymentDetails, paymentMethod, toast]);
 
   useEffect(() => {
     if (paymentStatus === 'completed') {
@@ -81,7 +84,10 @@ export default function CheckoutPayment() {
       const response = await fetch(`/api/payment/${orderRef}/status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ 
+          status: newStatus,
+          method: paymentMethod
+        })
       });
 
       if (!response.ok) {
@@ -151,22 +157,53 @@ export default function CheckoutPayment() {
           <CardTitle>Complete Your Payment</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex justify-center">
-            {qrCodeUrl ? (
-              <div className="bg-white p-4 rounded-lg">
-                <img src={qrCodeUrl} alt="Payment QR Code" className="w-64 h-64" />
+          <Tabs defaultValue="upi" onValueChange={(value) => setPaymentMethod(value as 'upi' | 'cod')}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="upi" className="flex items-center gap-2">
+                <QrCode className="h-4 w-4" />
+                UPI Payment
+              </TabsTrigger>
+              <TabsTrigger value="cod" className="flex items-center gap-2">
+                <Banknote className="h-4 w-4" />
+                Cash on Delivery
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="upi">
+              <div className="flex justify-center">
+                {qrCodeUrl ? (
+                  <div className="bg-white p-4 rounded-lg">
+                    <img src={qrCodeUrl} alt="Payment QR Code" className="w-64 h-64" />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center w-64 h-64 bg-muted rounded-lg">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="flex items-center justify-center w-64 h-64 bg-muted rounded-lg">
-                <Loader2 className="h-8 w-8 animate-spin" />
+            </TabsContent>
+            <TabsContent value="cod">
+              <div className="space-y-4 text-center py-6">
+                <Banknote className="h-12 w-12 mx-auto text-primary" />
+                <div>
+                  <h3 className="text-lg font-medium">Cash on Delivery</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Pay in cash when your order arrives
+                  </p>
+                </div>
+                <div className="bg-muted p-4 rounded-lg">
+                  <p className="font-semibold">Amount to be paid: ₹{paymentDetails?.amount}</p>
+                </div>
               </div>
-            )}
-          </div>
+            </TabsContent>
+          </Tabs>
+
           <div className="text-center">
             <p className="font-semibold">Order Reference: {orderRef}</p>
-            <p className="text-muted-foreground mt-2">
-              Scan the QR code using any UPI app to complete your payment
-            </p>
+            {paymentMethod === 'upi' && (
+              <p className="text-muted-foreground mt-2">
+                Scan the QR code using any UPI app to complete your payment
+              </p>
+            )}
           </div>
           <div className="flex items-center justify-center space-x-2">
             {paymentStatus === 'pending' && (
@@ -191,8 +228,7 @@ export default function CheckoutPayment() {
           >
             Back to Cart
           </Button>
-          {/* For demo purposes only */}
-          <div className="space-x-2">
+          {paymentMethod === 'cod' ? (
             <Button
               variant="default"
               onClick={() => handlePaymentStatusUpdate('completed')}
@@ -201,20 +237,37 @@ export default function CheckoutPayment() {
               {isUpdatingStatus ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
+                  Confirming Order...
                 </>
               ) : (
-                'Simulate Success'
+                'Confirm COD Order'
               )}
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => handlePaymentStatusUpdate('failed')}
-              disabled={paymentStatus === 'completed' || isUpdatingStatus}
-            >
-              Simulate Failure
-            </Button>
-          </div>
+          ) : (
+            <div className="space-x-2">
+              <Button
+                variant="default"
+                onClick={() => handlePaymentStatusUpdate('completed')}
+                disabled={paymentStatus === 'completed' || isUpdatingStatus}
+              >
+                {isUpdatingStatus ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  'Simulate Success'
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handlePaymentStatusUpdate('failed')}
+                disabled={paymentStatus === 'completed' || isUpdatingStatus}
+              >
+                Simulate Failure
+              </Button>
+            </div>
+          )}
         </CardFooter>
       </Card>
     </div>

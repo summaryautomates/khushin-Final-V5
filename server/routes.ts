@@ -293,6 +293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { orderRef } = req.params;
       const validatedBody = paymentStatusSchema.parse(req.body);
+      const { method = 'upi' } = req.body;
 
       const payment = paymentStore.get(orderRef);
       const order = orderStore.get(orderRef);
