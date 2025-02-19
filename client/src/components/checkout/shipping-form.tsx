@@ -188,7 +188,12 @@ export function ShippingForm({ onSubmit, isLoading }: ShippingFormProps) {
           </div>
         </div>
 
-        <Button type="submit" className="w-full h-8 mt-4" disabled={isLoading}>
+        <Button 
+          type="submit" 
+          className="w-full h-10 mt-4" 
+          disabled={isLoading || !form.formState.isValid}
+        >
+          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isLoading ? "Processing..." : "Pay now"}
         </Button>
       </form>
