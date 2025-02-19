@@ -193,7 +193,11 @@ export default function ProductPage() {
           />
         </div>
       </div>
-      <AuthSheet open={isAuthSheetOpen} onOpenChange={setIsAuthSheetOpen} onSuccess={handleAuthSuccess} />
+      <AuthSheet 
+        open={isAuthSheetOpen} 
+        onOpenChange={setIsAuthSheetOpen} 
+        onSuccess={handleAuthSuccess}
+      />
     </>
   );
 }

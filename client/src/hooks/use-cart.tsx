@@ -21,7 +21,7 @@ interface CartState {
     percent: number;
   } | null;
   isLoading: boolean;
-  error: string | null; // Added error state
+  error: string | null;
 }
 
 type CartAction =
@@ -34,8 +34,7 @@ type CartAction =
   | { type: "SET_CART_ITEMS"; payload: CartItem[] }
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "CLEAR_CART" }
-  | { type: "SET_ERROR"; payload: string | null }; // Added error action
-
+  | { type: "SET_ERROR"; payload: string | null };
 
 interface CartContextType extends CartState {
   addItem: (product: Product, quantity?: number) => Promise<void>;
@@ -50,7 +49,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "SET_LOADING":
-      return { ...state, isLoading: action.payload, error: null }; // Clear error on loading
+      return { ...state, isLoading: action.payload, error: null };
 
     case "SET_CART_ITEMS":
       return {
@@ -58,7 +57,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         items: action.payload,
         total: calculateTotal(action.payload),
         isLoading: false,
-        error: null, // Clear error on success
+        error: null,
       };
 
     case "ADD_ITEM": {
@@ -84,7 +83,8 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         ...state,
         items: newItems,
         total: calculateTotal(newItems),
-        error: null, // Clear error on success
+        error: null,
+        isLoading: false
       };
     }
 
@@ -96,7 +96,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         ...state,
         items: newItems,
         total: calculateTotal(newItems),
-        error: null, // Clear error on success
+        error: null,
       };
     }
 
@@ -113,7 +113,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         ...state,
         items: newItems,
         total: calculateTotal(newItems),
-        error: null, // Clear error on success
+        error: null,
       };
     }
 
@@ -124,7 +124,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
           type: action.payload.type,
           cost: action.payload.cost
         },
-        error: null, // Clear error on success
+        error: null,
       };
 
     case "CLEAR_CART":
@@ -134,10 +134,10 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         giftWrap: { type: null, cost: 0 },
         discount: null,
         isLoading: false,
-        error: null, // Clear error on success
+        error: null,
       };
     case "SET_ERROR":
-      return { ...state, error: action.payload };
+      return { ...state, error: action.payload, isLoading: false };
 
     default:
       return state;
@@ -156,15 +156,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     total: 0,
     giftWrap: { type: null, cost: 0 },
     discount: null,
-    isLoading: true,
-    error: null, // Initialize error state
+    isLoading: false,
+    error: null,
   });
 
   const { toast } = useToast();
   const { user } = useAuth();
   const [isClearing, setIsClearing] = useState(false);
 
-  // Load cart items whenever the user changes (login/logout)
   useEffect(() => {
     let isMounted = true;
 
@@ -177,20 +176,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "SET_LOADING", payload: true });
       try {
         const response = await apiRequest('GET', '/api/cart');
-        const items = await response.json();
+        const data = await response.json();
 
-        if (isMounted) {
-          dispatch({ type: "SET_CART_ITEMS", payload: items });
+        if (isMounted && Array.isArray(data)) {
+          dispatch({ type: "SET_CART_ITEMS", payload: data });
         }
       } catch (error: any) {
         console.error('Failed to load cart items:', error);
         if (isMounted) {
-          dispatch({ type: "SET_CART_ITEMS", payload: [] });
-          dispatch({ type: "SET_ERROR", payload: error.message }); // Set error message
-          toast({
-            variant: "destructive",
-            description: "Failed to load cart items. Please try again.",
-          });
+          dispatch({ type: "SET_ERROR", payload: error.message });
         }
       } finally {
         dispatch({ type: "SET_LOADING", payload: false });
@@ -202,26 +196,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return () => {
       isMounted = false;
     };
-  }, [user, toast]);
+  }, [user]);
 
   const addItem = async (product: Product, quantity = 1) => {
     if (!user) {
-      return Promise.reject(new Error("AUTH_REQUIRED"));
+      throw new Error("AUTH_REQUIRED");
     }
 
     dispatch({ type: "SET_LOADING", payload: true });
     try {
-      await apiRequest('POST', '/api/cart', {
+      const response = await apiRequest('POST', '/api/cart', {
         productId: product.id,
         quantity,
       });
-      dispatch({ type: "ADD_ITEM", payload: { product, quantity } });
+
+      const updatedCart = await response.json();
+
+      if (Array.isArray(updatedCart)) {
+        dispatch({ type: "SET_CART_ITEMS", payload: updatedCart });
+      } else {
+        dispatch({ type: "ADD_ITEM", payload: { product, quantity } });
+      }
+
       toast({
         description: `${product.name} added to cart`,
       });
     } catch (error: any) {
       console.error('Failed to add item to cart:', error);
-      dispatch({ type: "SET_ERROR", payload: error.message }); // Set error message
+      dispatch({ type: "SET_ERROR", payload: error.message });
       toast({
         variant: "destructive",
         description: "Failed to add item to cart. Please try again.",
@@ -241,7 +243,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "REMOVE_ITEM", payload: { productId } });
     } catch (error: any) {
       console.error('Failed to remove item from cart:', error);
-      dispatch({ type: "SET_ERROR", payload: error.message }); // Set error message
+      dispatch({ type: "SET_ERROR", payload: error.message });
       toast({
         variant: "destructive",
         description: "Failed to remove item from cart. Please try again.",
@@ -260,7 +262,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "UPDATE_QUANTITY", payload: { productId, quantity } });
     } catch (error: any) {
       console.error('Failed to update quantity:', error);
-      dispatch({ type: "SET_ERROR", payload: error.message }); // Set error message
+      dispatch({ type: "SET_ERROR", payload: error.message });
       toast({
         variant: "destructive",
         description: "Failed to update quantity. Please try again.",
@@ -268,6 +270,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } finally {
       dispatch({ type: "SET_LOADING", payload: false });
     }
+  };
+
+  const updateGiftWrap = async (type: GiftWrapType, cost: number) => {
+    dispatch({ type: "UPDATE_GIFT_WRAP", payload: { type, cost } });
   };
 
   const clearCart = async () => {
@@ -280,7 +286,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "CLEAR_CART" });
     } catch (error: any) {
       console.error('Failed to clear cart:', error);
-      dispatch({ type: "SET_ERROR", payload: error.message }); // Set error message
+      dispatch({ type: "SET_ERROR", payload: error.message });
       toast({
         variant: "destructive",
         description: "Failed to clear cart. Please try again.",
@@ -289,10 +295,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setIsClearing(false);
       dispatch({ type: "SET_LOADING", payload: false });
     }
-  };
-
-  const updateGiftWrap = async (type: GiftWrapType, cost: number) => {
-    dispatch({ type: "UPDATE_GIFT_WRAP", payload: { type, cost } });
   };
 
   return (

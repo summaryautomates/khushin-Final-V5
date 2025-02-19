@@ -61,10 +61,7 @@ export function AuthSheet({ open, onOpenChange, onSuccess, showTrigger = true }:
     try {
       await loginMutation.mutateAsync(data);
       onSuccess?.();
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
-      });
+      onOpenChange?.(false);
     } catch (error) {
       // Error is already handled by the mutation
     }
@@ -74,10 +71,7 @@ export function AuthSheet({ open, onOpenChange, onSuccess, showTrigger = true }:
     try {
       await registerMutation.mutateAsync(data);
       onSuccess?.();
-      toast({
-        title: "Welcome!",
-        description: "Your account has been created successfully.",
-      });
+      onOpenChange?.(false);
     } catch (error) {
       // Error is already handled by the mutation
     }
