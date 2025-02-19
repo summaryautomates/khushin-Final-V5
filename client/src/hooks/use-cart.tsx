@@ -159,7 +159,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add item to cart');
+        const data = await response.json();
+        throw new Error(data.details || 'Failed to add item to cart');
       }
 
       const items = await response.json();
@@ -170,9 +171,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error('Failed to add item to cart:', error);
       dispatch({ type: "SET_ERROR", payload: error.message });
+      dispatch({ type: "SET_CART_ITEMS", payload: state.items });
       toast({
         variant: "destructive",
-        description: "Failed to add item to cart. Please try again.",
+        description: error.message || "Failed to add item to cart. Please try again.",
       });
     }
   };
@@ -207,9 +209,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const updateQuantity = async (productId: number, quantity: number) => {
     if (!user) return;
-    if (quantity < 0) return;
+    if (quantity < 0 || quantity > 10) {
+      toast({
+        variant: "destructive",
+        description: "Quantity must be between 1 and 10",
+      });
+      return;
+    }
 
-    // Optimistically update the UI
+    const previousItems = state.items;
+
     const updatedItems = state.items.map(item =>
       item.product.id === productId ? { ...item, quantity } : item
     );
@@ -229,7 +238,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update quantity');
+        const data = await response.json();
+        throw new Error(data.details || 'Failed to update quantity');
       }
 
       const items = await response.json();
@@ -237,13 +247,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error('Failed to update quantity:', error);
 
-      // Revert the optimistic update
-      dispatch({ type: "SET_CART_ITEMS", payload: state.items });
+      dispatch({ type: "SET_CART_ITEMS", payload: previousItems });
 
-      dispatch({ type: "SET_ERROR", payload: error.message });
       toast({
         variant: "destructive",
-        description: "Failed to update quantity. Please try again.",
+        description: error.message === "Maximum quantity per item is 10"
+          ? "Maximum quantity per item is 10"
+          : "Failed to update quantity. Please try again.",
       });
     }
   };

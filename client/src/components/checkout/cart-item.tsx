@@ -12,7 +12,9 @@ interface CartItemProps {
 
 export function CartItem({ product, quantity, onUpdateQuantity, onRemove }: CartItemProps) {
   const handleIncrement = () => {
-    onUpdateQuantity(product.id, quantity + 1);
+    if (quantity < 10) {
+      onUpdateQuantity(product.id, quantity + 1);
+    }
   };
 
   const handleDecrement = () => {
@@ -60,6 +62,7 @@ export function CartItem({ product, quantity, onUpdateQuantity, onRemove }: Cart
             size="icon"
             className="h-8 w-8"
             onClick={handleIncrement}
+            disabled={quantity >= 10}
           >
             <Plus className="h-4 w-4" />
           </Button>
