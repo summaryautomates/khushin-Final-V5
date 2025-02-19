@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -10,14 +11,18 @@ export function NewsletterDialog() {
   const [email, setEmail] = useState("");
   const { toast } = useToast();
 
+  const closeDialog = () => {
+    localStorage.setItem('hasSeenNewsletterDialog', 'true');
+    setOpen(false);
+  };
+
   useEffect(() => {
     const hasSeenDialog = localStorage.getItem('hasSeenNewsletterDialog');
-    if(hasSeenDialog !== 'true'){
-        const timer = setTimeout(() => {
-          setOpen(true);
-        }, 7000);
-    
-        return () => clearTimeout(timer);
+    if (!hasSeenDialog) {
+      const timer = setTimeout(() => {
+        setOpen(true);
+      }, 7000);
+      return () => clearTimeout(timer);
     }
   }, []);
 
@@ -27,23 +32,14 @@ export function NewsletterDialog() {
       title: "Thanks for subscribing!",
       description: "You'll receive your 10% discount code via email shortly.",
     });
-    localStorage.setItem('hasSeenNewsletterDialog', 'true');
-    setOpen(false);
+    closeDialog();
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onOpenChange={(isOpen) => {
-        setOpen(isOpen);
-        if (!isOpen) {
-          localStorage.setItem('hasSeenNewsletterDialog', 'true');
-        }
-      }}
-    >
+    <Dialog open={open} onOpenChange={closeDialog}>
       <DialogContent className="sm:max-w-[425px] bg-white text-black">
         <button
-          onClick={() => setOpen(false)}
+          onClick={closeDialog}
           className="absolute right-4 top-4 opacity-70 transition-opacity hover:opacity-100"
         >
           <X className="h-4 w-4" />
