@@ -34,41 +34,78 @@ app.use((req, res, next) => {
   next();
 });
 
-// Start server with detailed logging and port fallback
+// Cleanup function to ensure proper server shutdown
+const cleanup = (server: Server | null) => {
+  if (server) {
+    server.removeAllListeners();
+    if (server.listening) {
+      server.close();
+    }
+  }
+};
+
+// Start server with improved port handling
 const startServer = async () => {
   try {
     log('Starting server...', 'server');
 
-    // Define ports to try in order
+    // Restore port 5000 as first option
     const ports = [5000, 3000, 3001, 5001, 5002];
-    let server: Server | undefined;
-    let bound = false;
+    let server: Server | null = null;
+    let boundPort: number | null = null;
 
-    // Try each port in sequence
+    // Register routes first
+    server = await registerRoutes(app);
+
+    // Try each port sequentially with proper cleanup
     for (const port of ports) {
       try {
-        server = await registerRoutes(app);
+        // Clean up any existing connections
+        cleanup(server);
+
         await new Promise<void>((resolve, reject) => {
-          server!.listen(port, '0.0.0.0', () => {
+          const timeoutId = setTimeout(() => {
+            cleanup(server);
+            reject(new Error(`Port binding timeout on port ${port}`));
+          }, 10000); // Increased timeout to 10 seconds
+
+          server!.listen(port, '0.0.0.0', async () => {
+            clearTimeout(timeoutId);
             const address = server!.address() as AddressInfo;
-            log(`Server successfully started on port ${address.port}`, 'server');
-            bound = true;
+            boundPort = address.port;
+            log(`Server successfully bound to port ${boundPort}`, 'server');
             resolve();
-          }).on('error', (err: Error) => {
-            log(`Could not bind to port ${port}, trying next port`, 'server');
-            reject(err);
+          });
+
+          server!.once('error', (err: NodeJS.ErrnoException) => {
+            clearTimeout(timeoutId);
+            if (err.code === 'EADDRINUSE') {
+              log(`Port ${port} is in use, trying next port...`, 'server');
+              cleanup(server);
+              reject(err);
+            } else {
+              log(`Unexpected error while binding to port ${port}: ${err.message}`, 'server');
+              cleanup(server);
+              reject(err);
+            }
           });
         });
-        if (bound) break;
+
+        // If we get here, we successfully bound to a port
+        break;
       } catch (error) {
-        if (ports.indexOf(port) === ports.length - 1) {
-          throw new Error('No available ports found');
+        const isLastPort = ports.indexOf(port) === ports.length - 1;
+        log(`Failed to bind to port ${port}${isLastPort ? '' : ', trying next port...'}`, 'server');
+
+        if (isLastPort) {
+          throw new Error('All ports are in use, cannot start server');
         }
+        // Continue to next port
         continue;
       }
     }
 
-    if (!bound || !server) {
+    if (!boundPort || !server) {
       throw new Error('Failed to start server on any port');
     }
 
@@ -80,26 +117,27 @@ const startServer = async () => {
         .then(() => log('Vite setup complete', 'server'))
         .catch(error => {
           log(`Vite setup error: ${error}`, 'server');
+          cleanup(server);
           process.exit(1);
         });
     } else {
       serveStatic(app);
     }
+
+    // Graceful shutdown handlers
+    const shutdownHandler = () => {
+      log('Shutting down gracefully...', 'server');
+      cleanup(server);
+      process.exit(0);
+    };
+
+    process.on('SIGTERM', shutdownHandler);
+    process.on('SIGINT', shutdownHandler);
+
   } catch (error) {
     log(`Critical server error: ${error}`, 'server');
     process.exit(1);
   }
 };
-
-// Add process handlers for cleanup
-process.on('SIGTERM', () => {
-  log('SIGTERM received. Shutting down gracefully...', 'server');
-  process.exit(0);
-});
-
-process.on('SIGINT', () => {
-  log('SIGINT received. Shutting down gracefully...', 'server');
-  process.exit(0);
-});
 
 startServer();
