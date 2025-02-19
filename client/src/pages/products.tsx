@@ -32,7 +32,7 @@ interface SearchHistory {
 
 export default function Products() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 50000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
   const [category, setCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("name-asc");
   const [searchHistory, setSearchHistory] = useState<SearchHistory[]>([]);
