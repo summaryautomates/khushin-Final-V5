@@ -32,7 +32,7 @@ export default function Cart() {
   } | null>(null);
 
   const { toast } = useToast();
-  const { items, total, updateQuantity, removeItem, isLoading } = useCart();
+  const { items, total, updateQuantity, removeItem, isLoading, pendingUpdates } = useCart();
 
   const handleUpdateQuantity = (productId: number, quantity: number) => {
     if (quantity === 0) {
@@ -144,6 +144,7 @@ export default function Cart() {
                       quantity={item.quantity}
                       onUpdateQuantity={handleUpdateQuantity}
                       onRemove={handleRemoveItem}
+                      isUpdating={pendingUpdates.has(item.product.id)}
                     />
                   ))}
                 </div>

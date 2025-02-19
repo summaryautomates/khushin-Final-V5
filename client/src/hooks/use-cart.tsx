@@ -21,6 +21,7 @@ interface CartState {
   } | null;
   isLoading: boolean;
   error: string | null;
+  pendingUpdates: Set<number>;
 }
 
 type CartAction =
@@ -28,7 +29,9 @@ type CartAction =
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "SET_ERROR"; payload: string | null }
   | { type: "UPDATE_GIFT_WRAP"; payload: { type: GiftWrapType; cost: number } }
-  | { type: "CLEAR_CART" };
+  | { type: "CLEAR_CART" }
+  | { type: "START_UPDATE"; payload: number }
+  | { type: "END_UPDATE"; payload: number };
 
 interface CartContextType extends CartState {
   addItem: (product: Product, quantity?: number) => Promise<void>;
@@ -43,13 +46,13 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "SET_LOADING":
-      return { ...state, isLoading: action.payload, error: null };
+      return { ...state, isLoading: action.payload };
 
     case "SET_CART_ITEMS":
       return {
         ...state,
         items: action.payload,
-        total: calculateTotal(action.payload),
+        total: action.payload.reduce((total, item) => total + item.product.price * item.quantity, 0),
         isLoading: false,
         error: null,
       };
@@ -61,7 +64,6 @@ function cartReducer(state: CartState, action: CartAction): CartState {
           type: action.payload.type,
           cost: action.payload.cost
         },
-        error: null,
       };
 
     case "CLEAR_CART":
@@ -72,6 +74,21 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         discount: null,
         isLoading: false,
         error: null,
+        pendingUpdates: new Set(),
+      };
+
+    case "START_UPDATE":
+      return {
+        ...state,
+        pendingUpdates: new Set([...state.pendingUpdates, action.payload]),
+      };
+
+    case "END_UPDATE":
+      const updates = new Set(state.pendingUpdates);
+      updates.delete(action.payload);
+      return {
+        ...state,
+        pendingUpdates: updates,
       };
 
     case "SET_ERROR":
@@ -80,10 +97,6 @@ function cartReducer(state: CartState, action: CartAction): CartState {
     default:
       return state;
   }
-}
-
-function calculateTotal(items: CartItem[]): number {
-  return items.reduce((total, item) => total + item.product.price * item.quantity, 0);
 }
 
 type GiftWrapType = 'standard' | 'premium' | 'luxury' | null;
@@ -96,46 +109,103 @@ export function CartProvider({ children }: { children: ReactNode }) {
     discount: null,
     isLoading: false,
     error: null,
+    pendingUpdates: new Set(),
   });
 
   const { toast } = useToast();
   const { user } = useAuth();
+
+  const fetchCartItems = async () => {
+    if (!user) return;
+
+    dispatch({ type: "SET_LOADING", payload: true });
+    try {
+      const response = await fetch('/api/cart', {
+        headers: {
+          'x-user-id': user.id.toString()
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch cart items');
+      }
+
+      const items = await response.json();
+      dispatch({ type: "SET_CART_ITEMS", payload: items });
+    } catch (error: any) {
+      console.error('Failed to load cart items:', error);
+      dispatch({ type: "SET_ERROR", payload: error.message });
+      toast({
+        variant: "destructive",
+        description: "Failed to load cart items. Please try again.",
+      });
+    }
+  };
 
   useEffect(() => {
     if (!user) {
       dispatch({ type: "SET_CART_ITEMS", payload: [] });
       return;
     }
+    fetchCartItems();
+  }, [user]);
 
-    const loadCartItems = async () => {
-      dispatch({ type: "SET_LOADING", payload: true });
-      try {
-        const response = await fetch('/api/cart', {
-          headers: {
-            'x-user-id': user.id.toString()
-          }
-        });
+  const updateQuantity = async (productId: number, quantity: number) => {
+    if (!user) return;
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch cart items');
-        }
+    // Prevent updates if there's already a pending update for this product
+    if (state.pendingUpdates.has(productId)) {
+      return;
+    }
 
-        const items = await response.json();
-        dispatch({ type: "SET_CART_ITEMS", payload: items });
-      } catch (error: any) {
-        console.error('Failed to load cart items:', error);
-        dispatch({ type: "SET_ERROR", payload: error.message });
-        toast({
-          variant: "destructive",
-          description: "Failed to load cart items. Please try again.",
-        });
-      } finally {
-        dispatch({ type: "SET_LOADING", payload: false });
+    // Validate quantity
+    if (quantity < 0 || quantity > 10) {
+      toast({
+        variant: "destructive",
+        description: "Quantity must be between 1 and 10",
+      });
+      return;
+    }
+
+    // For quantity 0, remove the item
+    if (quantity === 0) {
+      await removeItem(productId);
+      return;
+    }
+
+    dispatch({ type: "START_UPDATE", payload: productId });
+
+    try {
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.id.toString()
+        },
+        body: JSON.stringify({
+          productId,
+          quantity,
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update quantity');
       }
-    };
 
-    loadCartItems();
-  }, [user, toast]);
+      const updatedItems = await response.json();
+      dispatch({ type: "SET_CART_ITEMS", payload: updatedItems });
+    } catch (error: any) {
+      console.error('Failed to update quantity:', error);
+      // Refresh cart items to ensure consistent state
+      await fetchCartItems();
+      toast({
+        variant: "destructive",
+        description: "Failed to update quantity. Please try again.",
+      });
+    } finally {
+      dispatch({ type: "END_UPDATE", payload: productId });
+    }
+  };
 
   const addItem = async (product: Product, quantity = 1) => {
     if (!user) {
@@ -146,7 +216,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    dispatch({ type: "SET_LOADING", payload: true });
+    if (state.pendingUpdates.has(product.id)) {
+      return;
+    }
+
+    dispatch({ type: "START_UPDATE", payload: product.id });
+
     try {
       const response = await fetch('/api/cart', {
         method: 'POST',
@@ -165,28 +240,32 @@ export function CartProvider({ children }: { children: ReactNode }) {
         throw new Error(data.details || 'Failed to add item to cart');
       }
 
-      const items = await response.json();
-      dispatch({ type: "SET_CART_ITEMS", payload: items });
+      const updatedItems = await response.json();
+      dispatch({ type: "SET_CART_ITEMS", payload: updatedItems });
       toast({
         description: `${product.name} added to cart`,
       });
     } catch (error: any) {
       console.error('Failed to add item to cart:', error);
-      dispatch({ type: "SET_ERROR", payload: error.message });
-      dispatch({ type: "SET_CART_ITEMS", payload: state.items });
+      await fetchCartItems();
       toast({
         variant: "destructive",
         description: error.message || "Failed to add item to cart. Please try again.",
       });
     } finally {
-      dispatch({ type: "SET_LOADING", payload: false });
+      dispatch({ type: "END_UPDATE", payload: product.id });
     }
   };
 
   const removeItem = async (productId: number) => {
     if (!user) return;
 
-    dispatch({ type: "SET_LOADING", payload: true });
+    if (state.pendingUpdates.has(productId)) {
+      return;
+    }
+
+    dispatch({ type: "START_UPDATE", payload: productId });
+
     try {
       const response = await fetch(`/api/cart/${productId}`, {
         method: 'DELETE',
@@ -199,71 +278,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
         throw new Error('Failed to remove item from cart');
       }
 
-      const items = await response.json();
-      dispatch({ type: "SET_CART_ITEMS", payload: items });
+      const updatedItems = await response.json();
+      dispatch({ type: "SET_CART_ITEMS", payload: updatedItems });
     } catch (error: any) {
       console.error('Failed to remove item from cart:', error);
-      dispatch({ type: "SET_ERROR", payload: error.message });
+      await fetchCartItems();
       toast({
         variant: "destructive",
         description: "Failed to remove item from cart. Please try again.",
       });
     } finally {
-      dispatch({ type: "SET_LOADING", payload: false });
-    }
-  };
-
-  const updateQuantity = async (productId: number, quantity: number) => {
-    if (!user) return;
-
-    // Validate quantity before making any changes
-    if (quantity < 0 || quantity > 10) {
-      toast({
-        variant: "destructive",
-        description: "Quantity must be between 1 and 10",
-      });
-      return;
-    }
-
-    // Store previous state for rollback
-    const previousItems = [...state.items];
-
-    try {
-      // For quantity 0, remove the item
-      if (quantity === 0) {
-        await removeItem(productId);
-        return;
-      }
-
-      dispatch({ type: "SET_LOADING", payload: true });
-      const response = await fetch('/api/cart', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': user.id.toString()
-        },
-        body: JSON.stringify({
-          productId,
-          quantity,
-        })
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.details || 'Failed to update quantity');
-      }
-
-      const items = await response.json();
-      dispatch({ type: "SET_CART_ITEMS", payload: items });
-    } catch (error: any) {
-      console.error('Failed to update quantity:', error);
-      dispatch({ type: "SET_CART_ITEMS", payload: previousItems });
-      toast({
-        variant: "destructive",
-        description: "Failed to update quantity. Please try again.",
-      });
-    } finally {
-      dispatch({ type: "SET_LOADING", payload: false });
+      dispatch({ type: "END_UPDATE", payload: productId });
     }
   };
 
@@ -274,7 +299,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clearCart = async () => {
     if (!user) return;
 
-    dispatch({ type: "SET_LOADING", payload: true });
     try {
       const response = await fetch('/api/cart', {
         method: 'DELETE',
@@ -290,13 +314,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "CLEAR_CART" });
     } catch (error: any) {
       console.error('Failed to clear cart:', error);
-      dispatch({ type: "SET_ERROR", payload: error.message });
       toast({
         variant: "destructive",
         description: "Failed to clear cart. Please try again.",
       });
-    } finally {
-      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 

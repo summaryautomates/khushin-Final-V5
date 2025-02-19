@@ -1,4 +1,4 @@
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Product } from "@shared/schema";
@@ -8,19 +8,26 @@ interface CartItemProps {
   quantity: number;
   onUpdateQuantity: (productId: number, quantity: number) => void;
   onRemove: (productId: number) => void;
+  isUpdating?: boolean;
 }
 
-export function CartItem({ product, quantity, onUpdateQuantity, onRemove }: CartItemProps) {
+export function CartItem({ 
+  product, 
+  quantity, 
+  onUpdateQuantity, 
+  onRemove,
+  isUpdating = false 
+}: CartItemProps) {
   const handleIncrement = () => {
-    if (quantity < 10) {
+    if (quantity < 10 && !isUpdating) {
       onUpdateQuantity(product.id, quantity + 1);
     }
   };
 
   const handleDecrement = () => {
-    if (quantity > 1) {
+    if (quantity > 1 && !isUpdating) {
       onUpdateQuantity(product.id, quantity - 1);
-    } else {
+    } else if (quantity === 1 && !isUpdating) {
       onRemove(product.id);
     }
   };
@@ -53,8 +60,13 @@ export function CartItem({ product, quantity, onUpdateQuantity, onRemove }: Cart
             size="icon"
             className="h-8 w-8"
             onClick={handleDecrement}
+            disabled={isUpdating || quantity <= 1}
           >
-            <Minus className="h-4 w-4" />
+            {isUpdating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Minus className="h-4 w-4" />
+            )}
           </Button>
           <span className="w-8 text-center">{quantity}</span>
           <Button
@@ -62,9 +74,13 @@ export function CartItem({ product, quantity, onUpdateQuantity, onRemove }: Cart
             size="icon"
             className="h-8 w-8"
             onClick={handleIncrement}
-            disabled={quantity >= 10}
+            disabled={isUpdating || quantity >= 10}
           >
-            <Plus className="h-4 w-4" />
+            {isUpdating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Plus className="h-4 w-4" />
+            )}
           </Button>
         </div>
 
@@ -74,8 +90,13 @@ export function CartItem({ product, quantity, onUpdateQuantity, onRemove }: Cart
           size="icon"
           className="h-8 w-8 text-muted-foreground hover:text-destructive"
           onClick={() => onRemove(product.id)}
+          disabled={isUpdating}
         >
-          <Trash2 className="h-4 w-4" />
+          {isUpdating ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Trash2 className="h-4 w-4" />
+          )}
         </Button>
       </div>
     </Card>
