@@ -5,6 +5,7 @@ import { insertContactMessageSchema, insertReturnRequestSchema, insertCartItemSc
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { WebSocketServer, WebSocket } from 'ws';
+import { setupAuth } from "./auth";
 import {
   insertOrderSchema,
   insertOrderStatusHistorySchema
@@ -14,8 +15,6 @@ import {
 interface OrderTrackingWebSocket extends WebSocket {
   orderRef?: string;
 }
-
-// Rest of the imports and schema definitions remain unchanged...
 
 const shippingSchema = z.object({
   fullName: z.string(),
@@ -91,6 +90,9 @@ const returnRequestSchema = z.object({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Set up authentication first
+  await setupAuth(app);
+
   const productsRouter = {
     getAll: async (_req: any, res: any) => {
       try {

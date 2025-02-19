@@ -7,12 +7,21 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { ShoppingCart, ClockIcon } from "lucide-react";
+import { ShoppingCart, ClockIcon, UserCircle2 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
+import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 
 export function Header() {
   const cart = useCart();
+  const { user, logoutMutation } = useAuth();
+  const [, setLocation] = useLocation();
   const cartItemCount = cart.items?.length || 0;
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+    setLocation("/auth");
+  };
 
   return (
     <header className="fixed top-0 z-50 w-full bg-gradient-to-b from-black/95 to-black/85 backdrop-blur-md supports-[backdrop-filter]:bg-black/60 border-b border-white/10">
@@ -81,6 +90,28 @@ export function Header() {
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </Button>
             </Link>
+            {user ? (
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="relative group hover:bg-white/10 transition-all duration-300"
+                onClick={handleLogout}
+              >
+                <UserCircle2 className="h-5 w-5 text-white group-hover:scale-110 transition-transform duration-300" />
+                <span className="sr-only">Logout</span>
+              </Button>
+            ) : (
+              <Link href="/auth">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="relative group hover:bg-white/10 transition-all duration-300"
+                >
+                  <UserCircle2 className="h-5 w-5 text-white group-hover:scale-110 transition-transform duration-300" />
+                  <span className="sr-only">Login</span>
+                </Button>
+              </Link>
+            )}
             <Link href="/cart">
               <Button 
                 variant="ghost" 

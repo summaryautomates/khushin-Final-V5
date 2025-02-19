@@ -20,6 +20,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
+import { users, type User, type InsertUser } from "@shared/schema";
 
 export interface IStorage {
   // Products
@@ -51,6 +52,11 @@ export interface IStorage {
   // Order Status History methods
   addOrderStatusHistory(history: InsertOrderStatusHistory): Promise<OrderStatusHistory>;
   getOrderStatusHistory(orderId: number): Promise<OrderStatusHistory[]>;
+
+  // Add these new user-related methods
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -191,6 +197,22 @@ export class DatabaseStorage implements IStorage {
       .from(orderStatusHistory)
       .where(eq(orderStatusHistory.orderId, orderId))
       .orderBy(desc(orderStatusHistory.timestamp));
+  }
+
+  // Add these new user-related method implementations
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [newUser] = await db.insert(users).values(user).returning();
+    return newUser;
   }
 }
 

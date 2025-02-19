@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { CartProvider } from "@/hooks/use-cart";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { AuthProvider } from "@/hooks/use-auth";
 
 // Page imports
 import Home from "@/pages/home";
@@ -26,76 +27,82 @@ import OrderDetails from "@/pages/order-details";
 import Refueling from "@/pages/refueling";
 import EventOrganizer from "@/pages/event-organizer";
 import ExpressDelivery from "@/pages/express-delivery";
+import AuthPage from "@/pages/auth-page";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <CartProvider>
-        <ErrorBoundary>
-          <div className="min-h-screen flex flex-col bg-background">
-            <Header />
-            <main className="flex-1">
-              {/* Mobile View Container */}
-              <div className="md:hidden w-full">
-                <div className="px-4 py-3">
-                  <Switch>
-                    <Route path="/" component={Home} />
-                    <Route path="/products" component={Products} />
-                    <Route path="/products/category/:category" component={Products} />
-                    <Route path="/product/:id" component={Product} />
-                    <Route path="/cart" component={Cart} />
-                    <Route path="/checkout/payment" component={CheckoutPayment} />
-                    <Route path="/checkout/success" component={CheckoutSuccess} />
-                    <Route path="/contact" component={Contact} />
-                    <Route path="/customize" component={Customize} />
-                    <Route path="/refueling" component={Refueling} />
-                    <Route path="/orders" component={Orders} />
-                    <Route path="/orders/:orderRef" component={OrderDetails} />
-                    <Route path="/faqs" component={FAQs} />
-                    <Route path="/warranty" component={Warranty} />
-                    <Route path="/shipping" component={Shipping} />
-                    <Route path="/returns" component={Returns} />
-                    <Route path="/event-organizer" component={EventOrganizer} />
-                    <Route path="/express-delivery" component={ExpressDelivery} />
-                    <Route component={NotFound} />
-                  </Switch>
+      <AuthProvider>
+        <CartProvider>
+          <ErrorBoundary>
+            <div className="min-h-screen flex flex-col bg-background">
+              <Header />
+              <main className="flex-1">
+                {/* Mobile View Container */}
+                <div className="md:hidden w-full">
+                  <div className="px-4 py-3">
+                    <Switch>
+                      <Route path="/auth" component={AuthPage} />
+                      <ProtectedRoute path="/" component={Home} />
+                      <ProtectedRoute path="/products" component={Products} />
+                      <ProtectedRoute path="/products/category/:category" component={Products} />
+                      <ProtectedRoute path="/product/:id" component={Product} />
+                      <ProtectedRoute path="/cart" component={Cart} />
+                      <ProtectedRoute path="/checkout/payment" component={CheckoutPayment} />
+                      <ProtectedRoute path="/checkout/success" component={CheckoutSuccess} />
+                      <ProtectedRoute path="/contact" component={Contact} />
+                      <ProtectedRoute path="/customize" component={Customize} />
+                      <ProtectedRoute path="/refueling" component={Refueling} />
+                      <ProtectedRoute path="/orders" component={Orders} />
+                      <ProtectedRoute path="/orders/:orderRef" component={OrderDetails} />
+                      <Route path="/faqs" component={FAQs} />
+                      <Route path="/warranty" component={Warranty} />
+                      <Route path="/shipping" component={Shipping} />
+                      <Route path="/returns" component={Returns} />
+                      <ProtectedRoute path="/event-organizer" component={EventOrganizer} />
+                      <ProtectedRoute path="/express-delivery" component={ExpressDelivery} />
+                      <Route component={NotFound} />
+                    </Switch>
+                  </div>
                 </div>
-              </div>
 
-              {/* Desktop View Container */}
-              <div className="hidden md:block w-full">
-                <div className="container mx-auto px-6 py-8 max-w-7xl">
-                  <Switch>
-                    <Route path="/" component={Home} />
-                    <Route path="/products" component={Products} />
-                    <Route path="/products/category/:category" component={Products} />
-                    <Route path="/product/:id" component={Product} />
-                    <Route path="/cart" component={Cart} />
-                    <Route path="/checkout/payment" component={CheckoutPayment} />
-                    <Route path="/checkout/success" component={CheckoutSuccess} />
-                    <Route path="/contact" component={Contact} />
-                    <Route path="/customize" component={Customize} />
-                    <Route path="/refueling" component={Refueling} />
-                    <Route path="/orders" component={Orders} />
-                    <Route path="/orders/:orderRef" component={OrderDetails} />
-                    <Route path="/faqs" component={FAQs} />
-                    <Route path="/warranty" component={Warranty} />
-                    <Route path="/shipping" component={Shipping} />
-                    <Route path="/returns" component={Returns} />
-                    <Route path="/event-organizer" component={EventOrganizer} />
-                    <Route path="/express-delivery" component={ExpressDelivery} />
-                    <Route component={NotFound} />
-                  </Switch>
+                {/* Desktop View Container */}
+                <div className="hidden md:block w-full">
+                  <div className="container mx-auto px-6 py-8 max-w-7xl">
+                    <Switch>
+                      <Route path="/auth" component={AuthPage} />
+                      <ProtectedRoute path="/" component={Home} />
+                      <ProtectedRoute path="/products" component={Products} />
+                      <ProtectedRoute path="/products/category/:category" component={Products} />
+                      <ProtectedRoute path="/product/:id" component={Product} />
+                      <ProtectedRoute path="/cart" component={Cart} />
+                      <ProtectedRoute path="/checkout/payment" component={CheckoutPayment} />
+                      <ProtectedRoute path="/checkout/success" component={CheckoutSuccess} />
+                      <ProtectedRoute path="/contact" component={Contact} />
+                      <ProtectedRoute path="/customize" component={Customize} />
+                      <ProtectedRoute path="/refueling" component={Refueling} />
+                      <ProtectedRoute path="/orders" component={Orders} />
+                      <ProtectedRoute path="/orders/:orderRef" component={OrderDetails} />
+                      <Route path="/faqs" component={FAQs} />
+                      <Route path="/warranty" component={Warranty} />
+                      <Route path="/shipping" component={Shipping} />
+                      <Route path="/returns" component={Returns} />
+                      <ProtectedRoute path="/event-organizer" component={EventOrganizer} />
+                      <ProtectedRoute path="/express-delivery" component={ExpressDelivery} />
+                      <Route component={NotFound} />
+                    </Switch>
+                  </div>
                 </div>
-              </div>
-            </main>
-            <Footer />
-          </div>
-          <ErrorBoundary fallback={<div className="fixed bottom-4 right-4 p-4 bg-destructive text-destructive-foreground rounded-md shadow-lg">Toast Error</div>}>
-            <Toaster />
+              </main>
+              <Footer />
+            </div>
+            <ErrorBoundary fallback={<div className="fixed bottom-4 right-4 p-4 bg-destructive text-destructive-foreground rounded-md shadow-lg">Toast Error</div>}>
+              <Toaster />
+            </ErrorBoundary>
           </ErrorBoundary>
-        </ErrorBoundary>
-      </CartProvider>
+        </CartProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
