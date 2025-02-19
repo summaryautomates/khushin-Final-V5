@@ -22,7 +22,7 @@ export const sampleProducts = [
     description: "24K gold-plated luxury lighter with intricate Art Deco engravings and premium butane ignition system",
     price: 499900,
     images: [
-      "https://images.unsplash.com/photo-1675789652575-0a5dd196b4ba?w=800&q=90",
+      "/attached_assets/93robnxJuGA81CI0-generated_image.jpg",
       "https://images.unsplash.com/photo-1675789652363-e2f09f5e40d9?w=800&q=90"
     ],
     category: "lighters",
@@ -39,7 +39,7 @@ export const sampleProducts = [
     description: "Platinum-coated lighter adorned with genuine diamonds, featuring windproof technology",
     price: 799900,
     images: [
-      "https://images.unsplash.com/photo-1675789652871-36b796381d11?w=800&q=90",
+      "/attached_assets/oKlJonOsIQgIBznu-generated_image.jpg",
       "https://images.unsplash.com/photo-1675789652903-e5e60f4bb19d?w=800&q=90"
     ],
     category: "lighters"
@@ -50,8 +50,8 @@ export const sampleProducts = [
     description: "Rose gold lighter with vintage-inspired design and temperature-resistant ceramic coating",
     price: 399900,
     images: [
-      "https://images.unsplash.com/photo-1675789653233-a5e5bde363f7?w=800&q=90",
-      "https://images.unsplash.com/photo-1675789653295-20df7a1d5665?w=800&q=90"
+      "/attached_assets/93robnxJuGA81CI0-generated_image.jpg",
+      "/attached_assets/oKlJonOsIQgIBznu-generated_image.jpg"
     ],
     category: "lighters"
   },
@@ -61,8 +61,8 @@ export const sampleProducts = [
     description: "Aircraft-grade titanium lighter with matte black finish and precision flame control",
     price: 299900,
     images: [
-      "https://images.unsplash.com/photo-1675789652575-0a5dd196b4ba?w=800&q=90",
-      "https://images.unsplash.com/photo-1675789652363-e2f09f5e40d9?w=800&q=90"
+      "/attached_assets/oKlJonOsIQgIBznu-generated_image.jpg",
+      "/attached_assets/93robnxJuGA81CI0-generated_image.jpg"
     ],
     category: "lighters"
   },
@@ -72,8 +72,8 @@ export const sampleProducts = [
     description: "Sterling silver lighter featuring traditional guilloche engraving and double flame system",
     price: 599900,
     images: [
-      "https://images.unsplash.com/photo-1675789652871-36b796381d11?w=800&q=90",
-      "https://images.unsplash.com/photo-1675789652903-e5e60f4bb19d?w=800&q=90"
+      "/attached_assets/93robnxJuGA81CI0-generated_image.jpg",
+      "/attached_assets/oKlJonOsIQgIBznu-generated_image.jpg"
     ],
     category: "lighters"
   },
