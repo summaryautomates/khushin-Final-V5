@@ -89,10 +89,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCartItems(userId: string): Promise<CartItem[]> {
-    return await db
-      .select()
+    const cartItemsWithProducts = await db
+      .select({
+        id: cartItems.id,
+        userId: cartItems.userId,
+        productId: cartItems.productId,
+        quantity: cartItems.quantity,
+        giftWrapType: cartItems.giftWrapType,
+        giftWrapCost: cartItems.giftWrapCost,
+        product: products
+      })
       .from(cartItems)
+      .innerJoin(products, eq(cartItems.productId, products.id))
       .where(eq(cartItems.userId, userId));
+
+    return cartItemsWithProducts.map(item => ({
+      id: item.id,
+      userId: item.userId,
+      productId: item.productId,
+      quantity: item.quantity,
+      giftWrapType: item.giftWrapType,
+      giftWrapCost: item.giftWrapCost,
+      product: item.product
+    }));
   }
 
   async addCartItem(item: InsertCartItem): Promise<CartItem> {
