@@ -33,11 +33,17 @@ export class ErrorBoundary extends Component<Props, State> {
     });
 
     this.setState({ errorInfo });
+    
+    // Prevent unhandled rejections from propagating
+    window.addEventListener('unhandledrejection', (event) => {
+      event.preventDefault();
+      console.error('Unhandled promise rejection:', event.reason);
+    });
 
-    // Here you could also send the error to your error reporting service
-    // if (process.env.NODE_ENV === 'production') {
-    //   reportError(error, errorInfo);
-    // }
+    if (process.env.NODE_ENV === 'production') {
+      // In production, log to a service or handle specially
+      this.setState({ error: new Error('An unexpected error occurred') });
+    }
   }
 
   private handleReset = () => {

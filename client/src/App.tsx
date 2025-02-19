@@ -55,7 +55,6 @@ function App() {
                 <Route path="/returns" component={Returns} />
                 <Route path="/event-organizer" component={EventOrganizer} />
                 <Route path="/express-delivery" component={ExpressDelivery} />
-                <Route path="/test-error" component={TestError} />
                 <Route component={NotFound} />
               </Switch>
             </main>
