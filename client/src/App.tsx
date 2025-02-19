@@ -32,9 +32,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <CartProvider>
         <ErrorBoundary>
-          <div className="flex min-h-screen flex-col">
+          <div className="flex min-h-screen flex-col bg-background">
             <Header />
-            <main className="flex-1">
+            <main className="flex-1 w-full px-4 md:px-6 mx-auto max-w-7xl">
               <Switch>
                 <Route path="/" component={Home} />
                 <Route path="/products" component={Products} />
@@ -59,7 +59,7 @@ function App() {
             </main>
             <Footer />
           </div>
-          <ErrorBoundary fallback={<div className="fixed bottom-4 right-4 p-4 bg-destructive text-destructive-foreground rounded-md">Toast Error</div>}>
+          <ErrorBoundary fallback={<div className="fixed bottom-4 right-4 p-4 bg-destructive text-destructive-foreground rounded-md shadow-lg">Toast Error</div>}>
             <Toaster />
           </ErrorBoundary>
         </ErrorBoundary>

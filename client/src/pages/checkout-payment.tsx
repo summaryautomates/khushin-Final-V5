@@ -1,4 +1,3 @@
-
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { useCart } from "@/hooks/use-cart";
@@ -84,7 +83,7 @@ export default function CheckoutPayment() {
       const response = await fetch(`/api/payment/${orderRef}/status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           status: newStatus,
           method: paymentMethod
         })
@@ -151,56 +150,58 @@ export default function CheckoutPayment() {
   }
 
   return (
-    <div className="container py-20 min-h-screen">
+    <div className="container py-8 md:py-20 min-h-screen px-4">
       <Card className="max-w-lg mx-auto">
         <CardHeader>
-          <CardTitle>Complete Your Payment</CardTitle>
+          <CardTitle className="text-xl md:text-2xl">Complete Your Payment</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <Tabs defaultValue="upi" onValueChange={(value) => setPaymentMethod(value as 'upi' | 'cod')}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="upi" className="flex items-center gap-2">
+            <TabsList className="grid w-full grid-cols-2 h-auto">
+              <TabsTrigger value="upi" className="flex items-center gap-2 px-2 py-2 md:px-4">
                 <QrCode className="h-4 w-4" />
-                UPI Payment
+                <span className="hidden md:inline">UPI Payment</span>
+                <span className="md:hidden">UPI</span>
               </TabsTrigger>
-              <TabsTrigger value="cod" className="flex items-center gap-2">
+              <TabsTrigger value="cod" className="flex items-center gap-2 px-2 py-2 md:px-4">
                 <Banknote className="h-4 w-4" />
-                Cash on Delivery
+                <span className="hidden md:inline">Cash on Delivery</span>
+                <span className="md:hidden">COD</span>
               </TabsTrigger>
             </TabsList>
             <TabsContent value="upi">
-              <div className="flex justify-center">
+              <div className="flex justify-center mt-4">
                 {qrCodeUrl ? (
-                  <div className="bg-white p-4 rounded-lg">
-                    <img src={qrCodeUrl} alt="Payment QR Code" className="w-64 h-64" />
+                  <div className="bg-white p-2 md:p-4 rounded-lg">
+                    <img src={qrCodeUrl} alt="Payment QR Code" className="w-48 h-48 md:w-64 md:h-64" />
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center w-64 h-64 bg-muted rounded-lg">
+                  <div className="flex items-center justify-center w-48 h-48 md:w-64 md:h-64 bg-muted rounded-lg">
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
                 )}
               </div>
             </TabsContent>
             <TabsContent value="cod">
-              <div className="space-y-4 text-center py-6">
-                <Banknote className="h-12 w-12 mx-auto text-primary" />
+              <div className="space-y-4 text-center py-4 md:py-6">
+                <Banknote className="h-8 w-8 md:h-12 md:w-12 mx-auto text-primary" />
                 <div>
-                  <h3 className="text-lg font-medium">Cash on Delivery</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <h3 className="text-base md:text-lg font-medium">Cash on Delivery</h3>
+                  <p className="text-xs md:text-sm text-muted-foreground mt-1">
                     Pay in cash when your order arrives
                   </p>
                 </div>
-                <div className="bg-muted p-4 rounded-lg">
-                  <p className="font-semibold">Amount to be paid: ₹{paymentDetails?.amount}</p>
+                <div className="bg-muted p-3 md:p-4 rounded-lg">
+                  <p className="font-semibold text-sm md:text-base">Amount to be paid: ₹{paymentDetails?.amount}</p>
                 </div>
               </div>
             </TabsContent>
           </Tabs>
 
-          <div className="text-center">
-            <p className="font-semibold">Order Reference: {orderRef}</p>
+          <div className="text-center space-y-2">
+            <p className="font-semibold text-sm md:text-base">Order Reference: {orderRef}</p>
             {paymentMethod === 'upi' && (
-              <p className="text-muted-foreground mt-2">
+              <p className="text-xs md:text-sm text-muted-foreground">
                 Scan the QR code using any UPI app to complete your payment
               </p>
             )}
@@ -215,16 +216,17 @@ export default function CheckoutPayment() {
             {paymentStatus === 'failed' && (
               <XCircle className="h-4 w-4 text-red-500" />
             )}
-            <p className="text-sm font-medium">
+            <p className="text-xs md:text-sm font-medium">
               Payment Status: {paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1)}
             </p>
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
+        <CardFooter className="flex flex-col md:flex-row gap-4 md:gap-2 md:justify-between">
           <Button 
             variant="outline" 
             onClick={() => setLocation('/cart')}
             disabled={paymentStatus === 'completed' || isUpdatingStatus}
+            className="w-full md:w-auto"
           >
             Back to Cart
           </Button>
@@ -233,22 +235,24 @@ export default function CheckoutPayment() {
               variant="default"
               onClick={() => handlePaymentStatusUpdate('completed')}
               disabled={paymentStatus === 'completed' || isUpdatingStatus}
+              className="w-full md:w-auto"
             >
               {isUpdatingStatus ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Confirming Order...
+                  Confirming...
                 </>
               ) : (
                 'Confirm COD Order'
               )}
             </Button>
           ) : (
-            <div className="space-x-2">
+            <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
               <Button
                 variant="default"
                 onClick={() => handlePaymentStatusUpdate('completed')}
                 disabled={paymentStatus === 'completed' || isUpdatingStatus}
+                className="w-full md:w-auto"
               >
                 {isUpdatingStatus ? (
                   <>
@@ -263,6 +267,7 @@ export default function CheckoutPayment() {
                 variant="outline"
                 onClick={() => handlePaymentStatusUpdate('failed')}
                 disabled={paymentStatus === 'completed' || isUpdatingStatus}
+                className="w-full md:w-auto"
               >
                 Simulate Failure
               </Button>
