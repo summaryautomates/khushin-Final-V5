@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { NewsletterDialog } from "@/components/dialogs/newsletter-dialog";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/products/product-grid";
 import type { Product } from "@shared/schema";
@@ -50,6 +51,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col">
+      <NewsletterDialog />
       {/* Hero Section */}
       <section className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden">
         <div className="absolute inset-0 z-0">
