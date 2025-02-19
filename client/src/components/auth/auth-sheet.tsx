@@ -9,7 +9,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
-import { useState } from "react";
 import { UserCircle2 } from "lucide-react";
 
 const loginSchema = z.object({
@@ -27,8 +26,14 @@ const registerSchema = insertUserSchema.extend({
 type LoginData = z.infer<typeof loginSchema>;
 type RegisterData = z.infer<typeof registerSchema>;
 
-export function AuthSheet() {
-  const [open, setOpen] = useState(false);
+interface AuthSheetProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onSuccess?: () => void;
+  showTrigger?: boolean;
+}
+
+export function AuthSheet({ open, onOpenChange, onSuccess, showTrigger = true }: AuthSheetProps) {
   const { loginMutation, registerMutation } = useAuth();
   const { toast } = useToast();
 
@@ -55,7 +60,7 @@ export function AuthSheet() {
   const onLogin = async (data: LoginData) => {
     try {
       await loginMutation.mutateAsync(data);
-      setOpen(false);
+      onSuccess?.();
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in.",
@@ -68,7 +73,7 @@ export function AuthSheet() {
   const onRegister = async (data: RegisterData) => {
     try {
       await registerMutation.mutateAsync(data);
-      setOpen(false);
+      onSuccess?.();
       toast({
         title: "Welcome!",
         description: "Your account has been created successfully.",
@@ -79,17 +84,19 @@ export function AuthSheet() {
   };
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="icon"
-          className="relative group hover:bg-white/10 transition-all duration-300"
-        >
-          <UserCircle2 className="h-5 w-5 text-white group-hover:scale-110 transition-transform duration-300" />
-          <span className="sr-only">Login</span>
-        </Button>
-      </SheetTrigger>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      {showTrigger && (
+        <SheetTrigger asChild>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="relative group hover:bg-white/10 transition-all duration-300"
+          >
+            <UserCircle2 className="h-5 w-5 text-white group-hover:scale-110 transition-transform duration-300" />
+            <span className="sr-only">Login</span>
+          </Button>
+        </SheetTrigger>
+      )}
 
       <SheetContent side="right" className="w-[400px] sm:w-[540px] p-0">
         <Tabs defaultValue="login" className="h-full">

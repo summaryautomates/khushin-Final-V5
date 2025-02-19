@@ -2,6 +2,7 @@ import { createContext, useContext, useReducer, useEffect, ReactNode, useState }
 import { Product } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 
 interface CartItem {
   product: Product;
@@ -151,11 +152,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
   });
 
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isClearing, setIsClearing] = useState(false);
 
-  // Load cart items when the component mounts
   useEffect(() => {
     const loadCartItems = async () => {
+      if (!user) {
+        dispatch({ type: "SET_CART_ITEMS", payload: [] });
+        return;
+      }
+
       try {
         const response = await apiRequest('GET', '/api/cart');
         const items = await response.json();
@@ -167,9 +173,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
 
     loadCartItems();
-  }, []);
+  }, [user]);
 
   const addItem = async (product: Product, quantity = 1) => {
+    if (!user) {
+      return Promise.reject(new Error("AUTH_REQUIRED"));
+    }
+
     try {
       await apiRequest('POST', '/api/cart', {
         productId: product.id,
@@ -190,6 +200,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const removeItem = async (productId: number) => {
+    if (!user) return;
+
     try {
       await apiRequest('DELETE', `/api/cart/${productId}`);
       dispatch({ type: "REMOVE_ITEM", payload: { productId } });
@@ -203,6 +215,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const updateQuantity = async (productId: number, quantity: number) => {
+    if (!user) return;
+
     try {
       await apiRequest('PATCH', `/api/cart/${productId}`, { quantity });
       dispatch({ type: "UPDATE_QUANTITY", payload: { productId, quantity } });
@@ -216,7 +230,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const clearCart = async () => {
-    if (isClearing) return; // Prevent multiple clear requests
+    if (!user || isClearing) return;
+
     try {
       setIsClearing(true);
       await apiRequest('DELETE', '/api/cart');
