@@ -65,6 +65,25 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold mb-4">Something went wrong</h2>
+            <p className="text-gray-600 mb-4">
+              {this.state.error?.message || 'An unexpected error occurred'}
+            </p>
+            <button
+              onClick={this.handleReload}
+              className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+  }
+
+      return (
         <div className="container py-12">
           <Card className="max-w-2xl mx-auto">
             <CardHeader>
