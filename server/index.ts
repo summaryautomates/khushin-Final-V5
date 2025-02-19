@@ -67,22 +67,16 @@ const startServer = async () => {
       HOST: process.env.HOST
     });
 
+    // Register routes first
+    console.log('Registering routes...');
+    const server = await registerRoutes(app);
+    console.log('Routes registered successfully');
+
     // Prioritize environment PORT, then try alternative ports
     const portToTry = process.env.PORT ? [parseInt(process.env.PORT, 10)] : [5000, 3000, 3001, 5001];
-    let server: Server | null = null;
     let boundPort: number | null = null;
 
-    try {
-      // Register routes first
-      console.log('Registering routes...');
-      server = await registerRoutes(app);
-      console.log('Routes registered successfully');
-    } catch (error) {
-      console.error('Failed to register routes:', error);
-      throw error;
-    }
-
-    // Try ports sequentially
+    // Try ports sequentially with proper error handling
     for (const port of portToTry) {
       try {
         await new Promise<void>((resolve, reject) => {
@@ -91,66 +85,49 @@ const startServer = async () => {
             reject(new Error(`Port binding timeout on port ${port}`));
           }, 10000);
 
-          server!.listen(port, '0.0.0.0', async () => {
+          server.once('error', (err: NodeJS.ErrnoException) => {
             clearTimeout(timeoutId);
-            const address = server!.address() as AddressInfo;
+            if (err.code === 'EADDRINUSE') {
+              console.log(`Port ${port} is in use, trying next port...`);
+              resolve(); // Continue to next port
+            } else {
+              reject(err);
+            }
+          });
+
+          server.listen(port, '0.0.0.0', () => {
+            clearTimeout(timeoutId);
+            const address = server.address() as AddressInfo;
             boundPort = port;
             console.log(`Server bound successfully to port ${port}`);
             log(`Server successfully bound to port ${port}`, 'server');
             resolve();
           });
-
-          server!.once('error', (err: NodeJS.ErrnoException) => {
-            clearTimeout(timeoutId);
-            console.error(`Failed to bind to port ${port}:`, err.message);
-            if (err.code === 'EADDRINUSE') {
-              // If this is the environment-specified port, we should fail
-              if (process.env.PORT && port === parseInt(process.env.PORT, 10)) {
-                cleanup(server);
-                reject(new Error(`Environment-specified port ${port} is in use`));
-              }
-              // Otherwise, we'll try the next port
-              resolve();
-            } else {
-              cleanup(server);
-              reject(err);
-            }
-          });
         });
 
-        // If we successfully bound to a port, break the loop
-        if (boundPort) break;
+        if (boundPort) break; // Successfully bound to a port
       } catch (error) {
-        // If this was the last port or an environment-specified port, throw
-        if (process.env.PORT || port === portToTry[portToTry.length - 1]) {
-          throw error;
+        console.error(`Failed to bind to port ${port}:`, error);
+        if (port === portToTry[portToTry.length - 1]) {
+          throw new Error('Failed to bind to any available port');
         }
-        // Otherwise continue to next port
-        continue;
       }
     }
 
-    if (!boundPort || !server) {
+    if (!boundPort) {
       throw new Error('Failed to bind to any available port');
     }
 
     log(`Server started in ${process.env.NODE_ENV || 'development'} mode`, 'server');
 
-    // Setup Vite after server is running
+    // Setup Vite or serve static files
     if (process.env.NODE_ENV !== 'production') {
-      try {
-        console.log('Setting up Vite...');
-        await setupVite(app, server)
-          .then(() => log('Vite setup complete', 'server'))
-          .catch(error => {
-            console.error('Vite setup error:', error);
-            cleanup(server);
-            process.exit(1);
-          });
-      } catch (error) {
-        console.error('Error during Vite setup:', error);
-        throw error;
-      }
+      await setupVite(app, server)
+        .then(() => log('Vite setup complete', 'server'))
+        .catch(error => {
+          console.error('Vite setup error:', error);
+          throw error;
+        });
     } else {
       serveStatic(app);
     }
