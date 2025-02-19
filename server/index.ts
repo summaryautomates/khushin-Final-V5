@@ -69,7 +69,7 @@ const startServer = async () => {
             reject(new Error(`Port binding timeout on port ${port}`));
           }, 10000); // Increased timeout to 10 seconds
 
-          server!.listen(port, '0.0.0.0', async () => {
+          server!.listen(port, '0.0.0.0', async () => { // Modified to use 0.0.0.0
             clearTimeout(timeoutId);
             const address = server!.address() as AddressInfo;
             boundPort = address.port;
