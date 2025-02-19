@@ -34,7 +34,7 @@ import {
   Calendar
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import Tesseract from 'tesseract.js';
+import { createWorker } from 'tesseract.js';
 import { toast } from "@/hooks/use-toast";
 
 
@@ -48,7 +48,7 @@ export default function Home() {
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const handleVoiceSearch = () => {
     if ('webkitSpeechRecognition' in window) {
       const recognition = new (window as any).webkitSpeechRecognition();
@@ -88,17 +88,35 @@ export default function Home() {
     if (!file) return;
 
     try {
-      const worker = await Tesseract.createWorker();
+      toast({
+        title: "Processing Image",
+        description: "Please wait while we analyze the image...",
+      });
+
+      const worker = await createWorker();
+      await worker.load();
       await worker.loadLanguage('eng');
       await worker.initialize('eng');
+
       const { data: { text } } = await worker.recognize(file);
       await worker.terminate();
 
       const cleanText = text.replace(/[^\w\s]/gi, '').trim();
       if (cleanText) {
         setSearchQuery(cleanText);
+        toast({
+          title: "Image Processed",
+          description: "Text extracted successfully",
+        });
+      } else {
+        toast({
+          title: "No Text Found",
+          description: "Could not extract text from the image",
+          variant: "destructive",
+        });
       }
     } catch (error) {
+      console.error('Image processing error:', error);
       toast({
         title: "Error",
         description: "Failed to process image",
@@ -109,10 +127,10 @@ export default function Home() {
 
   const getSuggestions = (query: string) => {
     if (!products || !query) return [];
-    
+
     const normalizedQuery = query.toLowerCase();
     const productNames = products.map(p => p.name.toLowerCase());
-    
+
     return productNames
       .filter(name => name !== normalizedQuery && name.includes(normalizedQuery))
       .slice(0, 3);
@@ -202,8 +220,8 @@ export default function Home() {
                       placeholder="Search our luxury collection..."
                       className="border-primary/20 rounded-full flex-grow"
                     />
-                    <Button 
-                      variant="secondary" 
+                    <Button
+                      variant="secondary"
                       className={`rounded-full ${isListening ? 'bg-red-500 hover:bg-red-600' : ''}`}
                       onClick={handleVoiceSearch}
                     >
@@ -250,9 +268,9 @@ export default function Home() {
                   <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
                     <Star className="w-4 h-4" /> Premium Collection
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="gap-2 mt-3 rounded-full hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
                     onClick={() => window.location.href = '/express-delivery'}
                   >
