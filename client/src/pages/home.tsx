@@ -87,18 +87,50 @@ export default function Home() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload a valid image file (JPEG, PNG, or GIF)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      toast({
+        title: "File Too Large",
+        description: "Please upload an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       toast({
         title: "Processing Image",
         description: "Please wait while we analyze the image...",
       });
 
-      const worker = await createWorker();
+      const worker = await createWorker({
+        logger: progress => {
+          console.log('OCR Progress:', progress);
+        },
+      });
+
+      console.log('Worker created, loading...');
       await worker.load();
+      console.log('Loading language...');
       await worker.loadLanguage('eng');
+      console.log('Initializing...');
       await worker.initialize('eng');
+      console.log('Starting recognition...');
 
       const { data: { text } } = await worker.recognize(file);
+      console.log('Recognition completed:', text);
       await worker.terminate();
 
       const cleanText = text.replace(/[^\w\s]/gi, '').trim();
@@ -117,9 +149,16 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Image processing error:', error);
+      let errorMessage = "Failed to process image";
+
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+        errorMessage = `Error: ${error.message}`;
+      }
+
       toast({
-        title: "Error",
-        description: "Failed to process image",
+        title: "Processing Error",
+        description: errorMessage,
         variant: "destructive",
       });
     }
