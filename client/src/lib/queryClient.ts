@@ -54,12 +54,7 @@ export const queryClient = new QueryClient({
         }
         return failureCount < 3;
       },
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-      onError: (error: unknown) => {
-        if (error instanceof Error) {
-          console.error('Query error:', error);
-        }
-      }
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
     },
     mutations: {
       retry: (failureCount, error) => {
@@ -67,11 +62,6 @@ export const queryClient = new QueryClient({
           return false;
         }
         return failureCount < 2;
-      },
-      onError: (error: unknown) => {
-        if (error instanceof Error) {
-          console.error('Mutation error:', error);
-        }
       }
     },
   },
