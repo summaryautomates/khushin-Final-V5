@@ -18,12 +18,25 @@ export default function ProductPage() {
   const id = params?.id;
   const { addItem } = useCart();
   const { toast } = useToast();
+  const [selectedImage, setSelectedImage] = useState<number>(0);
   const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<"add-to-cart" | "buy-now" | null>(null);
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: [`/api/products/${id}`],
   });
+
+  const handleImageError = (index: number) => {
+    if (product && product.images.length > 1) {
+      // Try next image
+      setSelectedImage((index + 1) % product.images.length);
+    }
+    toast({
+      title: "Image loading error",
+      description: "Failed to load product image. Trying alternative view.",
+      variant: "destructive",
+    });
+  };
 
   const handleAddToCart = async () => {
     try {
@@ -102,9 +115,10 @@ export default function ProductPage() {
           <div className="space-y-4">
             <div className="aspect-square overflow-hidden rounded-lg border bg-zinc-100 relative">
               <img
-                src={product.images[0]}
+                src={product.images[selectedImage]}
                 alt={product.name}
                 className="h-full w-full object-contain p-4"
+                onError={() => handleImageError(selectedImage)}
               />
               {product.category === "lighters" && (
                 <div className="absolute inset-0 flex items-center justify-center bg-opacity-50">
@@ -115,12 +129,19 @@ export default function ProductPage() {
 
             {product.images.length > 1 && (
               <div className="grid grid-cols-4 gap-4 mt-4">
-                {product.images.slice(1).map((image, i) => (
-                  <div key={i} className="aspect-square overflow-hidden rounded-lg border bg-zinc-100">
+                {product.images.map((image, i) => (
+                  <div 
+                    key={i} 
+                    className={`aspect-square overflow-hidden rounded-lg border bg-zinc-100 cursor-pointer transition-all ${
+                      selectedImage === i ? 'ring-2 ring-primary' : ''
+                    }`}
+                    onClick={() => setSelectedImage(i)}
+                  >
                     <img
                       src={image}
-                      alt={`${product.name} view ${i + 2}`}
+                      alt={`${product.name} view ${i + 1}`}
                       className="h-full w-full object-contain p-2"
+                      onError={() => handleImageError(i)}
                     />
                   </div>
                 ))}

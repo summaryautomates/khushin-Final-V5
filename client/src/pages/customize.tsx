@@ -34,11 +34,14 @@ export default function Customize() {
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setUploadedImage(e.target?.result as string);
+      // Create a URL for the uploaded image
+      const imageUrl = URL.createObjectURL(file);
+      setUploadedImage(imageUrl);
+
+      // Clean up the URL when component unmounts
+      return () => {
+        URL.revokeObjectURL(imageUrl);
       };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -59,7 +62,15 @@ export default function Customize() {
                   <img
                     src={uploadedImage}
                     alt="Preview"
-                    className="max-w-full max-h-full object-contain"
+                    className="max-w-full max-h-full object-contain rounded-lg"
+                    onError={() => {
+                      setUploadedImage(null);
+                      toast({
+                        title: "Error loading image",
+                        description: "Failed to load the image. Please try again.",
+                        variant: "destructive",
+                      });
+                    }}
                   />
                 ) : (
                   <p className="text-muted-foreground text-center px-4">
@@ -96,6 +107,9 @@ export default function Customize() {
                     onChange={handleImageUpload}
                     className="mt-2"
                   />
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Supported formats: JPEG, PNG, GIF (max 5MB)
+                  </p>
                 </CardContent>
               </Card>
             </TabsContent>

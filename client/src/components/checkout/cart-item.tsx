@@ -36,17 +36,27 @@ export function CartItem({
     }
   };
 
+  const getProductImage = () => {
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      return product.images[0];
+    }
+    return '/placeholder.jpg';
+  };
+
   return (
     <Card className="p-4">
       <div className="flex items-center gap-4">
         {/* Product Image */}
         <div className="w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-lg overflow-hidden">
           <img 
-            src={Array.isArray(product.images) && product.images.length > 0 
-              ? product.images[0] 
-              : '/placeholder.jpg'} 
+            src={getProductImage()} 
             alt={product.name}
             className="w-full h-full object-cover"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = '/placeholder.jpg';
+              target.onerror = null; // Prevent infinite loop
+            }}
           />
         </div>
 
