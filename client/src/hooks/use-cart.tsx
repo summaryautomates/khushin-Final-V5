@@ -32,7 +32,10 @@ type CartAction =
   | { type: "UPDATE_GIFT_WRAP"; giftWrap: { type: GiftWrapType; cost: number } }
   | { type: "CLEAR_CART" }
   | { type: "START_UPDATE"; productId: number }
-  | { type: "END_UPDATE"; productId: number };
+  | { type: "END_UPDATE"; productId: number }
+  | { type: "OPTIMISTIC_ADD_ITEM"; item: CartItem }
+  | { type: "OPTIMISTIC_REMOVE_ITEM"; productId: number }
+  | { type: "OPTIMISTIC_UPDATE_QUANTITY"; productId: number; quantity: number };
 
 interface CartContextType extends CartState {
   addItem: (product: Product, quantity?: number) => Promise<void>;
@@ -59,6 +62,49 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         isLoading: false,
         error: null,
       };
+
+    case "OPTIMISTIC_ADD_ITEM": {
+      const existingItemIndex = state.items.findIndex(item => item.product.id === action.item.product.id);
+      let newItems;
+
+      if (existingItemIndex >= 0) {
+        newItems = [...state.items];
+        newItems[existingItemIndex] = {
+          ...newItems[existingItemIndex],
+          quantity: newItems[existingItemIndex].quantity + action.item.quantity,
+        };
+      } else {
+        newItems = [...state.items, action.item];
+      }
+
+      return {
+        ...state,
+        items: newItems,
+        total: newItems.reduce((total, item) => total + item.product.price * item.quantity, 0),
+      };
+    }
+
+    case "OPTIMISTIC_REMOVE_ITEM": {
+      const newItems = state.items.filter(item => item.product.id !== action.productId);
+      return {
+        ...state,
+        items: newItems,
+        total: newItems.reduce((total, item) => total + item.product.price * item.quantity, 0),
+      };
+    }
+
+    case "OPTIMISTIC_UPDATE_QUANTITY": {
+      const newItems = state.items.map(item =>
+        item.product.id === action.productId
+          ? { ...item, quantity: action.quantity }
+          : item
+      );
+      return {
+        ...state,
+        items: newItems,
+        total: newItems.reduce((total, item) => total + item.product.price * item.quantity, 0),
+      };
+    }
 
     case "UPDATE_GIFT_WRAP":
       return {
@@ -125,6 +171,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "SET_LOADING", isLoading: true });
       const response = await fetch('/api/cart', {
         headers: {
+          'Accept': 'application/json',
           'x-user-id': user.id.toString()
         }
       });
@@ -139,8 +186,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       console.error('Failed to load cart items:', error);
       dispatch({ type: "SET_ERROR", error: "Failed to load cart items" });
       toast({
-        variant: "destructive",
+        title: "Error",
         description: "Failed to load cart items. Please try again.",
+        variant: "destructive",
       });
     }
   };
@@ -162,8 +210,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     if (quantity < 0 || quantity > 10) {
       toast({
-        variant: "destructive",
+        title: "Invalid Quantity",
         description: "Quantity must be between 1 and 10",
+        variant: "destructive",
       });
       return;
     }
@@ -174,12 +223,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     dispatch({ type: "START_UPDATE", productId });
+    dispatch({ type: "OPTIMISTIC_UPDATE_QUANTITY", productId, quantity });
 
     try {
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           'x-user-id': user.id.toString()
         },
         body: JSON.stringify({
@@ -195,10 +246,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       await fetchCartItems();
     } catch (error: any) {
       console.error('Failed to update quantity:', error);
-      await fetchCartItems();
+      await fetchCartItems(); // Revert to server state
       toast({
-        variant: "destructive",
+        title: "Error",
         description: "Failed to update quantity. Please try again.",
+        variant: "destructive",
       });
     } finally {
       dispatch({ type: "END_UPDATE", productId });
@@ -208,8 +260,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = async (product: Product, quantity = 1) => {
     if (!user) {
       toast({
-        variant: "destructive",
+        title: "Authentication Required",
         description: "Please log in to add items to cart.",
+        variant: "destructive",
       });
       return;
     }
@@ -219,12 +272,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     dispatch({ type: "START_UPDATE", productId: product.id });
+    dispatch({ type: "OPTIMISTIC_ADD_ITEM", item: { product, quantity } });
 
     try {
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           'x-user-id': user.id.toString()
         },
         body: JSON.stringify({
@@ -240,13 +295,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       await fetchCartItems();
       toast({
+        title: "Added to Cart",
         description: `${product.name} added to cart`,
       });
     } catch (error: any) {
       console.error('Failed to add item to cart:', error);
+      await fetchCartItems(); // Revert to server state
       toast({
-        variant: "destructive",
+        title: "Error",
         description: error.message || "Failed to add item to cart. Please try again.",
+        variant: "destructive",
       });
     } finally {
       dispatch({ type: "END_UPDATE", productId: product.id });
@@ -261,11 +319,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     dispatch({ type: "START_UPDATE", productId });
+    dispatch({ type: "OPTIMISTIC_REMOVE_ITEM", productId });
 
     try {
       const response = await fetch(`/api/cart/${productId}`, {
         method: 'DELETE',
         headers: {
+          'Accept': 'application/json',
           'x-user-id': user.id.toString()
         }
       });
@@ -277,10 +337,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       await fetchCartItems();
     } catch (error: any) {
       console.error('Failed to remove item from cart:', error);
-      await fetchCartItems();
+      await fetchCartItems(); // Revert to server state
       toast({
-        variant: "destructive",
+        title: "Error",
         description: "Failed to remove item from cart. Please try again.",
+        variant: "destructive",
       });
     } finally {
       dispatch({ type: "END_UPDATE", productId });
@@ -298,6 +359,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const response = await fetch('/api/cart', {
         method: 'DELETE',
         headers: {
+          'Accept': 'application/json',
           'x-user-id': user.id.toString()
         }
       });
@@ -310,8 +372,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error('Failed to clear cart:', error);
       toast({
-        variant: "destructive",
+        title: "Error",
         description: "Failed to clear cart. Please try again.",
+        variant: "destructive",
       });
     }
   };
