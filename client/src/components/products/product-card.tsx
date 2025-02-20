@@ -24,6 +24,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [fallbackImageIndex, setFallbackImageIndex] = useState(0);
 
   const FALLBACK_IMAGES = [
     '/placeholder-product.svg',
@@ -35,16 +36,22 @@ export function ProductCard({ product }: ProductCardProps) {
     setImageLoading(true);
     setImageError(false);
     setCurrentImageIndex(0);
+    setFallbackImageIndex(0);
   }, [product.id]);
 
   const handleImageError = () => {
+    console.log(`Image error at index ${currentImageIndex}:`, getProductImage());
     // Try next image in product.images array
     if (Array.isArray(product.images) && currentImageIndex < product.images.length - 1) {
       setCurrentImageIndex(prev => prev + 1);
       setImageLoading(true);
     } else {
-      // If all product images fail, try fallback images
+      // If all product images fail, try next fallback image
+      if (fallbackImageIndex < FALLBACK_IMAGES.length - 1) {
+        setFallbackImageIndex(prev => prev + 1);
+      }
       setImageError(true);
+      setImageLoading(false);
     }
   };
 
@@ -55,7 +62,13 @@ export function ProductCard({ product }: ProductCardProps) {
         return image;
       }
     }
-    return FALLBACK_IMAGES[0];
+    return FALLBACK_IMAGES[fallbackImageIndex];
+  };
+
+  const handleImageLoad = () => {
+    console.log(`Image loaded successfully at index ${currentImageIndex}:`, getProductImage());
+    setImageLoading(false);
+    setImageError(false);
   };
 
   const handleAddToCart = async () => {
@@ -104,7 +117,7 @@ export function ProductCard({ product }: ProductCardProps) {
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.7, ease: "easeOut" }}
               onError={handleImageError}
-              onLoad={() => setImageLoading(false)}
+              onLoad={handleImageLoad}
               style={{ 
                 opacity: imageLoading ? 0 : 1,
                 transition: 'opacity 0.3s ease-in-out'
