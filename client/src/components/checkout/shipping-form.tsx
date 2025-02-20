@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 const shippingSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
@@ -194,7 +195,7 @@ export function ShippingForm({ onSubmit, isLoading }: ShippingFormProps) {
           disabled={isLoading || !form.formState.isValid}
         >
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isLoading ? "Processing..." : "Pay now"}
+          {isLoading ? "Processing..." : "Continue"}
         </Button>
       </form>
     </Form>

@@ -12,26 +12,50 @@ const timeSlots = [
 ];
 
 interface DeliverySchedulerProps {
-  onScheduleSelect: (date: Date, timeSlot: string) => void;
+  value?: { date: string; timeSlot: string } | null;
+  onChange?: (value: { date: string; timeSlot: string } | null) => void;
+  onScheduleSelect?: (date: Date, timeSlot: string) => void;
   selectedDate?: Date;
   selectedTimeSlot?: string;
 }
 
-export function DeliveryScheduler({ onScheduleSelect, selectedDate, selectedTimeSlot }: DeliverySchedulerProps) {
-  const [date, setDate] = useState<Date | undefined>(selectedDate);
-  const [timeSlot, setTimeSlot] = useState<string | undefined>(selectedTimeSlot);
+export function DeliveryScheduler({ 
+  value,
+  onChange,
+  onScheduleSelect,
+  selectedDate: propSelectedDate,
+  selectedTimeSlot: propSelectedTimeSlot 
+}: DeliverySchedulerProps) {
+  const [date, setDate] = useState<Date | undefined>(propSelectedDate || (value ? new Date(value.date) : undefined));
+  const [timeSlot, setTimeSlot] = useState<string | undefined>(propSelectedTimeSlot || value?.timeSlot);
 
   const handleDateSelect = (newDate: Date | undefined) => {
     setDate(newDate);
     if (newDate && timeSlot) {
-      onScheduleSelect(newDate, timeSlot);
+      if (onScheduleSelect) {
+        onScheduleSelect(newDate, timeSlot);
+      }
+      if (onChange) {
+        onChange({
+          date: newDate.toISOString(),
+          timeSlot
+        });
+      }
     }
   };
 
   const handleTimeSelect = (newTimeSlot: string) => {
     setTimeSlot(newTimeSlot);
     if (date) {
-      onScheduleSelect(date, newTimeSlot);
+      if (onScheduleSelect) {
+        onScheduleSelect(date, newTimeSlot);
+      }
+      if (onChange) {
+        onChange({
+          date: date.toISOString(),
+          timeSlot: newTimeSlot
+        });
+      }
     }
   };
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   type ShippingFormData,
+  ShippingForm,
 } from "@/components/checkout/shipping-form";
 import { CitySelector } from "@/components/checkout/city-selector";
 import { DeliveryScheduler } from "@/components/checkout/delivery-scheduler";
@@ -29,20 +30,39 @@ export default function Cart() {
     date: string;
     timeSlot: string;
   } | null>(null);
+  const [shippingData, setShippingData] = useState<ShippingFormData | null>(null);
 
   const { toast } = useToast();
   const { items, total, updateQuantity, removeItem, isLoading, pendingUpdates } = useCart();
 
-  const handleUpdateQuantity = (productId: number, quantity: number) => {
-    if (quantity === 0) {
-      handleRemoveItem(productId);
-      return;
+  const handleUpdateQuantity = async (productId: number, quantity: number) => {
+    try {
+      if (quantity === 0) {
+        await handleRemoveItem(productId);
+        return;
+      }
+      await updateQuantity(productId, quantity);
+    } catch (error) {
+      console.error("Failed to update quantity:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update quantity. Please try again.",
+        variant: "destructive",
+      });
     }
-    updateQuantity(productId, quantity);
   };
 
-  const handleRemoveItem = (productId: number) => {
-    removeItem(productId);
+  const handleRemoveItem = async (productId: number) => {
+    try {
+      await removeItem(productId);
+    } catch (error) {
+      console.error("Failed to remove item:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove item. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const cartTotal = total;
@@ -52,6 +72,15 @@ export default function Cart() {
   const handleCitySelect = (city: string) => {
     setSelectedCity(city);
     setShippingMethod("express");
+  };
+
+  const handleShippingSubmit = (data: ShippingFormData) => {
+    setShippingData(data);
+    setShowShippingForm(false);
+  };
+
+  const handleDeliveryScheduleChange = (value: { date: string; timeSlot: string } | null) => {
+    setDeliverySchedule(value);
   };
 
   const handleCheckout = async () => {
@@ -73,6 +102,16 @@ export default function Cart() {
       return;
     }
 
+    if (!shippingData) {
+      setShowShippingForm(true);
+      toast({
+        title: "Please provide shipping details",
+        description: "Fill in your shipping information to continue",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsCheckingOut(true);
     try {
       const response = await fetch("/api/checkout", {
@@ -84,12 +123,9 @@ export default function Cart() {
             quantity: item.quantity,
           })),
           shipping: {
-            fullName: "",
-            address: "",
+            ...shippingData,
             city: selectedCity,
-            state: "",
-            pincode: "",
-            phone: "",
+            delivery: deliverySchedule,
           },
         }),
       });
@@ -146,7 +182,58 @@ export default function Cart() {
                 ))}
               </div>
             )}
+
+            {items.length > 0 && (
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <MapPin className="h-5 w-5" />
+                      Delivery Location
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CitySelector
+                      selectedCity={selectedCity}
+                      onCitySelect={handleCitySelect}
+                    />
+                  </CardContent>
+                </Card>
+
+                {selectedCity && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Clock className="h-5 w-5" />
+                        Delivery Schedule
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <DeliveryScheduler
+                        value={deliverySchedule}
+                        onChange={handleDeliveryScheduleChange}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+
+                {showShippingForm && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Truck className="h-5 w-5" />
+                        Shipping Details
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ShippingForm onSubmit={handleShippingSubmit} isLoading={isCheckingOut} />
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
           </div>
+
           <div className="lg:sticky lg:top-8 space-y-6">
             <Card>
               <CardHeader>
@@ -194,6 +281,17 @@ export default function Cart() {
                 </Button>
               </CardFooter>
             </Card>
+
+            {items.length > 0 && (
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Shield className="h-4 w-4" />
+                    <span>Secure checkout powered by Stripe</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
