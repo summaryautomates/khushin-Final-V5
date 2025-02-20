@@ -196,13 +196,17 @@ export class DatabaseStorage implements IStorage {
 
   // Order methods
   async createOrder(order: InsertOrder): Promise<Order> {
-    // Create a properly typed order object
     const orderData = {
-      orderRef: order.orderRef || '',
+      orderRef: order.orderRef,
       userId: order.userId,
       status: order.status || 'pending',
       total: order.total || 0,
-      items: order.items,
+      items: order.items.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        price: 0, // This will be updated below
+        name: 'Unknown Product' // This will be updated below
+      })),
       shipping: order.shipping,
       trackingNumber: order.trackingNumber,
       trackingStatus: order.trackingStatus,
@@ -210,6 +214,15 @@ export class DatabaseStorage implements IStorage {
       createdAt: new Date(),
       lastUpdated: new Date()
     };
+
+    // Update product details in items
+    for (const item of orderData.items) {
+      const product = await this.getProduct(item.productId);
+      if (product) {
+        item.price = product.price;
+        item.name = product.name;
+      }
+    }
 
     const [newOrder] = await db.insert(orders).values(orderData).returning();
     return newOrder;
