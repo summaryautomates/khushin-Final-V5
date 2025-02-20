@@ -7,13 +7,20 @@ import { setupVite } from './vite';
 import { setupAuth } from './auth';
 import cors from 'cors';
 
+// Enhanced WebSocket interface
+interface ExtendedWebSocket extends WebSocket {
+  isAlive: boolean;
+  id: string;
+  lastPingTime?: number;
+}
+
 const app = express();
 app.use(express.json());
 
-// Create HTTP server first
+// Create HTTP server
 const server = createServer(app);
 
-// Update CORS configuration to handle credentials and WebSocket
+// CORS configuration
 app.use(cors({
   origin: true,
   credentials: true,
@@ -21,17 +28,12 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Basic health check endpoint
+// Health check endpoint
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });
 });
 
 const PORT = 5000;
-
-// Extend WebSocket type to include isAlive property
-interface ExtendedWebSocket extends WebSocket {
-  isAlive: boolean;
-}
 
 // Start server
 const startServer = async () => {
@@ -42,7 +44,7 @@ const startServer = async () => {
     const port = PORT;
     console.log(`Found available port: ${port}`);
 
-    // Setup authentication first
+    // Setup authentication
     console.log('Setting up authentication...');
     try {
       await setupAuth(app);
@@ -52,7 +54,7 @@ const startServer = async () => {
       throw error;
     }
 
-    // Setup routes after auth
+    // Setup routes
     console.log('Registering API routes...');
     try {
       await registerRoutes(app);
@@ -62,7 +64,7 @@ const startServer = async () => {
       throw error;
     }
 
-    // Setup Vite after API routes
+    // Setup Vite
     console.log('Setting up Vite...');
     try {
       await setupVite(app, server);
@@ -72,76 +74,110 @@ const startServer = async () => {
       throw error;
     }
 
-    // Setup WebSocket server
+    // Setup WebSocket server with improved error handling
     console.log('Setting up WebSocket server...');
     wss = new WebSocketServer({ 
       server,
       path: '/ws',
-      perMessageDeflate: false
+      perMessageDeflate: false,
+      clientTracking: true
     });
 
+    // Error handling for the WSS server
     wss.on('error', (error) => {
       console.error('WebSocket server error:', error);
     });
 
-    // WebSocket connection handling
+    // Connection handling
     wss.on('connection', function(ws: ExtendedWebSocket, req) {
-      console.log('WebSocket client connected from:', req.socket.remoteAddress);
-      ws.isAlive = true;
+      // Assign unique ID to connection
+      ws.id = Math.random().toString(36).substring(7);
+      console.log(`WebSocket client connected - ID: ${ws.id} from: ${req.socket.remoteAddress}`);
 
+      ws.isAlive = true;
+      ws.lastPingTime = Date.now();
+
+      // Ping/Pong handling
       ws.on('pong', () => {
         ws.isAlive = true;
+        ws.lastPingTime = Date.now();
+        console.log(`Received pong from client ${ws.id}`);
       });
 
+      // Error handling
       ws.on('error', (error) => {
-        console.error('WebSocket connection error:', error);
+        console.error(`WebSocket connection error for client ${ws.id}:`, error);
         ws.isAlive = false;
       });
 
+      // Close handling
       ws.on('close', (code, reason) => {
-        console.log('WebSocket client disconnected. Code:', code, 'Reason:', reason.toString());
+        console.log(`WebSocket client ${ws.id} disconnected. Code: ${code}, Reason: ${reason.toString()}`);
         ws.isAlive = false;
       });
 
-      // Send immediate welcome message
+      // Send welcome message
       try {
-        ws.send(JSON.stringify({ type: 'welcome', message: 'Connected to KHUSH.IN server' }));
+        ws.send(JSON.stringify({ 
+          type: 'welcome',
+          message: 'Connected to KHUSH.IN server',
+          clientId: ws.id
+        }));
       } catch (error) {
-        console.error('Error sending welcome message:', error);
+        console.error(`Error sending welcome message to client ${ws.id}:`, error);
       }
     });
 
-    // Heartbeat mechanism
+    // Enhanced heartbeat mechanism
     const heartbeat = setInterval(function() {
       if (!wss) return;
 
       const clients = wss.clients as Set<ExtendedWebSocket>;
+      const now = Date.now();
+
       clients.forEach(function(ws) {
-        if (ws.isAlive === false) {
-          console.log('Terminating inactive WebSocket connection');
+        // Check if client hasn't responded for too long
+        if (ws.lastPingTime && (now - ws.lastPingTime) > 60000) {
+          console.log(`Client ${ws.id} hasn't responded for too long, terminating connection`);
           return ws.terminate();
         }
+
+        if (ws.isAlive === false) {
+          console.log(`Terminating inactive WebSocket connection for client ${ws.id}`);
+          return ws.terminate();
+        }
+
         ws.isAlive = false;
-        ws.ping();
+        try {
+          ws.ping();
+          console.log(`Sent ping to client ${ws.id}`);
+        } catch (error) {
+          console.error(`Error sending ping to client ${ws.id}:`, error);
+          ws.terminate();
+        }
       });
     }, 30000);
 
+    // Cleanup on WSS close
     wss.on('close', () => {
       clearInterval(heartbeat);
+      console.log('WebSocket server closed');
     });
 
-    // Start server
+    // Start HTTP server
     server.listen(port, '0.0.0.0', () => {
       console.log(`Server running at http://0.0.0.0:${port}`);
     });
 
-    // Handle graceful shutdown
+    // Graceful shutdown handling
     const cleanup = () => {
       console.log('Cleaning up server resources...');
       if (wss) {
         wss.clients.forEach((client) => {
           try {
-            (client as WebSocket).terminate();
+            const extClient = client as ExtendedWebSocket;
+            console.log(`Closing connection for client ${extClient.id}`);
+            extClient.terminate();
           } catch (error) {
             console.error('Error terminating client:', error);
           }
@@ -161,6 +197,7 @@ const startServer = async () => {
       }
     };
 
+    // Setup signal handlers
     process.on('SIGTERM', cleanup);
     process.on('SIGINT', cleanup);
 

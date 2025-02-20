@@ -31,24 +31,28 @@ import EventOrganizer from "@/pages/event-organizer";
 import ExpressDelivery from "@/pages/express-delivery";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
-// Update the WebSocket connection helper function with better error handling
+// WebSocket connection helper with improved reliability
 const createWebSocketConnection = (wsUrl: string) => {
   let ws: WebSocket | null = null;
   let reconnectTimeout: NodeJS.Timeout | null = null;
   let isIntentionallyClosed = false;
   let reconnectAttempts = 0;
-  const MAX_RECONNECT_ATTEMPTS = 5;
+  const MAX_RECONNECT_ATTEMPTS = 10; // Increased from 5
   const INITIAL_RECONNECT_DELAY = 1000;
+  const MAX_RECONNECT_DELAY = 30000; // Added max delay cap
 
   const connect = () => {
-    if (isIntentionallyClosed || reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) return;
+    if (isIntentionallyClosed || reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+      console.log('WebSocket connection permanently closed or max attempts reached');
+      return;
+    }
 
     try {
       ws = new WebSocket(wsUrl);
 
       ws.addEventListener('open', () => {
         console.log('WebSocket connected successfully');
-        reconnectAttempts = 0;
+        reconnectAttempts = 0; // Reset attempts on successful connection
       });
 
       ws.addEventListener('message', (event) => {
@@ -57,6 +61,7 @@ const createWebSocketConnection = (wsUrl: string) => {
           if (data.type === 'welcome') {
             console.log('Server welcome message:', data.message);
           }
+          // Handle other message types here
         } catch (error) {
           console.error('Error processing WebSocket message:', error);
         }
@@ -65,19 +70,21 @@ const createWebSocketConnection = (wsUrl: string) => {
       ws.addEventListener('close', (event) => {
         if (isIntentionallyClosed) return;
 
-        console.log('WebSocket closed with code:', event.code);
-        if (event.code === 1006) {
-          // Abnormal closure, attempt reconnect
+        console.log(`WebSocket closed with code: ${event.code}, reason: ${event.reason}`);
+
+        // Only attempt reconnect for specific close codes
+        if (event.code === 1006 || event.code === 1001 || event.code === 1012) {
           reconnectWithBackoff();
         }
       });
 
       ws.addEventListener('error', (error) => {
         console.error('WebSocket error:', error);
-        if (!isIntentionallyClosed) {
-          reconnectWithBackoff();
+        if (!isIntentionallyClosed && ws) {
+          ws.close(); // Properly close the connection on error
         }
       });
+
     } catch (error) {
       console.error('Error creating WebSocket:', error);
       if (!isIntentionallyClosed) {
@@ -92,14 +99,24 @@ const createWebSocketConnection = (wsUrl: string) => {
     }
 
     if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-      const delay = Math.min(INITIAL_RECONNECT_DELAY * Math.pow(2, reconnectAttempts), 10000);
+      const delay = Math.min(
+        INITIAL_RECONNECT_DELAY * Math.pow(2, reconnectAttempts),
+        MAX_RECONNECT_DELAY
+      );
       console.log(`Attempting to reconnect in ${delay}ms (attempt ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
+
       reconnectTimeout = setTimeout(() => {
         reconnectAttempts++;
         connect();
       }, delay);
     } else {
-      console.log('Max reconnection attempts reached');
+      console.log('Max reconnection attempts reached. Please refresh the page to try again.');
+      // Notify user about connection issues
+      if (window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('websocket-max-attempts', {
+          detail: { message: 'Connection lost. Please refresh the page.' }
+        }));
+      }
     }
   };
 
@@ -111,7 +128,7 @@ const createWebSocketConnection = (wsUrl: string) => {
         clearTimeout(reconnectTimeout);
       }
       if (ws) {
-        ws.close();
+        ws.close(1000, 'User initiated disconnect');
       }
     }
   };
@@ -121,6 +138,7 @@ function App() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // WebSocket connection
     if (import.meta.env.DEV) {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsUrl = `${protocol}//${window.location.host}/ws`;
@@ -128,57 +146,22 @@ function App() {
       const wsConnection = createWebSocketConnection(wsUrl);
       wsConnection.connect();
 
-      return () => {
-        wsConnection.disconnect();
-      };
-    }
-  }, []);
-
-  useEffect(() => {
-    // Handle critical errors with improved error boundaries
-    const handler = (event: PromiseRejectionEvent | ErrorEvent) => {
-      event.preventDefault();
-
-      // Handle network errors
-      if (event instanceof ErrorEvent && event.error?.name === 'NetworkError') {
-        console.warn('Network error detected, attempting recovery...');
-        return;
-      }
-
-      // Extract error details
-      const error = event instanceof PromiseRejectionEvent ? event.reason : event.error;
-      console.error('Critical error:', error);
-
-      if (error?.response?.status === 401) {
-        // Clear auth state and redirect to login
-        queryClient.setQueryData(["/api/user"], null);
-        toast({
-          title: "Session Expired",
-          description: "Please log in again to continue.",
-          variant: "destructive",
-        });
-      } else if (error?.message?.includes('Failed to fetch') || error?.message?.includes('NetworkError')) {
+      // Listen for max attempts event
+      const handleMaxAttempts = (event: CustomEvent) => {
         toast({
           title: "Connection Error",
-          description: "Please check your internet connection.",
+          description: event.detail.message,
           variant: "destructive",
         });
-      } else {
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred. Please try again.",
-          variant: "destructive",
-        });
-      }
-    };
+      };
 
-    window.addEventListener('unhandledrejection', handler);
-    window.addEventListener('error', handler);
+      window.addEventListener('websocket-max-attempts', handleMaxAttempts as EventListener);
 
-    return () => {
-      window.removeEventListener('unhandledrejection', handler);
-      window.removeEventListener('error', handler);
-    };
+      return () => {
+        wsConnection.disconnect();
+        window.removeEventListener('websocket-max-attempts', handleMaxAttempts as EventListener);
+      };
+    }
   }, [toast]);
 
   return (
