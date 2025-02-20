@@ -185,7 +185,7 @@ export default function Home() {
               transition={{ duration: 1.5 }}
             >
               <img
-                src="https://images.unsplash.com/photo-1586227740560-8cf2732c1531?q=80&w=2661&auto=format"
+                src="https://images.unsplash.com/photo-1478971408687-8820951f5a62?q=80&w=2661&auto=format"
                 className="w-full h-full object-cover"
                 alt="Hero background"
               />
