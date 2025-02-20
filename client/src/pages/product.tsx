@@ -5,13 +5,18 @@ import { formatPrice } from "@/lib/products";
 import { Truck, Shield, RefreshCcw, Loader2 } from "lucide-react";
 import type { Product } from "@shared/schema";
 import { useCart } from "@/hooks/use-cart";
-import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ShareButtons } from "@/components/products/share-buttons";
 import { ModelViewer } from "@/components/model-viewer/model-viewer";
 import { SimilarProducts } from "@/components/products/similar-products";
 import { AuthSheet } from "@/components/auth/auth-sheet";
 import { useState, useEffect } from "react";
+
+const FALLBACK_IMAGES = [
+  "/placeholder-product.svg",
+  "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500",
+  "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=500",
+];
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:id");
@@ -23,6 +28,7 @@ export default function ProductPage() {
   const [pendingAction, setPendingAction] = useState<"add-to-cart" | "buy-now" | null>(null);
   const [imageLoadingStates, setImageLoadingStates] = useState<Record<number, boolean>>({});
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
+  const [fallbackImageIndex, setFallbackImageIndex] = useState(0);
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: [`/api/products/${id}`],
@@ -30,17 +36,17 @@ export default function ProductPage() {
     staleTime: 60000,
   });
 
-  const defaultPlaceholder = "/placeholder-product.svg"; 
-
   const getValidProductImage = (index: number) => {
-    if (!product?.images) return defaultPlaceholder;
+    if (!product?.images) return FALLBACK_IMAGES[0];
 
     const images = Array.isArray(product.images) ? product.images : [];
     if (images.length > index && !imageErrors[index]) {
       const image = images[index];
-      return image && typeof image === 'string' ? image : defaultPlaceholder;
+      if (image && typeof image === 'string') {
+        return image;
+      }
     }
-    return defaultPlaceholder;
+    return FALLBACK_IMAGES[fallbackImageIndex];
   };
 
   useEffect(() => {
@@ -53,26 +59,26 @@ export default function ProductPage() {
       setImageLoadingStates(initialLoadingStates);
       setImageErrors({});
       setSelectedImage(0);
+      setFallbackImageIndex(0);
     }
   }, [product]);
 
   const handleImageError = (index: number) => {
+    console.log(`Image error at index ${index}:`, getValidProductImage(index));
     setImageErrors(prev => ({ ...prev, [index]: true }));
     setImageLoadingStates(prev => ({ ...prev, [index]: false }));
 
-    if (product?.images && Array.isArray(product.images) && product.images.length > 1) {
-      let nextIndex = (index + 1) % product.images.length;
-      while (nextIndex !== index) {
-        if (!imageErrors[nextIndex]) {
-          setSelectedImage(nextIndex);
-          break;
-        }
-        nextIndex = (nextIndex + 1) % product.images.length;
+    // Try next fallback image
+    setFallbackImageIndex(prev => {
+      if (prev < FALLBACK_IMAGES.length - 1) {
+        return prev + 1;
       }
-    }
+      return prev;
+    });
   };
 
   const handleImageLoad = (index: number) => {
+    console.log(`Image loaded successfully at index ${index}:`, getValidProductImage(index));
     setImageLoadingStates(prev => ({ ...prev, [index]: false }));
     setImageErrors(prev => ({ ...prev, [index]: false }));
   };
@@ -174,22 +180,22 @@ export default function ProductPage() {
                   <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
               )}
-              <img
-                src={getValidProductImage(selectedImage)}
-                alt={product.name}
-                className="h-full w-full object-contain p-4"
-                onError={() => handleImageError(selectedImage)}
-                onLoad={() => handleImageLoad(selectedImage)}
-                style={{ 
-                  opacity: imageLoadingStates[selectedImage] ? 0 : 1,
-                  transition: 'opacity 0.3s ease-in-out',
-                  display: product.category === "lighters" ? "none" : "block"
-                }}
-              />
-              {product.category === "lighters" && (
+              {product.category === "lighters" ? (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <ModelViewer modelUrl="/attached_assets/zippo_lighter.glb" />
                 </div>
+              ) : (
+                <img
+                  src={getValidProductImage(selectedImage)}
+                  alt={product.name}
+                  className="h-full w-full object-contain p-4"
+                  onError={() => handleImageError(selectedImage)}
+                  onLoad={() => handleImageLoad(selectedImage)}
+                  style={{ 
+                    opacity: imageLoadingStates[selectedImage] ? 0 : 1,
+                    transition: 'opacity 0.3s ease-in-out'
+                  }}
+                />
               )}
             </div>
 
@@ -208,18 +214,19 @@ export default function ProductPage() {
                         <Loader2 className="h-4 w-4 animate-spin" />
                       </div>
                     )}
-                    <img
-                      src={getValidProductImage(i)}
-                      alt={`${product.name} view ${i + 1}`}
-                      className="h-full w-full object-contain p-2"
-                      onError={() => handleImageError(i)}
-                      onLoad={() => handleImageLoad(i)}
-                      style={{ 
-                        opacity: imageLoadingStates[i] ? 0 : 1,
-                        transition: 'opacity 0.3s ease-in-out',
-                        display: product.category === "lighters" ? "none" : "block"
-                      }}
-                    />
+                    {product.category !== "lighters" && (
+                      <img
+                        src={getValidProductImage(i)}
+                        alt={`${product.name} view ${i + 1}`}
+                        className="h-full w-full object-contain p-2"
+                        onError={() => handleImageError(i)}
+                        onLoad={() => handleImageLoad(i)}
+                        style={{ 
+                          opacity: imageLoadingStates[i] ? 0 : 1,
+                          transition: 'opacity 0.3s ease-in-out'
+                        }}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
