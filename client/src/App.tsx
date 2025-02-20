@@ -31,24 +31,35 @@ import EventOrganizer from "@/pages/event-organizer";
 import ExpressDelivery from "@/pages/express-delivery";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
-// WebSocket connection helper function
+// Update the WebSocket connection helper function
 const createWebSocketConnection = (wsUrl: string, maxRetries: number = 3) => {
   let ws: WebSocket | null = null;
   let reconnectAttempts = 0;
+  let reconnectTimeout: NodeJS.Timeout | null = null;
 
   const connect = () => {
+    // Clear any existing connection
+    if (ws) {
+      ws.close();
+      ws = null;
+    }
+
     try {
       ws = new WebSocket(wsUrl);
 
       ws.addEventListener('open', () => {
         console.log('WebSocket connected successfully');
         reconnectAttempts = 0; // Reset attempts on successful connection
+        if (reconnectTimeout) {
+          clearTimeout(reconnectTimeout);
+          reconnectTimeout = null;
+        }
       });
 
       ws.addEventListener('error', (event) => {
         console.warn('WebSocket error:', event);
         if (reconnectAttempts < maxRetries) {
-          setTimeout(connect, 1000 * Math.pow(2, reconnectAttempts));
+          reconnectTimeout = setTimeout(connect, 1000 * Math.pow(2, reconnectAttempts));
           reconnectAttempts++;
         }
       });
@@ -56,18 +67,26 @@ const createWebSocketConnection = (wsUrl: string, maxRetries: number = 3) => {
       ws.addEventListener('close', () => {
         console.log('WebSocket closed');
         if (reconnectAttempts < maxRetries) {
-          setTimeout(connect, 1000 * Math.pow(2, reconnectAttempts));
+          reconnectTimeout = setTimeout(connect, 1000 * Math.pow(2, reconnectAttempts));
           reconnectAttempts++;
         }
       });
     } catch (error) {
       console.error('WebSocket connection error:', error);
+      if (reconnectAttempts < maxRetries) {
+        reconnectTimeout = setTimeout(connect, 1000 * Math.pow(2, reconnectAttempts));
+        reconnectAttempts++;
+      }
     }
   };
 
   return {
     connect,
     disconnect: () => {
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+        reconnectTimeout = null;
+      }
       if (ws) {
         ws.close();
         ws = null;

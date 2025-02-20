@@ -38,7 +38,7 @@ interface ExtendedWebSocket extends WebSocket {
 
 // Start server
 const startServer = async () => {
-  let wss: WebSocketServer;
+  let wss: WebSocketServer | null = null;
 
   try {
     console.log('Starting server...');
@@ -78,9 +78,8 @@ const startServer = async () => {
     // Setup WebSocket server with better configuration
     console.log('Setting up WebSocket server...');
     wss = new WebSocketServer({ 
-      server,
+      noServer: true, // Important: Use noServer mode to handle upgrades manually
       clientTracking: true,
-      path: '/ws',
       perMessageDeflate: {
         zlibDeflateOptions: {
           chunkSize: 1024,
@@ -120,20 +119,39 @@ const startServer = async () => {
       });
     });
 
-    // Handle upgrade requests
+    // Handle upgrade requests with proper path checking
     server.on('upgrade', (request, socket, head) => {
-      if (request.url === '/ws') {
-        wss.handleUpgrade(request, socket, head, (ws) => {
-          wss.emit('connection', ws, request);
-        });
+      console.log(`Upgrade request received for path: ${request.url}`);
+
+      if (request.url !== '/ws') {
+        console.log(`Rejecting upgrade request for invalid path: ${request.url}`);
+        socket.destroy();
+        return;
       }
+
+      // Prevent multiple upgrade attempts for the same socket
+      if ((socket as any).isUpgraded) {
+        console.log('Ignoring duplicate upgrade attempt for socket');
+        return;
+      }
+
+      console.log('Processing WebSocket upgrade request...');
+      (socket as any).isUpgraded = true;
+
+      wss!.handleUpgrade(request, socket, head, (ws) => {
+        console.log('WebSocket upgrade successful, emitting connection event');
+        wss!.emit('connection', ws, request);
+      });
     });
 
     // Implement ping/pong for connection health checks with proper type casting
     const interval = setInterval(function() {
+      if (!wss) return;
+
       const clients = wss.clients as Set<ExtendedWebSocket>;
       clients.forEach(function(ws) {
         if (ws.isAlive === false) {
+          console.log('Terminating inactive WebSocket connection');
           return ws.terminate();
         }
         ws.isAlive = false;
@@ -171,6 +189,7 @@ const startServer = async () => {
       wss.close(() => {
         console.log('WebSocket server closed');
       });
+      wss = null;
     }
     if (server) {
       server.close(() => {

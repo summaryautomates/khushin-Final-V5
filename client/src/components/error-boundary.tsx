@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   children?: ReactNode;
@@ -42,9 +43,12 @@ export class ErrorBoundary extends Component<Props, State> {
 
   private handleReset = () => {
     this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+    // Attempt to recover the application state
+    window.location.href = '/';
   };
 
-  private handleReload = () => {
+  private handleRetry = () => {
+    // Reload only the current route
     window.location.reload();
   };
 
@@ -88,6 +92,14 @@ export class ErrorBoundary extends Component<Props, State> {
                 </div>
               )}
             </AlertDescription>
+            <div className="flex gap-4 mt-6">
+              <Button variant="default" onClick={this.handleRetry}>
+                Try Again
+              </Button>
+              <Button variant="outline" onClick={this.handleReset}>
+                Return to Home
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
