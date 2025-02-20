@@ -73,7 +73,11 @@ app.use((req, res, next) => {
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Server error:', err);
-  res.status(500).json({ error: 'Internal server error' });
+  if (req.accepts('html')) {
+    res.sendFile(path.resolve(__dirname, '../client/index.html'));
+  } else {
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // Global server reference for proper cleanup

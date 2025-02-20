@@ -37,7 +37,17 @@ function App() {
     };
     
     window.addEventListener('unhandledrejection', handler);
-    return () => window.removeEventListener('unhandledrejection', handler);
+    
+    // Prevent default browser navigation
+    window.addEventListener('popstate', (e) => {
+      e.preventDefault();
+      window.location.reload();
+    });
+    
+    return () => {
+      window.removeEventListener('unhandledrejection', handler);
+      window.removeEventListener('popstate', () => {});
+    };
   }, []);
 
   return (
