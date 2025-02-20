@@ -83,6 +83,10 @@ const startServer = async () => {
       handleProtocols: () => 'websocket'
     });
 
+    wss.on('error', (error) => {
+      console.error('WebSocket server error:', error);
+    });
+
     // WebSocket connection handling
     wss.on('connection', function(ws: ExtendedWebSocket) {
       console.log('WebSocket client connected');
@@ -149,17 +153,28 @@ const startServer = async () => {
   function cleanup() {
     console.log('Cleaning up server resources...');
     if (wss) {
+      const clients = wss.clients as Set<ExtendedWebSocket>;
+      clients.forEach((client) => {
+        client.terminate();
+      });
       wss.close(() => {
         console.log('WebSocket server closed');
+        if (server) {
+          server.close(() => {
+            console.log('HTTP server closed');
+            portManager.releaseAll();
+          });
+        }
       });
       wss = null;
-    }
-    if (server) {
+    } else if (server) {
       server.close(() => {
         console.log('HTTP server closed');
+        portManager.releaseAll();
       });
+    } else {
+      portManager.releaseAll();
     }
-    portManager.releaseAll();
   }
 };
 
