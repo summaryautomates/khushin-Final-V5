@@ -330,7 +330,30 @@ export async function registerRoutes(app: Express) {
       const userId = req.headers['x-user-id'] as string || 'anonymous';
       const orderData = insertOrderSchema.parse({ ...req.body, userId });
 
-      const order = await storage.createOrder(orderData);
+      // Generate order reference
+      const orderRef = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      // Calculate total from items
+      const total = await calculateSubtotal(orderData.items);
+
+      // Create the order with all required fields
+      const order = await storage.createOrder({
+        ...orderData,
+        orderRef,
+        total,
+        status: 'pending',
+        items: await Promise.all(
+          orderData.items.map(async item => {
+            const product = await storage.getProduct(item.productId);
+            return {
+              productId: item.productId,
+              quantity: item.quantity,
+              price: product?.price || 0,
+              name: product?.name || 'Unknown Product'
+            };
+          })
+        )
+      });
 
       // Create initial status history
       await storage.addOrderStatusHistory({

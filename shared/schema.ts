@@ -152,6 +152,25 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
   id: true,
   lastUpdated: true,
   createdAt: true 
+}).extend({
+  items: z.array(z.object({
+    productId: z.number(),
+    quantity: z.number().min(1, "Quantity must be at least 1").max(10, "Maximum quantity per item is 10")
+  })).min(1, "At least one item is required"),
+  shipping: z.object({
+    fullName: z.string().min(1, "Full name is required"),
+    address: z.string().min(1, "Address is required"),
+    city: z.string().min(1, "City is required"),
+    state: z.string().min(1, "State is required"),
+    pincode: z.string().min(1, "Pincode is required"),
+    phone: z.string().min(10, "Invalid phone number")
+  }),
+  status: z.string().optional(),
+  orderRef: z.string().optional(),
+  total: z.number().optional(),
+  trackingNumber: z.string().optional(),
+  trackingStatus: z.string().optional(),
+  estimatedDelivery: z.string().optional()
 });
 export const insertOrderStatusHistorySchema = createInsertSchema(orderStatusHistory).omit({ 
   id: true,

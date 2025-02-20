@@ -1,10 +1,6 @@
 import { drizzle } from 'drizzle-orm/neon-http';
-import { neon, neonConfig } from '@neondatabase/serverless';
+import { neon } from '@neondatabase/serverless';
 import * as schema from '@shared/schema';
-import { WebSocket } from 'ws';
-
-// Enable WebSocket connections for better performance
-neonConfig.webSocketConstructor = WebSocket;
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
