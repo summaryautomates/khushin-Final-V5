@@ -15,7 +15,8 @@ import {
   Loader2
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { createWorker, type Worker, type CreateWorkerOptions } from 'tesseract.js';
+import { createWorker } from 'tesseract.js';
+import type { Worker, WorkerParams } from 'tesseract.js';
 import { useToast } from "@/hooks/use-toast";
 
 let wsRetryCount = 0;
@@ -29,6 +30,7 @@ export default function Home() {
   const [isListening, setIsListening] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const { toast } = useToast();
 
   const { data: products = [], isLoading, error } = useQuery<Product[]>({
     queryKey: ["/api/products"]
@@ -157,15 +159,15 @@ export default function Home() {
 
       if (!workerRef.current) {
         workerRef.current = await createWorker({
-          logger: progress => {
+          logger: (progress: WorkerParams) => {
             console.log('OCR Progress:', progress);
           }
-        } as CreateWorkerOptions);
+        });
       }
 
       const worker = workerRef.current;
-      await worker.loadLanguage('eng');
-      await worker.initialize('eng');
+      // Initialize with English language
+      await worker.reinitialize('eng');
 
       const result = await worker.recognize(file);
       const cleanText = result.data.text.replace(/[^\w\s]/gi, '').trim();
