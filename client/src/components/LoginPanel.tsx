@@ -9,11 +9,12 @@ import { Link, useLocation } from "wouter"
 import { X } from "lucide-react"
 import { useState } from "react"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/hooks/use-auth"
 
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email"),
+  username: z.string().min(1, "Username is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-})
+});
 
 type LoginFormValues = z.infer<typeof loginSchema>
 
@@ -23,36 +24,30 @@ interface LoginPanelProps {
 }
 
 export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
-  const [isLoading, setIsLoading] = useState(false)
+  const { loginMutation } = useAuth();
   const { toast } = useToast()
   const [_, setLocation] = useLocation()
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
+      username: "",
       password: "",
     },
   })
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
-      setIsLoading(true)
-      // TODO: Implement login logic with backend
-      console.log(data)
+      await loginMutation.mutateAsync(data);
       toast({
         title: "Success",
         description: "Logged in successfully",
       })
       onClose()
+      setLocation("/") // Redirect to home after successful login
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to login. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
+      // Error is already handled by the mutation
+      console.error("Login error:", error);
     }
   }
 
@@ -69,7 +64,7 @@ export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
       >
         <DialogTitle>Welcome Back</DialogTitle>
         <DialogDescription id="login-dialog-description" className="sr-only">
-          Enter your email and password to access your KHUSH.IN account
+          Enter your username and password to access your KHUSH.IN account
         </DialogDescription>
 
         <div className="flex justify-between items-center mb-8">
@@ -92,19 +87,18 @@ export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
-              name="email"
+              name="username"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-sm font-medium">
-                    Email<span className="text-red-500 ml-0.5" aria-hidden="true">*</span>
+                    Username<span className="text-red-500 ml-0.5" aria-hidden="true">*</span>
                   </FormLabel>
                   <FormControl>
                     <Input 
                       {...field} 
-                      type="email" 
-                      disabled={isLoading}
+                      disabled={loginMutation.isPending}
                       className="bg-background/50 backdrop-blur-sm border-muted-foreground/20 focus:border-primary/50 transition-all duration-200 h-11"
-                      placeholder="Enter your email"
+                      placeholder="Enter your username"
                       aria-required="true" 
                     />
                   </FormControl>
@@ -125,7 +119,7 @@ export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
                     <Input 
                       {...field} 
                       type="password" 
-                      disabled={isLoading}
+                      disabled={loginMutation.isPending}
                       className="bg-background/50 backdrop-blur-sm border-muted-foreground/20 focus:border-primary/50 transition-all duration-200 h-11"
                       placeholder="Enter your password"
                       aria-required="true" 
@@ -139,9 +133,9 @@ export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
             <Button 
               type="submit" 
               className="w-full bg-black hover:bg-black/90 text-white font-medium tracking-wide h-11 transition-all duration-200 hover:shadow-lg"
-              disabled={isLoading}
+              disabled={loginMutation.isPending}
             >
-              {isLoading ? "Signing in..." : "SIGN IN"}
+              {loginMutation.isPending ? "Signing in..." : "SIGN IN"}
             </Button>
           </form>
         </Form>
