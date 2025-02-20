@@ -32,12 +32,15 @@ import ExpressDelivery from "@/pages/express-delivery";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
 // Update the WebSocket connection helper function
-const createWebSocketConnection = (wsUrl: string, maxRetries: number = 3) => {
+const createWebSocketConnection = (wsUrl: string, maxRetries: number = 10) => {
   let ws: WebSocket | null = null;
   let reconnectAttempts = 0;
   let reconnectTimeout: NodeJS.Timeout | null = null;
+  let isIntentionallyClosed = false;
 
   const connect = () => {
+    if (isIntentionallyClosed) return;
+    
     // Clear any existing connection
     if (ws) {
       ws.close();
@@ -57,27 +60,32 @@ const createWebSocketConnection = (wsUrl: string, maxRetries: number = 3) => {
       });
 
       ws.addEventListener('error', (event) => {
+        if (isIntentionallyClosed) return;
         console.warn('WebSocket error:', event);
-        if (reconnectAttempts < maxRetries) {
-          reconnectTimeout = setTimeout(connect, 1000 * Math.pow(2, reconnectAttempts));
-          reconnectAttempts++;
-        }
+        reconnectWithBackoff();
       });
 
       ws.addEventListener('close', () => {
+        if (isIntentionallyClosed) return;
         console.log('WebSocket closed');
-        if (reconnectAttempts < maxRetries) {
-          reconnectTimeout = setTimeout(connect, 1000 * Math.pow(2, reconnectAttempts));
-          reconnectAttempts++;
-        }
+        reconnectWithBackoff();
       });
     } catch (error) {
+      if (isIntentionallyClosed) return;
       console.error('WebSocket connection error:', error);
-      if (reconnectAttempts < maxRetries) {
-        reconnectTimeout = setTimeout(connect, 1000 * Math.pow(2, reconnectAttempts));
-        reconnectAttempts++;
-      }
+      reconnectWithBackoff();
     }
+  };
+
+  const reconnectWithBackoff = () => {
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+    }
+    
+    // Exponential backoff with max delay of 10 seconds
+    const delay = Math.min(1000 * Math.pow(1.5, reconnectAttempts), 10000);
+    reconnectTimeout = setTimeout(connect, delay);
+    reconnectAttempts++;
   };
 
   return {
