@@ -3,11 +3,25 @@ import fs from "fs";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 import { createServer as createHttpServer } from "http";
-import { createServer as createViteServer } from 'vite';
+import { createServer as createViteServer, createLogger } from 'vite';
 import { WebSocket, WebSocketServer } from 'ws';
+import { portManager } from './port-manager';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const viteLogger = createLogger();
+
+export function log(message: string, source = "express") {
+  const formattedTime = new Date().toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+
+  console.log(`${formattedTime} [${source}] ${message}`);
+}
 
 // Initialize express app and basic middleware
 const app = express();
@@ -32,7 +46,7 @@ app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;
-    console.log(`${new Date().toISOString()} [server] ${req.method} ${req.path} ${res.statusCode} ${duration}ms`);
+    log(`${req.method} ${req.path} ${res.statusCode} ${duration}ms`);
   });
   next();
 });
@@ -43,73 +57,131 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   res.status(500).json({ error: 'Internal server error' });
 });
 
+// Global server reference for proper cleanup
+let globalServer: ReturnType<typeof createHttpServer> | null = null;
+let globalWss: WebSocketServer | null = null;
+
+// Cleanup function
+function cleanup() {
+  return new Promise<void>((resolve) => {
+    if (globalWss) {
+      globalWss.clients.forEach((client) => {
+        client.terminate();
+      });
+      globalWss.close();
+      globalWss = null;
+    }
+
+    if (globalServer) {
+      globalServer.close(() => {
+        globalServer = null;
+        resolve();
+      });
+    } else {
+      resolve();
+    }
+  });
+}
+
+const PORT_RANGE = {
+  start: 5000,
+  end: 5500  // Greatly expanded port range
+};
+
 // Start server with improved error handling
 const startServer = async () => {
   try {
-    console.log('Starting server...');
+    // Cleanup any existing instances
+    await cleanup();
+
+    log('Starting server...', 'server');
+
+    // Use portManager to acquire an available port
+    const port = await portManager.acquirePort(PORT_RANGE.start, PORT_RANGE.end);
+    log(`Found available port: ${port}`, 'server');
 
     // Create HTTP server
     const server = createHttpServer(app);
+    globalServer = server;
 
     // Create WebSocket server
-    const wss = new WebSocketServer({ server });
+    const wss = new WebSocketServer({ server, path: '/ws' });
+    globalWss = wss;
 
-    // WebSocket connection handling
+    // WebSocket connection handling with heartbeat
     wss.on('connection', (ws: WebSocket) => {
-      console.log('WebSocket client connected');
+      log('WebSocket client connected', 'websocket');
+
+      const pingInterval = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.ping();
+        }
+      }, 30000);
 
       ws.on('error', (error) => {
         console.error('WebSocket error:', error);
       });
 
       ws.on('close', () => {
-        console.log('WebSocket client disconnected');
+        clearInterval(pingInterval);
+        log('WebSocket client disconnected', 'websocket');
       });
     });
 
     // Register routes
-    console.log('Registering routes...');
+    log('Registering routes...', 'server');
     await import("./routes.ts").then(m => m.registerRoutes(app));
-    console.log('Routes registered successfully');
+    log('Routes registered successfully', 'server');
 
     // Setup Vite in development or serve static files in production
     if (process.env.NODE_ENV !== 'production') {
-      console.log('Setting up Vite middleware...');
+      log('Setting up Vite middleware...', 'vite');
       const vite = await createViteServer({
         server: {
           middlewareMode: true,
           hmr: {
             server,
-            path: '/@vite/client',
-            timeout: 20000,
-            overlay: true,
-            clientPort: null,
-            host: '0.0.0.0'
-          }
+            host: '0.0.0.0',
+            port: 24678,
+            clientPort: 443
+          },
+          host: '0.0.0.0',
         },
-        appType: 'spa'
+        appType: 'spa',
+        customLogger: {
+          ...viteLogger,
+          error: (msg, options) => {
+            viteLogger.error(msg, options);
+            process.exit(1);
+          },
+        },
       });
       app.use(vite.middlewares);
-      console.log('Vite setup complete');
+      log('Vite setup complete', 'vite');
     } else {
       const { serveStatic } = await import("./vite.ts");
       serveStatic(app);
     }
 
-    // Start server on port 5000 to match workflow expectations
-    const PORT = 5000;
-    server.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running at http://0.0.0.0:${PORT}`);
-      console.log(`Server listening on port ${PORT}`);
+    // Start server
+    await new Promise<void>((resolve, reject) => {
+      const serverTimeout = setTimeout(() => {
+        reject(new Error('Server startup timeout'));
+      }, 30000);
+
+      server.listen(port, '0.0.0.0', () => {
+        clearTimeout(serverTimeout);
+        log(`Server running at http://0.0.0.0:${port}`, 'server');
+        resolve();
+      });
     });
 
     // Graceful shutdown
-    const shutdown = () => {
-      console.log('Shutting down gracefully...');
-      server.close(() => {
-        console.log('Server closed');
-        process.exit(0);
-      });
+    const shutdown = async () => {
+      log('Shutting down gracefully...', 'server');
+      portManager.releaseAll(); // Release all ports before cleanup
+      await cleanup();
+      process.exit(0);
     };
 
     process.on('SIGTERM', shutdown);
@@ -117,13 +189,26 @@ const startServer = async () => {
 
   } catch (error) {
     console.error('Critical server error:', error);
+    portManager.releaseAll(); // Release ports on error
+    await cleanup();
     process.exit(1);
   }
 };
 
 // Handle uncaught promise rejections
-process.on('unhandledRejection', (error) => {
+process.on('unhandledRejection', async (error) => {
   console.error('Unhandled promise rejection:', error);
+  portManager.releaseAll();
+  await cleanup();
+  process.exit(1);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', async (error) => {
+  console.error('Uncaught exception:', error);
+  portManager.releaseAll();
+  await cleanup();
+  process.exit(1);
 });
 
 startServer();
