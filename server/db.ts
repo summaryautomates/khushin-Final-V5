@@ -23,7 +23,7 @@ export const sampleProducts = [
     price: 499900,
     images: [
       "/attached_assets/93robnxJuGA81CI0-generated_image.jpg",
-      "https://images.unsplash.com/photo-1675789652363-e2f09f5e40d9?w=800&q=90"
+      "/attached_assets/oKlJonOsIQgIBznu-generated_image.jpg"
     ],
     category: "lighters",
     customizable: true,
@@ -40,7 +40,7 @@ export const sampleProducts = [
     price: 799900,
     images: [
       "/attached_assets/oKlJonOsIQgIBznu-generated_image.jpg",
-      "https://images.unsplash.com/photo-1675789652903-e5e60f4bb19d?w=800&q=90"
+      "/attached_assets/93robnxJuGA81CI0-generated_image.jpg"
     ],
     category: "lighters"
   },
