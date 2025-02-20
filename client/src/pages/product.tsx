@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/products";
 import { Truck, Shield, RefreshCcw, Loader2 } from "lucide-react";
@@ -29,7 +29,8 @@ export default function ProductPage() {
   const [imageLoadingStates, setImageLoadingStates] = useState<Record<number, boolean>>({});
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
   const [fallbackImageIndex, setFallbackImageIndex] = useState(0);
-  const [isCheckingOut, setIsCheckingOut] = useState(false); // Added state for loading
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [, setLocation] = useLocation();
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: [`/api/products/${id}`],
@@ -110,36 +111,10 @@ export default function ProductPage() {
 
     try {
       setIsCheckingOut(true);
-      // First add the item to cart
+      // First add to cart
       await addItem(product);
-
-      // Then initiate direct checkout
-      const response = await fetch('/api/direct-checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        credentials: 'include', // Important for auth
-        body: JSON.stringify({
-          items: [{ productId: product.id, quantity: 1 }],
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        if (response.status === 401) {
-          throw new Error("AUTH_REQUIRED");
-        }
-        throw new Error(errorData?.message || 'Checkout failed');
-      }
-
-      const data = await response.json();
-      if (data.redirectUrl) {
-        window.location.href = data.redirectUrl;
-      } else {
-        throw new Error('Invalid checkout response');
-      }
+      // Then redirect to cart page
+      setLocation("/cart");
     } catch (error) {
       if (error instanceof Error && error.message === "AUTH_REQUIRED") {
         setPendingAction("buy-now");
@@ -149,8 +124,8 @@ export default function ProductPage() {
       console.error('Buy now error:', error);
       toast({
         variant: "destructive",
-        title: "Checkout Failed",
-        description: "Could not process checkout. Please try again.",
+        title: "Error",
+        description: "Could not process your request. Please try again.",
       });
     } finally {
       setIsCheckingOut(false);
@@ -272,7 +247,7 @@ export default function ProductPage() {
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <Button size="lg" variant="outline" className="w-full" onClick={handleAddToCart}>
+                <Button size="lg" variant="outline" className="w-full" onClick={handleAddToCart} disabled={isCheckingOut}>
                   Add to Cart
                 </Button>
                 <Button size="lg" className="w-full" onClick={handleBuyNow} disabled={isCheckingOut}>
