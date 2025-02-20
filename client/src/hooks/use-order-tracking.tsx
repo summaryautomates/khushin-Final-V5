@@ -18,7 +18,7 @@ export function useOrderTracking(orderRef: string | null) {
   const connect = useCallback(() => {
     if (!orderRef) return;
 
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`;
     console.log('Connecting to WebSocket:', wsUrl);
 
     const ws = new WebSocket(wsUrl);
@@ -31,15 +31,6 @@ export function useOrderTracking(orderRef: string | null) {
         type: 'SUBSCRIBE_ORDER',
         orderRef
       }));
-    };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      toast({
-        title: 'Connection Error',
-        description: 'Failed to connect to order tracking service',
-        variant: 'destructive'
-      });
     };
 
     ws.onmessage = (event) => {
@@ -84,6 +75,7 @@ export function useOrderTracking(orderRef: string | null) {
 
     ws.onclose = () => {
       setIsConnected(false);
+      setSocket(null);
       toast({
         title: 'Disconnected',
         description: 'Lost connection to order tracking service',
@@ -91,7 +83,9 @@ export function useOrderTracking(orderRef: string | null) {
       });
 
       // Attempt to reconnect after 5 seconds
-      setTimeout(connect, 5000);
+      setTimeout(() => {
+        connect();
+      }, 5000);
     };
 
     ws.onerror = (error) => {
@@ -101,7 +95,7 @@ export function useOrderTracking(orderRef: string | null) {
         description: "Lost connection to order tracking. Retrying...",
         variant: "destructive"
       });
-      setTimeout(connect, 5000); // Retry after 5 seconds
+      // Reconnection handled in ws.onclose
     };
 
     setSocket(ws);
@@ -112,12 +106,12 @@ export function useOrderTracking(orderRef: string | null) {
         ws.close();
       }
     };
-  }, [orderRef, toast, connect]);
+  }, [orderRef, toast]);
 
   useEffect(() => {
     const cleanup = connect();
     return () => {
-      cleanup?.();
+      if (cleanup) cleanup();
     };
   }, [connect]);
 

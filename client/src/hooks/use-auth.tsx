@@ -27,6 +27,7 @@ function useLoginMutation() {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include', // Important for session cookies
         body: JSON.stringify(credentials),
       });
       if (!res.ok) {
@@ -59,6 +60,7 @@ function useRegisterMutation() {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify(userData),
       });
       if (!res.ok) {
@@ -88,7 +90,10 @@ function useLogoutMutation() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch("/api/logout", { method: "POST" });
+      const res = await fetch("/api/logout", { 
+        method: "POST",
+        credentials: 'include'
+      });
       if (!res.ok) {
         throw new Error("Logout failed");
       }
@@ -114,7 +119,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: user, error, isLoading } = useQuery<SelectUser | null>({
     queryKey: ["/api/user"],
     queryFn: async () => {
-      const res = await fetch("/api/user");
+      const res = await fetch("/api/user", {
+        credentials: 'include'
+      });
       if (res.status === 401) return null;
       if (!res.ok) throw new Error("Failed to fetch user");
       return res.json();

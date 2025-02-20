@@ -12,20 +12,18 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-const sql = neon(process.env.DATABASE_URL!);
+const sql = neon(process.env.DATABASE_URL);
 export const db = drizzle(sql, { schema });
 
+// Sample products for development
 export const sampleProducts = [
   {
     id: 1,
     name: "Regal Gold Essence",
-    description: "24K gold-plated luxury lighter with intricate Art Deco engravings and premium butane ignition system",
+    description: "24K gold-plated luxury lighter with intricate Art Deco engravings",
     price: 499900,
-    images: [
-      "/attached_assets/93robnxJuGA81CI0-generated_image.jpg",
-      "/attached_assets/oKlJonOsIQgIBznu-generated_image.jpg"
-    ],
     category: "lighters",
+    images: ["/images/lighter-1.jpg", "/images/lighter-1-alt.jpg"],
     customizable: true,
     features: {
       material: "24K Gold Plated",
@@ -38,54 +36,39 @@ export const sampleProducts = [
     name: "Platinum Diamond Elite",
     description: "Platinum-coated lighter adorned with genuine diamonds, featuring windproof technology",
     price: 799900,
-    images: [
-      "/attached_assets/oKlJonOsIQgIBznu-generated_image.jpg",
-      "/attached_assets/93robnxJuGA81CI0-generated_image.jpg"
-    ],
-    category: "lighters"
+    category: "lighters",
+    images: ["/images/lighter-2.jpg", "/images/lighter-2-alt.jpg"]
   },
   {
     id: 3,
     name: "Heritage Rose Gold",
     description: "Rose gold lighter with vintage-inspired design and temperature-resistant ceramic coating",
     price: 399900,
-    images: [
-      "/attached_assets/93robnxJuGA81CI0-generated_image.jpg",
-      "/attached_assets/oKlJonOsIQgIBznu-generated_image.jpg"
-    ],
-    category: "lighters"
+    category: "lighters",
+    images: ["/images/lighter-3.jpg", "/images/lighter-3-alt.jpg"]
   },
   {
     id: 4,
     name: "Titanium Stealth Pro",
     description: "Aircraft-grade titanium lighter with matte black finish and precision flame control",
     price: 299900,
-    images: [
-      "/attached_assets/oKlJonOsIQgIBznu-generated_image.jpg",
-      "/attached_assets/93robnxJuGA81CI0-generated_image.jpg"
-    ],
-    category: "lighters"
+    category: "lighters",
+    images: ["/images/lighter-4.jpg", "/images/lighter-4-alt.jpg"]
   },
   {
     id: 5,
     name: "Silver Guilloche Edition",
     description: "Sterling silver lighter featuring traditional guilloche engraving and double flame system",
     price: 599900,
-    images: [
-      "/attached_assets/93robnxJuGA81CI0-generated_image.jpg",
-      "/attached_assets/oKlJonOsIQgIBznu-generated_image.jpg"
-    ],
-    category: "lighters"
+    category: "lighters",
+    images: ["/images/lighter-5.jpg", "/images/lighter-5-alt.jpg"]
   },
   {
     id: 6,
     name: "Premium Butane Refill Kit",
     description: "Ultra-refined triple-filtered butane fuel with universal adapter set",
     price: 49900,
-    images: [
-      "https://images.unsplash.com/photo-1675789653233-a5e5bde363f7?w=800&q=90",
-      "https://images.unsplash.com/photo-1675789653295-20df7a1d5665?w=800&q=90"
-    ],
+    images: ["/images/refill-1.jpg", "/images/refill-1-alt.jpg"],
     category: "refueling"
   },
   {
@@ -93,10 +76,7 @@ export const sampleProducts = [
     name: "Master Service Kit",
     description: "Complete lighter maintenance kit with premium tools and cleaning solutions",
     price: 129900,
-    images: [
-      "https://images.unsplash.com/photo-1675789652575-0a5dd196b4ba?w=800&q=90",
-      "https://images.unsplash.com/photo-1675789652363-e2f09f5e40d9?w=800&q=90"
-    ],
+    images: ["/images/refill-2.jpg", "/images/refill-2-alt.jpg"],
     category: "refueling"
   },
   {
@@ -104,10 +84,7 @@ export const sampleProducts = [
     name: "Elite Flint Pack",
     description: "Premium replacement flints with brass housing, pack of 10",
     price: 29900,
-    images: [
-      "https://images.unsplash.com/photo-1675789652871-36b796381d11?w=800&q=90",
-      "https://images.unsplash.com/photo-1675789652903-e5e60f4bb19d?w=800&q=90"
-    ],
+    images: ["/images/refill-3.jpg", "/images/refill-3-alt.jpg"],
     category: "refueling"
   },
   {
@@ -115,10 +92,7 @@ export const sampleProducts = [
     name: "Luxury Travel Kit",
     description: "Compact refueling and maintenance kit in genuine leather case",
     price: 89900,
-    images: [
-      "https://images.unsplash.com/photo-1675789653233-a5e5bde363f7?w=800&q=90",
-      "https://images.unsplash.com/photo-1675789653295-20df7a1d5665?w=800&q=90"
-    ],
+    images: ["/images/refill-4.jpg", "/images/refill-4-alt.jpg"],
     category: "refueling"
   },
   {
@@ -126,10 +100,7 @@ export const sampleProducts = [
     name: "Professional Wick Kit",
     description: "Premium cotton wick replacements with installation tools",
     price: 39900,
-    images: [
-      "https://images.unsplash.com/photo-1675789652575-0a5dd196b4ba?w=800&q=90",
-      "https://images.unsplash.com/photo-1675789652363-e2f09f5e40d9?w=800&q=90"
-    ],
+    images: ["/images/refill-5.jpg", "/images/refill-5-alt.jpg"],
     category: "refueling"
   }
 ];

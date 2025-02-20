@@ -32,35 +32,27 @@ import { ProtectedRoute } from "@/components/auth/protected-route";
 
 function App() {
   useEffect(() => {
+    // Handle unhandled promise rejections globally
     const handler = (event: PromiseRejectionEvent) => {
       event.preventDefault();
       console.error('Unhandled rejection:', event.reason);
 
-      // Show error toast
-      queryClient.getQueryCache().clear();
+      // Clear query cache on unhandled rejections to prevent stale data
+      queryClient.clear();
     };
 
     window.addEventListener('unhandledrejection', handler);
 
-    // Prevent default browser navigation
-    const popStateHandler = (e: PopStateEvent) => {
-      e.preventDefault();
-      window.location.reload();
-    };
-
-    window.addEventListener('popstate', popStateHandler);
-
     return () => {
       window.removeEventListener('unhandledrejection', handler);
-      window.removeEventListener('popstate', popStateHandler);
     };
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <CartProvider>
-          <ErrorBoundary>
+      <ErrorBoundary>
+        <AuthProvider>
+          <CartProvider>
             <div className="min-h-screen flex flex-col bg-background">
               <Header />
               <main className="flex-1">
@@ -120,12 +112,12 @@ function App() {
               </main>
               <Footer />
             </div>
-            <ErrorBoundary fallback={<div className="fixed bottom-4 right-4 p-4 bg-destructive text-destructive-foreground rounded-md shadow-lg">Toast Error</div>}>
+            <ErrorBoundary>
               <Toaster />
             </ErrorBoundary>
-          </ErrorBoundary>
-        </CartProvider>
-      </AuthProvider>
+          </CartProvider>
+        </AuthProvider>
+      </ErrorBoundary>
     </QueryClientProvider>
   );
 }

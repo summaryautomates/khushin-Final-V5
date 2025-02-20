@@ -1,21 +1,28 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
+import { createServer } from "http";
 import { storage } from "./storage";
-import { insertContactMessageSchema, insertReturnRequestSchema, insertCartItemSchema } from "@shared/schema";
+import { insertContactMessageSchema, insertReturnRequestSchema } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
-import { WebSocket } from 'ws';
 import { setupAuth } from "./auth";
+import { WebSocket } from 'ws';
 import { globalWss } from "./index";
-import {
-  insertOrderSchema,
-  insertOrderStatusHistorySchema
-} from "@shared/schema";
 
 // Custom interface for our WebSocket with order tracking
 interface OrderTrackingWebSocket extends WebSocket {
   orderRef?: string;
 }
+
+const returnRequestSchema = z.object({
+  orderRef: z.string(),
+  reason: z.string().min(10, "Please provide a detailed reason"),
+  items: z.array(z.object({
+    productId: z.number(),
+    quantity: z.number().min(1, "Quantity must be at least 1"),
+    reason: z.string().min(1, "Item-specific reason is required")
+  })).min(1, "At least one item must be selected"),
+  additionalNotes: z.string().optional().nullable()
+});
 
 const shippingSchema = z.object({
   fullName: z.string(),
@@ -30,21 +37,22 @@ const paymentStatusSchema = z.object({
   status: z.enum(['pending', 'completed', 'failed'])
 });
 
-const paymentStore = new Map<string, {
-  status: 'pending' | 'completed' | 'failed',
-  details: {
-    upiId: string,
-    merchantName: string,
-    amount: number,
-    orderRef: string
-  }
-}>();
-
-const discountStore = new Map<string, {
-  code: string,
-  discountPercent: number,
-  validUntil: string,
-  isActive: boolean
+// Storage for various data
+const paymentStore = new Map();
+const discountStore = new Map();
+const orderStore = new Map();
+const returnRequestStore = new Map<string, {
+  id: number,
+  orderRef: string,
+  reason: string,
+  status: 'pending' | 'approved' | 'rejected',
+  items: Array<{
+    productId: number,
+    quantity: number,
+    reason: string
+  }>,
+  additionalNotes?: string,
+  createdAt: string
 }>();
 
 // Add some sample discount codes
@@ -55,98 +63,20 @@ discountStore.set('WELCOME10', {
   isActive: true
 });
 
-const orderStore = new Map<string, {
-  orderRef: string,
-  status: 'pending' | 'completed' | 'failed',
-  total: number,
-  items: Array<{
-    productId: number,
-    quantity: number,
-    price: number,
-    name: string
-  }>,
-  shipping: {
-    fullName: string,
-    address: string,
-    city: string,
-    state: string,
-    pincode: string,
-    phone: string
-  },
-  createdAt: string,
-  trackingNumber?: string,
-  trackingStatus?: string,
-  estimatedDelivery?: string
-}>();
-
-const returnRequestSchema = z.object({
-  orderRef: z.string(),
-  reason: z.string().min(10, "Please provide a detailed reason"),
-  items: z.array(z.object({
-    productId: z.number(),
-    quantity: z.number().min(1, "Quantity must be at least 1"),
-    reason: z.string().min(1, "Item-specific reason is required")
-  })).min(1, "At least one item must be selected"),
-  additionalNotes: z.string().optional().nullable()
-});
-
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express) {
   // Set up authentication first
   await setupAuth(app);
 
-  const productsRouter = {
-    getAll: async (_req: any, res: any) => {
-      try {
-        const products = await storage.getProducts();
-        res.json(products);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-        res.status(500).json({
-          message: "Failed to fetch products",
-          details: "An error occurred while retrieving the products"
-        });
-      }
-    },
-
-    getById: async (req: any, res: any) => {
-      try {
-        const id = Number(req.params.id);
-        if (isNaN(id) || id < 1) {
-          return res.status(400).json({
-            message: "Invalid product ID",
-            details: "Product ID must be a positive number"
-          });
-        }
-        const product = await storage.getProduct(id);
-        if (!product) {
-          return res.status(404).json({
-            message: "Product not found",
-            details: "The requested product does not exist"
-          });
-        }
-        res.json(product);
-      } catch (error) {
-        console.error('Error fetching product:', error);
-        res.status(500).json({
-          message: "Failed to fetch product",
-          details: "An error occurred while retrieving the product"
-        });
-      }
-    },
-
-    getByCategory: async (req: any, res: any) => {
-      try {
-        const products = await storage.getProductsByCategory(req.params.category);
-        res.json(products);
-      } catch (error) {
-        console.error('Error fetching products by category:', error);
-        res.status(500).json({
-          message: "Failed to fetch products",
-          details: "An error occurred while retrieving the products for this category"
-        });
-      }
+  // Basic routes setup
+  app.get("/api/products", async (_req, res) => {
+    try {
+      const products = await storage.getProducts();
+      res.json(products);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      res.status(500).json({ message: "Failed to fetch products" });
     }
-  };
+  });
 
   app.post("/api/checkout", async (req, res) => {
     try {
@@ -392,9 +322,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return subtotal;
   }
 
-  app.get("/api/products", productsRouter.getAll);
-  app.get("/api/products/:id", productsRouter.getById);
-  app.get("/api/products/category/:category", productsRouter.getByCategory);
+  app.get("/api/products/:id", async (req: any, res: any) => {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id) || id < 1) {
+        return res.status(400).json({
+          message: "Invalid product ID",
+          details: "Product ID must be a positive number"
+        });
+      }
+      const product = await storage.getProduct(id);
+      if (!product) {
+        return res.status(404).json({
+          message: "Product not found",
+          details: "The requested product does not exist"
+        });
+      }
+      res.json(product);
+    } catch (error) {
+      console.error('Error fetching product:', error);
+      res.status(500).json({
+        message: "Failed to fetch product",
+        details: "An error occurred while retrieving the product"
+      });
+    }
+  });
+
+  app.get("/api/products/category/:category", async (req: any, res: any) => {
+    try {
+      const products = await storage.getProductsByCategory(req.params.category);
+      res.json(products);
+    } catch (error) {
+      console.error('Error fetching products by category:', error);
+      res.status(500).json({
+        message: "Failed to fetch products",
+        details: "An error occurred while retrieving the products for this category"
+      });
+    }
+  });
 
   app.post("/api/validate-discount", (req, res) => {
     const { code } = req.body;
@@ -434,20 +399,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ));
   });
 
-  // Add return requests store
-  const returnRequestStore = new Map<string, {
-    id: number,
-    orderRef: string,
-    reason: string,
-    status: 'pending' | 'approved' | 'rejected',
-    items: Array<{
-      productId: number,
-      quantity: number,
-      reason: string
-    }>,
-    additionalNotes?: string,
-    createdAt: string
-  }>();
 
   // Create a return request
   app.post("/api/returns", async (req, res) => {
@@ -879,11 +830,5 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: "Orders updated with tracking information" });
   });
 
-  // Create HTTP server
-  const server = createServer(app);
-
-  // The WebSocket server initialization is now handled in index.ts
-  // We'll use the existing wss instance for order tracking
-
-  return server;
+  return createServer(app);
 }
