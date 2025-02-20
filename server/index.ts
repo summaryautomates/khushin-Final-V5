@@ -26,10 +26,7 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });
 });
 
-const PORT_RANGE = {
-  start: 5000,
-  end: 5500
-};
+const PORT = 5000;
 
 // Extend WebSocket type to include isAlive property
 interface ExtendedWebSocket extends WebSocket {
@@ -42,7 +39,7 @@ const startServer = async () => {
 
   try {
     console.log('Starting server...');
-    const port = await portManager.acquirePort(PORT_RANGE.start, PORT_RANGE.end);
+    const port = PORT;
     console.log(`Found available port: ${port}`);
 
     // Setup authentication first
