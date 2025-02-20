@@ -75,10 +75,11 @@ const startServer = async () => {
     // Setup WebSocket server with improved stability configuration
     console.log('Setting up WebSocket server...');
     wss = new WebSocketServer({ 
-      noServer: true,
+      server,
+      path: '/ws',
       clientTracking: true,
-      perMessageDeflate: false, // Disable compression to reduce overhead
-      maxPayload: 1024 * 1024, // 1MB max message size
+      perMessageDeflate: false,
+      maxPayload: 1024 * 1024,
     });
 
     // WebSocket connection handling
