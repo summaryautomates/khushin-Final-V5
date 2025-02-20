@@ -169,7 +169,7 @@ export class DatabaseStorage implements IStorage {
       // Update existing item
       await db
         .update(cartItems)
-        .set({ quantity })
+        .set({ quantity: existingItem.quantity + 1 })
         .where(
           and(
             eq(cartItems.userId, userId),
