@@ -75,26 +75,13 @@ const startServer = async () => {
       throw error;
     }
 
-    // Setup WebSocket server with better configuration
+    // Setup WebSocket server with improved stability configuration
     console.log('Setting up WebSocket server...');
     wss = new WebSocketServer({ 
-      noServer: true, // Important: Use noServer mode to handle upgrades manually
+      noServer: true,
       clientTracking: true,
-      perMessageDeflate: {
-        zlibDeflateOptions: {
-          chunkSize: 1024,
-          memLevel: 7,
-          level: 3
-        },
-        zlibInflateOptions: {
-          chunkSize: 10 * 1024
-        },
-        clientNoContextTakeover: true,
-        serverNoContextTakeover: true,
-        serverMaxWindowBits: 10,
-        concurrencyLimit: 10,
-        threshold: 1024
-      }
+      perMessageDeflate: false, // Disable compression to reduce overhead
+      maxPayload: 1024 * 1024, // 1MB max message size
     });
 
     // WebSocket connection handling
@@ -109,7 +96,8 @@ const startServer = async () => {
       });
 
       ws.on('error', (error) => {
-        console.error('WebSocket error:', error);
+        console.error(`WebSocket error from ${clientIp}:`, error);
+        ws.isAlive = false;
         ws.terminate();
       });
 
@@ -117,6 +105,9 @@ const startServer = async () => {
         console.log(`WebSocket client disconnected from ${clientIp}`);
         ws.isAlive = false;
       });
+
+      // Send immediate ping to verify connection
+      ws.ping();
     });
 
     // Handle upgrade requests with proper path checking
