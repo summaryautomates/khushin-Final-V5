@@ -1,9 +1,19 @@
-import { useEffect } from "react";
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export function TestError() {
-  useEffect(() => {
-    throw new Error("Test error to verify error boundary");
-  }, []);
+  const [shouldError, setShouldError] = useState(false);
 
-  return <div>This should not be visible</div>;
+  if (shouldError) {
+    throw new Error("Test error to verify error boundary");
+  }
+
+  return (
+    <div className="p-4">
+      <Button onClick={() => setShouldError(true)}>
+        Test Error Boundary
+      </Button>
+    </div>
+  );
 }

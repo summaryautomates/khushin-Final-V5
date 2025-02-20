@@ -30,7 +30,14 @@ export class ErrorBoundary extends Component<Props, State> {
       timestamp: new Date().toISOString()
     });
 
-    this.setState({ errorInfo });
+    // Handle both sync and async errors
+    if (error instanceof Promise) {
+      error.catch(actualError => {
+        this.setState({ error: actualError, errorInfo });
+      });
+    } else {
+      this.setState({ error, errorInfo });
+    }
   }
 
   private handleReset = () => {
