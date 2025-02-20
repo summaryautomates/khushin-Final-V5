@@ -84,7 +84,7 @@ function App() {
     if (import.meta.env.DEV) {
       // Determine protocol based on current page protocol
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.hostname}:${window.location.port}`;
+      const wsUrl = `${protocol}//${window.location.hostname}:${window.location.port}/ws`;
 
       const wsConnection = createWebSocketConnection(wsUrl);
       wsConnection.connect();

@@ -10,11 +10,14 @@ import cors from 'cors';
 const app = express();
 app.use(express.json());
 
+// Create HTTP server first
+const server = createServer(app);
+
 // Update CORS configuration to handle credentials and WebSocket
 app.use(cors({
   origin: true,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'WS', 'WSS'], // Added WSS method
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'WS', 'WSS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Upgrade', 'Connection'],
 }));
 
@@ -35,7 +38,6 @@ interface ExtendedWebSocket extends WebSocket {
 
 // Start server
 const startServer = async () => {
-  let server: ReturnType<typeof createServer>;
   let wss: WebSocketServer;
 
   try {
@@ -43,13 +45,42 @@ const startServer = async () => {
     const port = await portManager.acquirePort(PORT_RANGE.start, PORT_RANGE.end);
     console.log(`Found available port: ${port}`);
 
-    // Create HTTP server
-    server = createServer(app);
+    // Setup authentication first
+    console.log('Setting up authentication...');
+    try {
+      await setupAuth(app);
+      console.log('Authentication setup completed');
+    } catch (error) {
+      console.error('Authentication setup error:', error);
+      throw error;
+    }
+
+    // Setup routes after auth
+    console.log('Registering API routes...');
+    try {
+      await registerRoutes(app);
+      console.log('API routes registered successfully');
+    } catch (error) {
+      console.error('Route registration error:', error);
+      throw error;
+    }
+
+    // Setup Vite after API routes
+    console.log('Setting up Vite...');
+    try {
+      await setupVite(app, server);
+      console.log('Vite setup completed');
+    } catch (error) {
+      console.error('Vite setup error:', error);
+      throw error;
+    }
 
     // Setup WebSocket server with better configuration
+    console.log('Setting up WebSocket server...');
     wss = new WebSocketServer({ 
       server,
       clientTracking: true,
+      path: '/ws',
       perMessageDeflate: {
         zlibDeflateOptions: {
           chunkSize: 1024,
@@ -89,6 +120,15 @@ const startServer = async () => {
       });
     });
 
+    // Handle upgrade requests
+    server.on('upgrade', (request, socket, head) => {
+      if (request.url === '/ws') {
+        wss.handleUpgrade(request, socket, head, (ws) => {
+          wss.emit('connection', ws, request);
+        });
+      }
+    });
+
     // Implement ping/pong for connection health checks with proper type casting
     const interval = setInterval(function() {
       const clients = wss.clients as Set<ExtendedWebSocket>;
@@ -104,36 +144,6 @@ const startServer = async () => {
     wss.on('close', () => {
       clearInterval(interval);
     });
-
-    // Setup authentication first
-    console.log('Setting up authentication...');
-    try {
-      await setupAuth(app);
-      console.log('Authentication setup completed');
-    } catch (error) {
-      console.error('Authentication setup error:', error);
-      throw error;
-    }
-
-    // Setup routes after auth
-    console.log('Registering API routes...');
-    try {
-      await registerRoutes(app);
-      console.log('API routes registered successfully');
-    } catch (error) {
-      console.error('Route registration error:', error);
-      throw error;
-    }
-
-    // Setup Vite after API routes
-    console.log('Setting up Vite...');
-    try {
-      await setupVite(app, server);
-      console.log('Vite setup completed');
-    } catch (error) {
-      console.error('Vite setup error:', error);
-      throw error;
-    }
 
     // Start server with better error handling
     server.listen(port, '0.0.0.0', () => {
