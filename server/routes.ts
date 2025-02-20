@@ -4,8 +4,9 @@ import { storage } from "./storage";
 import { insertContactMessageSchema, insertReturnRequestSchema, insertCartItemSchema } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
-import { WebSocketServer, WebSocket } from 'ws';
+import { WebSocket } from 'ws';
 import { setupAuth } from "./auth";
+import { globalWss } from "./index";
 import {
   insertOrderSchema,
   insertOrderStatusHistorySchema
@@ -337,19 +338,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         order.estimatedDelivery = estimatedDelivery.toISOString();
 
         // Notify connected WebSocket clients
-        wss.clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN) {
-            const orderTrackingClient = client as OrderTrackingWebSocket;
-            if (orderTrackingClient.orderRef === orderRef) {
-              client.send(JSON.stringify({
-                type: 'ORDER_STATUS_UPDATE',
-                orderRef,
-                status: order.trackingStatus,
-                timestamp: new Date().toISOString()
-              }));
+        if (globalWss) {
+          globalWss.clients.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+              const orderTrackingClient = client as OrderTrackingWebSocket;
+              if (orderTrackingClient.orderRef === orderRef) {
+                client.send(JSON.stringify({
+                  type: 'ORDER_STATUS_UPDATE',
+                  orderRef,
+                  status: order.trackingStatus,
+                  timestamp: new Date().toISOString()
+                }));
+              }
             }
-          }
-        });
+          });
+        }
       }
 
       paymentStore.set(orderRef, payment);
@@ -611,9 +614,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(cartWithProducts.filter(item => item.product !== undefined));
     } catch (error) {
       console.error('Error adding to cart:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       res.status(500).json({
         message: "Failed to add item to cart",
-        details: error.message
+        details: errorMessage
       });
     }
   });
@@ -784,15 +788,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       };
 
-      wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-          const orderTrackingClient = client as OrderTrackingWebSocket;
-          // Only send updates to clients subscribed to this order
-          if (orderTrackingClient.orderRef === orderRef) {
-            client.send(JSON.stringify(statusUpdate));
+      if (globalWss) {
+        globalWss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            const orderTrackingClient = client as OrderTrackingWebSocket;
+            // Only send updates to clients subscribed to this order
+            if (orderTrackingClient.orderRef === orderRef) {
+              client.send(JSON.stringify(statusUpdate));
+            }
           }
-        }
-      });
+        });
+      }
 
       res.json(order);
     } catch (error) {
@@ -830,14 +836,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       };
 
-      wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-          const orderTrackingClient = client as OrderTrackingWebSocket;
-          if (orderTrackingClient.orderRef === orderRef) {
-            client.send(JSON.stringify(statusUpdate));
+      if (globalWss) {
+        globalWss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            const orderTrackingClient = client as OrderTrackingWebSocket;
+            if (orderTrackingClient.orderRef === orderRef) {
+              client.send(JSON.stringify(statusUpdate));
+            }
           }
-        }
-      });
+        });
+      }
 
       res.json(order);
     } catch (error) {
@@ -871,79 +879,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: "Orders updated with tracking information" });
   });
 
-
   // Create HTTP server
   const server = createServer(app);
 
-  // Initialize WebSocket server for real-time updates
-  const wss = new WebSocketServer({ server, path: '/ws' });
-
-  wss.on('connection', (ws: OrderTrackingWebSocket) => {
-    const log = (msg: string) => console.log(`[${new Date().toISOString()}] ${msg}`);
-    log('Client connected to order tracking WebSocket');
-
-    // Add heartbeat mechanism
-    const pingInterval = setInterval(() => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.ping();
-      }
-    }, 30000);
-
-    ws.on('pong', () => {
-      // Client is alive
-    });
-
-    ws.on('message', (message) => {
-      try {
-        const data = JSON.parse(message.toString());
-        if (data.type === 'SUBSCRIBE_ORDER') {
-          ws.orderRef = data.orderRef;
-          log(`Client subscribed to order: ${data.orderRef}`);
-
-          // Send initial order status
-          const order = orderStore.get(data.orderRef);
-          if (order) {
-            ws.send(JSON.stringify({
-              type: 'ORDER_STATUS_UPDATE',
-              orderRef: data.orderRef,
-              status: order.trackingStatus,
-              timestamp: new Date().toISOString()
-            }));
-          }
-
-          // Send subscription confirmation
-          ws.send(JSON.stringify({
-            type: 'SUBSCRIPTION_CONFIRMED',
-            orderRef: data.orderRef,
-            timestamp: new Date().toISOString()
-          }));
-        }
-      } catch (error) {
-        log(`WebSocket message error: ${error}`);
-        ws.send(JSON.stringify({
-          type: 'ERROR',
-          message: 'Invalid message format',
-          timestamp: new Date().toISOString()
-        }));
-      }
-    });
-
-    ws.on('error', (error) => {
-      log(`WebSocket error: ${error}`);
-    });
-
-    ws.on('close', () => {
-      clearInterval(pingInterval);
-      log('Client disconnected from order tracking WebSocket');
-    });
-
-    // Send welcome message
-    ws.send(JSON.stringify({
-      type: 'CONNECTED',
-      message: 'Connected to order tracking service',
-      timestamp: new Date().toISOString()
-    }));
-  });
+  // The WebSocket server initialization is now handled in index.ts
+  // We'll use the existing wss instance for order tracking
 
   return server;
 }

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Switch, Route } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
@@ -30,23 +31,28 @@ import ExpressDelivery from "@/pages/express-delivery";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
 function App() {
-  React.useEffect(() => {
+  useEffect(() => {
     const handler = (event: PromiseRejectionEvent) => {
       event.preventDefault();
       console.error('Unhandled rejection:', event.reason);
+
+      // Show error toast
+      queryClient.getQueryCache().clear();
     };
-    
+
     window.addEventListener('unhandledrejection', handler);
-    
+
     // Prevent default browser navigation
-    window.addEventListener('popstate', (e) => {
+    const popStateHandler = (e: PopStateEvent) => {
       e.preventDefault();
       window.location.reload();
-    });
-    
+    };
+
+    window.addEventListener('popstate', popStateHandler);
+
     return () => {
       window.removeEventListener('unhandledrejection', handler);
-      window.removeEventListener('popstate', () => {});
+      window.removeEventListener('popstate', popStateHandler);
     };
   }, []);
 

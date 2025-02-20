@@ -12,6 +12,8 @@ const __dirname = dirname(__filename);
 
 const viteLogger = createLogger();
 
+export let globalWss: WebSocketServer | null = null;
+
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -41,48 +43,52 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });
 });
 
-// Request rate limiting
+// Request rate limiting with proper IP handling
 const requestCounts = new Map<string, { count: number; timestamp: number }>();
+
 app.use((req, res, next) => {
-  const ip = req.ip;
+  // Skip rate limiting for static assets and in development
+  if (process.env.NODE_ENV !== 'production' || 
+      req.path.endsWith('.js') || 
+      req.path.endsWith('.css') || 
+      req.path.endsWith('.html') ||
+      req.path.includes('/@vite/') ||
+      req.path.includes('/@fs/') ||
+      req.path.startsWith('/@react-refresh')) {
+    return next();
+  }
+
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
   const now = Date.now();
   const requestData = requestCounts.get(ip) || { count: 0, timestamp: now };
-  
+
   // Reset counter after 1 minute
   if (now - requestData.timestamp > 60000) {
     requestData.count = 0;
     requestData.timestamp = now;
   }
-  
-  // Limit to 60 requests per minute
-  if (requestData.count > 60) {
-    return res.status(429).json({ error: 'Too many requests' });
+
+  // Increase limit to 200 requests per minute for API endpoints
+  if (requestData.count > 200) {
+    return res.status(429).json({ 
+      error: 'Too many requests',
+      retryAfter: Math.ceil((requestData.timestamp + 60000 - now) / 1000)
+    });
   }
-  
+
   requestData.count++;
   requestCounts.set(ip, requestData);
-
-  const start = Date.now();
-  res.on('finish', () => {
-    const duration = Date.now() - start;
-    log(`${req.method} ${req.path} ${res.statusCode} ${duration}ms`);
-  });
   next();
 });
 
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Server error:', err);
-  if (req.accepts('html')) {
-    res.sendFile(path.resolve(__dirname, '../client/index.html'));
-  } else {
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 // Global server reference for proper cleanup
 let globalServer: ReturnType<typeof createHttpServer> | null = null;
-let globalWss: WebSocketServer | null = null;
 
 // Cleanup function
 function cleanup() {
@@ -108,7 +114,7 @@ function cleanup() {
 
 const PORT_RANGE = {
   start: 5000,
-  end: 5500  // Greatly expanded port range
+  end: 5500
 };
 
 // Start server with improved error handling
@@ -127,19 +133,28 @@ const startServer = async () => {
     const server = createHttpServer(app);
     globalServer = server;
 
-    // Create WebSocket server
-    const wss = new WebSocketServer({ server, path: '/ws' });
+    // Create WebSocket server with proper configuration
+    const wss = new WebSocketServer({ 
+      server,
+      path: '/ws',
+      perMessageDeflate: false // Disable per-message deflate to avoid memory issues
+    });
     globalWss = wss;
 
-    // WebSocket connection handling with heartbeat
+    // Setup WebSocket connection handling
     wss.on('connection', (ws: WebSocket) => {
       log('WebSocket client connected', 'websocket');
 
+      // Set up heartbeat
       const pingInterval = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) {
           ws.ping();
         }
       }, 30000);
+
+      ws.on('pong', () => {
+        // Client responded to ping, connection is alive
+      });
 
       ws.on('error', (error) => {
         console.error('WebSocket error:', error);
@@ -151,12 +166,12 @@ const startServer = async () => {
       });
     });
 
-    // Register routes
+    // Setup routes first
     log('Registering routes...', 'server');
     await import("./routes.ts").then(m => m.registerRoutes(app));
     log('Routes registered successfully', 'server');
 
-    // Setup Vite in development or serve static files in production
+    // Setup Vite in development
     if (process.env.NODE_ENV !== 'production') {
       log('Setting up Vite middleware...', 'vite');
       const vite = await createViteServer({
@@ -164,20 +179,19 @@ const startServer = async () => {
           middlewareMode: true,
           hmr: {
             server,
+            protocol: 'ws',
             host: '0.0.0.0',
-            port: 24678,
-            clientPort: 443
+            port: port,
+            clientPort: port
+          },
+          watch: {
+            usePolling: true,
+            interval: 100
           },
           host: '0.0.0.0',
         },
         appType: 'spa',
-        customLogger: {
-          ...viteLogger,
-          error: (msg, options) => {
-            viteLogger.error(msg, options);
-            process.exit(1);
-          },
-        },
+        customLogger: viteLogger
       });
       app.use(vite.middlewares);
       log('Vite setup complete', 'vite');
@@ -202,7 +216,7 @@ const startServer = async () => {
     // Graceful shutdown
     const shutdown = async () => {
       log('Shutting down gracefully...', 'server');
-      portManager.releaseAll(); // Release all ports before cleanup
+      portManager.releaseAll();
       await cleanup();
       process.exit(0);
     };
@@ -212,7 +226,7 @@ const startServer = async () => {
 
   } catch (error) {
     console.error('Critical server error:', error);
-    portManager.releaseAll(); // Release ports on error
+    portManager.releaseAll();
     await cleanup();
     process.exit(1);
   }
