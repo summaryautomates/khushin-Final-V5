@@ -43,20 +43,33 @@ export default function Home() {
   const connectWebSocket = () => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
-    setIsConnecting(true);
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+    try {
+      setIsConnecting(true);
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
 
-    ws.onopen = () => {
-      console.log("WebSocket connected successfully");
-      wsRetryCount = 0;
-      setIsConnecting(false);
-      wsRef.current = ws;
-    };
+      ws.onopen = () => {
+        console.log("WebSocket connected successfully");
+        wsRetryCount = 0;
+        setIsConnecting(false);
+        wsRef.current = ws;
+      };
 
-    ws.onclose = () => {
-      wsRef.current = null;
-      setIsConnecting(false);
+      ws.onclose = (event) => {
+        console.log("WebSocket closed with code:", event.code);
+        wsRef.current = null;
+        setIsConnecting(false);
+        
+        // Only attempt reconnect if not a normal closure
+        if (event.code !== 1000 && event.code !== 1001) {
+          setTimeout(() => connectWebSocket(), RETRY_DELAY);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error("WebSocket error:", error);
+        ws.close();
+      };
 
       if (wsRetryCount < MAX_RETRIES) {
         wsRetryCount++;
