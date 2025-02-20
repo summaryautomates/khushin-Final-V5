@@ -46,7 +46,7 @@ function useLoginMutation() {
     onError: (error: Error) => {
       toast({
         title: "Login failed",
-        description: error.message,
+        description: error.message || "Please check your credentials and try again",
         variant: "destructive",
       });
     },
@@ -79,7 +79,7 @@ function useRegisterMutation() {
     onError: (error: Error) => {
       toast({
         title: "Registration failed",
-        description: error.message,
+        description: error.message || "Please try again with different credentials",
         variant: "destructive",
       });
     },

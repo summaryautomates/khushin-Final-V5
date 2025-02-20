@@ -60,10 +60,9 @@ export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
         className="sm:max-w-[425px] h-[100dvh] sm:h-auto overflow-y-auto fixed right-0 top-0 sm:relative sm:right-auto sm:top-auto sm:rounded-lg bg-gradient-to-br from-background/95 via-background/98 to-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 border-0 sm:border"
-        aria-describedby="login-dialog-description"
       >
-        <DialogTitle>Welcome Back</DialogTitle>
-        <DialogDescription id="login-dialog-description" className="sr-only">
+        <DialogTitle className="sr-only">Login to your account</DialogTitle>
+        <DialogDescription className="sr-only">
           Enter your username and password to access your KHUSH.IN account
         </DialogDescription>
 

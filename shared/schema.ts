@@ -155,7 +155,9 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
 }).extend({
   items: z.array(z.object({
     productId: z.number(),
-    quantity: z.number().min(1, "Quantity must be at least 1").max(10, "Maximum quantity per item is 10")
+    quantity: z.number().min(1, "Quantity must be at least 1").max(10, "Maximum quantity per item is 10"),
+    price: z.number().optional(),
+    name: z.string().optional()
   })).min(1, "At least one item is required"),
   shipping: z.object({
     fullName: z.string().min(1, "Full name is required"),

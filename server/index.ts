@@ -3,9 +3,19 @@ import { createServer } from "http";
 import { portManager } from './port-manager';
 import { registerRoutes } from './routes';
 import { setupVite } from './vite';
+import { setupAuth } from './auth';
+import cors from 'cors';
 
 const app = express();
 app.use(express.json());
+
+// Update CORS configuration to handle credentials
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 // Basic health check endpoint
 app.get('/api/health', (_req, res) => {
@@ -27,7 +37,17 @@ const startServer = async () => {
     // Create HTTP server
     const server = createServer(app);
 
-    // Setup routes
+    // Setup authentication first
+    console.log('Setting up authentication...');
+    try {
+      await setupAuth(app);
+      console.log('Authentication setup completed');
+    } catch (error) {
+      console.error('Authentication setup error:', error);
+      throw error;
+    }
+
+    // Setup routes after auth
     console.log('Registering API routes...');
     try {
       await registerRoutes(app);
