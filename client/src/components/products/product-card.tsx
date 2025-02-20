@@ -11,7 +11,7 @@ import type { Product } from "@shared/schema";
 import { Eye, ShoppingCart, Loader2 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface ProductCardProps {
   product: Product;
@@ -21,6 +21,42 @@ export function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
   const { toast } = useToast();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const FALLBACK_IMAGES = [
+    '/placeholder-product.svg',
+    'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500',
+  ];
+
+  // Reset loading state when product changes
+  useEffect(() => {
+    setImageLoading(true);
+    setImageError(false);
+    setCurrentImageIndex(0);
+  }, [product.id]);
+
+  const handleImageError = () => {
+    // Try next image in product.images array
+    if (Array.isArray(product.images) && currentImageIndex < product.images.length - 1) {
+      setCurrentImageIndex(prev => prev + 1);
+      setImageLoading(true);
+    } else {
+      // If all product images fail, try fallback images
+      setImageError(true);
+    }
+  };
+
+  const getProductImage = () => {
+    if (!imageError && Array.isArray(product.images) && product.images.length > currentImageIndex) {
+      const image = product.images[currentImageIndex];
+      if (image && typeof image === 'string' && (image.startsWith('http') || image.startsWith('/'))) {
+        return image;
+      }
+    }
+    return FALLBACK_IMAGES[0];
+  };
 
   const handleAddToCart = async () => {
     setIsAddingToCart(true);
@@ -55,16 +91,23 @@ export function ProductCard({ product }: ProductCardProps) {
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
           >
+            {imageLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            )}
             <motion.img
-              src={product.images[0]}
+              src={getProductImage()}
               alt={product.name}
               className="h-full w-full object-cover opacity-90 transition-opacity duration-700 group-hover:opacity-100"
               initial={{ scale: 1.1 }}
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.7, ease: "easeOut" }}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = '/placeholder-product.svg'; // Fallback image
+              onError={handleImageError}
+              onLoad={() => setImageLoading(false)}
+              style={{ 
+                opacity: imageLoading ? 0 : 1,
+                transition: 'opacity 0.3s ease-in-out'
               }}
             />
             <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
