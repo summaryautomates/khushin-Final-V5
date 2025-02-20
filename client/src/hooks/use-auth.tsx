@@ -27,7 +27,7 @@ function useLoginMutation() {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: 'include', // Important for session cookies
+        credentials: 'include',
         body: JSON.stringify(credentials),
       });
       if (!res.ok) {
@@ -100,6 +100,7 @@ function useLogoutMutation() {
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
+      queryClient.clear(); // Clear all queries on logout
       toast({
         title: "Logged out",
         description: "Successfully logged out",
@@ -119,13 +120,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: user, error, isLoading } = useQuery<SelectUser | null>({
     queryKey: ["/api/user"],
     queryFn: async () => {
-      const res = await fetch("/api/user", {
-        credentials: 'include'
-      });
-      if (res.status === 401) return null;
-      if (!res.ok) throw new Error("Failed to fetch user");
-      return res.json();
+      try {
+        const res = await fetch("/api/user", {
+          credentials: 'include'
+        });
+        if (res.status === 401) {
+          // Return null for unauthorized without throwing an error
+          return null;
+        }
+        if (!res.ok) {
+          throw new Error("Failed to fetch user");
+        }
+        return res.json();
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        return null; // Return null on error to prevent retries
+      }
     },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    retry: false, // Don't retry on failure
   });
 
   const loginMutation = useLoginMutation();

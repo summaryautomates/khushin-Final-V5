@@ -31,25 +31,100 @@ import EventOrganizer from "@/pages/event-organizer";
 import ExpressDelivery from "@/pages/express-delivery";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
+// WebSocket connection helper function
+const createWebSocketConnection = (wsUrl: string, maxRetries: number = 3) => {
+  let ws: WebSocket | null = null;
+  let reconnectAttempts = 0;
+
+  const connect = () => {
+    try {
+      ws = new WebSocket(wsUrl);
+
+      ws.addEventListener('open', () => {
+        console.log('WebSocket connected successfully');
+        reconnectAttempts = 0; // Reset attempts on successful connection
+      });
+
+      ws.addEventListener('error', (event) => {
+        console.warn('WebSocket error:', event);
+        if (reconnectAttempts < maxRetries) {
+          setTimeout(connect, 1000 * Math.pow(2, reconnectAttempts));
+          reconnectAttempts++;
+        }
+      });
+
+      ws.addEventListener('close', () => {
+        console.log('WebSocket closed');
+        if (reconnectAttempts < maxRetries) {
+          setTimeout(connect, 1000 * Math.pow(2, reconnectAttempts));
+          reconnectAttempts++;
+        }
+      });
+    } catch (error) {
+      console.error('WebSocket connection error:', error);
+    }
+  };
+
+  return {
+    connect,
+    disconnect: () => {
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+    }
+  };
+};
+
 function App() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Only handle critical errors
-    const handler = (event: PromiseRejectionEvent) => {
-      event.preventDefault();
-      console.error('Critical error:', event.reason);
+    // Handle WebSocket connection for HMR
+    if (import.meta.env.DEV) {
+      // Determine protocol based on current page protocol
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.hostname}:${window.location.port}`;
 
-      if (event.reason?.response?.status === 401) {
-        // Handle authentication errors specifically
+      const wsConnection = createWebSocketConnection(wsUrl);
+      wsConnection.connect();
+
+      return () => {
+        wsConnection.disconnect();
+      };
+    }
+  }, []);
+
+  useEffect(() => {
+    // Handle critical errors with improved error boundaries
+    const handler = (event: PromiseRejectionEvent | ErrorEvent) => {
+      event.preventDefault();
+
+      // Handle network errors
+      if (event instanceof ErrorEvent && event.error?.name === 'NetworkError') {
+        console.warn('Network error detected, attempting recovery...');
+        return;
+      }
+
+      // Extract error details
+      const error = event instanceof PromiseRejectionEvent ? event.reason : event.error;
+      console.error('Critical error:', error);
+
+      if (error?.response?.status === 401) {
+        // Clear auth state and redirect to login
+        queryClient.setQueryData(["/api/user"], null);
         toast({
-          title: "Authentication Error",
-          description: "Please log in to continue.",
+          title: "Session Expired",
+          description: "Please log in again to continue.",
           variant: "destructive",
         });
-        queryClient.clear();
+      } else if (error?.message?.includes('Failed to fetch') || error?.message?.includes('NetworkError')) {
+        toast({
+          title: "Connection Error",
+          description: "Please check your internet connection.",
+          variant: "destructive",
+        });
       } else {
-        // Handle other critical errors
         toast({
           title: "Error",
           description: "An unexpected error occurred. Please try again.",
@@ -59,7 +134,12 @@ function App() {
     };
 
     window.addEventListener('unhandledrejection', handler);
-    return () => window.removeEventListener('unhandledrejection', handler);
+    window.addEventListener('error', handler);
+
+    return () => {
+      window.removeEventListener('unhandledrejection', handler);
+      window.removeEventListener('error', handler);
+    };
   }, [toast]);
 
   return (

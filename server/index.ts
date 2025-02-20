@@ -1,5 +1,6 @@
 import express, { type Express } from "express";
 import { createServer } from "http";
+import { WebSocketServer, WebSocket } from 'ws';
 import { portManager } from './port-manager';
 import { registerRoutes } from './routes';
 import { setupVite } from './vite';
@@ -9,12 +10,12 @@ import cors from 'cors';
 const app = express();
 app.use(express.json());
 
-// Update CORS configuration to handle credentials
+// Update CORS configuration to handle credentials and WebSocket
 app.use(cors({
   origin: true,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'WS', 'WSS'], // Added WSS method
+  allowedHeaders: ['Content-Type', 'Authorization', 'Upgrade', 'Connection'],
 }));
 
 // Basic health check endpoint
@@ -27,15 +28,82 @@ const PORT_RANGE = {
   end: 5500
 };
 
+// Extend WebSocket type to include isAlive property
+interface ExtendedWebSocket extends WebSocket {
+  isAlive: boolean;
+}
+
 // Start server
 const startServer = async () => {
+  let server: ReturnType<typeof createServer>;
+  let wss: WebSocketServer;
+
   try {
     console.log('Starting server...');
     const port = await portManager.acquirePort(PORT_RANGE.start, PORT_RANGE.end);
     console.log(`Found available port: ${port}`);
 
     // Create HTTP server
-    const server = createServer(app);
+    server = createServer(app);
+
+    // Setup WebSocket server with better configuration
+    wss = new WebSocketServer({ 
+      server,
+      clientTracking: true,
+      perMessageDeflate: {
+        zlibDeflateOptions: {
+          chunkSize: 1024,
+          memLevel: 7,
+          level: 3
+        },
+        zlibInflateOptions: {
+          chunkSize: 10 * 1024
+        },
+        clientNoContextTakeover: true,
+        serverNoContextTakeover: true,
+        serverMaxWindowBits: 10,
+        concurrencyLimit: 10,
+        threshold: 1024
+      }
+    });
+
+    // WebSocket connection handling
+    wss.on('connection', function(ws: ExtendedWebSocket, req) {
+      const clientIp = req.socket.remoteAddress;
+      console.log(`WebSocket client connected from ${clientIp}`);
+
+      ws.isAlive = true;
+
+      ws.on('pong', () => {
+        ws.isAlive = true;
+      });
+
+      ws.on('error', (error) => {
+        console.error('WebSocket error:', error);
+        ws.terminate();
+      });
+
+      ws.on('close', () => {
+        console.log(`WebSocket client disconnected from ${clientIp}`);
+        ws.isAlive = false;
+      });
+    });
+
+    // Implement ping/pong for connection health checks with proper type casting
+    const interval = setInterval(function() {
+      const clients = wss.clients as Set<ExtendedWebSocket>;
+      clients.forEach(function(ws) {
+        if (ws.isAlive === false) {
+          return ws.terminate();
+        }
+        ws.isAlive = false;
+        ws.ping(() => {});
+      });
+    }, 30000);
+
+    wss.on('close', () => {
+      clearInterval(interval);
+    });
 
     // Setup authentication first
     console.log('Setting up authentication...');
@@ -72,14 +140,34 @@ const startServer = async () => {
       console.log(`Server running at http://0.0.0.0:${port}`);
     }).on('error', (error) => {
       console.error('Server startup error:', error);
-      portManager.releaseAll();
+      cleanup();
       process.exit(1);
     });
 
+    // Handle graceful shutdown
+    process.on('SIGTERM', () => cleanup());
+    process.on('SIGINT', () => cleanup());
+
   } catch (error) {
     console.error('Critical server error:', error);
-    portManager.releaseAll();
+    cleanup();
     process.exit(1);
+  }
+
+  // Cleanup function
+  function cleanup() {
+    console.log('Cleaning up server resources...');
+    if (wss) {
+      wss.close(() => {
+        console.log('WebSocket server closed');
+      });
+    }
+    if (server) {
+      server.close(() => {
+        console.log('HTTP server closed');
+      });
+    }
+    portManager.releaseAll();
   }
 };
 
