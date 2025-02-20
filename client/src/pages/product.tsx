@@ -28,7 +28,20 @@ export default function ProductPage() {
     queryKey: [`/api/products/${id}`],
   });
 
-  // Initialize loading states when product data is received
+  const defaultPlaceholder = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500";
+
+  const getValidProductImage = (index: number) => {
+    if (
+      product?.images && 
+      Array.isArray(product.images) && 
+      product.images.length > index && 
+      !imageErrors[index]
+    ) {
+      return product.images[index];
+    }
+    return defaultPlaceholder;
+  };
+
   useEffect(() => {
     if (product?.images) {
       const initialLoadingStates = product.images.reduce((acc, _, index) => {
@@ -37,21 +50,29 @@ export default function ProductPage() {
       }, {} as Record<number, boolean>);
       setImageLoadingStates(initialLoadingStates);
       setImageErrors({});
+      setSelectedImage(0); // Reset selected image when product changes
     }
   }, [product]);
 
   const handleImageError = (index: number) => {
+    console.log(`Image error at index ${index}`);
     setImageErrors(prev => ({ ...prev, [index]: true }));
+    setImageLoadingStates(prev => ({ ...prev, [index]: false }));
 
+    // Try next image or use default
     if (product && product.images.length > 1) {
       const nextIndex = (index + 1) % product.images.length;
       if (!imageErrors[nextIndex]) {
         setSelectedImage(nextIndex);
+      } else {
+        // If all images failed, keep the current index but use placeholder
+        console.log("All product images failed to load, using placeholder");
       }
     }
   };
 
   const handleImageLoad = (index: number) => {
+    console.log(`Image loaded successfully at index ${index}`);
     setImageLoadingStates(prev => ({ ...prev, [index]: false }));
     setImageErrors(prev => ({ ...prev, [index]: false }));
   };
@@ -138,7 +159,7 @@ export default function ProductPage() {
                 </div>
               )}
               <img
-                src={product.images[selectedImage]}
+                src={getValidProductImage(selectedImage)}
                 alt={product.name}
                 className="h-full w-full object-contain p-4"
                 onError={() => handleImageError(selectedImage)}
@@ -157,7 +178,7 @@ export default function ProductPage() {
 
             {product.images.length > 1 && (
               <div className="grid grid-cols-4 gap-4 mt-4">
-                {product.images.map((image, i) => (
+                {product.images.map((_, i) => (
                   <div 
                     key={i} 
                     className={`aspect-square overflow-hidden rounded-lg border bg-zinc-100 cursor-pointer transition-all relative
@@ -171,7 +192,7 @@ export default function ProductPage() {
                       </div>
                     )}
                     <img
-                      src={image}
+                      src={getValidProductImage(i)}
                       alt={`${product.name} view ${i + 1}`}
                       className="h-full w-full object-contain p-2"
                       onError={() => handleImageError(i)}
