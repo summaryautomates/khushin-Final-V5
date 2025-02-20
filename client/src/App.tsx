@@ -40,7 +40,7 @@ const createWebSocketConnection = (wsUrl: string, maxRetries: number = 10) => {
 
   const connect = () => {
     if (isIntentionallyClosed) return;
-    
+
     // Clear any existing connection
     if (ws) {
       ws.close();
@@ -81,7 +81,7 @@ const createWebSocketConnection = (wsUrl: string, maxRetries: number = 10) => {
     if (reconnectTimeout) {
       clearTimeout(reconnectTimeout);
     }
-    
+
     // Exponential backoff with max delay of 10 seconds
     const delay = Math.min(1000 * Math.pow(1.5, reconnectAttempts), 10000);
     reconnectTimeout = setTimeout(connect, delay);
@@ -91,6 +91,7 @@ const createWebSocketConnection = (wsUrl: string, maxRetries: number = 10) => {
   return {
     connect,
     disconnect: () => {
+      isIntentionallyClosed = true;
       if (reconnectTimeout) {
         clearTimeout(reconnectTimeout);
         reconnectTimeout = null;
@@ -109,7 +110,6 @@ function App() {
   useEffect(() => {
     // Handle WebSocket connection for HMR
     if (import.meta.env.DEV) {
-      // Determine protocol based on current page protocol
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsUrl = `${protocol}//${window.location.hostname}:${window.location.port}/ws`;
 

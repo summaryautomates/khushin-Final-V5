@@ -14,91 +14,37 @@ import {
   Camera,
   Loader2
 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { createWorker } from 'tesseract.js';
-import type { Worker, WorkerParams } from 'tesseract.js';
+import type { Worker } from 'tesseract.js';
 import { useToast } from "@/hooks/use-toast";
-
-let wsRetryCount = 0;
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 2000;
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isListening, setIsListening] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const { toast } = useToast();
 
-  const { data: products = [], isLoading, error } = useQuery<Product[]>({
-    queryKey: ["/api/products"]
+  const { data: products = [], isLoading } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+    staleTime: 30000, // Cache results for 30 seconds
+    retry: 2,
+    refetchOnWindowFocus: false
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const wsRef = useRef<WebSocket | null>(null);
   const workerRef = useRef<Worker | null>(null);
 
-  const connectWebSocket = () => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) return;
-
-    try {
-      setIsConnecting(true);
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
-
-      ws.onopen = () => {
-        console.log("WebSocket connected successfully");
-        wsRetryCount = 0;
-        setIsConnecting(false);
-        wsRef.current = ws;
-      };
-
-      ws.onclose = (event) => {
-        console.log("WebSocket closed with code:", event.code);
-        wsRef.current = null;
-        setIsConnecting(false);
-
-        // Only attempt reconnect if not a normal closure
-        if (event.code !== 1000 && event.code !== 1001) {
-          setTimeout(() => connectWebSocket(), RETRY_DELAY);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.close();
-        }
-      };
-
-    } catch (error) {
-      console.error("WebSocket connection error:", error);
-      setIsConnecting(false);
-
-      if (wsRetryCount < MAX_RETRIES) {
-        wsRetryCount++;
-        setTimeout(connectWebSocket, RETRY_DELAY * wsRetryCount);
-      } else {
-        toast({
-          title: "Connection Error",
-          description: "Failed to establish real-time connection. Some features may be limited.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
-  useEffect(() => {
-    connectWebSocket();
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-    };
-  }, []);
+  // Memoize suggestions calculation
+  const suggestions = useMemo(() => {
+    if (!searchQuery) return [];
+    const normalizedQuery = searchQuery.toLowerCase();
+    return products
+      .map(p => p.name.toLowerCase())
+      .filter(name => name !== normalizedQuery && name.includes(normalizedQuery))
+      .slice(0, 3);
+  }, [searchQuery, products]);
 
   const handleVoiceSearch = () => {
     if ('webkitSpeechRecognition' in window) {
@@ -166,21 +112,13 @@ export default function Home() {
 
     setIsProcessingImage(true);
     try {
-      toast({
-        title: "Processing Image",
-        description: "Please wait while we analyze the image...",
-      });
-
       if (!workerRef.current) {
-        workerRef.current = await createWorker({
-          logger: m => console.log('OCR Progress:', m)
-        } as any); // Type assertion to bypass type checking for logger
+        workerRef.current = createWorker();
       }
 
       const worker = workerRef.current;
-      // Initialize with English language
-      await worker.reinitialize('eng');
-
+      await worker.loadLanguage('eng');
+      await worker.initialize('eng');
       const result = await worker.recognize(file);
       const cleanText = result.data.text.replace(/[^\w\s]/gi, '').trim();
 
@@ -213,20 +151,6 @@ export default function Home() {
     }
   };
 
-  const getSuggestions = (query: string): string[] => {
-    if (!query) return [];
-    const normalizedQuery = query.toLowerCase();
-    return products
-      .map(p => p.name.toLowerCase())
-      .filter(name => name !== normalizedQuery && name.includes(normalizedQuery))
-      .slice(0, 3);
-  };
-
-  useEffect(() => {
-    const newSuggestions = getSuggestions(searchQuery);
-    setSuggestions(newSuggestions);
-  }, [searchQuery, products]);
-
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.3], [1, 0.98]);
@@ -235,8 +159,8 @@ export default function Home() {
     setLocation('/event-organizer');
   };
 
+  // Cleanup worker on unmount
   useEffect(() => {
-    localStorage.removeItem('hasSeenNewsletterDialog');
     return () => {
       if (workerRef.current) {
         workerRef.current.terminate();
@@ -244,19 +168,6 @@ export default function Home() {
       }
     };
   }, []);
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <p className="text-red-500">Failed to load products</p>
-          <Button onClick={() => window.location.reload()}>
-            Retry
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <>

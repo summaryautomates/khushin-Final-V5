@@ -47,10 +47,14 @@ export function CartItem({
   };
 
   const getProductImage = () => {
-    if (!imageError && Array.isArray(product.images) && product.images.length > 0) {
-      return product.images[0];
+    if (Array.isArray(product.images) && product.images.length > 0 && !imageError) {
+      const primaryImage = product.images[0];
+      // Ensure the URL is valid and accessible
+      if (primaryImage && primaryImage.startsWith('http')) {
+        return primaryImage;
+      }
     }
-    return '/placeholder.jpg';
+    return '/placeholder.jpg';  // Fallback image
   };
 
   return (
@@ -68,10 +72,14 @@ export function CartItem({
             alt={product.name}
             className="w-full h-full object-cover"
             onError={() => {
+              console.error('Failed to load image:', getProductImage());
               setImageError(true);
               setImageLoading(false);
             }}
-            onLoad={() => setImageLoading(false)}
+            onLoad={() => {
+              console.log('Image loaded successfully:', getProductImage());
+              setImageLoading(false);
+            }}
             style={{ 
               opacity: imageLoading ? 0 : 1,
               transition: 'opacity 0.3s ease-in-out'
@@ -83,7 +91,7 @@ export function CartItem({
         <div className="flex-1">
           <h3 className="font-medium">{product.name}</h3>
           <p className="text-sm text-muted-foreground mt-1">{product.description}</p>
-          <p className="text-lg font-semibold mt-1">₹{product.price}</p>
+          <p className="text-lg font-semibold mt-1">₹{(product.price / 100).toLocaleString('en-IN')}</p>
         </div>
 
         {/* Quantity Controls */}
