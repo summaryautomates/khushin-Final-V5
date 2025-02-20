@@ -31,6 +31,7 @@ export default function Cart() {
     timeSlot: string;
   } | null>(null);
   const [shippingData, setShippingData] = useState<ShippingFormData | null>(null);
+  const [autoCheckout, setAutoCheckout] = useState(false);
 
   const { toast } = useToast();
   const { items, total, updateQuantity, removeItem, isLoading, pendingUpdates, error } = useCart();
@@ -45,6 +46,16 @@ export default function Cart() {
       });
     }
   }, [error, toast]);
+
+  useEffect(() => {
+    // Check for buyNow flag in URL
+    const params = new URLSearchParams(window.location.search);
+    const buyNow = params.get('buyNow') === 'true';
+    if (buyNow) {
+      setAutoCheckout(true);
+      setShowShippingForm(true);
+    }
+  }, []);
 
   const handleUpdateQuantity = async (productId: number, quantity: number) => {
     try {
@@ -85,9 +96,14 @@ export default function Cart() {
     setShippingMethod("express");
   };
 
-  const handleShippingSubmit = (data: ShippingFormData) => {
+  const handleShippingSubmit = async (data: ShippingFormData) => {
     setShippingData(data);
     setShowShippingForm(false);
+
+    // If this is a buy now flow, proceed to checkout immediately
+    if (autoCheckout) {
+      await handleCheckout();
+    }
   };
 
   const handleDeliveryScheduleChange = (value: { date: string; timeSlot: string } | null) => {
@@ -127,7 +143,7 @@ export default function Cart() {
     try {
       const response = await fetch("/api/checkout", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Accept": "application/json"
         },
