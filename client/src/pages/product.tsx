@@ -30,7 +30,7 @@ export default function ProductPage() {
     staleTime: 60000,
   });
 
-  const defaultPlaceholder = "/placeholder-product.svg"; // Use local placeholder image
+  const defaultPlaceholder = "/placeholder-product.svg"; 
 
   const getValidProductImage = (index: number) => {
     if (!product?.images) return defaultPlaceholder;
@@ -61,7 +61,6 @@ export default function ProductPage() {
     setImageLoadingStates(prev => ({ ...prev, [index]: false }));
 
     if (product?.images && Array.isArray(product.images) && product.images.length > 1) {
-      // Try next non-errored image
       let nextIndex = (index + 1) % product.images.length;
       while (nextIndex !== index) {
         if (!imageErrors[nextIndex]) {
@@ -104,7 +103,6 @@ export default function ProductPage() {
 
     try {
       await addItem(product);
-      // Use the apiRequest helper for consistent error handling
       const response = await fetch('/api/direct-checkout', {
         method: 'POST',
         headers: {
@@ -184,7 +182,8 @@ export default function ProductPage() {
                 onLoad={() => handleImageLoad(selectedImage)}
                 style={{ 
                   opacity: imageLoadingStates[selectedImage] ? 0 : 1,
-                  transition: 'opacity 0.3s ease-in-out'
+                  transition: 'opacity 0.3s ease-in-out',
+                  display: product.category === "lighters" ? "none" : "block"
                 }}
               />
               {product.category === "lighters" && (
@@ -217,7 +216,8 @@ export default function ProductPage() {
                       onLoad={() => handleImageLoad(i)}
                       style={{ 
                         opacity: imageLoadingStates[i] ? 0 : 1,
-                        transition: 'opacity 0.3s ease-in-out'
+                        transition: 'opacity 0.3s ease-in-out',
+                        display: product.category === "lighters" ? "none" : "block"
                       }}
                     />
                   </div>
