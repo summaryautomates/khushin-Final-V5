@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { type Product } from "@shared/schema";
 import { ProductCard } from "./product-card";
+import { ProductSkeleton } from "./product-skeleton";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface SimilarProductsProps {
@@ -17,9 +18,16 @@ export function SimilarProducts({ currentProductId, category }: SimilarProductsP
     return (
       <div className="space-y-4">
         <h2 className="text-2xl font-light tracking-wide">Similar Products</h2>
-        <div className="h-[300px] flex items-center justify-center">
-          <p className="text-muted-foreground">Loading similar products...</p>
-        </div>
+        <ScrollArea className="w-full whitespace-nowrap">
+          <div className="flex w-full space-x-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="w-[300px] flex-none">
+                <ProductSkeleton />
+              </div>
+            ))}
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </div>
     );
   }

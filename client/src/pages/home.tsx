@@ -433,12 +433,12 @@ export default function Home() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-center text-zinc-400"
+                className="container"
               >
-                <Loader2 className="animate-spin h-8 w-8 mx-auto"/>
+                <ProductGrid products={[]} isLoading={true} />
               </motion.div>
             ) : (
-              <ProductGrid products={products.slice(0, 4)} />
+              <ProductGrid products={products.slice(0, 4)} isLoading={false} />
             )}
 
             <div className="mt-12 text-center">

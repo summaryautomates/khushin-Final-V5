@@ -288,7 +288,7 @@ export default function Products() {
                     Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
                   </p>
                 </div>
-                <ProductGrid products={filteredProducts} />
+                <ProductGrid products={filteredProducts} isLoading={isLoading} />
               </>
             ) : (
               <div className="text-center py-12">
