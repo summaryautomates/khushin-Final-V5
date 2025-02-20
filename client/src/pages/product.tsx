@@ -113,8 +113,29 @@ export default function ProductPage() {
       setIsCheckingOut(true);
       // First add to cart
       await addItem(product);
-      // Then redirect to cart page
-      setLocation("/cart");
+
+      // Create checkout session directly
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          items: [{
+            productId: product.id,
+            quantity: 1,
+          }],
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || "Checkout failed");
+      }
+
+      const { redirectUrl } = await response.json();
+      window.location.href = redirectUrl;
     } catch (error) {
       if (error instanceof Error && error.message === "AUTH_REQUIRED") {
         setPendingAction("buy-now");
