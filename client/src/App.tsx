@@ -31,49 +31,58 @@ import EventOrganizer from "@/pages/event-organizer";
 import ExpressDelivery from "@/pages/express-delivery";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
-// Update the WebSocket connection helper function
-const createWebSocketConnection = (wsUrl: string, maxRetries: number = 10) => {
+// Update the WebSocket connection helper function with better error handling
+const createWebSocketConnection = (wsUrl: string) => {
   let ws: WebSocket | null = null;
-  let reconnectAttempts = 0;
   let reconnectTimeout: NodeJS.Timeout | null = null;
   let isIntentionallyClosed = false;
+  let reconnectAttempts = 0;
+  const MAX_RECONNECT_ATTEMPTS = 5;
+  const INITIAL_RECONNECT_DELAY = 1000;
 
   const connect = () => {
-    if (isIntentionallyClosed) return;
-
-    // Clear any existing connection
-    if (ws) {
-      ws.close();
-      ws = null;
-    }
+    if (isIntentionallyClosed || reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) return;
 
     try {
       ws = new WebSocket(wsUrl);
 
       ws.addEventListener('open', () => {
         console.log('WebSocket connected successfully');
-        reconnectAttempts = 0; // Reset attempts on successful connection
-        if (reconnectTimeout) {
-          clearTimeout(reconnectTimeout);
-          reconnectTimeout = null;
+        reconnectAttempts = 0;
+      });
+
+      ws.addEventListener('message', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'welcome') {
+            console.log('Server welcome message:', data.message);
+          }
+        } catch (error) {
+          console.error('Error processing WebSocket message:', error);
         }
       });
 
-      ws.addEventListener('error', (event) => {
+      ws.addEventListener('close', (event) => {
         if (isIntentionallyClosed) return;
-        console.warn('WebSocket error:', event);
-        reconnectWithBackoff();
+
+        console.log('WebSocket closed with code:', event.code);
+        if (event.code === 1006) {
+          // Abnormal closure, attempt reconnect
+          reconnectWithBackoff();
+        }
       });
 
-      ws.addEventListener('close', () => {
-        if (isIntentionallyClosed) return;
-        console.log('WebSocket closed');
-        reconnectWithBackoff();
+      ws.addEventListener('error', (error) => {
+        console.error('WebSocket error:', error);
+        if (!isIntentionallyClosed) {
+          reconnectWithBackoff();
+        }
       });
     } catch (error) {
-      if (isIntentionallyClosed) return;
-      console.error('WebSocket connection error:', error);
-      reconnectWithBackoff();
+      console.error('Error creating WebSocket:', error);
+      if (!isIntentionallyClosed) {
+        reconnectWithBackoff();
+      }
     }
   };
 
@@ -82,10 +91,16 @@ const createWebSocketConnection = (wsUrl: string, maxRetries: number = 10) => {
       clearTimeout(reconnectTimeout);
     }
 
-    // Exponential backoff with max delay of 10 seconds
-    const delay = Math.min(1000 * Math.pow(1.5, reconnectAttempts), 10000);
-    reconnectTimeout = setTimeout(connect, delay);
-    reconnectAttempts++;
+    if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+      const delay = Math.min(INITIAL_RECONNECT_DELAY * Math.pow(2, reconnectAttempts), 10000);
+      console.log(`Attempting to reconnect in ${delay}ms (attempt ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
+      reconnectTimeout = setTimeout(() => {
+        reconnectAttempts++;
+        connect();
+      }, delay);
+    } else {
+      console.log('Max reconnection attempts reached');
+    }
   };
 
   return {
@@ -94,11 +109,9 @@ const createWebSocketConnection = (wsUrl: string, maxRetries: number = 10) => {
       isIntentionallyClosed = true;
       if (reconnectTimeout) {
         clearTimeout(reconnectTimeout);
-        reconnectTimeout = null;
       }
       if (ws) {
         ws.close();
-        ws = null;
       }
     }
   };
@@ -108,10 +121,9 @@ function App() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Handle WebSocket connection for HMR
     if (import.meta.env.DEV) {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.hostname}:${window.location.port}/ws`;
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
 
       const wsConnection = createWebSocketConnection(wsUrl);
       wsConnection.connect();

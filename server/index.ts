@@ -17,8 +17,8 @@ const server = createServer(app);
 app.use(cors({
   origin: true,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'WS', 'WSS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Upgrade', 'Connection'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // Basic health check endpoint
@@ -72,15 +72,12 @@ const startServer = async () => {
       throw error;
     }
 
-    // Setup WebSocket server with improved stability configuration
+    // Setup WebSocket server
     console.log('Setting up WebSocket server...');
     wss = new WebSocketServer({ 
       server,
       path: '/ws',
-      clientTracking: true,
-      perMessageDeflate: false,
-      maxPayload: 1024 * 1024,
-      handleProtocols: () => 'websocket'
+      perMessageDeflate: false
     });
 
     wss.on('error', (error) => {
@@ -88,8 +85,8 @@ const startServer = async () => {
     });
 
     // WebSocket connection handling
-    wss.on('connection', function(ws: ExtendedWebSocket) {
-      console.log('WebSocket client connected');
+    wss.on('connection', function(ws: ExtendedWebSocket, req) {
+      console.log('WebSocket client connected from:', req.socket.remoteAddress);
       ws.isAlive = true;
 
       ws.on('pong', () => {
@@ -97,22 +94,25 @@ const startServer = async () => {
       });
 
       ws.on('error', (error) => {
-        console.error('WebSocket error:', error);
-        ws.isAlive = false;
-        ws.terminate();
-      });
-
-      ws.on('close', () => {
-        console.log('WebSocket client disconnected');
+        console.error('WebSocket connection error:', error);
         ws.isAlive = false;
       });
 
-      // Send immediate ping to verify connection
-      ws.ping();
+      ws.on('close', (code, reason) => {
+        console.log('WebSocket client disconnected. Code:', code, 'Reason:', reason.toString());
+        ws.isAlive = false;
+      });
+
+      // Send immediate welcome message
+      try {
+        ws.send(JSON.stringify({ type: 'welcome', message: 'Connected to KHUSH.IN server' }));
+      } catch (error) {
+        console.error('Error sending welcome message:', error);
+      }
     });
 
-    // Implement ping/pong for connection health checks
-    const interval = setInterval(function() {
+    // Heartbeat mechanism
+    const heartbeat = setInterval(function() {
       if (!wss) return;
 
       const clients = wss.clients as Set<ExtendedWebSocket>;
@@ -122,59 +122,51 @@ const startServer = async () => {
           return ws.terminate();
         }
         ws.isAlive = false;
-        ws.ping(() => {});
+        ws.ping();
       });
     }, 30000);
 
     wss.on('close', () => {
-      clearInterval(interval);
+      clearInterval(heartbeat);
     });
 
-    // Start server with better error handling
+    // Start server
     server.listen(port, '0.0.0.0', () => {
       console.log(`Server running at http://0.0.0.0:${port}`);
-    }).on('error', (error) => {
-      console.error('Server startup error:', error);
-      cleanup();
-      process.exit(1);
     });
 
     // Handle graceful shutdown
-    process.on('SIGTERM', () => cleanup());
-    process.on('SIGINT', () => cleanup());
+    const cleanup = () => {
+      console.log('Cleaning up server resources...');
+      if (wss) {
+        wss.clients.forEach((client) => {
+          try {
+            (client as WebSocket).terminate();
+          } catch (error) {
+            console.error('Error terminating client:', error);
+          }
+        });
+        wss.close(() => {
+          console.log('WebSocket server closed');
+          server.close(() => {
+            console.log('HTTP server closed');
+            process.exit(0);
+          });
+        });
+      } else {
+        server.close(() => {
+          console.log('HTTP server closed');
+          process.exit(0);
+        });
+      }
+    };
+
+    process.on('SIGTERM', cleanup);
+    process.on('SIGINT', cleanup);
 
   } catch (error) {
     console.error('Critical server error:', error);
-    cleanup();
     process.exit(1);
-  }
-
-  // Cleanup function
-  function cleanup() {
-    console.log('Cleaning up server resources...');
-    if (wss) {
-      const clients = wss.clients as Set<ExtendedWebSocket>;
-      clients.forEach((client) => {
-        client.terminate();
-      });
-      wss.close(() => {
-        console.log('WebSocket server closed');
-        if (server) {
-          server.close(() => {
-            console.log('HTTP server closed');
-            portManager.releaseAll();
-          });
-        }
-      });
-      wss = null;
-    } else if (server) {
-      server.close(() => {
-        console.log('HTTP server closed');
-        portManager.releaseAll();
-      });
-    } else {
-      portManager.releaseAll();
-    }
   }
 };
 
