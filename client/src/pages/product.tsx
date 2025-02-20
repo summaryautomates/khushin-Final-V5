@@ -26,62 +26,65 @@ export default function ProductPage() {
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: [`/api/products/${id}`],
+    retry: 3,
+    staleTime: 60000,
   });
 
-  const defaultPlaceholder = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500";
+  const defaultPlaceholder = "/placeholder-product.svg"; // Use local placeholder image
 
   const getValidProductImage = (index: number) => {
-    if (
-      product?.images && 
-      Array.isArray(product.images) && 
-      product.images.length > index && 
-      !imageErrors[index]
-    ) {
-      return product.images[index];
+    if (!product?.images) return defaultPlaceholder;
+
+    const images = Array.isArray(product.images) ? product.images : [];
+    if (images.length > index && !imageErrors[index]) {
+      const image = images[index];
+      return image && typeof image === 'string' ? image : defaultPlaceholder;
     }
     return defaultPlaceholder;
   };
 
   useEffect(() => {
     if (product?.images) {
-      const initialLoadingStates = product.images.reduce((acc, _, index) => {
+      const images = Array.isArray(product.images) ? product.images : [];
+      const initialLoadingStates = images.reduce((acc, _, index) => {
         acc[index] = true;
         return acc;
       }, {} as Record<number, boolean>);
       setImageLoadingStates(initialLoadingStates);
       setImageErrors({});
-      setSelectedImage(0); // Reset selected image when product changes
+      setSelectedImage(0);
     }
   }, [product]);
 
   const handleImageError = (index: number) => {
-    console.log(`Image error at index ${index}`);
     setImageErrors(prev => ({ ...prev, [index]: true }));
     setImageLoadingStates(prev => ({ ...prev, [index]: false }));
 
-    // Try next image or use default
-    if (product && product.images.length > 1) {
-      const nextIndex = (index + 1) % product.images.length;
-      if (!imageErrors[nextIndex]) {
-        setSelectedImage(nextIndex);
-      } else {
-        // If all images failed, keep the current index but use placeholder
-        console.log("All product images failed to load, using placeholder");
+    if (product?.images && Array.isArray(product.images) && product.images.length > 1) {
+      // Try next non-errored image
+      let nextIndex = (index + 1) % product.images.length;
+      while (nextIndex !== index) {
+        if (!imageErrors[nextIndex]) {
+          setSelectedImage(nextIndex);
+          break;
+        }
+        nextIndex = (nextIndex + 1) % product.images.length;
       }
     }
   };
 
   const handleImageLoad = (index: number) => {
-    console.log(`Image loaded successfully at index ${index}`);
     setImageLoadingStates(prev => ({ ...prev, [index]: false }));
     setImageErrors(prev => ({ ...prev, [index]: false }));
   };
 
   const handleAddToCart = async () => {
+    if (!product) return;
+
     try {
-      await addItem(product!);
+      await addItem(product);
       toast({
-        description: `${product!.name} added to cart`,
+        description: `${product.name} added to cart`,
       });
     } catch (error) {
       if (error instanceof Error && error.message === "AUTH_REQUIRED") {
@@ -97,14 +100,28 @@ export default function ProductPage() {
   };
 
   const handleBuyNow = async () => {
+    if (!product) return;
+
     try {
-      await addItem(product!);
-      const response = await apiRequest("POST", "/api/direct-checkout", {
-        items: [{ productId: product!.id, quantity: 1 }],
+      await addItem(product);
+      // Use the apiRequest helper for consistent error handling
+      const response = await fetch('/api/direct-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items: [{ productId: product.id, quantity: 1 }],
+        }),
       });
-      const { redirectUrl } = await response.json();
-      if (redirectUrl) {
-        window.location.href = redirectUrl;
+
+      if (!response.ok) {
+        throw new Error('Checkout failed');
+      }
+
+      const data = await response.json();
+      if (data.redirectUrl) {
+        window.location.href = data.redirectUrl;
       }
     } catch (error) {
       if (error instanceof Error && error.message === "AUTH_REQUIRED") {
@@ -112,7 +129,6 @@ export default function ProductPage() {
         setIsAuthSheetOpen(true);
         return;
       }
-      console.error("Checkout error:", error);
       toast({
         variant: "destructive",
         title: "Checkout Failed",
@@ -134,7 +150,7 @@ export default function ProductPage() {
   if (isLoading) {
     return (
       <div className="container flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading product details...</div>
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -146,6 +162,8 @@ export default function ProductPage() {
       </div>
     );
   }
+
+  const images = Array.isArray(product.images) ? product.images : [];
 
   return (
     <>
@@ -170,15 +188,15 @@ export default function ProductPage() {
                 }}
               />
               {product.category === "lighters" && (
-                <div className="absolute inset-0 flex items-center justify-center bg-opacity-50">
+                <div className="absolute inset-0 flex items-center justify-center">
                   <ModelViewer modelUrl="/attached_assets/zippo_lighter.glb" />
                 </div>
               )}
             </div>
 
-            {product.images.length > 1 && (
+            {images.length > 1 && (
               <div className="grid grid-cols-4 gap-4 mt-4">
-                {product.images.map((_, i) => (
+                {images.map((_, i) => (
                   <div 
                     key={i} 
                     className={`aspect-square overflow-hidden rounded-lg border bg-zinc-100 cursor-pointer transition-all relative
@@ -220,7 +238,7 @@ export default function ProductPage() {
                 url={window.location.href}
                 title={product.name}
                 description={product.description}
-                image={product.images[0]}
+                image={getValidProductImage(0)}
               />
             </div>
 
