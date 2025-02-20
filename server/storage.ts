@@ -21,6 +21,10 @@ import {
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
 import { users, type User, type InsertUser } from "@shared/schema";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   // Products
@@ -35,14 +39,14 @@ export interface IStorage {
   // Contact messages
   createContactMessage(message: InsertContactMessage): Promise<ContactMessage>;
 
-  // New cart methods
+  // Cart methods
   getCartItems(userId: string): Promise<CartItem[]>;
   addCartItem(item: InsertCartItem): Promise<CartItem>;
   updateCartItemQuantity(userId: string, productId: number, quantity: number): Promise<void>;
   removeCartItem(userId: string, productId: number): Promise<void>;
   clearCart(userId: string): Promise<void>;
 
-  // New Order methods
+  // Order methods
   createOrder(order: InsertOrder): Promise<Order>;
   getOrder(orderRef: string): Promise<Order | undefined>;
   getOrdersByUserId(userId: string): Promise<Order[]>;
@@ -53,13 +57,28 @@ export interface IStorage {
   addOrderStatusHistory(history: InsertOrderStatusHistory): Promise<OrderStatusHistory>;
   getOrderStatusHistory(orderId: number): Promise<OrderStatusHistory[]>;
 
-  // Add these new user-related methods
+  // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+
+  // Session store
+  sessionStore: session.Store;
 }
 
 export class DatabaseStorage implements IStorage {
+  sessionStore: session.Store;
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({
+      conObject: {
+        connectionString: process.env.DATABASE_URL,
+        ssl: process.env.NODE_ENV === "production",
+      },
+      createTableIfMissing: true,
+    });
+  }
+
   async getProducts(): Promise<Product[]> {
     return await db.select().from(products);
   }
@@ -116,7 +135,6 @@ export class DatabaseStorage implements IStorage {
       );
 
     if (existingItem) {
-      // Update quantity instead
       const newQuantity = existingItem.quantity + item.quantity;
       if (newQuantity > 10) {
         throw new Error("Maximum quantity per item is 10");
@@ -130,7 +148,6 @@ export class DatabaseStorage implements IStorage {
       return updatedItem;
     }
 
-    // Insert new item
     const [cartItem] = await db
       .insert(cartItems)
       .values(item)
@@ -148,35 +165,15 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Maximum quantity per item is 10");
     }
 
-    const [existingItem] = await db
-      .select()
-      .from(cartItems)
+    await db
+      .update(cartItems)
+      .set({ quantity })
       .where(
         and(
           eq(cartItems.userId, userId),
           eq(cartItems.productId, productId)
         )
       );
-
-    if (!existingItem) {
-      // If item doesn't exist, create it
-      await db.insert(cartItems).values({
-        userId,
-        productId,
-        quantity,
-      });
-    } else {
-      // Update existing item
-      await db
-        .update(cartItems)
-        .set({ quantity: existingItem.quantity + 1 })
-        .where(
-          and(
-            eq(cartItems.userId, userId),
-            eq(cartItems.productId, productId)
-          )
-        );
-    }
   }
 
   async removeCartItem(userId: string, productId: number): Promise<void> {
@@ -194,37 +191,12 @@ export class DatabaseStorage implements IStorage {
     await db.delete(cartItems).where(eq(cartItems.userId, userId));
   }
 
-  // Order methods
   async createOrder(order: InsertOrder): Promise<Order> {
-    const orderData = {
-      orderRef: order.orderRef,
-      userId: order.userId,
-      status: order.status || 'pending',
-      total: order.total || 0,
-      items: order.items.map(item => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        price: 0, // This will be updated below
-        name: 'Unknown Product' // This will be updated below
-      })),
-      shipping: order.shipping,
-      trackingNumber: order.trackingNumber,
-      trackingStatus: order.trackingStatus,
-      estimatedDelivery: order.estimatedDelivery,
+    const [newOrder] = await db.insert(orders).values([{
+      ...order,
       createdAt: new Date(),
       lastUpdated: new Date()
-    };
-
-    // Update product details in items
-    for (const item of orderData.items) {
-      const product = await this.getProduct(item.productId);
-      if (product) {
-        item.price = product.price;
-        item.name = product.name;
-      }
-    }
-
-    const [newOrder] = await db.insert(orders).values(orderData).returning();
+    }]).returning();
     return newOrder;
   }
 
@@ -271,7 +243,6 @@ export class DatabaseStorage implements IStorage {
     return updatedOrder;
   }
 
-  // Order Status History methods
   async addOrderStatusHistory(history: InsertOrderStatusHistory): Promise<OrderStatusHistory> {
     const [newHistory] = await db.insert(orderStatusHistory).values(history).returning();
     return newHistory;
@@ -285,7 +256,6 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(orderStatusHistory.timestamp));
   }
 
-  // Add these new user-related method implementations
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
