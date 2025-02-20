@@ -41,8 +41,27 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });
 });
 
-// Basic request logging
+// Request rate limiting
+const requestCounts = new Map<string, { count: number; timestamp: number }>();
 app.use((req, res, next) => {
+  const ip = req.ip;
+  const now = Date.now();
+  const requestData = requestCounts.get(ip) || { count: 0, timestamp: now };
+  
+  // Reset counter after 1 minute
+  if (now - requestData.timestamp > 60000) {
+    requestData.count = 0;
+    requestData.timestamp = now;
+  }
+  
+  // Limit to 60 requests per minute
+  if (requestData.count > 60) {
+    return res.status(429).json({ error: 'Too many requests' });
+  }
+  
+  requestData.count++;
+  requestCounts.set(ip, requestData);
+
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;

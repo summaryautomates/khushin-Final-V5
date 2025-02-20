@@ -30,6 +30,16 @@ import ExpressDelivery from "@/pages/express-delivery";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
 function App() {
+  React.useEffect(() => {
+    const handler = (event: PromiseRejectionEvent) => {
+      event.preventDefault();
+      console.error('Unhandled rejection:', event.reason);
+    };
+    
+    window.addEventListener('unhandledrejection', handler);
+    return () => window.removeEventListener('unhandledrejection', handler);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
