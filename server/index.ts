@@ -3,6 +3,8 @@ import { createServer as createHttpServer } from "http";
 import { createServer as createViteServer, createLogger } from 'vite';
 import { portManager } from './port-manager';
 import { WebSocketServer } from 'ws';
+import { parse as parseCookie } from 'cookie';
+import session from 'express-session';
 
 const viteLogger = createLogger();
 
@@ -44,10 +46,52 @@ const startServer = async () => {
     // Create HTTP server first
     const server = createHttpServer(app);
 
+    // Session middleware configuration
+    const sessionMiddleware = session({
+      secret: process.env.SESSION_SECRET || 'development-secret-key',
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      }
+    });
+
+    app.use(sessionMiddleware);
+
     // Initialize WebSocket server with error handling
     globalWss = new WebSocketServer({ 
-      server,
+      noServer: true, // Important: Use noServer to handle upgrade manually
       clientTracking: true
+    });
+
+    // Handle WebSocket upgrade requests
+    server.on('upgrade', (request, socket, head) => {
+      const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
+
+      if (pathname === '/ws/orders') {
+        // Authenticate the WebSocket connection
+        const cookies = parseCookie(request.headers.cookie || '');
+        const sessionId = cookies['connect.sid'];
+
+        if (!sessionId) {
+          log('WebSocket connection rejected: No session ID', 'ws');
+          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+          socket.destroy();
+          return;
+        }
+
+        // Upgrade the connection
+        globalWss?.handleUpgrade(request, socket, head, (ws) => {
+          log('WebSocket connection upgraded successfully', 'ws');
+          globalWss?.emit('connection', ws, request);
+        });
+      } else {
+        // Reject non-websocket upgrade attempts
+        socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
+        socket.destroy();
+      }
     });
 
     globalWss.on('error', (error) => {

@@ -8,6 +8,7 @@ import { Footer } from "@/components/layout/footer";
 import { CartProvider } from "@/hooks/use-cart";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { AuthProvider } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 
 // Page imports
 import Home from "@/pages/home";
@@ -31,14 +32,25 @@ import ExpressDelivery from "@/pages/express-delivery";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
 function App() {
+  const { toast } = useToast();
+
   useEffect(() => {
     // Handle unhandled promise rejections globally
     const handler = (event: PromiseRejectionEvent) => {
       event.preventDefault();
       console.error('Unhandled rejection:', event.reason);
 
-      // Clear query cache on unhandled rejections to prevent stale data
-      queryClient.clear();
+      // Show a user-friendly error message
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+
+      // Only clear query cache if it's an authentication or network error
+      if (event.reason?.response?.status === 401 || event.reason?.message?.includes('network')) {
+        queryClient.clear();
+      }
     };
 
     window.addEventListener('unhandledrejection', handler);
@@ -46,7 +58,7 @@ function App() {
     return () => {
       window.removeEventListener('unhandledrejection', handler);
     };
-  }, []);
+  }, [toast]);
 
   return (
     <QueryClientProvider client={queryClient}>

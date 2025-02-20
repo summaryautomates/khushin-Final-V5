@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
-import { insertContactMessageSchema, insertReturnRequestSchema } from "@shared/schema";
+import { insertContactMessageSchema, insertReturnRequestSchema, insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { setupAuth } from "./auth";
@@ -11,61 +11,75 @@ import { globalWss } from "./index";
 // Custom interface for our WebSocket with order tracking
 interface OrderTrackingWebSocket extends WebSocket {
   orderRef?: string;
+  userId?: number;
+  isAuthenticated?: boolean;
 }
 
-const returnRequestSchema = z.object({
+const orderTrackingSchema = z.object({
+  type: z.literal('SUBSCRIBE_ORDER'),
   orderRef: z.string(),
-  reason: z.string().min(10, "Please provide a detailed reason"),
-  items: z.array(z.object({
-    productId: z.number(),
-    quantity: z.number().min(1, "Quantity must be at least 1"),
-    reason: z.string().min(1, "Item-specific reason is required")
-  })).min(1, "At least one item must be selected"),
-  additionalNotes: z.string().optional().nullable()
-});
-
-const shippingSchema = z.object({
-  fullName: z.string(),
-  address: z.string(),
-  city: z.string(),
-  state: z.string(),
-  pincode: z.string(),
-  phone: z.string(),
-});
-
-const paymentStatusSchema = z.object({
-  status: z.enum(['pending', 'completed', 'failed'])
-});
-
-// Storage for various data
-const paymentStore = new Map();
-const discountStore = new Map();
-const orderStore = new Map();
-const returnRequestStore = new Map<string, {
-  id: number,
-  orderRef: string,
-  reason: string,
-  status: 'pending' | 'approved' | 'rejected',
-  items: Array<{
-    productId: number,
-    quantity: number,
-    reason: string
-  }>,
-  additionalNotes?: string,
-  createdAt: string
-}>();
-
-// Add some sample discount codes
-discountStore.set('WELCOME10', {
-  code: 'WELCOME10',
-  discountPercent: 10,
-  validUntil: '2025-12-31',
-  isActive: true
+  auth: z.object({
+    userId: z.number(),
+    sessionId: z.string()
+  })
 });
 
 export async function registerRoutes(app: Express) {
   // Set up authentication first
   await setupAuth(app);
+
+  // WebSocket message handling
+  if (globalWss) {
+    globalWss.on('connection', (ws: OrderTrackingWebSocket, request) => {
+      ws.on('message', async (data) => {
+        try {
+          const message = JSON.parse(data.toString());
+          const validatedMessage = orderTrackingSchema.parse(message);
+
+          // Store tracking information on the socket
+          ws.orderRef = validatedMessage.orderRef;
+          ws.userId = validatedMessage.auth.userId;
+          ws.isAuthenticated = true;
+
+          // Send confirmation
+          ws.send(JSON.stringify({
+            type: 'SUBSCRIPTION_CONFIRMED',
+            orderRef: validatedMessage.orderRef,
+            timestamp: new Date().toISOString()
+          }));
+
+          // Send initial status if available
+          const order = orderStore.get(validatedMessage.orderRef);
+          if (order) {
+            ws.send(JSON.stringify({
+              type: 'ORDER_STATUS_UPDATE',
+              orderRef: order.orderRef,
+              status: order.trackingStatus,
+              timestamp: new Date().toISOString()
+            }));
+          }
+        } catch (error) {
+          console.error('WebSocket message error:', error);
+          ws.send(JSON.stringify({
+            type: 'ERROR',
+            message: 'Invalid message format or authentication',
+            timestamp: new Date().toISOString()
+          }));
+        }
+      });
+
+      ws.on('error', (error) => {
+        console.error('WebSocket client error:', error);
+      });
+
+      ws.on('close', () => {
+        console.log('WebSocket client disconnected:', {
+          orderRef: ws.orderRef,
+          userId: ws.userId
+        });
+      });
+    });
+  }
 
   // Basic routes setup
   app.get("/api/products", async (_req, res) => {
@@ -309,6 +323,56 @@ export async function registerRoutes(app: Express) {
         details: "Failed to update payment status"
       });
     }
+  });
+
+  const returnRequestSchema = z.object({
+    orderRef: z.string(),
+    reason: z.string().min(10, "Please provide a detailed reason"),
+    items: z.array(z.object({
+      productId: z.number(),
+      quantity: z.number().min(1, "Quantity must be at least 1"),
+      reason: z.string().min(1, "Item-specific reason is required")
+    })).min(1, "At least one item must be selected"),
+    additionalNotes: z.string().optional().nullable()
+  });
+
+  const shippingSchema = z.object({
+    fullName: z.string(),
+    address: z.string(),
+    city: z.string(),
+    state: z.string(),
+    pincode: z.string(),
+    phone: z.string(),
+  });
+
+  const paymentStatusSchema = z.object({
+    status: z.enum(['pending', 'completed', 'failed'])
+  });
+
+  // Storage for various data
+  const paymentStore = new Map();
+  const discountStore = new Map();
+  const orderStore = new Map();
+  const returnRequestStore = new Map<string, {
+    id: number,
+    orderRef: string,
+    reason: string,
+    status: 'pending' | 'approved' | 'rejected',
+    items: Array<{
+      productId: number,
+      quantity: number,
+      reason: string
+    }>,
+    additionalNotes?: string,
+    createdAt: string
+  }>();
+
+  // Add some sample discount codes
+  discountStore.set('WELCOME10', {
+    code: 'WELCOME10',
+    discountPercent: 10,
+    validUntil: '2025-12-31',
+    isActive: true
   });
 
   async function calculateSubtotal(items: Array<{ productId: number; quantity: number }>) {

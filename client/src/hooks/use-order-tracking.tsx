@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 
 interface OrderUpdate {
   type: 'ORDER_STATUS_UPDATE' | 'SUBSCRIPTION_CONFIRMED' | 'CONNECTED' | 'ERROR';
@@ -14,28 +15,39 @@ export function useOrderTracking(orderRef: string | null) {
   const [isConnected, setIsConnected] = useState(false);
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [reconnectAttempt, setReconnectAttempt] = useState(0);
+  const MAX_RECONNECT_ATTEMPTS = 5;
 
   const connect = useCallback(() => {
-    if (!orderRef) return;
+    if (!orderRef || !user) return;
 
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`;
-    console.log('Connecting to WebSocket:', wsUrl);
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/orders`;
+    console.log('Attempting WebSocket connection:', wsUrl);
 
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
       setIsConnected(true);
-      console.log('WebSocket connected');
-      // Subscribe to order updates
+      setReconnectAttempt(0);
+      console.log('WebSocket connected successfully');
+
+      // Send authentication and subscription in one message
       ws.send(JSON.stringify({
         type: 'SUBSCRIBE_ORDER',
-        orderRef
+        orderRef,
+        auth: {
+          userId: user.id,
+          sessionId: document.cookie.match(/connect\.sid=([^;]+)/)?.[1] || ''
+        }
       }));
     };
 
     ws.onmessage = (event) => {
       try {
         const update: OrderUpdate = JSON.parse(event.data);
+        console.log('Received WebSocket message:', update);
 
         switch (update.type) {
           case 'ORDER_STATUS_UPDATE':
@@ -61,6 +73,7 @@ export function useOrderTracking(orderRef: string | null) {
             break;
 
           case 'ERROR':
+            console.error('WebSocket error message:', update.message);
             toast({
               title: 'Error',
               description: update.message,
@@ -73,40 +86,52 @@ export function useOrderTracking(orderRef: string | null) {
       }
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
+      console.log('WebSocket closed:', event);
       setIsConnected(false);
       setSocket(null);
-      toast({
-        title: 'Disconnected',
-        description: 'Lost connection to order tracking service',
-        variant: 'destructive',
-      });
 
-      // Attempt to reconnect after 5 seconds
-      setTimeout(() => {
-        connect();
-      }, 5000);
+      if (!event.wasClean) {
+        toast({
+          title: 'Connection Lost',
+          description: 'Lost connection to order tracking service. Retrying...',
+          variant: 'destructive',
+        });
+
+        // Implement exponential backoff for reconnection
+        if (reconnectAttempt < MAX_RECONNECT_ATTEMPTS) {
+          const timeout = Math.min(1000 * Math.pow(2, reconnectAttempt), 10000);
+          setTimeout(() => {
+            setReconnectAttempt(prev => prev + 1);
+            connect();
+          }, timeout);
+        } else {
+          toast({
+            title: 'Connection Failed',
+            description: 'Unable to connect to order tracking service. Please refresh the page.',
+            variant: 'destructive',
+          });
+        }
+      }
     };
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
       toast({
         title: "Connection Error",
-        description: "Lost connection to order tracking. Retrying...",
+        description: "Error connecting to order tracking. Retrying...",
         variant: "destructive"
       });
-      // Reconnection handled in ws.onclose
     };
 
     setSocket(ws);
 
-    // Cleanup function
     return () => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.close();
       }
     };
-  }, [orderRef, toast]);
+  }, [orderRef, toast, user, reconnectAttempt]);
 
   useEffect(() => {
     const cleanup = connect();

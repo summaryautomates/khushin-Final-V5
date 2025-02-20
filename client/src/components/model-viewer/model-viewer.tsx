@@ -1,10 +1,15 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 
 interface ModelViewerProps {
   modelUrl: string;
+}
+
+interface LoadProgress {
+  loaded: number;
+  total: number;
 }
 
 export function ModelViewer({ modelUrl }: ModelViewerProps) {
@@ -49,7 +54,7 @@ export function ModelViewer({ modelUrl }: ModelViewerProps) {
 
     loader.load(
       modelUrl,
-      (gltf) => {
+      (gltf: GLTF) => {
         console.log('Model loaded successfully');
         scene.add(gltf.scene);
 
@@ -58,10 +63,10 @@ export function ModelViewer({ modelUrl }: ModelViewerProps) {
         const center = box.getCenter(new THREE.Vector3());
         gltf.scene.position.sub(center);
       },
-      (progress) => {
+      (progress: LoadProgress) => {
         console.log('Loading progress:', (progress.loaded / progress.total * 100) + '%');
       },
-      (error) => {
+      (error: Error) => {
         console.error('Error loading model:', error);
       }
     );
