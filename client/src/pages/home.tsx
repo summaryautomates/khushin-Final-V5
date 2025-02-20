@@ -59,7 +59,7 @@ export default function Home() {
         console.log("WebSocket closed with code:", event.code);
         wsRef.current = null;
         setIsConnecting(false);
-        
+
         // Only attempt reconnect if not a normal closure
         if (event.code !== 1000 && event.code !== 1001) {
           setTimeout(() => connectWebSocket(), RETRY_DELAY);
@@ -68,8 +68,14 @@ export default function Home() {
 
       ws.onerror = (error) => {
         console.error("WebSocket error:", error);
-        ws.close();
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.close();
+        }
       };
+
+    } catch (error) {
+      console.error("WebSocket connection error:", error);
+      setIsConnecting(false);
 
       if (wsRetryCount < MAX_RETRIES) {
         wsRetryCount++;
@@ -81,12 +87,7 @@ export default function Home() {
           variant: "destructive",
         });
       }
-    };
-
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
-      ws.close();
-    };
+    }
   };
 
   useEffect(() => {
@@ -172,10 +173,8 @@ export default function Home() {
 
       if (!workerRef.current) {
         workerRef.current = await createWorker({
-          logger: (progress: WorkerParams) => {
-            console.log('OCR Progress:', progress);
-          }
-        });
+          logger: m => console.log('OCR Progress:', m)
+        } as any); // Type assertion to bypass type checking for logger
       }
 
       const worker = workerRef.current;

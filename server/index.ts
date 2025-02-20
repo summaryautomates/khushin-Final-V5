@@ -80,13 +80,12 @@ const startServer = async () => {
       clientTracking: true,
       perMessageDeflate: false,
       maxPayload: 1024 * 1024,
+      handleProtocols: () => 'websocket'
     });
 
     // WebSocket connection handling
-    wss.on('connection', function(ws: ExtendedWebSocket, req) {
-      const clientIp = req.socket.remoteAddress;
-      console.log(`WebSocket client connected from ${clientIp}`);
-
+    wss.on('connection', function(ws: ExtendedWebSocket) {
+      console.log('WebSocket client connected');
       ws.isAlive = true;
 
       ws.on('pong', () => {
@@ -94,13 +93,13 @@ const startServer = async () => {
       });
 
       ws.on('error', (error) => {
-        console.error(`WebSocket error from ${clientIp}:`, error);
+        console.error('WebSocket error:', error);
         ws.isAlive = false;
         ws.terminate();
       });
 
       ws.on('close', () => {
-        console.log(`WebSocket client disconnected from ${clientIp}`);
+        console.log('WebSocket client disconnected');
         ws.isAlive = false;
       });
 
@@ -108,32 +107,7 @@ const startServer = async () => {
       ws.ping();
     });
 
-    // Handle upgrade requests with proper path checking
-    server.on('upgrade', (request, socket, head) => {
-      console.log(`Upgrade request received for path: ${request.url}`);
-
-      if (request.url !== '/ws') {
-        console.log(`Rejecting upgrade request for invalid path: ${request.url}`);
-        socket.destroy();
-        return;
-      }
-
-      // Prevent multiple upgrade attempts for the same socket
-      if ((socket as any).isUpgraded) {
-        console.log('Ignoring duplicate upgrade attempt for socket');
-        return;
-      }
-
-      console.log('Processing WebSocket upgrade request...');
-      (socket as any).isUpgraded = true;
-
-      wss!.handleUpgrade(request, socket, head, (ws) => {
-        console.log('WebSocket upgrade successful, emitting connection event');
-        wss!.emit('connection', ws, request);
-      });
-    });
-
-    // Implement ping/pong for connection health checks with proper type casting
+    // Implement ping/pong for connection health checks
     const interval = setInterval(function() {
       if (!wss) return;
 
