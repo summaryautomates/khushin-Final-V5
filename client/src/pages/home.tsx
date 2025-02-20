@@ -41,8 +41,11 @@ export default function Home() {
     if (!searchQuery) return [];
     const normalizedQuery = searchQuery.toLowerCase();
     return products
-      .map(p => p.name.toLowerCase())
-      .filter(name => name !== normalizedQuery && name.includes(normalizedQuery))
+      .map(p => p.name)
+      .filter(name => 
+        name.toLowerCase() !== normalizedQuery && 
+        name.toLowerCase().includes(normalizedQuery)
+      )
       .slice(0, 3);
   }, [searchQuery, products]);
 

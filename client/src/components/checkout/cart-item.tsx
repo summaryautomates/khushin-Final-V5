@@ -21,11 +21,13 @@ export function CartItem({
 }: CartItemProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Reset loading state when product changes
   useEffect(() => {
     setImageLoading(true);
     setImageError(false);
+    setCurrentImageIndex(0);
   }, [product.id]);
 
   const handleIncrement = () => {
@@ -46,12 +48,22 @@ export function CartItem({
     }
   };
 
+  const handleImageError = () => {
+    console.error('Failed to load image:', getProductImage());
+    // Try next image if available
+    if (currentImageIndex < product.images.length - 1) {
+      setCurrentImageIndex(prev => prev + 1);
+    } else {
+      setImageError(true);
+    }
+    setImageLoading(false);
+  };
+
   const getProductImage = () => {
-    if (Array.isArray(product.images) && product.images.length > 0 && !imageError) {
-      const primaryImage = product.images[0];
-      // Ensure the URL is valid and accessible
-      if (primaryImage && primaryImage.startsWith('http')) {
-        return primaryImage;
+    if (Array.isArray(product.images) && product.images.length > currentImageIndex && !imageError) {
+      const currentImage = product.images[currentImageIndex];
+      if (currentImage && (currentImage.startsWith('http') || currentImage.startsWith('/'))) {
+        return currentImage;
       }
     }
     return '/placeholder.jpg';  // Fallback image
@@ -71,11 +83,7 @@ export function CartItem({
             src={getProductImage()} 
             alt={product.name}
             className="w-full h-full object-cover"
-            onError={() => {
-              console.error('Failed to load image:', getProductImage());
-              setImageError(true);
-              setImageLoading(false);
-            }}
+            onError={handleImageError}
             onLoad={() => {
               console.log('Image loaded successfully:', getProductImage());
               setImageLoading(false);
