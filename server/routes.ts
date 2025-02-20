@@ -1,85 +1,12 @@
 import type { Express } from "express";
-import { createServer } from "http";
 import { storage } from "./storage";
-import { insertContactMessageSchema, insertReturnRequestSchema, insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { setupAuth } from "./auth";
-import { WebSocket } from 'ws';
-import { globalWss } from "./index";
-
-// Custom interface for our WebSocket with order tracking
-interface OrderTrackingWebSocket extends WebSocket {
-  orderRef?: string;
-  userId?: number;
-  isAuthenticated?: boolean;
-}
-
-const orderTrackingSchema = z.object({
-  type: z.literal('SUBSCRIBE_ORDER'),
-  orderRef: z.string(),
-  auth: z.object({
-    userId: z.number(),
-    sessionId: z.string()
-  })
-});
 
 export async function registerRoutes(app: Express) {
   // Set up authentication first
   await setupAuth(app);
-
-  // WebSocket message handling
-  if (globalWss) {
-    globalWss.on('connection', (ws: OrderTrackingWebSocket, request) => {
-      ws.on('message', async (data) => {
-        try {
-          const message = JSON.parse(data.toString());
-          const validatedMessage = orderTrackingSchema.parse(message);
-
-          // Store tracking information on the socket
-          ws.orderRef = validatedMessage.orderRef;
-          ws.userId = validatedMessage.auth.userId;
-          ws.isAuthenticated = true;
-
-          // Send confirmation
-          ws.send(JSON.stringify({
-            type: 'SUBSCRIPTION_CONFIRMED',
-            orderRef: validatedMessage.orderRef,
-            timestamp: new Date().toISOString()
-          }));
-
-          // Send initial status if available
-          const order = orderStore.get(validatedMessage.orderRef);
-          if (order) {
-            ws.send(JSON.stringify({
-              type: 'ORDER_STATUS_UPDATE',
-              orderRef: order.orderRef,
-              status: order.trackingStatus,
-              timestamp: new Date().toISOString()
-            }));
-          }
-        } catch (error) {
-          console.error('WebSocket message error:', error);
-          ws.send(JSON.stringify({
-            type: 'ERROR',
-            message: 'Invalid message format or authentication',
-            timestamp: new Date().toISOString()
-          }));
-        }
-      });
-
-      ws.on('error', (error) => {
-        console.error('WebSocket client error:', error);
-      });
-
-      ws.on('close', () => {
-        console.log('WebSocket client disconnected:', {
-          orderRef: ws.orderRef,
-          userId: ws.userId
-        });
-      });
-    });
-  }
 
   // Basic routes setup
   app.get("/api/products", async (_req, res) => {
@@ -92,301 +19,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  app.post("/api/checkout", async (req, res) => {
-    try {
-      const { items, shipping } = req.body;
-
-      if (!Array.isArray(items) || items.length === 0) {
-        return res.status(400).json({ message: "Invalid items array" });
-      }
-
-      const validatedShipping = shippingSchema.parse(shipping);
-
-      const subtotal = await calculateSubtotal(items);
-      const shippingCost = subtotal >= 5000 ? 0 : 299;
-      const total = subtotal + shippingCost;
-
-      const orderRef = `ORD${Date.now()}${Math.random().toString(36).substring(2, 7)}`;
-
-      const paymentDetails = {
-        orderRef,
-        upiId: process.env.MERCHANT_UPI_ID || 'merchant@upi',
-        merchantName: 'KHUSH.IN',
-        amount: total
-      };
-
-      paymentStore.set(orderRef, {
-        status: 'pending',
-        details: paymentDetails
-      });
-
-      const orderItems = await Promise.all(items.map(async (item) => {
-        const product = await storage.getProduct(item.productId);
-        return {
-          productId: item.productId,
-          quantity: item.quantity,
-          price: product?.price || 0,
-          name: product?.name || 'Unknown Product'
-        };
-      }));
-
-      orderStore.set(orderRef, {
-        orderRef,
-        status: 'pending',
-        total,
-        items: orderItems,
-        shipping: validatedShipping,
-        createdAt: new Date().toISOString(),
-        trackingNumber: `TRK${Date.now()}${Math.random().toString(36).substring(2, 5)}`,
-        trackingStatus: 'Order Confirmed',
-        estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days from now
-      });
-
-      res.json({
-        orderRef,
-        total,
-        redirectUrl: `/checkout/payment?ref=${orderRef}`
-      });
-    } catch (error) {
-      console.error('Checkout error:', error);
-      res.status(500).json({ message: 'Error creating checkout session' });
-    }
-  });
-
-  app.post("/api/direct-checkout", async (req, res) => {
-    try {
-      const { items } = req.body;
-
-      if (!Array.isArray(items) || items.length === 0) {
-        return res.status(400).json({ message: "Invalid items array" });
-      }
-
-      const subtotal = await calculateSubtotal(items);
-      const shippingCost = subtotal >= 5000 ? 0 : 299;
-      const total = subtotal + shippingCost;
-
-      const orderRef = `ORD${Date.now()}${Math.random().toString(36).substring(2, 7)}`;
-
-      const paymentDetails = {
-        orderRef,
-        upiId: process.env.MERCHANT_UPI_ID || 'merchant@upi',
-        merchantName: 'KHUSH.IN',
-        amount: total
-      };
-
-      paymentStore.set(orderRef, {
-        status: 'pending',
-        details: paymentDetails
-      });
-
-      const orderItems = await Promise.all(items.map(async (item) => {
-        const product = await storage.getProduct(item.productId);
-        return {
-          productId: item.productId,
-          quantity: item.quantity,
-          price: product?.price || 0,
-          name: product?.name || 'Unknown Product'
-        };
-      }));
-
-      // For direct checkout, we'll create a minimal shipping entry
-      const defaultShipping = {
-        fullName: '',
-        address: '',
-        city: '',
-        state: '',
-        pincode: '',
-        phone: ''
-      };
-
-      orderStore.set(orderRef, {
-        orderRef,
-        status: 'pending',
-        total,
-        items: orderItems,
-        shipping: defaultShipping,
-        createdAt: new Date().toISOString(),
-        trackingNumber: `TRK${Date.now()}${Math.random().toString(36).substring(2, 5)}`,
-        trackingStatus: 'Order Confirmed',
-        estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days from now
-      });
-
-      res.json({
-        orderRef,
-        total,
-        redirectUrl: `/checkout/payment?ref=${orderRef}`
-      });
-    } catch (error) {
-      console.error('Direct checkout error:', error);
-      res.status(500).json({ message: 'Error creating checkout session' });
-    }
-  });
-
-  app.get("/api/payment/:orderRef", (req, res) => {
-    const { orderRef } = req.params;
-    const payment = paymentStore.get(orderRef);
-
-    if (!payment) {
-      return res.status(404).json({ message: "Payment not found" });
-    }
-
-    res.json({
-      status: payment.status,
-      ...payment.details
-    });
-  });
-
-  // Update payment status endpoint with better validation and error handling
-  app.post("/api/payment/:orderRef/status", (req, res) => {
-    try {
-      const { orderRef } = req.params;
-      const validatedBody = paymentStatusSchema.parse(req.body);
-      const { method = 'upi' } = req.body;
-
-      const payment = paymentStore.get(orderRef);
-      const order = orderStore.get(orderRef);
-
-      if (!payment || !order) {
-        return res.status(404).json({
-          message: "Order not found",
-          details: "The specified order reference could not be found"
-        });
-      }
-
-      // Validate state transitions
-      if (payment.status === 'completed' && validatedBody.status !== 'completed') {
-        return res.status(400).json({
-          message: "Invalid status transition",
-          details: "Cannot change status of a completed payment"
-        });
-      }
-
-      if (payment.status === 'failed' && validatedBody.status !== 'pending') {
-        return res.status(400).json({
-          message: "Invalid status transition",
-          details: "Failed payments can only be retried with pending status"
-        });
-      }
-
-      payment.status = validatedBody.status;
-      order.status = validatedBody.status;
-
-      // Add tracking information when payment is completed
-      if (validatedBody.status === 'completed') {
-        const trackingNumber = `TRK${Date.now()}${Math.random().toString(36).substring(2, 5)}`;
-        const estimatedDelivery = new Date();
-        estimatedDelivery.setDate(estimatedDelivery.getDate() + 3); // Delivery in 3 days
-
-        order.trackingNumber = trackingNumber;
-        order.trackingStatus = 'Order Confirmed';
-        order.estimatedDelivery = estimatedDelivery.toISOString();
-
-        // Notify connected WebSocket clients
-        if (globalWss) {
-          globalWss.clients.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-              const orderTrackingClient = client as OrderTrackingWebSocket;
-              if (orderTrackingClient.orderRef === orderRef) {
-                client.send(JSON.stringify({
-                  type: 'ORDER_STATUS_UPDATE',
-                  orderRef,
-                  status: order.trackingStatus,
-                  timestamp: new Date().toISOString()
-                }));
-              }
-            }
-          });
-        }
-      }
-
-      paymentStore.set(orderRef, payment);
-      orderStore.set(orderRef, order);
-
-      res.json({
-        status: validatedBody.status,
-        orderRef,
-        trackingNumber: order.trackingNumber,
-        trackingStatus: order.trackingStatus,
-        estimatedDelivery: order.estimatedDelivery,
-        updated: new Date().toISOString()
-      });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          message: "Invalid input",
-          details: fromZodError(error).message
-        });
-      }
-      console.error('Payment status update error:', error);
-      res.status(500).json({
-        message: "Internal server error",
-        details: "Failed to update payment status"
-      });
-    }
-  });
-
-  const returnRequestSchema = z.object({
-    orderRef: z.string(),
-    reason: z.string().min(10, "Please provide a detailed reason"),
-    items: z.array(z.object({
-      productId: z.number(),
-      quantity: z.number().min(1, "Quantity must be at least 1"),
-      reason: z.string().min(1, "Item-specific reason is required")
-    })).min(1, "At least one item must be selected"),
-    additionalNotes: z.string().optional().nullable()
-  });
-
-  const shippingSchema = z.object({
-    fullName: z.string(),
-    address: z.string(),
-    city: z.string(),
-    state: z.string(),
-    pincode: z.string(),
-    phone: z.string(),
-  });
-
-  const paymentStatusSchema = z.object({
-    status: z.enum(['pending', 'completed', 'failed'])
-  });
-
-  // Storage for various data
-  const paymentStore = new Map();
-  const discountStore = new Map();
-  const orderStore = new Map();
-  const returnRequestStore = new Map<string, {
-    id: number,
-    orderRef: string,
-    reason: string,
-    status: 'pending' | 'approved' | 'rejected',
-    items: Array<{
-      productId: number,
-      quantity: number,
-      reason: string
-    }>,
-    additionalNotes?: string,
-    createdAt: string
-  }>();
-
-  // Add some sample discount codes
-  discountStore.set('WELCOME10', {
-    code: 'WELCOME10',
-    discountPercent: 10,
-    validUntil: '2025-12-31',
-    isActive: true
-  });
-
-  async function calculateSubtotal(items: Array<{ productId: number; quantity: number }>) {
-    let subtotal = 0;
-    for (const item of items) {
-      const product = await storage.getProduct(item.productId);
-      if (product) {
-        subtotal += product.price * item.quantity;
-      }
-    }
-    return subtotal;
-  }
-
-  app.get("/api/products/:id", async (req: any, res: any) => {
+  app.get("/api/products/:id", async (req, res) => {
     try {
       const id = Number(req.params.id);
       if (isNaN(id) || id < 1) {
@@ -411,6 +44,148 @@ export async function registerRoutes(app: Express) {
       });
     }
   });
+
+  // Cart Routes
+  app.get("/api/cart", async (req, res) => {
+    try {
+      const userId = req.headers['x-user-id'];
+      if (!userId) {
+        return res.status(401).json({
+          message: "Unauthorized",
+          details: "User ID is required"
+        });
+      }
+
+      const cartItems = await storage.getCartItems(userId.toString());
+      const cartWithProducts = await Promise.all(
+        cartItems.map(async (item) => {
+          const product = await storage.getProduct(item.productId);
+          return {
+            product,
+            quantity: item.quantity
+          };
+        })
+      );
+
+      res.json(cartWithProducts.filter(item => item.product !== undefined));
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+      res.status(500).json({
+        message: "Failed to fetch cart",
+        details: "An error occurred while retrieving the cart items"
+      });
+    }
+  });
+
+  app.post("/api/cart", async (req, res) => {
+    try {
+      const userId = req.headers['x-user-id'];
+      if (!userId) {
+        return res.status(401).json({
+          message: "Unauthorized",
+          details: "User ID is required"
+        });
+      }
+
+      const { productId, quantity = 1 } = req.body;
+      const product = await storage.getProduct(productId);
+
+      if (!product) {
+        return res.status(404).json({
+          message: "Product not found",
+          details: "The requested product does not exist"
+        });
+      }
+
+      await storage.addCartItem({
+        userId: userId.toString(),
+        productId,
+        quantity,
+        giftWrapType: null,
+        giftWrapCost: 0
+      });
+
+      const cartItems = await storage.getCartItems(userId.toString());
+      const cartWithProducts = await Promise.all(
+        cartItems.map(async (item) => {
+          const product = await storage.getProduct(item.productId);
+          return {
+            product,
+            quantity: item.quantity
+          };
+        })
+      );
+
+      res.json(cartWithProducts.filter(item => item.product !== undefined));
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      res.status(500).json({
+        message: "Failed to add item to cart",
+        details: error instanceof Error ? error.message : "Unknown error occurred"
+      });
+    }
+  });
+
+  app.delete("/api/cart/:productId", async (req, res) => {
+    try {
+      const userId = req.headers['x-user-id'];
+      if (!userId) {
+        return res.status(401).json({
+          message: "Unauthorized",
+          details: "User ID is required"
+        });
+      }
+
+      const productId = parseInt(req.params.productId);
+      if (isNaN(productId)) {
+        return res.status(400).json({
+          message: "Invalid product ID",
+          details: "Product ID must be a number"
+        });
+      }
+
+      await storage.removeCartItem(userId.toString(), productId);
+      const cartItems = await storage.getCartItems(userId.toString());
+      const cartWithProducts = await Promise.all(
+        cartItems.map(async (item) => {
+          const product = await storage.getProduct(item.productId);
+          return {
+            product,
+            quantity: item.quantity
+          };
+        })
+      );
+
+      res.json(cartWithProducts.filter(item => item.product !== undefined));
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+      res.status(500).json({
+        message: "Failed to remove item from cart",
+        details: error instanceof Error ? error.message : "Unknown error occurred"
+      });
+    }
+  });
+
+  app.delete("/api/cart", async (req, res) => {
+    try {
+      const userId = req.headers['x-user-id'];
+      if (!userId) {
+        return res.status(401).json({
+          message: "Unauthorized",
+          details: "User ID is required"
+        });
+      }
+      await storage.clearCart(userId.toString());
+      res.json([]);
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      res.status(500).json({
+        message: "Failed to clear cart",
+        details: "An error occurred while clearing the cart"
+      });
+    }
+  });
+
 
   app.get("/api/products/category/:category", async (req: any, res: any) => {
     try {
@@ -462,7 +237,6 @@ export async function registerRoutes(app: Express) {
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     ));
   });
-
 
   // Create a return request
   app.post("/api/returns", async (req, res) => {
@@ -548,156 +322,6 @@ export async function registerRoutes(app: Express) {
     returnRequestStore.set(id, returnRequest);
 
     res.json(returnRequest);
-  });
-
-  // Cart Routes (UPDATED)
-  app.get("/api/cart", async (req, res) => {
-    try {
-      const userId = req.headers['x-user-id'];
-      if (!userId) {
-        return res.status(401).json({
-          message: "Unauthorized",
-          details: "User ID is required"
-        });
-      }
-
-      const cartItems = await storage.getCartItems(userId.toString());
-
-      // Get product details for each cart item
-      const cartWithProducts = await Promise.all(
-        cartItems.map(async (item) => {
-          const product = await storage.getProduct(item.productId);
-          return {
-            product,
-            quantity: item.quantity
-          };
-        })
-      );
-
-      res.json(cartWithProducts.filter(item => item.product !== undefined));
-    } catch (error) {
-      console.error('Error fetching cart:', error);
-      res.status(500).json({
-        message: "Failed to fetch cart",
-        details: "An error occurred while retrieving the cart items"
-      });
-    }
-  });
-
-  app.post("/api/cart", async (req, res) => {
-    try {
-      const userId = req.headers['x-user-id'];
-      if (!userId) {
-        return res.status(401).json({
-          message: "Unauthorized",
-          details: "User ID is required"
-        });
-      }
-
-      const { productId, quantity = 1 } = req.body;
-
-      // Validate the product exists
-      const product = await storage.getProduct(productId);
-      if (!product) {
-        return res.status(404).json({
-          message: "Product not found",
-          details: "The requested product does not exist"
-        });
-      }
-
-      // Add item to cart
-      await storage.addCartItem({
-        userId: userId.toString(),
-        productId,
-        quantity,
-        giftWrapType: null,
-        giftWrapCost: 0
-      });
-
-      // Get updated cart
-      const cartItems = await storage.getCartItems(userId.toString());
-      const cartWithProducts = await Promise.all(
-        cartItems.map(async (item) => {
-          const product = await storage.getProduct(item.productId);
-          return {
-            product,
-            quantity: item.quantity
-          };
-        })
-      );
-
-      res.json(cartWithProducts.filter(item => item.product !== undefined));
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-      res.status(500).json({
-        message: "Failed to add item to cart",
-        details: errorMessage
-      });
-    }
-  });
-
-  app.delete("/api/cart/:productId", async (req, res) => {
-    try {
-      const userId = req.headers['x-user-id'];
-      if (!userId) {
-        return res.status(401).json({
-          message: "Unauthorized",
-          details: "User ID is required"
-        });
-      }
-
-      const productId = parseInt(req.params.productId);
-      if (isNaN(productId)) {
-        return res.status(400).json({
-          message: "Invalid product ID",
-          details: "Product ID must be a number"
-        });
-      }
-
-      await storage.removeCartItem(userId.toString(), productId);
-
-      // Get updated cart
-      const cartItems = await storage.getCartItems(userId.toString());
-      const cartWithProducts = await Promise.all(
-        cartItems.map(async (item) => {
-          const product = await storage.getProduct(item.productId);
-          return {
-            product,
-            quantity: item.quantity
-          };
-        })
-      );
-
-      res.json(cartWithProducts.filter(item => item.product !== undefined));
-    } catch (error) {
-      console.error('Error removing from cart:', error);
-      res.status(500).json({
-        message: "Failed to remove item from cart",
-        details: error.message
-      });
-    }
-  });
-
-
-  app.delete("/api/cart", async (req, res) => {
-    try {
-      const userId = req.headers['x-user-id'];
-      if (!userId) {
-        return res.status(401).json({
-          message: "Unauthorized",
-          details: "User ID is required"
-        });
-      }
-      await storage.clearCart(userId.toString());
-      res.json([]);
-    } catch (error) {
-      console.error('Error clearing cart:', error);
-      res.status(500).json({
-        message: "Failed to clear cart",
-        details: "An error occurred while clearing the cart"
-      });
-    }
   });
 
   // Enhanced order endpoints
@@ -795,26 +419,6 @@ export async function registerRoutes(app: Express) {
         description
       });
 
-      // Notify connected clients about the status update
-      const statusUpdate = {
-        type: 'ORDER_STATUS_UPDATE',
-        orderRef,
-        status,
-        timestamp: new Date().toISOString()
-      };
-
-      if (globalWss) {
-        globalWss.clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN) {
-            const orderTrackingClient = client as OrderTrackingWebSocket;
-            // Only send updates to clients subscribed to this order
-            if (orderTrackingClient.orderRef === orderRef) {
-              client.send(JSON.stringify(statusUpdate));
-            }
-          }
-        });
-      }
-
       res.json(order);
     } catch (error) {
       console.error('Order status update error:', error);
@@ -825,74 +429,86 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Add a test endpoint to update order status
-  app.post("/api/orders/:orderRef/test-update", async (req, res) => {
-    try {
-      const { orderRef } = req.params;
-      const order = orderStore.get(orderRef);
+  const returnRequestSchema = z.object({
+    orderRef: z.string(),
+    reason: z.string().min(10, "Please provide a detailed reason"),
+    items: z.array(z.object({
+      productId: z.number(),
+      quantity: z.number().min(1, "Quantity must be at least 1"),
+      reason: z.string().min(1, "Item-specific reason is required")
+    })).min(1, "At least one item must be selected"),
+    additionalNotes: z.string().optional().nullable()
+  });
 
-      if (!order) {
-        return res.status(404).json({
-          message: "Order not found",
-          details: "The specified order reference could not be found"
-        });
+  const insertContactMessageSchema = z.object({
+    name: z.string().min(1),
+    email: z.string().email(),
+    message: z.string().min(10)
+  });
+
+
+  const insertOrderSchema = z.object({
+    userId: z.string(),
+    items: z.array(z.object({
+      productId: z.number(),
+      quantity: z.number().min(1)
+    })),
+    shipping: z.object({
+      fullName: z.string(),
+      address: z.string(),
+      city: z.string(),
+      state: z.string(),
+      pincode: z.string(),
+      phone: z.string()
+    }),
+    payment: z.object({
+      method: z.string(),
+      status: z.string()
+    }),
+    discountCode: z.string().optional().nullable()
+  });
+
+  const paymentStatusSchema = z.object({
+    status: z.enum(['pending', 'completed', 'failed'])
+  });
+
+
+  // Storage for various data
+  const paymentStore = new Map();
+  const discountStore = new Map();
+  const orderStore = new Map();
+  const returnRequestStore = new Map<string, {
+    id: number,
+    orderRef: string,
+    reason: string,
+    status: 'pending' | 'approved' | 'rejected',
+    items: Array<{
+      productId: number,
+      quantity: number,
+      reason: string
+    }>,
+    additionalNotes?: string,
+    createdAt: string
+  }>();
+
+  // Add some sample discount codes
+  discountStore.set('WELCOME10', {
+    code: 'WELCOME10',
+    discountPercent: 10,
+    validUntil: '2025-12-31',
+    isActive: true
+  });
+
+  async function calculateSubtotal(items: Array<{ productId: number; quantity: number }>) {
+    let subtotal = 0;
+    for (const item of items) {
+      const product = await storage.getProduct(item.productId);
+      if (product) {
+        subtotal += product.price * item.quantity;
       }
-
-      // Update tracking status
-      order.trackingStatus = "Out for Delivery";
-      order.estimatedDelivery = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // Tomorrow
-      orderStore.set(orderRef, order);
-
-      // Broadcast update to WebSocket clients
-      const statusUpdate = {
-        type: 'ORDER_STATUS_UPDATE',
-        orderRef,
-        status: order.trackingStatus,
-        timestamp: new Date().toISOString()
-      };
-
-      if (globalWss) {
-        globalWss.clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN) {
-            const orderTrackingClient = client as OrderTrackingWebSocket;
-            if (orderTrackingClient.orderRef === orderRef) {
-              client.send(JSON.stringify(statusUpdate));
-            }
-          }
-        });
-      }
-
-      res.json(order);
-    } catch (error) {
-      console.error('Test update error:', error);
-      res.status(500).json({
-        message: "Failed to update order status",
-        details: "An error occurred while updating the test status"
-      });
     }
-  });
+    return subtotal;
+  }
 
-  // Test endpoint to get all orders from store
-  app.get("/api/orders/debug", (_req, res) => {
-    const orders = Array.from(orderStore.values());
-    res.json(orders);
-  });
-
-  // Update existing orders with tracking info
-  app.post("/api/orders/debug/update-tracking", (_req, res) => {
-    orderStore.forEach((order, orderRef) => {
-      if (!order.trackingNumber) {
-        order.trackingNumber = `TRK${Date.now()}${Math.random().toString(36).substring(2, 5)}`;
-        order.trackingStatus = 'Order Confirmed';
-        const estimatedDelivery = new Date();
-        estimatedDelivery.setDate(estimatedDelivery.getDate() + 3);
-        order.estimatedDelivery = estimatedDelivery.toISOString();
-        orderStore.set(orderRef, order);
-      }
-    });
-
-    res.json({ message: "Orders updated with tracking information" });
-  });
-
-  return createServer(app);
+  return app;
 }

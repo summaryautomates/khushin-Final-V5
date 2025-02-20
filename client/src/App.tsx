@@ -35,29 +35,31 @@ function App() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Handle unhandled promise rejections globally
+    // Only handle critical errors
     const handler = (event: PromiseRejectionEvent) => {
       event.preventDefault();
-      console.error('Unhandled rejection:', event.reason);
+      console.error('Critical error:', event.reason);
 
-      // Show a user-friendly error message
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
-
-      // Only clear query cache if it's an authentication or network error
-      if (event.reason?.response?.status === 401 || event.reason?.message?.includes('network')) {
+      if (event.reason?.response?.status === 401) {
+        // Handle authentication errors specifically
+        toast({
+          title: "Authentication Error",
+          description: "Please log in to continue.",
+          variant: "destructive",
+        });
         queryClient.clear();
+      } else {
+        // Handle other critical errors
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+        });
       }
     };
 
     window.addEventListener('unhandledrejection', handler);
-
-    return () => {
-      window.removeEventListener('unhandledrejection', handler);
-    };
+    return () => window.removeEventListener('unhandledrejection', handler);
   }, [toast]);
 
   return (
@@ -124,9 +126,7 @@ function App() {
               </main>
               <Footer />
             </div>
-            <ErrorBoundary>
-              <Toaster />
-            </ErrorBoundary>
+            <Toaster />
           </CartProvider>
         </AuthProvider>
       </ErrorBoundary>
