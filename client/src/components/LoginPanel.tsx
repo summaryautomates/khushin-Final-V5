@@ -46,8 +46,11 @@ export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
       onClose()
       setLocation("/") // Redirect to home after successful login
     } catch (error) {
-      // Error is already handled by the mutation
-      console.error("Login error:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to login",
+        variant: "destructive"
+      });
     }
   }
 
@@ -61,29 +64,25 @@ export function LoginPanel({ isOpen, onClose }: LoginPanelProps) {
       <DialogContent 
         className="sm:max-w-[425px] h-[100dvh] sm:h-auto overflow-y-auto fixed right-0 top-0 sm:relative sm:right-auto sm:top-auto sm:rounded-lg bg-gradient-to-br from-background/95 via-background/98 to-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 border-0 sm:border"
       >
-        <DialogTitle className="sr-only">Login to your account</DialogTitle>
-        <DialogDescription className="sr-only">
-          Enter your username and password to access your KHUSH.IN account
+        <DialogTitle className="text-2xl font-light tracking-tight">
+          LOGIN
+        </DialogTitle>
+        <DialogDescription>
+          Please sign in to continue
         </DialogDescription>
 
-        <div className="flex justify-between items-center mb-8">
-          <div className="space-y-1.5">
-            <h2 className="text-2xl font-light tracking-tight">LOGIN</h2>
-            <p className="text-sm text-muted-foreground">Please sign in to continue</p>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={onClose} 
-            className="hover:bg-background/80 transition-colors duration-200" 
-            aria-label="Close login panel"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onClose} 
+          className="absolute right-4 top-4 hover:bg-background/80 transition-colors duration-200" 
+          aria-label="Close login panel"
+        >
+          <X className="h-4 w-4" />
+        </Button>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
             <FormField
               control={form.control}
               name="username"

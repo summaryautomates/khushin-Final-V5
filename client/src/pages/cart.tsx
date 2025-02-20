@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   type ShippingFormData,
   ShippingForm,
@@ -33,7 +33,18 @@ export default function Cart() {
   const [shippingData, setShippingData] = useState<ShippingFormData | null>(null);
 
   const { toast } = useToast();
-  const { items, total, updateQuantity, removeItem, isLoading, pendingUpdates } = useCart();
+  const { items, total, updateQuantity, removeItem, isLoading, pendingUpdates, error } = useCart();
+
+  // Show error toast if cart loading fails
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load cart items. Please try refreshing the page.",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
 
   const handleUpdateQuantity = async (productId: number, quantity: number) => {
     try {
@@ -116,7 +127,10 @@ export default function Cart() {
     try {
       const response = await fetch("/api/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify({
           items: items.map((item) => ({
             productId: item.product.id,
@@ -131,7 +145,8 @@ export default function Cart() {
       });
 
       if (!response.ok) {
-        throw new Error("Checkout failed");
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || "Checkout failed");
       }
 
       const { redirectUrl } = await response.json();
@@ -140,7 +155,7 @@ export default function Cart() {
       console.error("Checkout error:", error);
       toast({
         title: "Checkout Error",
-        description: "An error occurred during checkout. Please try again.",
+        description: error instanceof Error ? error.message : "An error occurred during checkout. Please try again.",
         variant: "destructive",
       });
     } finally {

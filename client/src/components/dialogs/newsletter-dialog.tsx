@@ -34,28 +34,30 @@ export function NewsletterDialog() {
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
-      toast({
-        title: "Email Required",
-        description: "Please enter your email address.",
-        variant: "destructive",
-      });
-      return;
-    }
 
-    if (!validateEmail(email)) {
-      toast({
-        title: "Invalid Email",
-        description: "Please enter a valid email address.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
     try {
-      // API call would go here
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated API delay
+      if (!email) {
+        throw new Error("Please enter your email address.");
+      }
+
+      if (!validateEmail(email)) {
+        throw new Error("Please enter a valid email address.");
+      }
+
+      setIsLoading(true);
+
+      const response = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Subscription failed. Please try again later.');
+      }
+
       toast({
         title: "Thanks for subscribing!",
         description: "You'll receive your 10% discount code via email shortly.",
@@ -64,7 +66,7 @@ export function NewsletterDialog() {
     } catch (error) {
       toast({
         title: "Subscription Failed",
-        description: "Unable to subscribe at this time. Please try again later.",
+        description: error instanceof Error ? error.message : "Unable to subscribe at this time. Please try again later.",
         variant: "destructive",
       });
     } finally {
@@ -76,12 +78,12 @@ export function NewsletterDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent 
         className="sm:max-w-[425px] h-auto overflow-y-auto sm:rounded-lg bg-gradient-to-br from-background/95 via-background/98 to-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 border border-primary/20"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="newsletter-dialog-title"
-        aria-describedby="newsletter-dialog-description"
       >
         <div className="relative p-6">
+          <DialogTitle className="text-3xl font-light tracking-tight text-center">
+            Special Offer
+          </DialogTitle>
+
           <Button 
             variant="ghost" 
             size="icon" 
@@ -94,10 +96,8 @@ export function NewsletterDialog() {
 
           <div className="text-center space-y-4">
             <Sparkles className="w-8 h-8 mx-auto text-primary animate-pulse" aria-hidden="true" />
-            <DialogTitle id="newsletter-dialog-title" className="text-3xl font-light tracking-tight">
-              Special Offer
-            </DialogTitle>
-            <DialogDescription id="newsletter-dialog-description">
+
+            <DialogDescription className="text-base">
               Subscribe to our newsletter and get 10% off your first purchase!
             </DialogDescription>
 

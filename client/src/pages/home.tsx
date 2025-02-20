@@ -7,48 +7,82 @@ import { ProductGrid } from "@/components/products/product-grid";
 import type { Product } from "@shared/schema";
 import { Input } from "@/components/ui/input";
 import {
-  Heart,
-  Search,
-  Gift,
   Star,
   Clock,
-  DollarSign,
-  Filter,
+  Calendar,
   Mic,
   Camera,
-  Sparkles,
-  ShieldCheck,
-  Truck,
-  CreditCard,
-  Phone,
-  Mail,
-  Instagram,
-  Facebook,
-  Twitter,
-  Youtube,
-  Lock,
-  Award,
-  Smile,
-  ThumbsUp,
-  Users,
-  Calendar
+  Loader2
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { createWorker } from 'tesseract.js';
-import type { Worker } from 'tesseract.js';
-import { toast } from "@/hooks/use-toast";
+import { createWorker, type Worker, type CreateWorkerOptions } from 'tesseract.js';
+import { useToast } from "@/hooks/use-toast";
 
+let wsRetryCount = 0;
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 2000;
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isListening, setIsListening] = useState(false);
-  const { data: products, isLoading } = useQuery<Product[]>({
-    queryKey: ["/api/products"],
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+
+  const { data: products = [], isLoading, error } = useQuery<Product[]>({
+    queryKey: ["/api/products"]
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const workerRef = useRef<Worker | null>(null);
+
+  const connectWebSocket = () => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) return;
+
+    setIsConnecting(true);
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+    ws.onopen = () => {
+      console.log("WebSocket connected successfully");
+      wsRetryCount = 0;
+      setIsConnecting(false);
+      wsRef.current = ws;
+    };
+
+    ws.onclose = () => {
+      wsRef.current = null;
+      setIsConnecting(false);
+
+      if (wsRetryCount < MAX_RETRIES) {
+        wsRetryCount++;
+        setTimeout(connectWebSocket, RETRY_DELAY * wsRetryCount);
+      } else {
+        toast({
+          title: "Connection Error",
+          description: "Failed to establish real-time connection. Some features may be limited.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
+      ws.close();
+    };
+  };
+
+  useEffect(() => {
+    connectWebSocket();
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
+  }, []);
 
   const handleVoiceSearch = () => {
     if ('webkitSpeechRecognition' in window) {
@@ -66,8 +100,14 @@ export default function Home() {
         setIsListening(false);
       };
 
-      recognition.onerror = () => {
+      recognition.onerror = (error: any) => {
+        console.error("Speech recognition error:", error);
         setIsListening(false);
+        toast({
+          title: "Voice Search Error",
+          description: "Failed to recognize speech. Please try again.",
+          variant: "destructive",
+        });
       };
 
       recognition.onend = () => {
@@ -88,7 +128,6 @@ export default function Home() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
     if (!validTypes.includes(file.type)) {
       toast({
@@ -99,7 +138,6 @@ export default function Home() {
       return;
     }
 
-    // Validate file size (max 5MB)
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
       toast({
@@ -110,38 +148,40 @@ export default function Home() {
       return;
     }
 
+    setIsProcessingImage(true);
     try {
       toast({
         title: "Processing Image",
         description: "Please wait while we analyze the image...",
       });
 
-      const worker = await createWorker();
+      if (!workerRef.current) {
+        workerRef.current = await createWorker({
+          logger: progress => {
+            console.log('OCR Progress:', progress);
+          }
+        } as CreateWorkerOptions);
+      }
 
-      try {
-        // Cast worker to any to bypass type checking for now
-        // This is safe because we know these methods exist
-        await (worker as any).loadLanguage('eng');
-        await (worker as any).initialize('eng');
+      const worker = workerRef.current;
+      await worker.loadLanguage('eng');
+      await worker.initialize('eng');
 
-        const { data: { text } } = await worker.recognize(file);
+      const result = await worker.recognize(file);
+      const cleanText = result.data.text.replace(/[^\w\s]/gi, '').trim();
 
-        const cleanText = text.replace(/[^\w\s]/gi, '').trim();
-        if (cleanText) {
-          setSearchQuery(cleanText);
-          toast({
-            title: "Image Processed",
-            description: "Text extracted successfully",
-          });
-        } else {
-          toast({
-            title: "No Text Found",
-            description: "Could not extract text from the image",
-            variant: "destructive",
-          });
-        }
-      } finally {
-        await worker.terminate();
+      if (cleanText) {
+        setSearchQuery(cleanText);
+        toast({
+          title: "Image Processed",
+          description: "Text extracted successfully",
+        });
+      } else {
+        toast({
+          title: "No Text Found",
+          description: "Could not extract text from the image",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Image processing error:', error);
@@ -150,16 +190,20 @@ export default function Home() {
         description: error instanceof Error ? error.message : "Failed to process image",
         variant: "destructive",
       });
+    } finally {
+      if (workerRef.current) {
+        await workerRef.current.terminate();
+        workerRef.current = null;
+      }
+      setIsProcessingImage(false);
     }
   };
 
-  const getSuggestions = (query: string) => {
-    if (!products || !query) return [];
-
+  const getSuggestions = (query: string): string[] => {
+    if (!query) return [];
     const normalizedQuery = query.toLowerCase();
-    const productNames = products.map(p => p.name.toLowerCase());
-
-    return productNames
+    return products
+      .map(p => p.name.toLowerCase())
       .filter(name => name !== normalizedQuery && name.includes(normalizedQuery))
       .slice(0, 3);
   };
@@ -177,10 +221,28 @@ export default function Home() {
     setLocation('/event-organizer');
   };
 
-  // Clear newsletter dialog flag when component mounts
   useEffect(() => {
     localStorage.removeItem('hasSeenNewsletterDialog');
+    return () => {
+      if (workerRef.current) {
+        workerRef.current.terminate();
+        workerRef.current = null;
+      }
+    };
   }, []);
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="text-red-500">Failed to load products</p>
+          <Button onClick={() => window.location.reload()}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -258,15 +320,25 @@ export default function Home() {
                         variant="secondary"
                         className={`rounded-full ${isListening ? 'bg-red-500 hover:bg-red-600' : ''}`}
                         onClick={handleVoiceSearch}
+                        disabled={isListening}
                       >
-                        <Mic className="w-4 h-4" />
+                        {isListening ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Mic className="w-4 h-4" />
+                        )}
                       </Button>
                       <Button
                         variant="secondary"
                         className="rounded-full"
                         onClick={() => fileInputRef.current?.click()}
+                        disabled={isProcessingImage}
                       >
-                        <Camera className="w-4 h-4" />
+                        {isProcessingImage ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Camera className="w-4 h-4" />
+                        )}
                       </Button>
                       <input
                         type="file"
@@ -298,7 +370,6 @@ export default function Home() {
                     transition={{ delay: 0.8 }}
                     className="flex flex-wrap justify-center gap-4"
                   >
-
                     <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
                       <Star className="w-4 h-4" /> Premium Collection
                     </Button>
@@ -350,10 +421,10 @@ export default function Home() {
                 animate={{ opacity: 1 }}
                 className="text-center text-zinc-400"
               >
-                Loading collection...
+                <Loader2 className="animate-spin h-8 w-8 mx-auto"/>
               </motion.div>
             ) : (
-              products && <ProductGrid products={products.slice(0, 4)} />
+              <ProductGrid products={products.slice(0, 4)} />
             )}
 
             <div className="mt-12 text-center">

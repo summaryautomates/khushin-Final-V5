@@ -8,9 +8,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/products";
 import type { Product } from "@shared/schema";
-import { Eye, ShoppingCart } from "lucide-react";
+import { Eye, ShoppingCart, Loader2 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 interface ProductCardProps {
   product: Product;
@@ -19,12 +20,25 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
   const { toast } = useToast();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
-  const handleAddToCart = () => {
-    addItem(product);
-    toast({
-      description: `${product.name} added to cart`,
-    });
+  const handleAddToCart = async () => {
+    setIsAddingToCart(true);
+    try {
+      await addItem(product);
+      toast({
+        description: `${product.name} added to cart`,
+      });
+    } catch (error) {
+      console.error("Failed to add to cart:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   return (
@@ -48,6 +62,10 @@ export function ProductCard({ product }: ProductCardProps) {
               initial={{ scale: 1.1 }}
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.7, ease: "easeOut" }}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = '/placeholder-product.svg'; // Fallback image
+              }}
             />
             <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <Link href={`/product/${product.id}`}>
@@ -73,8 +91,13 @@ export function ProductCard({ product }: ProductCardProps) {
                   variant="secondary"
                   className="rounded-full bg-white text-black hover:bg-gray-100"
                   onClick={handleAddToCart}
+                  disabled={isAddingToCart}
                 >
-                  <ShoppingCart className="h-4 w-4" />
+                  {isAddingToCart ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ShoppingCart className="h-4 w-4" />
+                  )}
                 </Button>
               </motion.div>
             </div>
