@@ -11,7 +11,7 @@ import type { Product } from "@shared/schema";
 import { Eye, ShoppingCart, Loader2 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface ProductCardProps {
   product: Product;
@@ -22,53 +22,15 @@ export function ProductCard({ product }: ProductCardProps) {
   const { toast } = useToast();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
-  const [imageError, setImageError] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [fallbackImageIndex, setFallbackImageIndex] = useState(0);
-
-  const FALLBACK_IMAGES = [
-    '/placeholder-product.svg',
-    'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500',
-  ];
-
-  // Reset loading state when product changes
-  useEffect(() => {
-    setImageLoading(true);
-    setImageError(false);
-    setCurrentImageIndex(0);
-    setFallbackImageIndex(0);
-  }, [product.id]);
-
-  const handleImageError = () => {
-    console.log(`Image error at index ${currentImageIndex}:`, getProductImage());
-    // Try next image in product.images array
-    if (Array.isArray(product.images) && currentImageIndex < product.images.length - 1) {
-      setCurrentImageIndex(prev => prev + 1);
-      setImageLoading(true);
-    } else {
-      // If all product images fail, try next fallback image
-      if (fallbackImageIndex < FALLBACK_IMAGES.length - 1) {
-        setFallbackImageIndex(prev => prev + 1);
-      }
-      setImageError(true);
-      setImageLoading(false);
-    }
-  };
 
   const getProductImage = () => {
-    if (!imageError && Array.isArray(product.images) && product.images.length > currentImageIndex) {
-      const image = product.images[currentImageIndex];
-      if (image && typeof image === 'string' && (image.startsWith('http') || image.startsWith('/'))) {
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      const image = product.images[0];
+      if (image && typeof image === 'string') {
         return image;
       }
     }
-    return FALLBACK_IMAGES[fallbackImageIndex];
-  };
-
-  const handleImageLoad = () => {
-    console.log(`Image loaded successfully at index ${currentImageIndex}:`, getProductImage());
-    setImageLoading(false);
-    setImageError(false);
+    return '/placeholder-product.svg';
   };
 
   const handleAddToCart = async () => {
@@ -116,8 +78,8 @@ export function ProductCard({ product }: ProductCardProps) {
               initial={{ scale: 1.1 }}
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.7, ease: "easeOut" }}
-              onError={handleImageError}
-              onLoad={handleImageLoad}
+              onError={() => setImageLoading(false)}
+              onLoad={() => setImageLoading(false)}
               style={{ 
                 opacity: imageLoading ? 0 : 1,
                 transition: 'opacity 0.3s ease-in-out'

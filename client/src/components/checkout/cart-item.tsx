@@ -2,7 +2,7 @@ import { Minus, Plus, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Product } from "@shared/schema";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface CartItemProps {
   product: Product;
@@ -19,16 +19,17 @@ export function CartItem({
   onRemove,
   isUpdating = false 
 }: CartItemProps) {
-  const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Reset loading state when product changes
-  useEffect(() => {
-    setImageLoading(true);
-    setImageError(false);
-    setCurrentImageIndex(0);
-  }, [product.id]);
+  const getProductImage = () => {
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      const image = product.images[0];
+      if (image && typeof image === 'string') {
+        return image;
+      }
+    }
+    return '/placeholder-product.svg';
+  };
 
   const handleIncrement = () => {
     if (quantity < 10 && !isUpdating) {
@@ -48,27 +49,6 @@ export function CartItem({
     }
   };
 
-  const handleImageError = () => {
-    console.error('Failed to load image:', getProductImage());
-    // Try next image if available
-    if (currentImageIndex < product.images.length - 1) {
-      setCurrentImageIndex(prev => prev + 1);
-    } else {
-      setImageError(true);
-    }
-    setImageLoading(false);
-  };
-
-  const getProductImage = () => {
-    if (Array.isArray(product.images) && product.images.length > currentImageIndex && !imageError) {
-      const currentImage = product.images[currentImageIndex];
-      if (currentImage && (currentImage.startsWith('http') || currentImage.startsWith('/'))) {
-        return currentImage;
-      }
-    }
-    return '/placeholder.jpg';  // Fallback image
-  };
-
   return (
     <Card className="p-4">
       <div className="flex items-center gap-4">
@@ -83,11 +63,8 @@ export function CartItem({
             src={getProductImage()} 
             alt={product.name}
             className="w-full h-full object-cover"
-            onError={handleImageError}
-            onLoad={() => {
-              console.log('Image loaded successfully:', getProductImage());
-              setImageLoading(false);
-            }}
+            onError={() => setImageLoading(false)}
+            onLoad={() => setImageLoading(false)}
             style={{ 
               opacity: imageLoading ? 0 : 1,
               transition: 'opacity 0.3s ease-in-out'
