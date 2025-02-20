@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/products";
-import { Truck, Shield, RefreshCcw } from "lucide-react";
+import { Truck, Shield, RefreshCcw, Loader2 } from "lucide-react";
 import type { Product } from "@shared/schema";
 import { useCart } from "@/hooks/use-cart";
 import { apiRequest } from "@/lib/queryClient";
@@ -11,7 +11,7 @@ import { ShareButtons } from "@/components/products/share-buttons";
 import { ModelViewer } from "@/components/model-viewer/model-viewer";
 import { SimilarProducts } from "@/components/products/similar-products";
 import { AuthSheet } from "@/components/auth/auth-sheet";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:id");
@@ -21,21 +21,39 @@ export default function ProductPage() {
   const [selectedImage, setSelectedImage] = useState<number>(0);
   const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<"add-to-cart" | "buy-now" | null>(null);
+  const [imageLoadingStates, setImageLoadingStates] = useState<Record<number, boolean>>({});
+  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: [`/api/products/${id}`],
   });
 
-  const handleImageError = (index: number) => {
-    if (product && product.images.length > 1) {
-      // Try next image
-      setSelectedImage((index + 1) % product.images.length);
+  // Initialize loading states when product data is received
+  useEffect(() => {
+    if (product?.images) {
+      const initialLoadingStates = product.images.reduce((acc, _, index) => {
+        acc[index] = true;
+        return acc;
+      }, {} as Record<number, boolean>);
+      setImageLoadingStates(initialLoadingStates);
+      setImageErrors({});
     }
-    toast({
-      title: "Image loading error",
-      description: "Failed to load product image. Trying alternative view.",
-      variant: "destructive",
-    });
+  }, [product]);
+
+  const handleImageError = (index: number) => {
+    setImageErrors(prev => ({ ...prev, [index]: true }));
+
+    if (product && product.images.length > 1) {
+      const nextIndex = (index + 1) % product.images.length;
+      if (!imageErrors[nextIndex]) {
+        setSelectedImage(nextIndex);
+      }
+    }
+  };
+
+  const handleImageLoad = (index: number) => {
+    setImageLoadingStates(prev => ({ ...prev, [index]: false }));
+    setImageErrors(prev => ({ ...prev, [index]: false }));
   };
 
   const handleAddToCart = async () => {
@@ -114,11 +132,21 @@ export default function ProductPage() {
         <div className="grid gap-12 md:grid-cols-2">
           <div className="space-y-4">
             <div className="aspect-square overflow-hidden rounded-lg border bg-zinc-100 relative">
+              {imageLoadingStates[selectedImage] && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              )}
               <img
                 src={product.images[selectedImage]}
                 alt={product.name}
                 className="h-full w-full object-contain p-4"
                 onError={() => handleImageError(selectedImage)}
+                onLoad={() => handleImageLoad(selectedImage)}
+                style={{ 
+                  opacity: imageLoadingStates[selectedImage] ? 0 : 1,
+                  transition: 'opacity 0.3s ease-in-out'
+                }}
               />
               {product.category === "lighters" && (
                 <div className="absolute inset-0 flex items-center justify-center bg-opacity-50">
@@ -132,16 +160,26 @@ export default function ProductPage() {
                 {product.images.map((image, i) => (
                   <div 
                     key={i} 
-                    className={`aspect-square overflow-hidden rounded-lg border bg-zinc-100 cursor-pointer transition-all ${
-                      selectedImage === i ? 'ring-2 ring-primary' : ''
-                    }`}
-                    onClick={() => setSelectedImage(i)}
+                    className={`aspect-square overflow-hidden rounded-lg border bg-zinc-100 cursor-pointer transition-all relative
+                      ${selectedImage === i ? 'ring-2 ring-primary' : ''}
+                      ${imageErrors[i] ? 'opacity-50' : ''}`}
+                    onClick={() => !imageErrors[i] && setSelectedImage(i)}
                   >
+                    {imageLoadingStates[i] && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    )}
                     <img
                       src={image}
                       alt={`${product.name} view ${i + 1}`}
                       className="h-full w-full object-contain p-2"
                       onError={() => handleImageError(i)}
+                      onLoad={() => handleImageLoad(i)}
+                      style={{ 
+                        opacity: imageLoadingStates[i] ? 0 : 1,
+                        transition: 'opacity 0.3s ease-in-out'
+                      }}
                     />
                   </div>
                 ))}

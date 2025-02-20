@@ -2,6 +2,7 @@ import { Minus, Plus, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Product } from "@shared/schema";
+import { useState, useEffect } from "react";
 
 interface CartItemProps {
   product: Product;
@@ -18,6 +19,15 @@ export function CartItem({
   onRemove,
   isUpdating = false 
 }: CartItemProps) {
+  const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+
+  // Reset loading state when product changes
+  useEffect(() => {
+    setImageLoading(true);
+    setImageError(false);
+  }, [product.id]);
+
   const handleIncrement = () => {
     if (quantity < 10 && !isUpdating) {
       onUpdateQuantity(product.id, quantity + 1);
@@ -37,7 +47,7 @@ export function CartItem({
   };
 
   const getProductImage = () => {
-    if (Array.isArray(product.images) && product.images.length > 0) {
+    if (!imageError && Array.isArray(product.images) && product.images.length > 0) {
       return product.images[0];
     }
     return '/placeholder.jpg';
@@ -47,15 +57,24 @@ export function CartItem({
     <Card className="p-4">
       <div className="flex items-center gap-4">
         {/* Product Image */}
-        <div className="w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-lg overflow-hidden">
+        <div className="w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-lg overflow-hidden relative">
+          {imageLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          )}
           <img 
             src={getProductImage()} 
             alt={product.name}
             className="w-full h-full object-cover"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = '/placeholder.jpg';
-              target.onerror = null; // Prevent infinite loop
+            onError={() => {
+              setImageError(true);
+              setImageLoading(false);
+            }}
+            onLoad={() => setImageLoading(false)}
+            style={{ 
+              opacity: imageLoading ? 0 : 1,
+              transition: 'opacity 0.3s ease-in-out'
             }}
           />
         </div>
