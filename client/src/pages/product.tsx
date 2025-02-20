@@ -29,6 +29,7 @@ export default function ProductPage() {
   const [imageLoadingStates, setImageLoadingStates] = useState<Record<number, boolean>>({});
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
   const [fallbackImageIndex, setFallbackImageIndex] = useState(0);
+  const [isCheckingOut, setIsCheckingOut] = useState(false); // Added state for loading
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: [`/api/products/${id}`],
@@ -108,24 +109,36 @@ export default function ProductPage() {
     if (!product) return;
 
     try {
+      setIsCheckingOut(true);
+      // First add the item to cart
       await addItem(product);
+
+      // Then initiate direct checkout
       const response = await fetch('/api/direct-checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
+        credentials: 'include', // Important for auth
         body: JSON.stringify({
           items: [{ productId: product.id, quantity: 1 }],
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Checkout failed');
+        const errorData = await response.json().catch(() => null);
+        if (response.status === 401) {
+          throw new Error("AUTH_REQUIRED");
+        }
+        throw new Error(errorData?.message || 'Checkout failed');
       }
 
       const data = await response.json();
       if (data.redirectUrl) {
         window.location.href = data.redirectUrl;
+      } else {
+        throw new Error('Invalid checkout response');
       }
     } catch (error) {
       if (error instanceof Error && error.message === "AUTH_REQUIRED") {
@@ -133,11 +146,14 @@ export default function ProductPage() {
         setIsAuthSheetOpen(true);
         return;
       }
+      console.error('Buy now error:', error);
       toast({
         variant: "destructive",
         title: "Checkout Failed",
         description: "Could not process checkout. Please try again.",
       });
+    } finally {
+      setIsCheckingOut(false);
     }
   };
 
@@ -191,7 +207,7 @@ export default function ProductPage() {
                   className="h-full w-full object-contain p-4"
                   onError={() => handleImageError(selectedImage)}
                   onLoad={() => handleImageLoad(selectedImage)}
-                  style={{ 
+                  style={{
                     opacity: imageLoadingStates[selectedImage] ? 0 : 1,
                     transition: 'opacity 0.3s ease-in-out'
                   }}
@@ -202,8 +218,8 @@ export default function ProductPage() {
             {images.length > 1 && (
               <div className="grid grid-cols-4 gap-4 mt-4">
                 {images.map((_, i) => (
-                  <div 
-                    key={i} 
+                  <div
+                    key={i}
                     className={`aspect-square overflow-hidden rounded-lg border bg-zinc-100 cursor-pointer transition-all relative
                       ${selectedImage === i ? 'ring-2 ring-primary' : ''}
                       ${imageErrors[i] ? 'opacity-50' : ''}`}
@@ -221,7 +237,7 @@ export default function ProductPage() {
                         className="h-full w-full object-contain p-2"
                         onError={() => handleImageError(i)}
                         onLoad={() => handleImageLoad(i)}
-                        style={{ 
+                        style={{
                           opacity: imageLoadingStates[i] ? 0 : 1,
                           transition: 'opacity 0.3s ease-in-out'
                         }}
@@ -259,8 +275,15 @@ export default function ProductPage() {
                 <Button size="lg" variant="outline" className="w-full" onClick={handleAddToCart}>
                   Add to Cart
                 </Button>
-                <Button size="lg" className="w-full" onClick={handleBuyNow}>
-                  Buy Now
+                <Button size="lg" className="w-full" onClick={handleBuyNow} disabled={isCheckingOut}>
+                  {isCheckingOut ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Buy Now"
+                  )}
                 </Button>
               </div>
             </div>
@@ -298,9 +321,9 @@ export default function ProductPage() {
           />
         </div>
       </div>
-      <AuthSheet 
-        open={isAuthSheetOpen} 
-        onOpenChange={setIsAuthSheetOpen} 
+      <AuthSheet
+        open={isAuthSheetOpen}
+        onOpenChange={setIsAuthSheetOpen}
         onSuccess={handleAuthSuccess}
       />
     </>

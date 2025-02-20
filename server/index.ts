@@ -6,11 +6,14 @@ import { registerRoutes } from './routes';
 import { setupVite } from './vite';
 import { setupAuth } from './auth';
 import cors from 'cors';
+import { parse } from 'cookie';
+import { IncomingMessage } from 'http';
 
 // Enhanced WebSocket interface
 interface ExtendedWebSocket extends WebSocket {
   isAlive: boolean;
   id: string;
+  userId?: string;
   lastPingTime?: number;
 }
 
@@ -74,13 +77,45 @@ const startServer = async () => {
       throw error;
     }
 
-    // Setup WebSocket server with improved error handling
+    // Get session middleware
+    const sessionMiddleware = app.get('sessionMiddleware');
+    if (!sessionMiddleware) {
+      throw new Error('Session middleware not found');
+    }
+
+    // Setup WebSocket server with session support
     console.log('Setting up WebSocket server...');
     wss = new WebSocketServer({ 
       server,
       path: '/ws',
       perMessageDeflate: false,
-      clientTracking: true
+      clientTracking: true,
+      verifyClient: async (info, callback) => {
+        try {
+          const req = info.req;
+          const cookies = parse(req.headers.cookie || '');
+
+          // Wait for session middleware to process the request
+          await new Promise((resolve) => {
+            sessionMiddleware(req as any, {} as any, () => {
+              resolve(true);
+            });
+          });
+
+          // Access session data
+          const session = (req as any).session;
+          if (!session) {
+            console.log('No session found for WebSocket connection');
+            callback(false, 401, 'Unauthorized');
+            return;
+          }
+
+          callback(true);
+        } catch (error) {
+          console.error('WebSocket verification error:', error);
+          callback(false, 500, 'Internal Server Error');
+        }
+      }
     });
 
     // Error handling for the WSS server
@@ -89,10 +124,14 @@ const startServer = async () => {
     });
 
     // Connection handling
-    wss.on('connection', function(ws: ExtendedWebSocket, req) {
+    wss.on('connection', function(ws: ExtendedWebSocket, req: IncomingMessage) {
+      // Get session from the upgraded request
+      const session = (req as any).session;
+      ws.userId = session?.passport?.user;
+
       // Assign unique ID to connection
       ws.id = Math.random().toString(36).substring(7);
-      console.log(`WebSocket client connected - ID: ${ws.id} from: ${req.socket.remoteAddress}`);
+      console.log(`WebSocket client connected - ID: ${ws.id}, UserID: ${ws.userId} from: ${req.socket.remoteAddress}`);
 
       ws.isAlive = true;
       ws.lastPingTime = Date.now();
@@ -116,12 +155,13 @@ const startServer = async () => {
         ws.isAlive = false;
       });
 
-      // Send welcome message
+      // Send welcome message with authentication status
       try {
         ws.send(JSON.stringify({ 
           type: 'welcome',
           message: 'Connected to KHUSH.IN server',
-          clientId: ws.id
+          clientId: ws.id,
+          authenticated: !!ws.userId
         }));
       } catch (error) {
         console.error(`Error sending welcome message to client ${ws.id}:`, error);
