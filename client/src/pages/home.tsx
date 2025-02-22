@@ -176,23 +176,22 @@ export default function Home() {
       <div className="flex flex-col">
         {/* Hero Section */}
         <section className="h-screen w-full flex items-center justify-center bg-black relative overflow-hidden">
-          <div className="absolute inset-0">
-            <motion.div
-              initial={{ scale: 1.1, opacity: 0 }}
-              animate={{ scale: 1, opacity: 0.5 }}
-              transition={{ duration: 1.5 }}
-              className="absolute inset-0"
-              style={{ display: 'contents' }}
-            >
+          <motion.div
+            initial={{ scale: 1.1, opacity: 0 }}
+            animate={{ scale: 1, opacity: 0.5 }}
+            transition={{ duration: 1.5 }}
+            className="absolute inset-0 w-full h-full"
+          >
+            <div style={{ display: 'contents' }}>
               <img
                 src="https://images.unsplash.com/photo-1483968049578-867b9ad94034?q=80&w=2072&auto=format"
-                className="w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover"
                 alt="Hero background"
                 style={{ objectPosition: "center" }}
               />
               <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/70 to-black"></div>
-            </motion.div>
-          </div>
+            </div>
+          </motion.div>
 
           <motion.div
             style={{ opacity, scale }}
