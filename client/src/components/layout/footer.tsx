@@ -53,8 +53,9 @@ export function Footer() {
             <li><Link href="/about"><span className="hover:text-primary transition-colors">About</span></Link></li>
             <li><Link href="/products"><span className="hover:text-primary transition-colors">Products</span></Link></li>
             <li><Link href="/contact"><span className="hover:text-primary transition-colors">Contact</span></Link></li>
-            <li><Link href="/loyalty"><span className="hover:text-primary transition-colors">Loyalty</span></Link></li>
+            <li><Link href="/loyalty"><span className="hover:text-primary transition-colors">Loyalty Program</span></Link></li>
             <li><Link href="/rewards"><span className="hover:text-primary transition-colors">Rewards</span></Link></li>
+            <li><Link href="/referral"><span className="hover:text-primary transition-colors">Referral Program</span></Link></li>
           </ul>
         </div>
         <div>
