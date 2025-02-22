@@ -72,6 +72,20 @@ export function ProductCard({ product }: ProductCardProps) {
     }
   };
 
+  const handleCompareToggle = () => {
+    if (isInCompare(product.id)) {
+      removeFromCompare(product.id);
+      toast({
+        description: `${product.name} removed from comparison`,
+      });
+    } else {
+      addToCompare(product);
+      toast({
+        description: `${product.name} added to comparison`,
+      });
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -127,20 +141,10 @@ export function ProductCard({ product }: ProductCardProps) {
                 <Button
                   size="icon"
                   variant="secondary"
-                  className="rounded-full bg-white text-black hover:bg-gray-100"
-                  onClick={() => {
-                    if (isInCompare(product.id)) {
-                      removeFromCompare(product.id);
-                      toast({
-                        description: `${product.name} removed from comparison`,
-                      });
-                    } else {
-                      addToCompare(product);
-                      toast({
-                        description: `${product.name} added to comparison`,
-                      });
-                    }
-                  }}
+                  className={`rounded-full bg-white text-black hover:bg-gray-100 ${
+                    isInCompare(product.id) ? 'border-2 border-primary' : ''
+                  }`}
+                  onClick={handleCompareToggle}
                 >
                   <Scale className={`h-4 w-4 ${isInCompare(product.id) ? 'text-primary' : ''}`} />
                 </Button>

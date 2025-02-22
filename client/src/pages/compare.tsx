@@ -5,6 +5,7 @@ import { X, ShoppingCart } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 export default function ComparePage() {
   const { items, removeItem, clearItems } = useCompare();

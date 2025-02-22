@@ -13,9 +13,11 @@ export const useCompare = create<CompareState>((set, get) => ({
   items: [],
   addItem: (product) => {
     set((state) => {
+      // Limit to 4 items
       if (state.items.length >= 4) {
         return state;
       }
+      // Avoid duplicates
       if (state.items.some(item => item.id === product.id)) {
         return state;
       }
