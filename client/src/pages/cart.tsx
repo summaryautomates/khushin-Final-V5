@@ -145,7 +145,6 @@ export default function Cart() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json"
         },
         body: JSON.stringify({
           items: items.map((item) => ({
@@ -160,13 +159,30 @@ export default function Cart() {
         }),
       });
 
+      const contentType = response.headers.get("content-type");
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || "Checkout failed");
+        // Check if the response is JSON
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Checkout failed");
+        } else {
+          // If not JSON, get the text content for error message
+          const errorText = await response.text();
+          throw new Error("Checkout failed: " + (errorText || response.statusText));
+        }
       }
 
-      const { redirectUrl } = await response.json();
-      window.location.href = redirectUrl;
+      // Ensure we have JSON response
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Invalid server response format");
+      }
+
+      const data = await response.json();
+      if (data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+      } else {
+        throw new Error("Missing redirect URL in response");
+      }
     } catch (error) {
       console.error("Checkout error:", error);
       toast({
