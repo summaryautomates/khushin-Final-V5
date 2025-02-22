@@ -16,15 +16,19 @@ import { Loader2 } from "lucide-react";
 const shippingSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   address: z.string()
-    .min(3, "Address must be at least 3 characters")
+    .min(1, "Address is required")
     .max(200, "Address is too long"),
   apartment: z.string().optional(),
-  city: z.string().min(2, "City is required"),
-  state: z.string().min(2, "State is required"),
-  pincode: z.string().regex(/^\d{6}$/, "Please enter a valid 6-digit pincode"),
+  city: z.string().min(1, "City is required"),
+  state: z.string().min(1, "State is required"),
+  pincode: z.string()
+    .min(1, "PIN code is required")
+    .max(6, "PIN code must be 6 digits")
+    .regex(/^\d*$/, "PIN code must contain only numbers"),
   phone: z.string()
-    .regex(/^\d{10}$/, "Please enter a valid 10-digit phone number")
-    .transform((val) => val.replace(/\D/g, "")),
+    .min(1, "Phone number is required")
+    .max(10, "Phone number must be 10 digits")
+    .regex(/^\d*$/, "Phone number must contain only numbers"),
 });
 
 export type ShippingFormData = z.infer<typeof shippingSchema>;
