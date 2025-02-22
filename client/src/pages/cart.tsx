@@ -36,7 +36,16 @@ export default function Cart() {
   const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false);
 
   const { toast } = useToast();
-  const { items, total, updateQuantity, removeItem, isLoading, pendingUpdates, error } = useCart();
+  const { 
+    items, 
+    total, 
+    updateQuantity, 
+    removeItem, 
+    isLoading, 
+    pendingUpdates, 
+    error,
+    updateGiftStatus 
+  } = useCart();
 
   useEffect(() => {
     if (error) {
@@ -64,7 +73,7 @@ export default function Cart() {
         return;
       }
       await updateQuantity(productId, quantity);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof Error && error.message === "AUTH_REQUIRED") {
         setIsAuthSheetOpen(true);
         return;
@@ -81,7 +90,7 @@ export default function Cart() {
   const handleRemoveItem = async (productId: number) => {
     try {
       await removeItem(productId);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof Error && error.message === "AUTH_REQUIRED") {
         setIsAuthSheetOpen(true);
         return;
@@ -90,6 +99,23 @@ export default function Cart() {
       toast({
         title: "Error",
         description: "Failed to remove item. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateGiftStatus = async (productId: number, isGift: boolean, giftMessage?: string) => {
+    try {
+      await updateGiftStatus(productId, isGift, giftMessage);
+    } catch (error: any) {
+      if (error instanceof Error && error.message === "AUTH_REQUIRED") {
+        setIsAuthSheetOpen(true);
+        return;
+      }
+      console.error("Failed to update gift status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update gift status. Please try again.",
         variant: "destructive",
       });
     }
@@ -112,7 +138,7 @@ export default function Cart() {
       if (autoCheckout) {
         await handleCheckout();
       }
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof Error && error.message === "AUTH_REQUIRED") {
         setIsAuthSheetOpen(true);
         return;
@@ -174,6 +200,8 @@ export default function Cart() {
         items: items.map((item) => ({
           productId: item.product.id,
           quantity: item.quantity,
+          isGift: item.isGift,
+          giftMessage: item.giftMessage
         })),
         shipping: {
           ...shippingData,
@@ -225,7 +253,7 @@ export default function Cart() {
 
       // Redirect to payment page
       window.location.href = responseData.redirectUrl;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Checkout error:", error);
       if (error instanceof Error && error.message === "AUTH_REQUIRED") {
         return; // AuthSheet is already shown
@@ -267,8 +295,11 @@ export default function Cart() {
                     key={item.product.id}
                     product={item.product}
                     quantity={item.quantity}
+                    isGift={item.isGift}
+                    giftMessage={item.giftMessage}
                     onUpdateQuantity={handleUpdateQuantity}
                     onRemove={handleRemoveItem}
+                    onUpdateGiftStatus={handleUpdateGiftStatus}
                     isUpdating={pendingUpdates.has(item.product.id)}
                   />
                 ))}
@@ -339,6 +370,7 @@ export default function Cart() {
                   >
                     <span className="text-muted-foreground">
                       {item.product.name} × {item.quantity}
+                      {item.isGift && " (Gift)"}
                     </span>
                     <span>₹{(item.product.price * item.quantity / 100).toLocaleString('en-IN')}</span>
                   </div>

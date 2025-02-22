@@ -75,6 +75,9 @@ export interface IStorage {
   getGiftOrderByRedemptionCode(code: string): Promise<GiftOrder | undefined>;
   updateGiftOrderRedemptionStatus(orderId: number, isRedeemed: boolean): Promise<GiftOrder>;
   getGiftOrdersBySender(senderUserId: string): Promise<GiftOrder[]>;
+
+  // Add new method for updating gift status
+  updateCartItemGiftStatus(userId: string, productId: number, isGift: boolean, giftMessage?: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -125,6 +128,8 @@ export class DatabaseStorage implements IStorage {
         userId: cartItems.userId,
         productId: cartItems.productId,
         quantity: cartItems.quantity,
+        isGift: cartItems.isGift,
+        giftMessage: cartItems.giftMessage,
         giftWrapType: cartItems.giftWrapType,
         giftWrapCost: cartItems.giftWrapCost,
         product: products
@@ -376,6 +381,26 @@ export class DatabaseStorage implements IStorage {
       .from(giftOrders)
       .where(eq(giftOrders.senderUserId, senderUserId))
       .orderBy(desc(giftOrders.createdAt));
+  }
+
+  async updateCartItemGiftStatus(userId: string, productId: number, isGift: boolean, giftMessage?: string): Promise<void> {
+    try {
+      await db
+        .update(cartItems)
+        .set({ 
+          isGift,
+          giftMessage: giftMessage || null
+        })
+        .where(
+          and(
+            eq(cartItems.userId, userId),
+            eq(cartItems.productId, productId)
+          )
+        );
+    } catch (error) {
+      console.error('Error updating cart item gift status:', error);
+      throw new Error('Failed to update gift status');
+    }
   }
 }
 

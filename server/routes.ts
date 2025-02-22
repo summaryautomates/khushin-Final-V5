@@ -109,6 +109,45 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  app.patch("/api/cart/:productId/gift", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const userId = req.user?.id?.toString();
+      if (!userId) {
+        return res.status(401).json({ message: "Invalid user session" });
+      }
+
+      const productId = parseInt(req.params.productId, 10);
+      if (isNaN(productId)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+
+      const giftSchema = z.object({
+        isGift: z.boolean(),
+        giftMessage: z.string().optional()
+      });
+
+      const validationResult = giftSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({
+          message: "Invalid request data",
+          errors: validationResult.error.errors
+        });
+      }
+
+      const { isGift, giftMessage } = validationResult.data;
+      await storage.updateCartItemGiftStatus(userId, productId, isGift, giftMessage);
+
+      res.json({ message: "Gift status updated successfully" });
+    } catch (error) {
+      console.error('Error updating gift status:', error);
+      res.status(500).json({ message: "Failed to update gift status" });
+    }
+  });
+
   app.post("/api/checkout", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {

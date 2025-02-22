@@ -7,6 +7,8 @@ import { useRef } from "react";
 interface CartItem {
   product: Product;
   quantity: number;
+  isGift: boolean;
+  giftMessage?: string;
 }
 
 interface CartState {
@@ -35,13 +37,15 @@ type CartAction =
   | { type: "END_UPDATE"; productId: number }
   | { type: "OPTIMISTIC_ADD_ITEM"; item: CartItem }
   | { type: "OPTIMISTIC_REMOVE_ITEM"; productId: number }
-  | { type: "OPTIMISTIC_UPDATE_QUANTITY"; productId: number; quantity: number };
+  | { type: "OPTIMISTIC_UPDATE_QUANTITY"; productId: number; quantity: number }
+  | { type: "UPDATE_GIFT_STATUS"; productId: number; isGift: boolean; giftMessage?: string };
 
 interface CartContextType extends CartState {
-  addItem: (product: Product, quantity?: number) => Promise<void>;
+  addItem: (product: Product, quantity?: number, isGift?: boolean, giftMessage?: string) => Promise<void>;
   removeItem: (productId: number) => Promise<void>;
   updateQuantity: (productId: number, quantity: number) => Promise<void>;
   updateGiftWrap: (type: GiftWrapType, cost: number) => Promise<void>;
+  updateGiftStatus: (productId: number, isGift: boolean, giftMessage?: string) => Promise<void>;
   clearCart: () => Promise<void>;
 }
 
@@ -111,6 +115,18 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         ...state,
         giftWrap: action.giftWrap,
       };
+
+    case "UPDATE_GIFT_STATUS": {
+      const newItems = state.items.map(item =>
+        item.product.id === action.productId
+          ? { ...item, isGift: action.isGift, giftMessage: action.giftMessage }
+          : item
+      );
+      return {
+        ...state,
+        items: newItems,
+      };
+    }
 
     case "CLEAR_CART":
       return {
@@ -257,7 +273,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addItem = async (product: Product, quantity = 1) => {
+  const addItem = async (product: Product, quantity = 1, isGift = false, giftMessage?: string) => {
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -272,7 +288,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     dispatch({ type: "START_UPDATE", productId: product.id });
-    dispatch({ type: "OPTIMISTIC_ADD_ITEM", item: { product, quantity } });
+    dispatch({ 
+      type: "OPTIMISTIC_ADD_ITEM", 
+      item: { product, quantity, isGift, giftMessage } 
+    });
 
     try {
       const response = await fetch('/api/cart', {
@@ -285,6 +304,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({
           productId: product.id,
           quantity,
+          isGift,
+          giftMessage
         })
       });
 
@@ -352,6 +373,48 @@ export function CartProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "UPDATE_GIFT_WRAP", giftWrap: { type, cost } });
   };
 
+  const updateGiftStatus = async (productId: number, isGift: boolean, giftMessage?: string) => {
+    if (!user) return;
+
+    if (state.pendingUpdates.has(productId)) {
+      return;
+    }
+
+    dispatch({ type: "START_UPDATE", productId });
+    dispatch({ type: "UPDATE_GIFT_STATUS", productId, isGift, giftMessage });
+
+    try {
+      const response = await fetch(`/api/cart/${productId}/gift`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'x-user-id': user.id.toString()
+        },
+        body: JSON.stringify({
+          isGift,
+          giftMessage
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update gift status');
+      }
+
+      await fetchCartItems();
+    } catch (error: any) {
+      console.error('Failed to update gift status:', error);
+      await fetchCartItems(); // Revert to server state
+      toast({
+        title: "Error",
+        description: "Failed to update gift status. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      dispatch({ type: "END_UPDATE", productId });
+    }
+  };
+
   const clearCart = async () => {
     if (!user) return;
 
@@ -387,6 +450,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         removeItem,
         updateQuantity,
         updateGiftWrap,
+        updateGiftStatus,
         clearCart,
       }}
     >

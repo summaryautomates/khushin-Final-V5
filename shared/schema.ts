@@ -56,6 +56,8 @@ export const cartItems = pgTable("cart_items", {
   userId: text("user_id").notNull(),
   productId: integer("product_id").notNull().references(() => products.id),
   quantity: integer("quantity").notNull(),
+  isGift: boolean("is_gift").notNull().default(false),
+  giftMessage: text("gift_message"),
   giftWrapType: text("gift_wrap_type"),
   giftWrapCost: integer("gift_wrap_cost").default(0),
 });
