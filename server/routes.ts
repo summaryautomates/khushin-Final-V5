@@ -99,8 +99,8 @@ export async function registerRoutes(app: Express) {
 
       const { status, method } = validationResult.data;
 
-      // Update order status
-      await storage.updateOrderStatus(order.id, status, method);
+      // Update order status - pass orderId as string
+      await storage.updateOrderStatus(order.orderRef, status, method);
 
       res.json({ message: "Payment status updated successfully" });
     } catch (error) {
