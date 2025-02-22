@@ -182,6 +182,7 @@ export default function Home() {
               animate={{ scale: 1, opacity: 0.5 }}
               transition={{ duration: 1.5 }}
               className="absolute inset-0"
+              style={{ display: 'contents' }}
             >
               <img
                 src="https://images.unsplash.com/photo-1483968049578-867b9ad94034?q=80&w=2072&auto=format"
