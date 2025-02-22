@@ -17,8 +17,10 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
+import { useAuth } from "@/hooks/use-auth";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { AuthSheet } from "@/components/auth/auth-sheet";
+import { type InsertOrder } from "@shared/schema";
 
 export default function Cart() {
   const [showShippingForm, setShowShippingForm] = useState(false);
@@ -36,6 +38,7 @@ export default function Cart() {
   const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false);
 
   const { toast } = useToast();
+  const { user } = useAuth();
   const {
     items,
     total,
@@ -158,13 +161,17 @@ export default function Cart() {
 
   const handleAuthSuccess = async () => {
     setIsAuthSheetOpen(false);
-    // Retry the last action that required authentication
     if (shippingData && autoCheckout) {
       await handleCheckout();
     }
   };
 
   const handleCheckout = async () => {
+    if (!user) {
+      setIsAuthSheetOpen(true);
+      return;
+    }
+
     if (!selectedCity) {
       toast({
         title: "Please select a delivery city",
@@ -193,13 +200,25 @@ export default function Cart() {
       return;
     }
 
+    if (items.length === 0) {
+      toast({
+        title: "Empty Cart",
+        description: "Please add items to your cart before checking out",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsCheckingOut(true);
     try {
-      // Structure the order payload according to the schema
-      const payload = {
-        items: items.map((item) => ({
+      // Prepare the order payload according to the InsertOrder schema
+      const orderPayload: Omit<InsertOrder, "orderRef"> = {
+        userId: user.id.toString(),
+        items: items.map(item => ({
           productId: item.product.id,
           quantity: item.quantity,
+          price: item.product.price,
+          name: item.product.name
         })),
         shipping: {
           fullName: shippingData.fullName,
@@ -209,20 +228,19 @@ export default function Cart() {
           pincode: shippingData.pincode,
           phone: shippingData.phone
         },
-        // Include optional fields
-        orderRef: undefined, // Let server generate this
-        status: 'pending',
-        total: orderTotal * 100, // Convert to cents for storage
+        total: orderTotal * 100,
+        status: "pending" as const
       };
 
-      // Make the request
+      console.log("Checkout payload:", orderPayload);
+
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify(payload),
+        body: JSON.stringify(orderPayload),
       });
 
       if (response.status === 401) {
@@ -238,6 +256,7 @@ export default function Cart() {
           responseData = await response.json();
         } else {
           const textContent = await response.text();
+          console.error("Unexpected response:", textContent);
           throw new Error(`Unexpected response format: ${textContent}`);
         }
       } catch (parseError) {
@@ -246,6 +265,7 @@ export default function Cart() {
       }
 
       if (!response.ok) {
+        console.error("Checkout failed:", responseData);
         throw new Error(responseData?.message || "Checkout process failed");
       }
 
@@ -262,7 +282,7 @@ export default function Cart() {
       }
       toast({
         title: "Checkout Error",
-        description: error instanceof Error ? error.message : "An unexpected error occurred during checkout. Please try again.",
+        description: error.message || "An unexpected error occurred during checkout. Please try again.",
         variant: "destructive",
       });
     } finally {

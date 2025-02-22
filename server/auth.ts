@@ -31,21 +31,20 @@ async function comparePasswords(supplied: string, stored: string) {
 export async function setupAuth(app: Express) {
   console.log('Setting up authentication...');
 
-  // Initialize session middleware with secure settings and proper domain config
+  // Initialize session middleware with secure settings
   const sessionMiddleware = session({
-    store: storage.sessionStore, // Use PostgreSQL session store
+    store: storage.sessionStore,
     secret: process.env.SESSION_SECRET || 'development-secret-key',
-    name: 'sid', // Change cookie name for better security
+    name: 'sid',
     resave: false,
     saveUninitialized: false,
-    rolling: true, // Refresh session with each request
+    rolling: true,
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       path: '/',
-      domain: process.env.NODE_ENV === "production" ? '.khush.in' : undefined
     }
   });
 
@@ -62,24 +61,24 @@ export async function setupAuth(app: Express) {
   app.use(passport.session());
   console.log('Passport initialized');
 
+  // Reduce logging frequency for deserialization
+  let lastLog = 0;
+  const LOG_INTERVAL = 5000; // Log at most every 5 seconds
+
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
-        console.log(`Attempting authentication for user: ${username}`);
         const user = await storage.getUserByUsername(username);
 
         if (!user) {
-          console.log(`User not found: ${username}`);
           return done(null, false, { message: "Invalid username or password" });
         }
 
         const passwordValid = await comparePasswords(password, user.password);
         if (!passwordValid) {
-          console.log(`Invalid password for user: ${username}`);
           return done(null, false, { message: "Invalid username or password" });
         }
 
-        console.log(`Authentication successful for user: ${username}`);
         return done(null, user);
       } catch (error) {
         console.error('Authentication error:', error);
@@ -88,21 +87,22 @@ export async function setupAuth(app: Express) {
     })
   );
 
-  // Passport serialization with more detailed logging
   passport.serializeUser((user, done) => {
-    console.log('Serializing user:', user.id);
     done(null, user.id);
   });
 
   passport.deserializeUser(async (id: number, done) => {
     try {
-      console.log('Deserializing user:', id);
+      const now = Date.now();
+      if (now - lastLog >= LOG_INTERVAL) {
+        console.log('Deserializing user:', id);
+        lastLog = now;
+      }
+
       const user = await storage.getUser(id);
       if (!user) {
-        console.log('User not found during deserialization:', id);
         return done(new Error('User not found'));
       }
-      console.log('User deserialized successfully:', user.id);
       done(null, user);
     } catch (error) {
       console.error('Deserialization error:', error);
@@ -110,12 +110,9 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  // Authentication routes with improved error handling and logging
+  // Authentication routes
   app.post("/api/register", async (req, res) => {
     try {
-      console.log('Registration attempt:', req.body.username);
-
-      // Validate required fields
       if (!req.body.username || !req.body.password || !req.body.email) {
         return res.status(400).json({
           message: "Missing required fields"
@@ -124,7 +121,6 @@ export async function setupAuth(app: Express) {
 
       const existingUser = await storage.getUserByUsername(req.body.username);
       if (existingUser) {
-        console.log('Username already exists:', req.body.username);
         return res.status(400).json({
           message: "Username already exists"
         });
@@ -137,11 +133,9 @@ export async function setupAuth(app: Express) {
       });
 
       const { password, ...userWithoutPassword } = user;
-      console.log('User registered successfully:', req.body.username);
 
       req.login(user, (err) => {
         if (err) {
-          console.error('Login error after registration:', err);
           return res.status(500).json({
             message: "Error logging in after registration"
           });
@@ -157,9 +151,6 @@ export async function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    console.log('Login attempt:', req.body.username);
-
-    // Validate required fields
     if (!req.body.username || !req.body.password) {
       return res.status(400).json({
         message: "Missing username or password"
@@ -170,21 +161,17 @@ export async function setupAuth(app: Express) {
       "local",
       (err: Error | null, user: SelectUser | false, info: { message: string } | undefined) => {
         if (err) {
-          console.error('Login error:', err);
           return next(err);
         }
         if (!user) {
-          console.log('Login failed:', req.body.username, info?.message);
           return res.status(401).json({
             message: info?.message || "Invalid username or password"
           });
         }
         req.login(user, (err) => {
           if (err) {
-            console.error('Session creation error:', err);
             return next(err);
           }
-          console.log('Login successful:', user.username);
           const { password, ...userWithoutPassword } = user;
           return res.json(userWithoutPassword);
         });
@@ -193,43 +180,34 @@ export async function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res) => {
-    const username = req.user?.username;
-    console.log('Logout request for user:', username);
     req.logout((err) => {
       if (err) {
-        console.error('Logout error:', err);
         return res.status(500).json({
           message: "Error logging out"
         });
       }
       req.session.destroy((err) => {
         if (err) {
-          console.error('Session destruction error:', err);
           return res.status(500).json({
             message: "Error destroying session"
           });
         }
         res.clearCookie('sid');
-        console.log('User logged out:', username);
         res.sendStatus(200);
       });
     });
   });
 
   app.get("/api/user", (req, res) => {
-    console.log('User data requested. Authenticated:', req.isAuthenticated());
-    console.log('Session ID:', req.sessionID);
-    console.log('Session:', req.session);
-
     if (!req.isAuthenticated()) {
       return res.status(401).json({
         message: "Not authenticated"
       });
     }
-    console.log('User data requested for:', req.user?.username);
     const { password, ...userWithoutPassword } = req.user;
     res.json(userWithoutPassword);
   });
 
-  console.log('Authentication setup completed');
+  // Export session middleware for WebSocket usage
+  return sessionMiddleware;
 }

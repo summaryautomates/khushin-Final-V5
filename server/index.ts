@@ -3,6 +3,7 @@ import { createServer } from "http";
 import { registerRoutes } from './routes';
 import { setupVite } from './vite';
 import { setupAuth } from './auth';
+import { setupWebSocket } from './websocket';
 import cors from 'cors';
 
 const app = express();
@@ -29,13 +30,18 @@ const startServer = async () => {
   try {
     console.log('Starting server...');
 
-    // Setup authentication
+    // Setup authentication and get session middleware
     console.log('Setting up authentication...');
     try {
-      await setupAuth(app);
+      const sessionMiddleware = await setupAuth(app);
       console.log('Authentication setup completed');
+
+      // Setup WebSocket after authentication
+      console.log('Setting up WebSocket server...');
+      await setupWebSocket(server, sessionMiddleware);
+      console.log('WebSocket server setup completed');
     } catch (error) {
-      console.error('Authentication setup error:', error);
+      console.error('Authentication/WebSocket setup error:', error);
       throw error;
     }
 
