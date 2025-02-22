@@ -142,7 +142,43 @@ export const rewards = pgTable("rewards", {
   validUntil: timestamp("valid_until")
 });
 
-// Add the insertUserSchema definition before other insert schemas
+export const referralCodes = pgTable("referral_codes", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  code: text("code").notNull().unique(),
+  timesUsed: integer("times_used").notNull().default(0),
+  pointsEarned: integer("points_earned").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at")
+});
+
+export const referralHistory = pgTable("referral_history", {
+  id: serial("id").primaryKey(),
+  referralId: integer("referral_id").notNull().references(() => referrals.id),
+  pointsAwarded: integer("points_awarded").notNull(),
+  type: text("type").notNull(), // 'signup', 'purchase', etc.
+  metadata: jsonb("metadata").$type<{
+    orderId?: string;
+    purchaseAmount?: number;
+    bonusType?: string;
+  }>(),
+  createdAt: timestamp("created_at").notNull().defaultNow()
+});
+
+// Add relations
+export const referralsRelations = relations(referrals, ({ one, many }) => ({
+  referrer: one(users, {
+    fields: [referrals.referrerId],
+    references: [users.id]
+  }),
+  referred: one(users, {
+    fields: [referrals.referredId],
+    references: [users.id]
+  }),
+  history: many(referralHistory)
+}));
+
+// Add users table schema definition at the top
 export const insertUserSchema = createInsertSchema(users)
   .omit({ 
     id: true,
@@ -197,6 +233,19 @@ export const insertLoyaltySchema = createInsertSchema(loyaltyPoints).omit({ id: 
 export const insertReferralSchema = createInsertSchema(referrals).omit({ id: true, createdAt: true });
 export const insertRewardSchema = createInsertSchema(rewards).omit({ id: true });
 
+// Add insert schemas
+export const insertReferralCodeSchema = createInsertSchema(referralCodes).omit({ 
+  id: true,
+  timesUsed: true,
+  pointsEarned: true,
+  createdAt: true 
+});
+
+export const insertReferralHistorySchema = createInsertSchema(referralHistory).omit({ 
+  id: true,
+  createdAt: true 
+});
+
 export type Product = typeof products.$inferSelect;
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type ContactMessage = typeof contactMessages.$inferSelect;
@@ -217,3 +266,9 @@ export type Referral = typeof referrals.$inferSelect;
 export type Reward = typeof rewards.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+// Add types
+export type ReferralCode = typeof referralCodes.$inferSelect;
+export type ReferralHistory = typeof referralHistory.$inferSelect;
+export type InsertReferralCode = z.infer<typeof insertReferralCodeSchema>;
+export type InsertReferralHistory = z.infer<typeof insertReferralHistorySchema>;

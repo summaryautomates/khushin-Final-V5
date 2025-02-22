@@ -16,6 +16,9 @@ export function Navbar() {
         <Link href="/rewards">
           <a className="hover:text-primary">Rewards</a>
         </Link>
+        <Link href="/referral">
+          <a className="hover:text-primary">Referral</a>
+        </Link>
         <Link href="/contact">
           <a className="hover:text-primary">Contact</a>
         </Link>
