@@ -73,7 +73,13 @@ export async function registerRoutes(app: Express) {
 
   app.post("/api/payment/:ref/status", async (req, res) => {
     try {
+      console.log("Payment status update request received:", {
+        ref: req.params.ref,
+        body: req.body
+      });
+
       if (!req.isAuthenticated()) {
+        console.log("Unauthorized payment status update attempt");
         return res.status(401).json({ message: "Authentication required" });
       }
 
@@ -84,6 +90,7 @@ export async function registerRoutes(app: Express) {
 
       const validationResult = statusSchema.safeParse(req.body);
       if (!validationResult.success) {
+        console.error("Payment status validation failed:", validationResult.error);
         return res.status(400).json({
           message: "Invalid status data",
           errors: validationResult.error.errors
@@ -92,15 +99,27 @@ export async function registerRoutes(app: Express) {
 
       const order = await storage.getOrderByRef(req.params.ref);
       if (!order) {
+        console.log("Order not found:", req.params.ref);
         return res.status(404).json({ message: "Order not found" });
       }
 
       if (order.userId.toString() !== req.user?.id?.toString()) {
+        console.log("Unauthorized access to order:", {
+          orderId: order.userId,
+          userId: req.user?.id
+        });
         return res.status(403).json({ message: "Unauthorized" });
       }
 
       const { status, method } = validationResult.data;
+      console.log("Updating order status:", {
+        ref: order.orderRef,
+        status,
+        method
+      });
+
       await storage.updateOrderStatus(order.orderRef, status, method);
+      console.log("Order status updated successfully");
 
       res.json({ message: "Payment status updated successfully" });
     } catch (error) {
@@ -150,12 +169,16 @@ export async function registerRoutes(app: Express) {
 
   app.post("/api/checkout", async (req, res) => {
     try {
+      console.log("Checkout request received:", { body: req.body });
+
       if (!req.isAuthenticated()) {
+        console.log("Unauthorized checkout attempt");
         return res.status(401).json({ message: "Authentication required" });
       }
 
       const userId = req.user?.id?.toString();
       if (!userId) {
+        console.log("Invalid user session detected");
         return res.status(401).json({ message: "Invalid user session" });
       }
 
@@ -165,15 +188,22 @@ export async function registerRoutes(app: Express) {
         orderRef: `ORD${randomBytes(4).toString('hex').toUpperCase()}`
       };
 
+      console.log("Validating order data:", orderData);
       const validationResult = insertOrderSchema.safeParse(orderData);
+
       if (!validationResult.success) {
+        console.error("Order validation failed:", validationResult.error);
         return res.status(400).json({
           message: "Invalid request data",
           errors: validationResult.error.errors
         });
       }
 
+      console.log("Creating order in database");
       const order = await storage.createOrder(validationResult.data);
+      console.log("Order created successfully:", order);
+
+      console.log("Clearing user cart");
       await storage.clearCart(userId);
 
       res.json({

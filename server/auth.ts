@@ -39,6 +39,7 @@ export async function setupAuth(app: Express) {
     resave: false,
     saveUninitialized: false,
     rolling: true,
+    proxy: true, // Trust the reverse proxy
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
@@ -53,17 +54,42 @@ export async function setupAuth(app: Express) {
   app.use(sessionMiddleware);
   console.log('Session middleware configured');
 
-  // Make session middleware available for WebSocket authentication
-  app.set('sessionMiddleware', sessionMiddleware);
-
   // Initialize passport after session middleware
   app.use(passport.initialize());
   app.use(passport.session());
   console.log('Passport initialized');
 
-  // Reduce logging frequency for deserialization
-  let lastLog = 0;
-  const LOG_INTERVAL = 5000; // Log at most every 5 seconds
+  // Cache user data to reduce database queries
+  const userCache = new Map<number, SelectUser>();
+  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+  passport.serializeUser((user, done) => {
+    done(null, user.id);
+  });
+
+  passport.deserializeUser(async (id: number, done) => {
+    try {
+      // Check cache first
+      const cachedUser = userCache.get(id);
+      if (cachedUser) {
+        return done(null, cachedUser);
+      }
+
+      const user = await storage.getUser(id);
+      if (!user) {
+        return done(new Error('User not found'));
+      }
+
+      // Cache the user
+      userCache.set(id, user);
+      setTimeout(() => userCache.delete(id), CACHE_TTL);
+
+      done(null, user);
+    } catch (error) {
+      console.error('Deserialization error:', error);
+      done(error);
+    }
+  });
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {
@@ -86,29 +112,6 @@ export async function setupAuth(app: Express) {
       }
     })
   );
-
-  passport.serializeUser((user, done) => {
-    done(null, user.id);
-  });
-
-  passport.deserializeUser(async (id: number, done) => {
-    try {
-      const now = Date.now();
-      if (now - lastLog >= LOG_INTERVAL) {
-        console.log('Deserializing user:', id);
-        lastLog = now;
-      }
-
-      const user = await storage.getUser(id);
-      if (!user) {
-        return done(new Error('User not found'));
-      }
-      done(null, user);
-    } catch (error) {
-      console.error('Deserialization error:', error);
-      done(error);
-    }
-  });
 
   // Authentication routes
   app.post("/api/register", async (req, res) => {
