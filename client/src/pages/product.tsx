@@ -20,7 +20,7 @@ const FALLBACK_IMAGES = [
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:id");
-  const id = params?.id;
+  const id = params?.id ? parseInt(params.id, 10) : undefined;
   const { addItem } = useCart();
   const { toast } = useToast();
   const [selectedImage, setSelectedImage] = useState<number>(0);
@@ -34,16 +34,17 @@ export default function ProductPage() {
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: [`/api/products/${id}`],
+    enabled: !!id,
     retry: 3,
     staleTime: 300000, // Cache for 5 minutes
-    cacheTime: 3600000, // Keep in cache for 1 hour
+    gcTime: 3600000, // Keep in cache for 1 hour
   });
 
   // Preload images when product data is available
   useEffect(() => {
     if (product?.images) {
       const images = Array.isArray(product.images) ? product.images : [];
-      images.forEach((imageUrl, index) => {
+      images.forEach((imageUrl: string, index: number) => {
         if (typeof imageUrl === 'string' && !imageErrors[index]) {
           const img = new Image();
           img.src = imageUrl;
@@ -52,7 +53,7 @@ export default function ProductPage() {
     }
   }, [product, imageErrors]);
 
-  const getValidProductImage = useMemo(() => (index: number) => {
+  const getValidProductImage = useMemo(() => (index: number): string => {
     if (!product?.images) return FALLBACK_IMAGES[0];
 
     const images = Array.isArray(product.images) ? product.images : [];
@@ -68,10 +69,10 @@ export default function ProductPage() {
   useEffect(() => {
     if (product?.images) {
       const images = Array.isArray(product.images) ? product.images : [];
-      const initialLoadingStates = images.reduce((acc, _, index) => {
+      const initialLoadingStates = images.reduce((acc: Record<number, boolean>, _: string, index: number) => {
         acc[index] = true;
         return acc;
-      }, {} as Record<number, boolean>);
+      }, {});
       setImageLoadingStates(initialLoadingStates);
       setImageErrors({});
       setSelectedImage(0);
@@ -125,10 +126,7 @@ export default function ProductPage() {
 
     try {
       setIsCheckingOut(true);
-      // Create a temporary cart for immediate checkout
       await addItem(product);
-
-      // Redirect directly to cart with buyNow flag
       setLocation(`/cart?buyNow=true`);
     } catch (error) {
       if (error instanceof Error && error.message === "AUTH_REQUIRED") {
@@ -165,7 +163,7 @@ export default function ProductPage() {
     );
   }
 
-  if (!product) {
+  if (!product || !id) {
     return (
       <div className="container flex min-h-screen items-center justify-center">
         <div className="text-lg">Product not found</div>
@@ -207,7 +205,7 @@ export default function ProductPage() {
 
             {images.length > 1 && (
               <div className="grid grid-cols-4 gap-4 mt-4">
-                {images.map((_, i) => (
+                {images.map((_: string, i: number) => (
                   <div
                     key={i}
                     className={`aspect-square overflow-hidden rounded-lg border bg-zinc-100 cursor-pointer transition-all relative
