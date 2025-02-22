@@ -6,7 +6,8 @@ import { Footer } from "@/components/layout/footer";
 import { CartProvider } from "@/hooks/use-cart";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { AuthProvider } from "@/hooks/use-auth";
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
+import { useEffect } from "react";
 
 // Page imports
 import Home from "@/pages/home";
@@ -32,6 +33,79 @@ import Rewards from "@/pages/rewards";
 import Referral from "@/pages/referral";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
+function AppRoutes() {
+  const [location] = useLocation();
+
+  // Scroll to top whenever the location changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
+
+  return (
+    <main className="flex-1">
+      {/* Mobile View Container */}
+      <div className="md:hidden w-full">
+        <div className="px-4 py-3">
+          <Switch>
+            <Route path="/" component={Home} />
+            <Route path="/products" component={Products} />
+            <Route path="/products/category/:category" component={Products} />
+            <Route path="/product/:id" component={Product} />
+            <ProtectedRoute path="/cart" component={Cart} />
+            <ProtectedRoute path="/checkout/payment" component={CheckoutPayment} />
+            <ProtectedRoute path="/checkout/success" component={CheckoutSuccess} />
+            <Route path="/contact" component={Contact} />
+            <Route path="/customize" component={Customize} />
+            <Route path="/refueling" component={Refueling} />
+            <ProtectedRoute path="/orders" component={Orders} />
+            <ProtectedRoute path="/orders/:orderRef" component={OrderDetails} />
+            <Route path="/faqs" component={FAQs} />
+            <Route path="/warranty" component={Warranty} />
+            <Route path="/shipping" component={Shipping} />
+            <Route path="/returns" component={Returns} />
+            <Route path="/event-organizer" component={EventOrganizer} />
+            <Route path="/express-delivery" component={ExpressDelivery} />
+            <Route path="/loyalty" component={Loyalty} />
+            <Route path="/rewards" component={Rewards} />
+            <Route path="/referral" component={Referral} />
+            <Route component={NotFound} />
+          </Switch>
+        </div>
+      </div>
+
+      {/* Desktop View Container */}
+      <div className="hidden md:block w-full">
+        <div className="container mx-auto px-6 py-8 max-w-7xl">
+          <Switch>
+            <Route path="/" component={Home} />
+            <Route path="/products" component={Products} />
+            <Route path="/products/category/:category" component={Products} />
+            <Route path="/product/:id" component={Product} />
+            <ProtectedRoute path="/cart" component={Cart} />
+            <ProtectedRoute path="/checkout/payment" component={CheckoutPayment} />
+            <ProtectedRoute path="/checkout/success" component={CheckoutSuccess} />
+            <Route path="/contact" component={Contact} />
+            <Route path="/customize" component={Customize} />
+            <Route path="/refueling" component={Refueling} />
+            <ProtectedRoute path="/orders" component={Orders} />
+            <ProtectedRoute path="/orders/:orderRef" component={OrderDetails} />
+            <Route path="/faqs" component={FAQs} />
+            <Route path="/warranty" component={Warranty} />
+            <Route path="/shipping" component={Shipping} />
+            <Route path="/returns" component={Returns} />
+            <Route path="/event-organizer" component={EventOrganizer} />
+            <Route path="/express-delivery" component={ExpressDelivery} />
+            <Route path="/loyalty" component={Loyalty} />
+            <Route path="/rewards" component={Rewards} />
+            <Route path="/referral" component={Referral} />
+            <Route component={NotFound} />
+          </Switch>
+        </div>
+      </div>
+    </main>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -40,67 +114,7 @@ function App() {
           <CartProvider>
             <div className="min-h-screen flex flex-col bg-background">
               <Header />
-              <main className="flex-1">
-                {/* Mobile View Container */}
-                <div className="md:hidden w-full">
-                  <div className="px-4 py-3">
-                    <Switch>
-                      <Route path="/" component={Home} />
-                      <Route path="/products" component={Products} />
-                      <Route path="/products/category/:category" component={Products} />
-                      <Route path="/product/:id" component={Product} />
-                      <ProtectedRoute path="/cart" component={Cart} />
-                      <ProtectedRoute path="/checkout/payment" component={CheckoutPayment} />
-                      <ProtectedRoute path="/checkout/success" component={CheckoutSuccess} />
-                      <Route path="/contact" component={Contact} />
-                      <Route path="/customize" component={Customize} />
-                      <Route path="/refueling" component={Refueling} />
-                      <ProtectedRoute path="/orders" component={Orders} />
-                      <ProtectedRoute path="/orders/:orderRef" component={OrderDetails} />
-                      <Route path="/faqs" component={FAQs} />
-                      <Route path="/warranty" component={Warranty} />
-                      <Route path="/shipping" component={Shipping} />
-                      <Route path="/returns" component={Returns} />
-                      <Route path="/event-organizer" component={EventOrganizer} />
-                      <Route path="/express-delivery" component={ExpressDelivery} />
-                      <Route path="/loyalty" component={Loyalty} />
-                      <Route path="/rewards" component={Rewards} />
-                      <Route path="/referral" component={Referral} />
-                      <Route component={NotFound} />
-                    </Switch>
-                  </div>
-                </div>
-
-                {/* Desktop View Container */}
-                <div className="hidden md:block w-full">
-                  <div className="container mx-auto px-6 py-8 max-w-7xl">
-                    <Switch>
-                      <Route path="/" component={Home} />
-                      <Route path="/products" component={Products} />
-                      <Route path="/products/category/:category" component={Products} />
-                      <Route path="/product/:id" component={Product} />
-                      <ProtectedRoute path="/cart" component={Cart} />
-                      <ProtectedRoute path="/checkout/payment" component={CheckoutPayment} />
-                      <ProtectedRoute path="/checkout/success" component={CheckoutSuccess} />
-                      <Route path="/contact" component={Contact} />
-                      <Route path="/customize" component={Customize} />
-                      <Route path="/refueling" component={Refueling} />
-                      <ProtectedRoute path="/orders" component={Orders} />
-                      <ProtectedRoute path="/orders/:orderRef" component={OrderDetails} />
-                      <Route path="/faqs" component={FAQs} />
-                      <Route path="/warranty" component={Warranty} />
-                      <Route path="/shipping" component={Shipping} />
-                      <Route path="/returns" component={Returns} />
-                      <Route path="/event-organizer" component={EventOrganizer} />
-                      <Route path="/express-delivery" component={ExpressDelivery} />
-                      <Route path="/loyalty" component={Loyalty} />
-                      <Route path="/rewards" component={Rewards} />
-                      <Route path="/referral" component={Referral} />
-                      <Route component={NotFound} />
-                    </Switch>
-                  </div>
-                </div>
-              </main>
+              <AppRoutes />
               <Footer />
             </div>
             <Toaster />
