@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { NewsletterDialog } from "@/components/dialogs/newsletter-dialog";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/products/product-grid";
+import Features from "@/components/Features"; // Add this import
 import type { Product } from "@shared/schema";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,7 +34,7 @@ export default function Home() {
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
     staleTime: 300000, // Cache results for 5 minutes
-    cacheTime: 3600000, // Keep in cache for 1 hour
+    gcTime: 3600000, // Keep in cache for 1 hour (renamed from cacheTime)
     retry: 2,
     refetchOnWindowFocus: false
   });
@@ -357,26 +358,10 @@ export default function Home() {
           </motion.div>
         </section>
 
-        {/* Brand Statement */}
+        {/* Features Section - Replacing Brand Statement */}
         <section className="py-20 px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              className="bg-primary/10 rounded-2xl p-8 md:p-12 border border-primary/20"
-            >
-              <Clock className="w-12 h-12 text-primary mx-auto mb-6" />
-              <h2 className="text-2xl md:text-3xl font-bold mb-4">
-                Express Delivery Available
-              </h2>
-              <p className="text-muted-foreground mb-6">
-                Premium same-day delivery service for last-minute luxury gifts
-              </p>
-              <Button size="lg" className="bg-primary/90 hover:bg-primary rounded-full">
-                Browse Instant Gifts
-              </Button>
-            </motion.div>
+          <div className="max-w-7xl mx-auto">
+            <Features />
           </div>
         </section>
       </div>
