@@ -10,7 +10,7 @@ import { ShareButtons } from "@/components/products/share-buttons";
 import { ModelViewer } from "@/components/model-viewer/model-viewer";
 import { SimilarProducts } from "@/components/products/similar-products";
 import { AuthSheet } from "@/components/auth/auth-sheet";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 const FALLBACK_IMAGES = [
   "/placeholder-product.svg",
@@ -35,10 +35,24 @@ export default function ProductPage() {
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: [`/api/products/${id}`],
     retry: 3,
-    staleTime: 60000,
+    staleTime: 300000, // Cache for 5 minutes
+    cacheTime: 3600000, // Keep in cache for 1 hour
   });
 
-  const getValidProductImage = (index: number) => {
+  // Preload images when product data is available
+  useEffect(() => {
+    if (product?.images) {
+      const images = Array.isArray(product.images) ? product.images : [];
+      images.forEach((imageUrl, index) => {
+        if (typeof imageUrl === 'string' && !imageErrors[index]) {
+          const img = new Image();
+          img.src = imageUrl;
+        }
+      });
+    }
+  }, [product, imageErrors]);
+
+  const getValidProductImage = useMemo(() => (index: number) => {
     if (!product?.images) return FALLBACK_IMAGES[0];
 
     const images = Array.isArray(product.images) ? product.images : [];
@@ -49,7 +63,7 @@ export default function ProductPage() {
       }
     }
     return FALLBACK_IMAGES[fallbackImageIndex];
-  };
+  }, [product, imageErrors, fallbackImageIndex]);
 
   useEffect(() => {
     if (product?.images) {

@@ -14,10 +14,14 @@ import {
   Camera,
   Loader2
 } from "lucide-react";
-import { useState, useRef, useEffect, useMemo } from "react";
-import { createWorker } from 'tesseract.js';
-import type { Worker } from 'tesseract.js';
+import { useState, useRef, useEffect, useMemo, lazy, Suspense } from "react";
 import { useToast } from "@/hooks/use-toast";
+
+// Lazy load Tesseract.js
+const initTesseract = async () => {
+  const { createWorker } = await import('tesseract.js');
+  return createWorker();
+};
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -28,13 +32,14 @@ export default function Home() {
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
-    staleTime: 30000, // Cache results for 30 seconds
+    staleTime: 300000, // Cache results for 5 minutes
+    cacheTime: 3600000, // Keep in cache for 1 hour
     retry: 2,
     refetchOnWindowFocus: false
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const workerRef = useRef<Worker | null>(null);
+  const workerRef = useRef<any>(null);
 
   // Memoize suggestions calculation
   const suggestions = useMemo(() => {
@@ -116,7 +121,7 @@ export default function Home() {
     setIsProcessingImage(true);
     try {
       if (!workerRef.current) {
-        workerRef.current = createWorker();
+        workerRef.current = await initTesseract();
       }
 
       const worker = workerRef.current;
@@ -162,19 +167,8 @@ export default function Home() {
     setLocation('/event-organizer');
   };
 
-  // Cleanup worker on unmount
-  useEffect(() => {
-    return () => {
-      if (workerRef.current) {
-        workerRef.current.terminate();
-        workerRef.current = null;
-      }
-    };
-  }, []);
-
   return (
-    <>
-      <NewsletterDialog />
+    <Suspense fallback={<div className="h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
       <div className="flex flex-col">
         {/* Hero Section */}
         <section className="h-screen w-full flex items-center justify-center bg-black relative overflow-hidden">
@@ -386,6 +380,6 @@ export default function Home() {
           </div>
         </section>
       </div>
-    </>
+    </Suspense>
   );
 }
