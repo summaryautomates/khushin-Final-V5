@@ -36,15 +36,15 @@ export default function Cart() {
   const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false);
 
   const { toast } = useToast();
-  const { 
-    items, 
-    total, 
-    updateQuantity, 
-    removeItem, 
-    isLoading, 
-    pendingUpdates, 
+  const {
+    items,
+    total,
+    updateQuantity,
+    removeItem,
+    isLoading,
+    pendingUpdates,
     error,
-    updateGiftStatus 
+    updateGiftStatus
   } = useCart();
 
   useEffect(() => {
@@ -195,19 +195,24 @@ export default function Cart() {
 
     setIsCheckingOut(true);
     try {
-      // Prepare the request payload
+      // Structure the order payload according to the schema
       const payload = {
         items: items.map((item) => ({
           productId: item.product.id,
           quantity: item.quantity,
-          isGift: item.isGift,
-          giftMessage: item.giftMessage
         })),
         shipping: {
-          ...shippingData,
+          fullName: shippingData.fullName,
+          address: shippingData.address,
           city: selectedCity,
-          delivery: deliverySchedule,
+          state: shippingData.state,
+          pincode: shippingData.pincode,
+          phone: shippingData.phone
         },
+        // Include optional fields
+        orderRef: undefined, // Let server generate this
+        status: 'pending',
+        total: orderTotal * 100, // Convert to cents for storage
       };
 
       // Make the request
@@ -216,8 +221,8 @@ export default function Cart() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(payload),
-        credentials: "include", // Important for authentication
       });
 
       if (response.status === 401) {
@@ -225,15 +230,13 @@ export default function Cart() {
         throw new Error("AUTH_REQUIRED");
       }
 
-      let responseData;
       const contentType = response.headers.get("content-type");
+      let responseData;
 
       try {
-        // Try to parse as JSON first
         if (contentType?.includes("application/json")) {
           responseData = await response.json();
         } else {
-          // If not JSON, get the text content
           const textContent = await response.text();
           throw new Error(`Unexpected response format: ${textContent}`);
         }
@@ -246,7 +249,6 @@ export default function Cart() {
         throw new Error(responseData?.message || "Checkout process failed");
       }
 
-      // Check for redirect URL
       if (!responseData?.redirectUrl) {
         throw new Error("Missing payment redirect URL");
       }
