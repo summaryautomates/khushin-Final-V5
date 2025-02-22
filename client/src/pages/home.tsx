@@ -42,8 +42,8 @@ export default function Home() {
     const normalizedQuery = searchQuery.toLowerCase();
     return products
       .map(p => p.name)
-      .filter(name => 
-        name.toLowerCase() !== normalizedQuery && 
+      .filter(name =>
+        name.toLowerCase() !== normalizedQuery &&
         name.toLowerCase().includes(normalizedQuery)
       )
       .slice(0, 3);
@@ -177,28 +177,22 @@ export default function Home() {
       <NewsletterDialog />
       <div className="flex flex-col">
         {/* Hero Section */}
-        <section className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden">
-          <div className="absolute inset-0 z-0">
+        <section className="relative min-h-screen flex items-center justify-center bg-black overflow-hidden">
+          <div className="absolute inset-0 w-full h-full z-0">
             <motion.div
               initial={{ scale: 1.1, opacity: 0 }}
               animate={{ scale: 1, opacity: 0.5 }}
               transition={{ duration: 1.5 }}
+              className="w-full h-full"
             >
               <img
                 src="https://images.unsplash.com/photo-1483968049578-867b9ad94034?q=80&w=2072&auto=format"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover absolute inset-0"
                 alt="Hero background"
               />
             </motion.div>
-            <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black"></div>
+            <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/70 to-black"></div>
           </div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.05, 0.1] }}
-            transition={{ duration: 2, times: [0, 0.5, 1] }}
-            className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"
-          />
 
           <motion.div
             style={{ opacity, scale }}
