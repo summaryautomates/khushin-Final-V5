@@ -17,6 +17,9 @@ import {
   cartItems,
   orders,
   orderStatusHistory,
+  giftOrders,
+  type GiftOrder,
+  type InsertGiftOrder,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
@@ -65,6 +68,13 @@ export interface IStorage {
 
   // Session store
   sessionStore: session.Store;
+
+  // Gift order methods
+  createGiftOrder(giftOrder: InsertGiftOrder): Promise<GiftOrder>;
+  getGiftOrder(orderId: number): Promise<GiftOrder | undefined>;
+  getGiftOrderByRedemptionCode(code: string): Promise<GiftOrder | undefined>;
+  updateGiftOrderRedemptionStatus(orderId: number, isRedeemed: boolean): Promise<GiftOrder>;
+  getGiftOrdersBySender(senderUserId: string): Promise<GiftOrder[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -322,6 +332,50 @@ export class DatabaseStorage implements IStorage {
   async createUser(user: InsertUser): Promise<User> {
     const [newUser] = await db.insert(users).values(user).returning();
     return newUser;
+  }
+
+  async createGiftOrder(giftOrder: InsertGiftOrder): Promise<GiftOrder> {
+    // Generate a redemption code if not provided
+    const giftOrderData = {
+      ...giftOrder,
+      redemptionCode: giftOrder.redemptionCode || `GIFT${Date.now()}${Math.random().toString(36).substring(2, 7)}`,
+    };
+
+    const [newGiftOrder] = await db.insert(giftOrders).values(giftOrderData).returning();
+    return newGiftOrder;
+  }
+
+  async getGiftOrder(orderId: number): Promise<GiftOrder | undefined> {
+    const [giftOrder] = await db
+      .select()
+      .from(giftOrders)
+      .where(eq(giftOrders.orderId, orderId));
+    return giftOrder;
+  }
+
+  async getGiftOrderByRedemptionCode(code: string): Promise<GiftOrder | undefined> {
+    const [giftOrder] = await db
+      .select()
+      .from(giftOrders)
+      .where(eq(giftOrders.redemptionCode, code));
+    return giftOrder;
+  }
+
+  async updateGiftOrderRedemptionStatus(orderId: number, isRedeemed: boolean): Promise<GiftOrder> {
+    const [updatedGiftOrder] = await db
+      .update(giftOrders)
+      .set({ isRedeemed })
+      .where(eq(giftOrders.orderId, orderId))
+      .returning();
+    return updatedGiftOrder;
+  }
+
+  async getGiftOrdersBySender(senderUserId: string): Promise<GiftOrder[]> {
+    return await db
+      .select()
+      .from(giftOrders)
+      .where(eq(giftOrders.senderUserId, senderUserId))
+      .orderBy(desc(giftOrders.createdAt));
   }
 }
 

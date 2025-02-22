@@ -246,6 +246,47 @@ export const insertReferralHistorySchema = createInsertSchema(referralHistory).o
   createdAt: true 
 });
 
+// First define the gift orders table with minimal fields
+export const giftOrders = pgTable("gift_orders", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull(),
+  recipientEmail: text("recipient_email").notNull(),
+  recipientName: text("recipient_name").notNull(),
+  redemptionCode: text("redemption_code").notNull().unique(),
+  isRedeemed: boolean("is_redeemed").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Define the relations after all tables are defined
+export const giftOrdersRelations = relations(giftOrders, ({ one }) => ({
+  order: one(orders, {
+    fields: [giftOrders.orderId],
+    references: [orders.id],
+  }),
+}));
+
+// Add the gift order relation to orders
+export const ordersRelations = relations(orders, ({ many }) => ({
+  orderStatusHistory: many(orderStatusHistory),
+  giftOrders: many(giftOrders)
+}));
+
+// Create the insert schema
+export const insertGiftOrderSchema = createInsertSchema(giftOrders)
+  .omit({ 
+    id: true,
+    createdAt: true,
+    isRedeemed: true 
+  })
+  .extend({
+    recipientEmail: z.string().email("Invalid recipient email address"),
+    recipientName: z.string().min(2, "Recipient name is required"),
+    redemptionCode: z.string().optional()
+  });
+
+export type GiftOrder = typeof giftOrders.$inferSelect;
+export type InsertGiftOrder = z.infer<typeof insertGiftOrderSchema>;
+
 export type Product = typeof products.$inferSelect;
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type ContactMessage = typeof contactMessages.$inferSelect;
