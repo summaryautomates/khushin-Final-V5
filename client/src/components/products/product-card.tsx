@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
   Card,
@@ -22,6 +22,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const { toast } = useToast();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+  const [, setLocation] = useLocation();
 
   const getProductImage = () => {
     if (Array.isArray(product.images) && product.images.length > 0) {
@@ -45,6 +46,23 @@ export function ProductCard({ product }: ProductCardProps) {
       toast({
         title: "Error",
         description: "Failed to add item to cart. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
+  const handleBuyNow = async () => {
+    setIsAddingToCart(true);
+    try {
+      await addItem(product);
+      setLocation(`/cart?buyNow=true`);
+    } catch (error) {
+      console.error("Failed to process buy now:", error);
+      toast({
+        title: "Error",
+        description: "Failed to process your request. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -108,7 +126,7 @@ export function ProductCard({ product }: ProductCardProps) {
                   size="icon"
                   variant="secondary"
                   className="rounded-full bg-white text-black hover:bg-gray-100"
-                  onClick={handleAddToCart}
+                  onClick={handleBuyNow}
                   disabled={isAddingToCart}
                 >
                   {isAddingToCart ? (
