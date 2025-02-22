@@ -160,11 +160,12 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
     name: z.string().optional()
   })).min(1, "At least one item is required"),
   shipping: z.object({
-    fullName: z.string().min(1, "Full name is required"),
-    address: z.string().min(1, "Address is required"),
-    city: z.string().min(1, "City is required"),
-    state: z.string().min(1, "State is required"),
-    pincode: z.string().min(1, "Pincode is required"),
+    email: z.string().email("Invalid email address"),
+    address: z.string().min(5, "Complete address is required"),
+    apartment: z.string().optional(),
+    city: z.string().min(2, "City is required"),
+    state: z.string().min(2, "State is required"),
+    pincode: z.string().regex(/^\d{6}$/, "Please enter a valid 6-digit pincode"),
     phone: z.string().min(10, "Invalid phone number")
   }),
   status: z.string().optional(),
