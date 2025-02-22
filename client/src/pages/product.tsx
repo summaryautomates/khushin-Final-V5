@@ -128,8 +128,8 @@ export default function ProductPage() {
       // First add to cart
       await addItem(product);
 
-      // Redirect to cart with buy now flag
-      setLocation(`/cart?buyNow=true`);
+      // Redirect directly to checkout page with buy now flag
+      setLocation(`/checkout-payment?buyNow=true`);
     } catch (error) {
       if (error instanceof Error && error.message === "AUTH_REQUIRED") {
         setPendingAction("buy-now");
