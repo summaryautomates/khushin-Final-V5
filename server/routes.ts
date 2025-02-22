@@ -112,7 +112,10 @@ export async function registerRoutes(app: Express) {
   // Protected routes requiring authentication
   app.post("/api/checkout", async (req, res) => {
     try {
-      console.log('Processing checkout request...');
+      console.log('Processing checkout request:', {
+        body: req.body,
+        user: req.user
+      });
 
       // Check authentication
       if (!req.isAuthenticated()) {
@@ -134,10 +137,14 @@ export async function registerRoutes(app: Express) {
       });
 
       if (!validationResult.success) {
-        console.log('Validation failed:', validationResult.error);
+        console.error('Validation failed:', {
+          errors: validationResult.error.errors,
+          formattedErrors: validationResult.error.format()
+        });
         return res.status(400).json({
           message: "Invalid request data",
-          errors: validationResult.error.errors
+          errors: validationResult.error.errors,
+          details: validationResult.error.format()
         });
       }
 
@@ -175,7 +182,8 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error('Checkout error:', error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : "Failed to process checkout"
+        message: error instanceof Error ? error.message : "Failed to process checkout",
+        details: error instanceof Error ? error.stack : undefined
       });
     }
   });

@@ -160,13 +160,14 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
     name: z.string().optional()
   })).min(1, "At least one item is required"),
   shipping: z.object({
+    fullName: z.string().min(2, "Full name is required"),
     email: z.string().email("Invalid email address"),
     address: z.string().min(5, "Complete address is required"),
     apartment: z.string().optional(),
     city: z.string().min(2, "City is required"),
     state: z.string().min(2, "State is required"),
     pincode: z.string().regex(/^\d{6}$/, "Please enter a valid 6-digit pincode"),
-    phone: z.string().min(10, "Invalid phone number")
+    phone: z.string().regex(/^\d{10}$/, "Please enter a valid 10-digit phone number")
   }),
   status: z.string().optional(),
   orderRef: z.string().optional(),
@@ -182,14 +183,6 @@ export const insertOrderStatusHistorySchema = createInsertSchema(orderStatusHist
 export const insertLoyaltySchema = createInsertSchema(loyaltyPoints).omit({ id: true, lastUpdated: true });
 export const insertReferralSchema = createInsertSchema(referrals).omit({ id: true, createdAt: true });
 export const insertRewardSchema = createInsertSchema(rewards).omit({ id: true });
-
-export const insertUserSchema = createInsertSchema(users).omit({ 
-  id: true,
-  createdAt: true 
-}).extend({
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  email: z.string().email("Invalid email address"),
-});
 
 export type Product = typeof products.$inferSelect;
 export type BlogPost = typeof blogPosts.$inferSelect;
