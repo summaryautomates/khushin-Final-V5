@@ -8,8 +8,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/products";
 import type { Product } from "@shared/schema";
-import { Eye, ShoppingCart, Loader2 } from "lucide-react";
+import { Eye, ShoppingCart, Loader2, Scale } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
+import { useCompare } from "@/hooks/use-compare";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
@@ -19,6 +20,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
+  const { addItem: addToCompare, removeItem: removeFromCompare, isInCompare } = useCompare();
   const { toast } = useToast();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
@@ -118,6 +120,31 @@ export function ProductCard({ product }: ProductCardProps) {
                   </Button>
                 </motion.div>
               </Link>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  className="rounded-full bg-white text-black hover:bg-gray-100"
+                  onClick={() => {
+                    if (isInCompare(product.id)) {
+                      removeFromCompare(product.id);
+                      toast({
+                        description: `${product.name} removed from comparison`,
+                      });
+                    } else {
+                      addToCompare(product);
+                      toast({
+                        description: `${product.name} added to comparison`,
+                      });
+                    }
+                  }}
+                >
+                  <Scale className={`h-4 w-4 ${isInCompare(product.id) ? 'text-primary' : ''}`} />
+                </Button>
+              </motion.div>
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

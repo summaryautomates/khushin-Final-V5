@@ -16,6 +16,7 @@ import Product from "@/pages/product";
 import Cart from "@/pages/cart";
 import Contact from "@/pages/contact";
 import NotFound from "@/pages/not-found";
+import Compare from "@/pages/compare";
 import Returns from "@/pages/support/returns";
 import Warranty from "@/pages/support/warranty";
 import Shipping from "@/pages/support/shipping";
@@ -51,6 +52,7 @@ function AppRoutes() {
             <Route path="/products" component={Products} />
             <Route path="/products/category/:category" component={Products} />
             <Route path="/product/:id" component={Product} />
+            <Route path="/compare" component={Compare} />
             <ProtectedRoute path="/cart" component={Cart} />
             <ProtectedRoute path="/checkout/payment" component={CheckoutPayment} />
             <ProtectedRoute path="/checkout/success" component={CheckoutSuccess} />
@@ -81,6 +83,7 @@ function AppRoutes() {
             <Route path="/products" component={Products} />
             <Route path="/products/category/:category" component={Products} />
             <Route path="/product/:id" component={Product} />
+            <Route path="/compare" component={Compare} />
             <ProtectedRoute path="/cart" component={Cart} />
             <ProtectedRoute path="/checkout/payment" component={CheckoutPayment} />
             <ProtectedRoute path="/checkout/success" component={CheckoutSuccess} />
