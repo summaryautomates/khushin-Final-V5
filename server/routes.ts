@@ -48,7 +48,7 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ message: "Order not found" });
       }
 
-      if (order.userId !== req.user?.id) {
+      if (order.userId.toString() !== req.user?.id?.toString()) {
         return res.status(403).json({ message: "Unauthorized" });
       }
 
@@ -93,7 +93,7 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ message: "Order not found" });
       }
 
-      if (order.userId !== req.user?.id) {
+      if (order.userId.toString() !== req.user?.id?.toString()) {
         return res.status(403).json({ message: "Unauthorized" });
       }
 

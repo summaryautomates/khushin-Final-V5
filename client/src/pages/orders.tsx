@@ -108,10 +108,16 @@ function ReturnRequestDialog({ order }: { order: Order }) {
         throw new Error("Please select at least one item to return");
       }
 
-      const response = await apiRequest('POST', '/api/returns', {
-        ...data,
-        items: validItems,
-        orderRef: order.orderRef
+      const response = await fetch('/api/returns', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ...data,
+          items: validItems,
+          orderRef: order.orderRef
+        })
       });
 
       if (!response.ok) {
