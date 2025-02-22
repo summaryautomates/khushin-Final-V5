@@ -27,6 +27,9 @@ import OrderDetails from "@/pages/order-details";
 import Refueling from "@/pages/refueling";
 import EventOrganizer from "@/pages/event-organizer";
 import ExpressDelivery from "@/pages/express-delivery";
+import Loyalty from "@/pages/loyalty";
+import Rewards from "@/pages/rewards";
+import Referral from "@/pages/referral";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
 function App() {
@@ -60,6 +63,9 @@ function App() {
                       <Route path="/returns" component={Returns} />
                       <Route path="/event-organizer" component={EventOrganizer} />
                       <Route path="/express-delivery" component={ExpressDelivery} />
+                      <Route path="/loyalty" component={Loyalty} />
+                      <Route path="/rewards" component={Rewards} />
+                      <Route path="/referral" component={Referral} />
                       <Route component={NotFound} />
                     </Switch>
                   </div>
@@ -87,6 +93,9 @@ function App() {
                       <Route path="/returns" component={Returns} />
                       <Route path="/event-organizer" component={EventOrganizer} />
                       <Route path="/express-delivery" component={ExpressDelivery} />
+                      <Route path="/loyalty" component={Loyalty} />
+                      <Route path="/rewards" component={Rewards} />
+                      <Route path="/referral" component={Referral} />
                       <Route component={NotFound} />
                     </Switch>
                   </div>
