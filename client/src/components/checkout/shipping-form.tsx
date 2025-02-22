@@ -13,14 +13,17 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
 const shippingSchema = z.object({
-  fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  address: z.string().min(5, "Please enter a complete address"),
+  address: z.string()
+    .min(5, "Complete address is required")
+    .max(200, "Address is too long"),
   apartment: z.string().optional(),
   city: z.string().min(2, "City is required"),
   state: z.string().min(2, "State is required"),
   pincode: z.string().regex(/^\d{6}$/, "Please enter a valid 6-digit pincode"),
-  phone: z.string().regex(/^\d{10}$/, "Please enter a valid 10-digit phone number"),
+  phone: z.string()
+    .regex(/^\d{10}$/, "Please enter a valid 10-digit phone number")
+    .transform((val) => val.replace(/\D/g, "")),
 });
 
 export type ShippingFormData = z.infer<typeof shippingSchema>;
@@ -35,7 +38,6 @@ export function ShippingForm({ onSubmit, isLoading }: ShippingFormProps) {
     resolver: zodResolver(shippingSchema),
     mode: "onChange",
     defaultValues: {
-      fullName: "",
       email: "",
       address: "",
       apartment: "",
@@ -51,16 +53,15 @@ export function ShippingForm({ onSubmit, isLoading }: ShippingFormProps) {
       await onSubmit(data);
     } catch (error) {
       console.error("Form submission error:", error);
-      // Let the parent component handle the error
     }
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         {/* Contact Section */}
         <div>
-          <h2 className="text-sm font-medium mb-3">Contact</h2>
+          <h2 className="text-sm font-medium mb-3 text-zinc-200">Contact</h2>
           <FormField
             control={form.control}
             name="email"
@@ -70,11 +71,11 @@ export function ShippingForm({ onSubmit, isLoading }: ShippingFormProps) {
                   <Input 
                     type="email" 
                     placeholder="Email" 
-                    className="h-8 px-3 py-1"
+                    className="h-10 px-3 py-2 bg-white/[0.05] border-0 focus-visible:ring-1 focus-visible:ring-primary"
                     {...field} 
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-xs text-red-500" />
               </FormItem>
             )}
           />
@@ -82,26 +83,8 @@ export function ShippingForm({ onSubmit, isLoading }: ShippingFormProps) {
 
         {/* Delivery Section */}
         <div>
-          <h2 className="text-sm font-medium mb-3">Delivery</h2>
-
-          <FormField
-            control={form.control}
-            name="fullName"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input 
-                    placeholder="Full name" 
-                    className="h-8 px-3 py-1"
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="space-y-2 mt-2">
+          <h2 className="text-sm font-medium mb-3 text-zinc-200">Delivery</h2>
+          <div className="space-y-3">
             <FormField
               control={form.control}
               name="address"
@@ -110,11 +93,11 @@ export function ShippingForm({ onSubmit, isLoading }: ShippingFormProps) {
                   <FormControl>
                     <Input 
                       placeholder="Address" 
-                      className="h-8 px-3 py-1"
+                      className="h-10 px-3 py-2 bg-white/[0.05] border-0 focus-visible:ring-1 focus-visible:ring-primary"
                       {...field} 
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-xs text-red-500" />
                 </FormItem>
               )}
             />
@@ -127,16 +110,16 @@ export function ShippingForm({ onSubmit, isLoading }: ShippingFormProps) {
                   <FormControl>
                     <Input 
                       placeholder="Apartment, suite, etc. (optional)" 
-                      className="h-8 px-3 py-1"
+                      className="h-10 px-3 py-2 bg-white/[0.05] border-0 focus-visible:ring-1 focus-visible:ring-primary"
                       {...field} 
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-xs text-red-500" />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <FormField
                 control={form.control}
                 name="city"
@@ -145,11 +128,11 @@ export function ShippingForm({ onSubmit, isLoading }: ShippingFormProps) {
                     <FormControl>
                       <Input 
                         placeholder="City" 
-                        className="h-8 px-3 py-1"
+                        className="h-10 px-3 py-2 bg-white/[0.05] border-0 focus-visible:ring-1 focus-visible:ring-primary"
                         {...field} 
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs text-red-500" />
                   </FormItem>
                 )}
               />
@@ -162,15 +145,17 @@ export function ShippingForm({ onSubmit, isLoading }: ShippingFormProps) {
                     <FormControl>
                       <Input 
                         placeholder="State" 
-                        className="h-8 px-3 py-1"
+                        className="h-10 px-3 py-2 bg-white/[0.05] border-0 focus-visible:ring-1 focus-visible:ring-primary"
                         {...field} 
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs text-red-500" />
                   </FormItem>
                 )}
               />
+            </div>
 
+            <div className="grid grid-cols-2 gap-3">
               <FormField
                 control={form.control}
                 name="pincode"
@@ -179,45 +164,59 @@ export function ShippingForm({ onSubmit, isLoading }: ShippingFormProps) {
                     <FormControl>
                       <Input 
                         placeholder="PIN code" 
-                        className="h-8 px-3 py-1"
+                        className="h-10 px-3 py-2 bg-white/[0.05] border-0 focus-visible:ring-1 focus-visible:ring-primary"
                         maxLength={6}
                         {...field} 
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, "");
+                          field.onChange(value);
+                        }}
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs text-red-500" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input 
+                        type="tel" 
+                        placeholder="Phone" 
+                        className="h-10 px-3 py-2 bg-white/[0.05] border-0 focus-visible:ring-1 focus-visible:ring-primary"
+                        maxLength={10}
+                        {...field}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, "");
+                          field.onChange(value);
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage className="text-xs text-red-500" />
                   </FormItem>
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input 
-                      type="tel" 
-                      placeholder="Phone" 
-                      className="h-8 px-3 py-1"
-                      maxLength={10}
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
         </div>
 
         <Button 
           type="submit" 
-          className="w-full h-10 mt-4" 
+          className="w-full h-10 bg-primary hover:bg-primary/90" 
           disabled={isLoading}
         >
-          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isLoading ? "Processing..." : "Continue"}
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            "Continue"
+          )}
         </Button>
       </form>
     </Form>
