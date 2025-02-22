@@ -87,7 +87,7 @@ export default function Cart() {
     }
   };
 
-  const cartTotal = total;
+  const cartTotal = total / 100; // Convert cents to rupees
   const shippingCost = cartTotal >= 5000 ? 0 : 599;
   const orderTotal = cartTotal + shippingCost;
 
@@ -279,13 +279,13 @@ export default function Cart() {
                     <span className="text-muted-foreground">
                       {item.product.name} × {item.quantity}
                     </span>
-                    <span>₹{item.product.price * item.quantity}</span>
+                    <span>₹{(item.product.price * item.quantity / 100).toLocaleString('en-IN')}</span>
                   </div>
                 ))}
                 <div className="space-y-2 pt-4 border-t">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>₹{cartTotal}</span>
+                    <span>₹{cartTotal.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Shipping</span>
@@ -293,7 +293,7 @@ export default function Cart() {
                   </div>
                   <div className="flex justify-between text-lg font-semibold">
                     <span>Total</span>
-                    <span>₹{orderTotal}</span>
+                    <span>₹{orderTotal.toLocaleString('en-IN')}</span>
                   </div>
                 </div>
               </CardContent>
