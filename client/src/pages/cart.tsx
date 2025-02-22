@@ -141,53 +141,61 @@ export default function Cart() {
 
     setIsCheckingOut(true);
     try {
+      // Prepare the request payload
+      const payload = {
+        items: items.map((item) => ({
+          productId: item.product.id,
+          quantity: item.quantity,
+        })),
+        shipping: {
+          ...shippingData,
+          city: selectedCity,
+          delivery: deliverySchedule,
+        },
+      };
+
+      // Make the request
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          items: items.map((item) => ({
-            productId: item.product.id,
-            quantity: item.quantity,
-          })),
-          shipping: {
-            ...shippingData,
-            city: selectedCity,
-            delivery: deliverySchedule,
-          },
-        }),
+        body: JSON.stringify(payload),
       });
 
+      let responseData;
       const contentType = response.headers.get("content-type");
-      if (!response.ok) {
-        // Check if the response is JSON
-        if (contentType && contentType.includes("application/json")) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Checkout failed");
+
+      try {
+        // Try to parse as JSON first
+        if (contentType?.includes("application/json")) {
+          responseData = await response.json();
         } else {
-          // If not JSON, get the text content for error message
-          const errorText = await response.text();
-          throw new Error("Checkout failed: " + (errorText || response.statusText));
+          // If not JSON, get the text content
+          const textContent = await response.text();
+          throw new Error(`Unexpected response format: ${textContent}`);
         }
+      } catch (parseError) {
+        console.error("Response parsing error:", parseError);
+        throw new Error("Failed to process server response");
       }
 
-      // Ensure we have JSON response
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Invalid server response format");
+      if (!response.ok) {
+        throw new Error(responseData?.message || "Checkout process failed");
       }
 
-      const data = await response.json();
-      if (data.redirectUrl) {
-        window.location.href = data.redirectUrl;
-      } else {
-        throw new Error("Missing redirect URL in response");
+      // Check for redirect URL
+      if (!responseData?.redirectUrl) {
+        throw new Error("Missing payment redirect URL");
       }
+
+      // Redirect to payment page
+      window.location.href = responseData.redirectUrl;
     } catch (error) {
       console.error("Checkout error:", error);
       toast({
         title: "Checkout Error",
-        description: error instanceof Error ? error.message : "An error occurred during checkout. Please try again.",
+        description: error instanceof Error ? error.message : "An unexpected error occurred during checkout. Please try again.",
         variant: "destructive",
       });
     } finally {
