@@ -178,7 +178,7 @@ export default function Home() {
         <section className="h-screen w-full flex items-center justify-center bg-black relative overflow-hidden">
           <motion.div
             initial={{ scale: 1.1, opacity: 0 }}
-            animate={{ scale: 1, opacity: 0.5 }}
+            animate={{ scale: 1, opacity: 0.7 }}
             transition={{ duration: 1.5 }}
             className="absolute inset-0 w-full h-full"
           >
@@ -189,7 +189,7 @@ export default function Home() {
                 alt="Hero background"
                 style={{ objectPosition: "center" }}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/70 to-black"></div>
+              <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black"></div>
             </div>
           </motion.div>
 
