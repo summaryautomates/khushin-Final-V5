@@ -18,6 +18,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { AuthSheet } from "@/components/auth/auth-sheet";
 
 export default function Cart() {
   const [showShippingForm, setShowShippingForm] = useState(false);
@@ -32,11 +33,11 @@ export default function Cart() {
   } | null>(null);
   const [shippingData, setShippingData] = useState<ShippingFormData | null>(null);
   const [autoCheckout, setAutoCheckout] = useState(false);
+  const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false);
 
   const { toast } = useToast();
   const { items, total, updateQuantity, removeItem, isLoading, pendingUpdates, error } = useCart();
 
-  // Show error toast if cart loading fails
   useEffect(() => {
     if (error) {
       toast({
@@ -48,7 +49,6 @@ export default function Cart() {
   }, [error, toast]);
 
   useEffect(() => {
-    // Check for buyNow flag in URL
     const params = new URLSearchParams(window.location.search);
     const buyNow = params.get('buyNow') === 'true';
     if (buyNow) {
@@ -65,6 +65,10 @@ export default function Cart() {
       }
       await updateQuantity(productId, quantity);
     } catch (error) {
+      if (error instanceof Error && error.message === "AUTH_REQUIRED") {
+        setIsAuthSheetOpen(true);
+        return;
+      }
       console.error("Failed to update quantity:", error);
       toast({
         title: "Error",
@@ -78,6 +82,10 @@ export default function Cart() {
     try {
       await removeItem(productId);
     } catch (error) {
+      if (error instanceof Error && error.message === "AUTH_REQUIRED") {
+        setIsAuthSheetOpen(true);
+        return;
+      }
       console.error("Failed to remove item:", error);
       toast({
         title: "Error",
@@ -87,7 +95,7 @@ export default function Cart() {
     }
   };
 
-  const cartTotal = total / 100; // Convert cents to rupees
+  const cartTotal = total / 100;
   const shippingCost = cartTotal >= 5000 ? 0 : 599;
   const orderTotal = cartTotal + shippingCost;
 
@@ -97,17 +105,37 @@ export default function Cart() {
   };
 
   const handleShippingSubmit = async (data: ShippingFormData) => {
-    setShippingData(data);
-    setShowShippingForm(false);
+    try {
+      setShippingData(data);
+      setShowShippingForm(false);
 
-    // If this is a buy now flow, proceed to checkout immediately
-    if (autoCheckout) {
-      await handleCheckout();
+      if (autoCheckout) {
+        await handleCheckout();
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message === "AUTH_REQUIRED") {
+        setIsAuthSheetOpen(true);
+        return;
+      }
+      console.error("Failed to save shipping data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save shipping information. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleDeliveryScheduleChange = (value: { date: string; timeSlot: string } | null) => {
     setDeliverySchedule(value);
+  };
+
+  const handleAuthSuccess = async () => {
+    setIsAuthSheetOpen(false);
+    // Retry the last action that required authentication
+    if (shippingData && autoCheckout) {
+      await handleCheckout();
+    }
   };
 
   const handleCheckout = async () => {
@@ -161,7 +189,13 @@ export default function Cart() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
+        credentials: "include", // Important for authentication
       });
+
+      if (response.status === 401) {
+        setIsAuthSheetOpen(true);
+        throw new Error("AUTH_REQUIRED");
+      }
 
       let responseData;
       const contentType = response.headers.get("content-type");
@@ -193,6 +227,9 @@ export default function Cart() {
       window.location.href = responseData.redirectUrl;
     } catch (error) {
       console.error("Checkout error:", error);
+      if (error instanceof Error && error.message === "AUTH_REQUIRED") {
+        return; // AuthSheet is already shown
+      }
       toast({
         title: "Checkout Error",
         description: error instanceof Error ? error.message : "An unexpected error occurred during checkout. Please try again.",
@@ -350,6 +387,11 @@ export default function Cart() {
           </div>
         </div>
       </div>
+      <AuthSheet
+        open={isAuthSheetOpen}
+        onOpenChange={setIsAuthSheetOpen}
+        onSuccess={handleAuthSuccess}
+      />
     </ErrorBoundary>
   );
 }
