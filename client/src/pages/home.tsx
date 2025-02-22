@@ -4,23 +4,16 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { NewsletterDialog } from "@/components/dialogs/newsletter-dialog";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/products/product-grid";
-import { ExperienceBoxes } from "@/components/ExperienceBoxes"; 
+import { ExperienceBoxes } from "@/components/ExperienceBoxes";
 import type { Product } from "@shared/schema";
 import { Input } from "@/components/ui/input";
-import {
-  Star,
-  Clock,
-  Calendar,
-  Mic,
-  Camera,
-  Loader2
-} from "lucide-react";
+import { Star, Clock, Calendar, Mic, Camera, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect, useMemo, lazy, Suspense } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 // Lazy load Tesseract.js
 const initTesseract = async () => {
-  const { createWorker } = await import('tesseract.js');
+  const { createWorker } = await import("tesseract.js");
   return createWorker();
 };
 
@@ -36,7 +29,7 @@ export default function Home() {
     staleTime: 300000, // Cache results for 5 minutes
     gcTime: 3600000, // Keep in cache for 1 hour (renamed from cacheTime)
     retry: 2,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -47,16 +40,17 @@ export default function Home() {
     if (!searchQuery) return [];
     const normalizedQuery = searchQuery.toLowerCase();
     return products
-      .map(p => p.name)
-      .filter(name =>
-        name.toLowerCase() !== normalizedQuery &&
-        name.toLowerCase().includes(normalizedQuery)
+      .map((p) => p.name)
+      .filter(
+        (name) =>
+          name.toLowerCase() !== normalizedQuery &&
+          name.toLowerCase().includes(normalizedQuery),
       )
       .slice(0, 3);
   }, [searchQuery, products]);
 
   const handleVoiceSearch = () => {
-    if ('webkitSpeechRecognition' in window) {
+    if ("webkitSpeechRecognition" in window) {
       const recognition = new (window as any).webkitSpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = false;
@@ -95,11 +89,13 @@ export default function Home() {
     }
   };
 
-  const handleImageSearch = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSearch = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    const validTypes = ["image/jpeg", "image/png", "image/gif"];
     if (!validTypes.includes(file.type)) {
       toast({
         title: "Invalid File Type",
@@ -126,10 +122,10 @@ export default function Home() {
       }
 
       const worker = workerRef.current;
-      await worker.loadLanguage('eng');
-      await worker.initialize('eng');
+      await worker.loadLanguage("eng");
+      await worker.initialize("eng");
       const result = await worker.recognize(file);
-      const cleanText = result.data.text.replace(/[^\w\s]/gi, '').trim();
+      const cleanText = result.data.text.replace(/[^\w\s]/gi, "").trim();
 
       if (cleanText) {
         setSearchQuery(cleanText);
@@ -145,10 +141,11 @@ export default function Home() {
         });
       }
     } catch (error) {
-      console.error('Image processing error:', error);
+      console.error("Image processing error:", error);
       toast({
         title: "Processing Error",
-        description: error instanceof Error ? error.message : "Failed to process image",
+        description:
+          error instanceof Error ? error.message : "Failed to process image",
         variant: "destructive",
       });
     } finally {
@@ -165,11 +162,17 @@ export default function Home() {
   const scale = useTransform(scrollYProgress, [0, 0.3], [1, 0.98]);
 
   const handleBookExperience = () => {
-    setLocation('/event-organizer');
+    setLocation("/event-organizer");
   };
 
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
+    <Suspense
+      fallback={
+        <div className="h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin" />
+        </div>
+      }
+    >
       <div className="flex flex-col">
         {/* Hero Section */}
         <section className="h-screen w-full flex items-center justify-center bg-black relative overflow-hidden">
@@ -184,7 +187,7 @@ export default function Home() {
                 src="https://images.unsplash.com/photo-1483968049578-867b9ad94034?q=80&w=2072&auto=format"
                 className="w-full h-full object-cover"
                 alt="Hero background"
-                style={{ objectPosition: 'center' }}
+                style={{ objectPosition: "center" }}
               />
               <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/70 to-black"></div>
             </motion.div>
@@ -216,7 +219,8 @@ export default function Home() {
                 transition={{ delay: 1.2, duration: 0.8 }}
                 className="mt-8 text-xl md:text-2xl leading-relaxed text-zinc-400 max-w-2xl mx-auto tracking-wide"
               >
-                Exclusive luxury lighters - The perfect gift to light up their smile.
+                Exclusive luxury lighters - The perfect gift to light up their
+                smile.
               </motion.p>
 
               <motion.div
@@ -236,7 +240,7 @@ export default function Home() {
                       />
                       <Button
                         variant="secondary"
-                        className={`rounded-full ${isListening ? 'bg-red-500 hover:bg-red-600' : ''}`}
+                        className={`rounded-full ${isListening ? "bg-red-500 hover:bg-red-600" : ""}`}
                         onClick={handleVoiceSearch}
                         disabled={isListening}
                       >
@@ -268,7 +272,9 @@ export default function Home() {
                     </div>
                     {suggestions.length > 0 && (
                       <div className="bg-background/80 backdrop-blur-sm border border-primary/20 rounded-lg p-2 space-y-1">
-                        <p className="text-sm text-muted-foreground px-2">Did you mean:</p>
+                        <p className="text-sm text-muted-foreground px-2">
+                          Did you mean:
+                        </p>
                         {suggestions.map((suggestion, index) => (
                           <Button
                             key={index}
@@ -288,14 +294,20 @@ export default function Home() {
                     transition={{ delay: 0.8 }}
                     className="flex flex-wrap justify-center gap-4"
                   >
-                    <Button variant="outline" size="sm" className="gap-2 mt-3 rounded-full">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 mt-3 rounded-full"
+                    >
                       <Star className="w-4 h-4" /> Premium Collection
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       className="gap-2 mt-3 rounded-full hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
-                      onClick={() => window.location.href = '/express-delivery'}
+                      onClick={() =>
+                        (window.location.href = "/express-delivery")
+                      }
                     >
                       <Clock className="w-4 h-4" /> Express Delivery
                     </Button>
@@ -350,7 +362,7 @@ export default function Home() {
                 variant="outline"
                 size="lg"
                 className="rounded-full"
-                onClick={() => setLocation('/products')}
+                onClick={() => setLocation("/products")}
               >
                 See More Products
               </Button>
