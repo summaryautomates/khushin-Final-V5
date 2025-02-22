@@ -213,11 +213,14 @@ export class DatabaseStorage implements IStorage {
       // Calculate total from validated items
       const total = validatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
+      // Prepare the order data
       const orderData = {
-        ...order,
-        items: validatedItems,
-        total: order.total || total,
+        orderRef: order.orderRef || `ORD${Date.now()}`,
+        userId: order.userId,
         status: order.status || 'pending',
+        total: order.total || total,
+        items: validatedItems,
+        shipping: order.shipping,
         createdAt: new Date(),
         lastUpdated: new Date()
       };

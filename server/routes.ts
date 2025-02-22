@@ -3,8 +3,40 @@ import { storage } from "./storage";
 import { insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
 import { randomBytes } from "crypto";
+import { WebSocketServer } from 'ws';
+import type { IncomingMessage, Server } from 'http';
+import type { WebSocket } from 'ws';
 
 export async function registerRoutes(app: Express) {
+  // WebSocket server setup
+  const wss = new WebSocketServer({ noServer: true });
+
+  // Handle WebSocket connections
+  wss.on('connection', (ws: WebSocket) => {
+    console.log('New WebSocket client connected');
+
+    ws.on('message', (message: Buffer) => {
+      console.log('Received:', message.toString());
+    });
+
+    ws.on('close', () => {
+      console.log('Client disconnected');
+    });
+  });
+
+  // Create HTTP server
+  const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+  const server = app.listen(port, '0.0.0.0', () => {
+    console.log(`Server started on port ${port}`);
+  });
+
+  // Handle WebSocket upgrade
+  server.on('upgrade', (request: IncomingMessage, socket, head) => {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
+    });
+  });
+
   // Basic routes without authentication
   app.get("/api/products", async (_req, res) => {
     try {
@@ -14,23 +46,6 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error('Error fetching products:', error);
       res.status(500).json({ message: "Failed to fetch products" });
-    }
-  });
-
-  app.get("/api/products/:id", async (req, res) => {
-    try {
-      const id = Number(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid product ID" });
-      }
-      const product = await storage.getProduct(id);
-      if (!product) {
-        return res.status(404).json({ message: "Product not found" });
-      }
-      res.json(product);
-    } catch (error) {
-      console.error('Error fetching product:', error);
-      res.status(500).json({ message: "Failed to fetch product" });
     }
   });
 
@@ -98,8 +113,6 @@ export async function registerRoutes(app: Express) {
       }
 
       const { status, method } = validationResult.data;
-
-      // Update order status - pass orderId as string
       await storage.updateOrderStatus(order.orderRef, status, method);
 
       res.json({ message: "Payment status updated successfully" });
@@ -188,5 +201,5 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  return app;
+  return server;
 }
