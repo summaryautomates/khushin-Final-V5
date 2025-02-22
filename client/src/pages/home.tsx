@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { NewsletterDialog } from "@/components/dialogs/newsletter-dialog";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/products/product-grid";
-import Features from "@/components/Features"; // Add this import
+import { ExperienceBoxes } from "@/components/ExperienceBoxes"; 
 import type { Product } from "@shared/schema";
 import { Input } from "@/components/ui/input";
 import {
@@ -358,10 +358,10 @@ export default function Home() {
           </motion.div>
         </section>
 
-        {/* Features Section - Replacing Brand Statement */}
+        {/* Replace Features Section with ExperienceBoxes */}
         <section className="py-20 px-4">
           <div className="max-w-7xl mx-auto">
-            <Features />
+            <ExperienceBoxes />
           </div>
         </section>
       </div>

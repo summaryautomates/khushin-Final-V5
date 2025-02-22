@@ -1,11 +1,10 @@
-import Features from "@/components/Features"
+import { ExperienceBoxes } from "@/components/ExperienceBoxes"
 
-// Keep other imports and top section of the file
 export default function Home() {
   return (
     <main className="min-h-screen">
       {/* Other components */}
-      <Features />
+      <ExperienceBoxes />
       {/* Rest of the components */}
     </main>
   )
