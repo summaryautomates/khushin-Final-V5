@@ -3,7 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
-// Add users table at the top since other tables might reference it
+// Add users table schema definition at the top
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -142,6 +142,20 @@ export const rewards = pgTable("rewards", {
   validUntil: timestamp("valid_until")
 });
 
+// Add the insertUserSchema definition before other insert schemas
+export const insertUserSchema = createInsertSchema(users)
+  .omit({ 
+    id: true,
+    createdAt: true 
+  })
+  .extend({
+    username: z.string().min(3, "Username must be at least 3 characters"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    email: z.string().email("Invalid email address"),
+    firstName: z.string().optional(),
+    lastName: z.string().optional()
+  });
+
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({ id: true });
 export const insertContactMessageSchema = createInsertSchema(contactMessages).omit({ id: true });
@@ -155,7 +169,7 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
 }).extend({
   items: z.array(z.object({
     productId: z.number(),
-    quantity: z.number().min(1, "Quantity must be at least 1").max(10, "Maximum quantity per item is 10"),
+    quantity: z.number().min(1, "Quantity must be at least 1"),
     price: z.number().optional(),
     name: z.string().optional()
   })).min(1, "At least one item is required"),
@@ -166,10 +180,10 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
     state: z.string().min(2, "State is required"),
     pincode: z.string().regex(/^\d{6}$/, "Please enter a valid 6-digit pincode"),
     phone: z.string().regex(/^\d{10}$/, "Please enter a valid 10-digit phone number")
-  }).strict(),
+  }),
   userId: z.string(),
   orderRef: z.string().optional(),
-  status: z.string().optional(),
+  status: z.enum(['pending', 'completed', 'failed']).optional().default('pending'),
   total: z.number().optional(),
   trackingNumber: z.string().optional(),
   trackingStatus: z.string().optional(),

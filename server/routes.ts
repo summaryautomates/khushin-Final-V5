@@ -3,44 +3,10 @@ import { storage } from "./storage";
 import { insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
 import { randomBytes } from "crypto";
-import { WebSocketServer } from 'ws';
-import type { IncomingMessage, Server } from 'http';
-import type { WebSocket } from 'ws';
 
 export async function registerRoutes(app: Express) {
-  // WebSocket server setup
-  const wss = new WebSocketServer({ noServer: true });
-
-  // Handle WebSocket connections
-  wss.on('connection', (ws: WebSocket) => {
-    console.log('New WebSocket client connected');
-
-    ws.on('message', (message: Buffer) => {
-      console.log('Received:', message.toString());
-    });
-
-    ws.on('close', () => {
-      console.log('Client disconnected');
-    });
-  });
-
-  // Create HTTP server
-  const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
-  const server = app.listen(port, '0.0.0.0', () => {
-    console.log(`Server started on port ${port}`);
-  });
-
-  // Handle WebSocket upgrade
-  server.on('upgrade', (request: IncomingMessage, socket, head) => {
-    wss.handleUpgrade(request, socket, head, (ws) => {
-      wss.emit('connection', ws, request);
-    });
-  });
-
-  // Basic routes without authentication
   app.get("/api/products", async (_req, res) => {
     try {
-      console.log('Fetching products...');
       const products = await storage.getProducts();
       res.json(products);
     } catch (error) {
@@ -49,11 +15,8 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Payment routes
   app.get("/api/payment/:ref", async (req, res) => {
     try {
-      console.log('Fetching payment details for order:', req.params.ref);
-
       if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -69,7 +32,7 @@ export async function registerRoutes(app: Express) {
 
       const paymentDetails = {
         status: order.status,
-        upiId: "khush@upi", // Demo UPI ID
+        upiId: "khush@upi",
         merchantName: "KHUSH.IN",
         amount: order.total,
         orderRef: order.orderRef
@@ -84,8 +47,6 @@ export async function registerRoutes(app: Express) {
 
   app.post("/api/payment/:ref/status", async (req, res) => {
     try {
-      console.log('Updating payment status for order:', req.params.ref);
-
       if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -122,84 +83,48 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Protected routes requiring authentication
   app.post("/api/checkout", async (req, res) => {
     try {
-      console.log('Processing checkout request:', {
-        body: req.body,
-        user: req.user
-      });
-
-      // Check authentication
       if (!req.isAuthenticated()) {
-        console.log('User not authenticated');
         return res.status(401).json({ message: "Authentication required" });
       }
 
       const userId = req.user?.id?.toString();
       if (!userId) {
-        console.log('User ID not found');
         return res.status(401).json({ message: "Invalid user session" });
       }
 
-      // Validate request body
-      const validationResult = insertOrderSchema.safeParse({
+      const orderData = {
         ...req.body,
         userId,
-        orderRef: `ORD${randomBytes(4).toString('hex').toUpperCase()}`,
-      });
+        orderRef: `ORD${randomBytes(4).toString('hex').toUpperCase()}`
+      };
 
+      const validationResult = insertOrderSchema.safeParse(orderData);
       if (!validationResult.success) {
-        console.error('Validation failed:', {
-          errors: validationResult.error.errors,
-          formattedErrors: validationResult.error.format()
-        });
         return res.status(400).json({
           message: "Invalid request data",
-          errors: validationResult.error.errors,
-          details: validationResult.error.format()
+          errors: validationResult.error.errors
         });
       }
 
-      const orderData = validationResult.data;
-
-      // Calculate total from validated items
-      const total = await Promise.all(
-        orderData.items.map(async (item) => {
-          const product = await storage.getProduct(item.productId);
-          if (!product) {
-            throw new Error(`Product not found: ${item.productId}`);
-          }
-          return product.price * item.quantity;
-        })
-      ).then(prices => prices.reduce((sum, price) => sum + price, 0));
-
-      // Create order with calculated total
-      const order = await storage.createOrder({
-        ...orderData,
-        total,
-        status: 'pending'
-      });
-
-      // Clear the user's cart after successful order creation
+      const order = await storage.createOrder(validationResult.data);
       await storage.clearCart(userId);
 
-      console.log('Order created successfully:', order.orderRef);
-
-      // Return success response with redirect URL
       res.json({
         message: "Order created successfully",
         redirectUrl: `/checkout/payment?ref=${order.orderRef}`
       });
-
     } catch (error) {
       console.error('Checkout error:', error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : "Failed to process checkout",
-        details: error instanceof Error ? error.stack : undefined
+        message: error instanceof Error ? error.message : "Failed to process checkout"
       });
     }
   });
 
-  return server;
+  const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+  return app.listen(port, '0.0.0.0', () => {
+    console.log(`Server started on port ${port}`);
+  });
 }
