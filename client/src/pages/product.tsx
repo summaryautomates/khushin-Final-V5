@@ -129,7 +129,7 @@ export default function ProductPage() {
       await addItem(product);
 
       // Redirect directly to checkout page with buy now flag
-      setLocation(`/checkout-payment?buyNow=true`);
+      setLocation(`/checkout/payment?buyNow=true`);
     } catch (error) {
       if (error instanceof Error && error.message === "AUTH_REQUIRED") {
         setPendingAction("buy-now");
