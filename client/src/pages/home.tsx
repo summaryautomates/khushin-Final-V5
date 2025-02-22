@@ -177,21 +177,22 @@ export default function Home() {
       <NewsletterDialog />
       <div className="flex flex-col">
         {/* Hero Section */}
-        <section className="relative min-h-screen flex items-center justify-center bg-black overflow-hidden">
-          <div className="absolute inset-0 w-full h-full z-0">
+        <section className="h-screen w-full flex items-center justify-center bg-black relative overflow-hidden">
+          <div className="absolute inset-0">
             <motion.div
               initial={{ scale: 1.1, opacity: 0 }}
               animate={{ scale: 1, opacity: 0.5 }}
               transition={{ duration: 1.5 }}
-              className="w-full h-full"
+              className="absolute inset-0"
             >
               <img
                 src="https://images.unsplash.com/photo-1483968049578-867b9ad94034?q=80&w=2072&auto=format"
-                className="w-full h-full object-cover absolute inset-0"
+                className="w-full h-full object-cover"
                 alt="Hero background"
+                style={{ objectPosition: 'center' }}
               />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/70 to-black"></div>
             </motion.div>
-            <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/70 to-black"></div>
           </div>
 
           <motion.div
