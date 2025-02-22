@@ -34,6 +34,81 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Payment routes
+  app.get("/api/payment/:ref", async (req, res) => {
+    try {
+      console.log('Fetching payment details for order:', req.params.ref);
+
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const order = await storage.getOrderByRef(req.params.ref);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      if (order.userId !== req.user?.id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const paymentDetails = {
+        status: order.status,
+        upiId: "khush@upi", // Demo UPI ID
+        merchantName: "KHUSH.IN",
+        amount: order.total,
+        orderRef: order.orderRef
+      };
+
+      res.json(paymentDetails);
+    } catch (error) {
+      console.error('Error fetching payment details:', error);
+      res.status(500).json({ message: "Failed to fetch payment details" });
+    }
+  });
+
+  app.post("/api/payment/:ref/status", async (req, res) => {
+    try {
+      console.log('Updating payment status for order:', req.params.ref);
+
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const statusSchema = z.object({
+        status: z.enum(['completed', 'failed']),
+        method: z.enum(['upi', 'cod'])
+      });
+
+      const validationResult = statusSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({
+          message: "Invalid status data",
+          errors: validationResult.error.errors
+        });
+      }
+
+      const order = await storage.getOrderByRef(req.params.ref);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      if (order.userId !== req.user?.id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const { status, method } = validationResult.data;
+
+      // Update order status
+      await storage.updateOrderStatus(order.id, status, method);
+
+      res.json({ message: "Payment status updated successfully" });
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+      res.status(500).json({ message: "Failed to update payment status" });
+    }
+  });
+
   // Protected routes requiring authentication
   app.post("/api/checkout", async (req, res) => {
     try {

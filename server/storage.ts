@@ -50,7 +50,8 @@ export interface IStorage {
   createOrder(order: InsertOrder): Promise<Order>;
   getOrder(orderRef: string): Promise<Order | undefined>;
   getOrdersByUserId(userId: string): Promise<Order[]>;
-  updateOrderStatus(orderRef: string, status: string, trackingNumber?: string): Promise<Order>;
+  getOrderByRef(orderRef: string): Promise<Order | undefined>;
+  updateOrderStatus(orderRef: string, status: string, method?: string): Promise<Order>;
   updateOrderTracking(orderRef: string, trackingStatus: string, estimatedDelivery?: string): Promise<Order>;
 
   // Order Status History methods
@@ -222,6 +223,10 @@ export class DatabaseStorage implements IStorage {
     return order;
   }
 
+  async getOrderByRef(orderRef: string): Promise<Order | undefined> {
+    return this.getOrder(orderRef);
+  }
+
   async getOrdersByUserId(userId: string): Promise<Order[]> {
     return await db
       .select()
@@ -230,16 +235,27 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(orders.createdAt));
   }
 
-  async updateOrderStatus(orderRef: string, status: string, trackingNumber?: string): Promise<Order> {
+  async updateOrderStatus(orderRef: string, status: string, method?: string): Promise<Order> {
+    const updates: Partial<Order> = {
+      status,
+      lastUpdated: new Date()
+    };
+
+    // Add tracking number based on payment method if provided
+    if (method) {
+      updates.trackingNumber = method === 'cod' ? `COD${Date.now()}` : undefined;
+    }
+
     const [updatedOrder] = await db
       .update(orders)
-      .set({
-        status,
-        trackingNumber,
-        lastUpdated: new Date(),
-      })
+      .set(updates)
       .where(eq(orders.orderRef, orderRef))
       .returning();
+
+    if (!updatedOrder) {
+      throw new Error(`Order not found: ${orderRef}`);
+    }
+
     return updatedOrder;
   }
 
