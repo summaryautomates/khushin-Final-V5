@@ -14,59 +14,75 @@ export function useOrderTracking(orderRef: string | null) {
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsHost = window.location.host;
     const ws = new WebSocket(`${wsProtocol}//${wsHost}/ws/orders/${orderRef}`);
+    let pingInterval: NodeJS.Timeout;
 
-    ws.onopen = () => {
-      console.log('WebSocket connection established');
-      setIsConnected(true);
-    };
+    const connect = () => {
+      ws.onopen = () => {
+        console.log('WebSocket connection established');
+        setIsConnected(true);
 
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.status) {
-          setStatus(data.status);
-        }
-      } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      setIsConnected(false);
-      toast({
-        title: 'Connection Error',
-        description: 'Failed to connect to order tracking. Please refresh the page.',
-        variant: 'destructive',
-      });
-    };
-
-    ws.onclose = () => {
-      console.log('WebSocket connection closed');
-      setIsConnected(false);
-    };
-
-    // Regular polling fallback if WebSocket fails
-    const pollInterval = setInterval(async () => {
-      if (!isConnected) {
-        try {
-          const response = await fetch(`/api/orders/${orderRef}`);
-          if (!response.ok) {
-            throw new Error('Failed to fetch order status');
+        // Start ping interval
+        pingInterval = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping' }));
           }
-          const data = await response.json();
-          setStatus(data.status);
-        } catch (error) {
-          console.error('Error fetching order status:', error);
-        }
-      }
-    }, 10000); // Poll every 10 seconds when WebSocket is not connected
+        }, 25000); // Ping every 25 seconds
+      };
 
-    return () => {
-      ws.close();
-      clearInterval(pollInterval);
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          switch (data.type) {
+            case 'connected':
+            case 'subscribed':
+              console.log('WebSocket subscription confirmed:', data);
+              break;
+            case 'status':
+              if (data.data?.status) {
+                setStatus(data.data.status);
+              }
+              break;
+            case 'error':
+              console.error('WebSocket error:', data.message);
+              toast({
+                title: 'Connection Error',
+                description: data.message,
+                variant: 'destructive',
+              });
+              break;
+          }
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setIsConnected(false);
+        toast({
+          title: 'Connection Error',
+          description: 'Failed to connect to order tracking. Please refresh the page.',
+          variant: 'destructive',
+        });
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket connection closed');
+        setIsConnected(false);
+        clearInterval(pingInterval);
+      };
     };
-  }, [orderRef, user, toast, isConnected]);
+
+    connect();
+
+    // Cleanup function
+    return () => {
+      clearInterval(pingInterval);
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+        ws.close();
+      }
+    };
+  }, [orderRef, user, toast]);
 
   return {
     status,

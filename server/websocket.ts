@@ -1,6 +1,6 @@
 import { WebSocket, WebSocketServer } from 'ws';
 import { storage } from './storage';
-import type { Session } from 'express-session';
+import type { SessionData } from 'express-session';
 import type { Server } from 'http';
 
 interface AuthenticatedWebSocket extends WebSocket {
@@ -10,8 +10,14 @@ interface AuthenticatedWebSocket extends WebSocket {
   reconnectAttempts?: number;
 }
 
+interface ExtendedSessionData extends SessionData {
+  passport?: {
+    user: string;
+  };
+}
+
 export function setupWebSocket(server: Server, sessionMiddleware: any) {
-  const wss = new WebSocketServer({ server, path: '/ws/orders' });
+  const wss = new WebSocketServer({ server, path: '/ws' });
   console.log('WebSocket server initialized');
 
   // Authenticate WebSocket connection using session
@@ -25,46 +31,47 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
           if (err) {
             console.error('Session middleware error:', err);
             reject(err);
+            return;
           }
           resolve(undefined);
         });
       });
 
-      const session = (req as any).session as Session;
+      const session = (req as any).session as ExtendedSessionData;
+
+      // Check authentication
       if (!session?.passport?.user) {
         console.log('WebSocket connection rejected: No authenticated session');
         ws.close(1008, 'Authentication required');
         return;
       }
 
-      // Extract order reference from URL
-      const match = req.url?.match(/\/ws\/orders\/([^/]+)/);
-      const orderRef = match?.[1];
-      if (!orderRef) {
-        console.log('WebSocket connection rejected: Missing order reference');
-        ws.close(1008, 'Invalid order reference');
-        return;
+      // Extract order reference from URL if it exists
+      const orderMatch = req.url?.match(/\/orders\/([^/?]+)/);
+      const orderRef = orderMatch?.[1];
+
+      // If this is an order-specific connection, verify access
+      if (orderRef) {
+        const order = await storage.getOrderByRef(orderRef);
+        if (!order || order.userId.toString() !== session.passport.user.toString()) {
+          console.log('WebSocket connection rejected: Unauthorized access to order');
+          ws.close(1008, 'Unauthorized');
+          return;
+        }
+        ws.orderRef = orderRef;
       }
 
-      // Verify order belongs to user
-      const order = await storage.getOrderByRef(orderRef);
-      if (!order || order.userId.toString() !== session.passport.user.toString()) {
-        console.log('WebSocket connection rejected: Unauthorized access to order');
-        ws.close(1008, 'Unauthorized');
-        return;
-      }
-
+      // Setup connection
       ws.isAlive = true;
       ws.userId = session.passport.user.toString();
-      ws.orderRef = orderRef;
       ws.reconnectAttempts = 0;
 
-      console.log(`WebSocket connection established for order: ${orderRef}`);
+      console.log(`WebSocket connection established for user: ${ws.userId}${orderRef ? `, order: ${orderRef}` : ''}`);
 
-      // Send initial order status
+      // Send initial connection status
       ws.send(JSON.stringify({ 
-        type: 'status',
-        data: { status: order.status }
+        type: 'connected',
+        data: { userId: ws.userId }
       }));
 
       // Handle incoming messages
@@ -73,10 +80,26 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
           const data = JSON.parse(message.toString());
           console.log('Received WebSocket message:', data);
 
-          // Handle different message types
           switch(data.type) {
             case 'ping':
               ws.send(JSON.stringify({ type: 'pong' }));
+              break;
+            case 'subscribe':
+              if (data.orderRef) {
+                const order = await storage.getOrderByRef(data.orderRef);
+                if (order && order.userId.toString() === ws.userId) {
+                  ws.orderRef = data.orderRef;
+                  ws.send(JSON.stringify({ 
+                    type: 'subscribed',
+                    data: { orderRef: data.orderRef }
+                  }));
+                } else {
+                  ws.send(JSON.stringify({ 
+                    type: 'error',
+                    message: 'Unauthorized access to order'
+                  }));
+                }
+              }
               break;
             default:
               console.log('Unknown message type:', data.type);
@@ -102,7 +125,7 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
 
       // Clean up on close
       ws.on('close', () => {
-        console.log(`WebSocket connection closed for order: ${orderRef}`);
+        console.log(`WebSocket connection closed for user: ${ws.userId}`);
         ws.isAlive = false;
       });
 
@@ -114,11 +137,11 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
 
   // Ping clients periodically to check connection
   const interval = setInterval(() => {
-    wss.clients.forEach((ws: AuthenticatedWebSocket) => {
+    wss.clients.forEach((client: WebSocket) => {
+      const ws = client as AuthenticatedWebSocket;
       if (!ws.isAlive) {
-        console.log(`Terminating inactive WebSocket for order: ${ws.orderRef}`);
-        ws.terminate();
-        return;
+        console.log(`Terminating inactive WebSocket for user: ${ws.userId}`);
+        return ws.terminate();
       }
       ws.isAlive = false;
       ws.ping();
