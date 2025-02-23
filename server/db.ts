@@ -11,18 +11,30 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Configure pool with more resilient settings
+// Configure pool with more resilient settings and connection retry logic
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
   connectionTimeoutMillis: 8000, // 8 second timeout
   max: 20, // Maximum 20 clients
   idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
-  keepAlive: true // Enable keep-alive
+  keepAlive: true, // Enable keep-alive
+  maxRetries: 5, // Maximum number of retries per request
+  retryDelay: 1000 // Delay between retries in milliseconds
 });
 
 // Add error handler for the pool
 pool.on('error', (err, client) => {
   console.error('Unexpected error on idle client', err);
+  // Attempt to reconnect on error
+  setTimeout(() => {
+    console.log('Attempting to reconnect to database...');
+    client.release(true); // Force release the client
+  }, 1000);
+});
+
+// Add connection event handler
+pool.on('connect', (client) => {
+  console.log('New database connection established');
 });
 
 export const db = drizzle({ client: pool, schema });

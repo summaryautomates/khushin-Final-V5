@@ -6,6 +6,10 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import { pool } from "./db";
+import pgSession from 'connect-pg-simple';
+
+const PostgresStore = pgSession(session);
 
 declare global {
   namespace Express {
@@ -29,9 +33,25 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export async function setupAuth(app: Express) {
-  // Initialize session middleware with secure settings
+  // Initialize session store with retry logic
+  const sessionStore = new PostgresStore({
+    pool,
+    tableName: 'session',
+    createTableIfMissing: true,
+    pruneSessionInterval: 60, // Prune expired sessions every minute
+    errorLog: console.error.bind(console, 'PostgresStore error:'),
+    retries: 3, // Number of retries for failed operations
+    retryDelay: 1000, // Delay between retries in milliseconds
+  });
+
+  // Handle session store errors
+  sessionStore.on('error', (error) => {
+    console.error('Session store error:', error);
+  });
+
+  // Initialize session middleware with enhanced settings
   const sessionMiddleware = session({
-    store: storage.sessionStore,
+    store: sessionStore,
     secret: process.env.SESSION_SECRET || 'development-secret-key',
     name: 'sid',
     resave: false,
@@ -39,7 +59,7 @@ export async function setupAuth(app: Express) {
     rolling: true,
     proxy: true,
     cookie: {
-      secure: false, // Set to false for development
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours

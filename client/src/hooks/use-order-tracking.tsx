@@ -9,17 +9,28 @@ export function useOrderTracking(orderRef: string | null) {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (!orderRef || !user) return;
+    if (!orderRef) return;
 
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsHost = window.location.host;
-    const ws = new WebSocket(`${wsProtocol}//${wsHost}/ws/orders/${orderRef}`);
+    const ws = new WebSocket(`${wsProtocol}//${wsHost}/ws`);
     let pingInterval: NodeJS.Timeout;
+    let reconnectTimeout: NodeJS.Timeout;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 5;
+    const RECONNECT_DELAY = 3000;
 
     const connect = () => {
       ws.onopen = () => {
         console.log('WebSocket connection established');
         setIsConnected(true);
+        reconnectAttempts = 0;
+
+        // Subscribe to order updates
+        ws.send(JSON.stringify({
+          type: 'subscribe',
+          data: { orderRef }
+        }));
 
         // Start ping interval
         pingInterval = setInterval(() => {
@@ -34,6 +45,11 @@ export function useOrderTracking(orderRef: string | null) {
           const data = JSON.parse(event.data);
           switch (data.type) {
             case 'connected':
+              console.log('WebSocket connection authenticated:', data);
+              if (!data.data.isAuthenticated && user) {
+                console.warn('User is logged in but WebSocket is not authenticated');
+              }
+              break;
             case 'subscribed':
               console.log('WebSocket subscription confirmed:', data);
               break;
@@ -59,17 +75,27 @@ export function useOrderTracking(orderRef: string | null) {
       ws.onerror = (error) => {
         console.error('WebSocket error:', error);
         setIsConnected(false);
-        toast({
-          title: 'Connection Error',
-          description: 'Failed to connect to order tracking. Please refresh the page.',
-          variant: 'destructive',
-        });
       };
 
       ws.onclose = () => {
         console.log('WebSocket connection closed');
         setIsConnected(false);
         clearInterval(pingInterval);
+
+        // Attempt to reconnect if not at max attempts
+        if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+          reconnectAttempts++;
+          console.log(`Attempting to reconnect (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
+          reconnectTimeout = setTimeout(() => {
+            connect();
+          }, RECONNECT_DELAY * reconnectAttempts);
+        } else {
+          toast({
+            title: 'Connection Lost',
+            description: 'Unable to reconnect to order tracking. Please refresh the page.',
+            variant: 'destructive',
+          });
+        }
       };
     };
 
@@ -78,6 +104,7 @@ export function useOrderTracking(orderRef: string | null) {
     // Cleanup function
     return () => {
       clearInterval(pingInterval);
+      clearTimeout(reconnectTimeout);
       if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
         ws.close();
       }

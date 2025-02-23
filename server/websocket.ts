@@ -20,6 +20,30 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
     server,
     path: '/ws',
     clientTracking: true,
+    verifyClient: async (info: any, callback: any) => {
+      try {
+        // Apply session middleware to WebSocket upgrade request
+        await new Promise((resolve, reject) => {
+          sessionMiddleware(info.req, {}, (err: Error) => {
+            if (err) {
+              console.error('Session middleware error:', err);
+              reject(err);
+              return;
+            }
+            resolve(undefined);
+          });
+        });
+
+        const session = info.req.session as ExtendedSessionData;
+        console.log('WebSocket auth check - Session:', session?.passport?.user ? 'Authenticated' : 'Unauthenticated');
+
+        // Allow both authenticated and unauthenticated connections
+        callback(true);
+      } catch (error) {
+        console.error('WebSocket verification error:', error);
+        callback(false, 401, 'Unauthorized');
+      }
+    }
   });
 
   console.log('WebSocket server initialized');
@@ -31,18 +55,6 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
       // Set initial connection state
       ws.isAlive = true;
       ws.reconnectAttempts = 0;
-
-      // Apply session middleware to WebSocket request
-      await new Promise((resolve, reject) => {
-        sessionMiddleware(req, {}, (err: Error) => {
-          if (err) {
-            console.error('Session middleware error:', err);
-            reject(err);
-            return;
-          }
-          resolve(undefined);
-        });
-      });
 
       const session = (req as any).session as ExtendedSessionData;
 
