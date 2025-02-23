@@ -33,15 +33,13 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export async function setupAuth(app: Express) {
-  // Initialize session store with retry logic
+  // Initialize session store with correct options
   const sessionStore = new PostgresStore({
     pool,
     tableName: 'session',
     createTableIfMissing: true,
     pruneSessionInterval: 60, // Prune expired sessions every minute
     errorLog: console.error.bind(console, 'PostgresStore error:'),
-    retries: 3, // Number of retries for failed operations
-    retryDelay: 1000, // Delay between retries in milliseconds
   });
 
   // Handle session store errors
@@ -49,7 +47,7 @@ export async function setupAuth(app: Express) {
     console.error('Session store error:', error);
   });
 
-  // Initialize session middleware with enhanced settings
+  // Initialize session middleware with secure settings
   const sessionMiddleware = session({
     store: sessionStore,
     secret: process.env.SESSION_SECRET || 'development-secret-key',
@@ -71,35 +69,21 @@ export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
   app.use(sessionMiddleware);
 
-  // Initialize passport after session middleware
+  // Initialize passport
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Cache user data to reduce database queries
-  const userCache = new Map<number, SelectUser>();
-  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
+  // User deserialization with error handling
   passport.serializeUser((user, done) => {
     done(null, user.id);
   });
 
   passport.deserializeUser(async (id: number, done) => {
     try {
-      // Check cache first
-      const cachedUser = userCache.get(id);
-      if (cachedUser) {
-        return done(null, cachedUser);
-      }
-
       const user = await storage.getUser(id);
       if (!user) {
         return done(new Error('User not found'));
       }
-
-      // Cache the user
-      userCache.set(id, user);
-      setTimeout(() => userCache.delete(id), CACHE_TTL);
-
       done(null, user);
     } catch (error) {
       console.error('Deserialization error:', error);
@@ -107,6 +91,7 @@ export async function setupAuth(app: Express) {
     }
   });
 
+  // Configure local strategy with better error handling
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
@@ -129,7 +114,7 @@ export async function setupAuth(app: Express) {
     })
   );
 
-  // Authentication routes
+  // Authentication routes with improved error handling
   app.post("/api/register", async (req, res) => {
     try {
       if (!req.body.username || !req.body.password || !req.body.email) {

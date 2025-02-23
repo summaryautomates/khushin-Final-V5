@@ -6,7 +6,7 @@ import type { Server } from 'http';
 interface AuthenticatedWebSocket extends WebSocket {
   isAlive: boolean;
   userId?: string;
-  reconnectAttempts?: number;
+  sessionId?: string;
 }
 
 interface ExtendedSessionData extends SessionData {
@@ -35,10 +35,12 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
         });
 
         const session = info.req.session as ExtendedSessionData;
-        console.log('WebSocket auth check - Session:', session?.passport?.user ? 'Authenticated' : 'Unauthenticated');
 
-        // Allow both authenticated and unauthenticated connections
-        callback(true);
+        // Allow the connection but track authentication status
+        callback(true, 200, '', {
+          isAuthenticated: !!session?.passport?.user,
+          sessionId: session?.id
+        });
       } catch (error) {
         console.error('WebSocket verification error:', error);
         callback(false, 401, 'Unauthorized');
@@ -48,98 +50,159 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
 
   console.log('WebSocket server initialized');
 
+  // Track active connections
+  const activeConnections = new Map<string, AuthenticatedWebSocket>();
+
   wss.on('connection', async (ws: AuthenticatedWebSocket, req) => {
     console.log('New WebSocket connection attempt');
 
     try {
-      // Set initial connection state
       ws.isAlive = true;
-      ws.reconnectAttempts = 0;
-
       const session = (req as any).session as ExtendedSessionData;
 
-      // Handle authenticated users
+      if (!session) {
+        ws.send(JSON.stringify({
+          type: 'error',
+          message: 'No session found',
+          timestamp: new Date().toISOString()
+        }));
+        ws.close(1011, 'No session found');
+        return;
+      }
+
+      // Set session ID for connection tracking
+      ws.sessionId = session.id;
+
       if (session?.passport?.user) {
         ws.userId = session.passport.user.toString();
-        console.log(`Authenticated WebSocket connection for user: ${ws.userId}`);
-        ws.send(JSON.stringify({ 
-          type: 'connected',
-          data: { userId: ws.userId, isAuthenticated: true }
-        }));
-      } else {
-        // Handle public/unauthenticated access
-        console.log('Public WebSocket connection established');
+        activeConnections.set(ws.sessionId, ws);
+
+        console.log('Authenticated connection established:', {
+          userId: ws.userId,
+          sessionId: ws.sessionId,
+          timestamp: new Date().toISOString()
+        });
+
         ws.send(JSON.stringify({
           type: 'connected',
-          data: { isAuthenticated: false }
+          data: {
+            userId: ws.userId,
+            isAuthenticated: true,
+            timestamp: new Date().toISOString()
+          }
+        }));
+      } else {
+        console.log('Public connection established:', {
+          sessionId: ws.sessionId,
+          timestamp: new Date().toISOString()
+        });
+
+        ws.send(JSON.stringify({
+          type: 'connected',
+          data: {
+            isAuthenticated: false,
+            timestamp: new Date().toISOString()
+          }
         }));
       }
 
-      // Handle incoming messages
+      // Message handling with improved error handling
       ws.on('message', async (message: string) => {
         try {
           const data = JSON.parse(message.toString());
-          console.log('Received WebSocket message:', data);
 
           switch(data.type) {
             case 'ping':
-              ws.send(JSON.stringify({ type: 'pong' }));
+              ws.send(JSON.stringify({
+                type: 'pong',
+                timestamp: new Date().toISOString()
+              }));
               break;
+
             case 'sync_zoom':
-              // Broadcast zoom sync to all clients except sender
+              if (!ws.userId) {
+                ws.send(JSON.stringify({
+                  type: 'error',
+                  message: 'Authentication required',
+                  timestamp: new Date().toISOString()
+                }));
+                return;
+              }
+
               wss.clients.forEach(client => {
-                if (client !== ws && client.readyState === WebSocket.OPEN) {
-                  client.send(JSON.stringify({
+                const authClient = client as AuthenticatedWebSocket;
+                if (authClient !== ws && authClient.readyState === WebSocket.OPEN) {
+                  authClient.send(JSON.stringify({
                     type: 'zoom_update',
-                    data: data.scale
+                    data: data.scale,
+                    userId: ws.userId,
+                    timestamp: new Date().toISOString()
                   }));
                 }
               });
               break;
+
             default:
-              console.log('Unknown message type:', data.type);
+              ws.send(JSON.stringify({
+                type: 'error',
+                message: 'Unknown message type',
+                timestamp: new Date().toISOString()
+              }));
           }
         } catch (error) {
-          console.error('Error handling WebSocket message:', error);
-          ws.send(JSON.stringify({ 
+          console.error('Message handling error:', error);
+          ws.send(JSON.stringify({
             type: 'error',
-            message: 'Invalid message format'
+            message: 'Invalid message format',
+            timestamp: new Date().toISOString()
           }));
         }
       });
 
-      // Handle pings to keep connection alive
+      // Connection monitoring
       ws.on('pong', () => {
         ws.isAlive = true;
       });
 
-      // Handle errors
       ws.on('error', (error) => {
-        console.error('WebSocket error:', error);
+        console.error('WebSocket error:', {
+          userId: ws.userId,
+          sessionId: ws.sessionId,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
       });
 
-      // Clean up on close
       ws.on('close', () => {
-        console.log(`WebSocket connection closed${ws.userId ? ` for user: ${ws.userId}` : ''}`);
-        ws.isAlive = false;
+        if (ws.sessionId) {
+          activeConnections.delete(ws.sessionId);
+        }
+        console.log('Connection closed:', {
+          userId: ws.userId,
+          sessionId: ws.sessionId,
+          timestamp: new Date().toISOString()
+        });
       });
 
     } catch (error) {
-      console.error('WebSocket connection error:', error);
+      console.error('Connection handling error:', error);
       ws.send(JSON.stringify({
         type: 'error',
-        message: 'Internal server error'
+        message: 'Server error',
+        timestamp: new Date().toISOString()
       }));
-      ws.close(1011, 'Internal server error');
+      ws.close(1011, 'Server error');
     }
   });
 
-  // Ping clients periodically to check connection
+  // Periodic connection checking
   const interval = setInterval(() => {
     wss.clients.forEach((client: WebSocket) => {
       const ws = client as AuthenticatedWebSocket;
       if (!ws.isAlive) {
-        console.log(`Terminating inactive WebSocket${ws.userId ? ` for user: ${ws.userId}` : ''}`);
+        if (ws.sessionId) {
+          activeConnections.delete(ws.sessionId);
+        }
         return ws.terminate();
       }
       ws.isAlive = false;
@@ -149,6 +212,7 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
 
   wss.on('close', () => {
     clearInterval(interval);
+    activeConnections.clear();
   });
 
   return wss;

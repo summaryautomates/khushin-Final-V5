@@ -11,35 +11,37 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Configure pool with more resilient settings and connection retry logic
+// Configure pool with optimized settings
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  connectionTimeoutMillis: 8000, // 8 second timeout
-  max: 20, // Maximum 20 clients
-  idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
-  keepAlive: true, // Enable keep-alive
-  maxRetries: 5, // Maximum number of retries per request
-  retryDelay: 1000 // Delay between retries in milliseconds
+  connectionTimeoutMillis: 5000,
+  max: 5, // Reduce maximum clients further
+  idleTimeoutMillis: 10000,
+  keepAlive: true,
 });
 
-// Add error handler for the pool
-pool.on('error', (err, client) => {
-  console.error('Unexpected error on idle client', err);
-  // Attempt to reconnect on error
-  setTimeout(() => {
-    console.log('Attempting to reconnect to database...');
-    client.release(true); // Force release the client
-  }, 1000);
+// Simplified error handling
+pool.on('error', (err) => {
+  console.error('Unexpected database pool error:', err);
 });
 
-// Add connection event handler
-pool.on('connect', (client) => {
+// Connection monitoring
+pool.on('connect', () => {
   console.log('New database connection established');
 });
 
-export const db = drizzle({ client: pool, schema });
+pool.on('acquire', () => {
+  console.log('Connection pool status:', {
+    total: pool.totalCount,
+    idle: pool.idleCount,
+    waiting: pool.waitingCount,
+    timestamp: new Date().toISOString()
+  });
+});
 
-// Sample products for development
+export const db = drizzle(pool, { schema });
+
+// Export sample products 
 export const sampleProducts = [
   {
     id: 1,
