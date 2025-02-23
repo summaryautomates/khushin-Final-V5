@@ -29,8 +29,6 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export async function setupAuth(app: Express) {
-  console.log('Setting up authentication...');
-
   // Initialize session middleware with secure settings
   const sessionMiddleware = session({
     store: storage.sessionStore,
@@ -39,9 +37,9 @@ export async function setupAuth(app: Express) {
     resave: false,
     saveUninitialized: false,
     rolling: true,
-    proxy: true, // Trust the reverse proxy
+    proxy: true,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // Set to false for development
       httpOnly: true,
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
@@ -52,12 +50,10 @@ export async function setupAuth(app: Express) {
   // Set trust proxy and use session middleware
   app.set("trust proxy", 1);
   app.use(sessionMiddleware);
-  console.log('Session middleware configured');
 
   // Initialize passport after session middleware
   app.use(passport.initialize());
   app.use(passport.session());
-  console.log('Passport initialized');
 
   // Cache user data to reduce database queries
   const userCache = new Map<number, SelectUser>();
@@ -211,6 +207,5 @@ export async function setupAuth(app: Express) {
     res.json(userWithoutPassword);
   });
 
-  // Export session middleware for WebSocket usage
   return sessionMiddleware;
 }

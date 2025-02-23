@@ -28,42 +28,17 @@ app.get('/api/health', (_req, res) => {
 // Start server
 const startServer = async () => {
   try {
-    console.log('Starting server...');
-
     // Setup authentication and get session middleware
-    console.log('Setting up authentication...');
-    try {
-      const sessionMiddleware = await setupAuth(app);
-      console.log('Authentication setup completed');
+    const sessionMiddleware = await setupAuth(app);
 
-      // Setup WebSocket after authentication
-      console.log('Setting up WebSocket server...');
-      await setupWebSocket(server, sessionMiddleware);
-      console.log('WebSocket server setup completed');
-    } catch (error) {
-      console.error('Authentication/WebSocket setup error:', error);
-      throw error;
-    }
+    // Setup WebSocket after authentication
+    await setupWebSocket(server, sessionMiddleware);
 
     // Setup routes
-    console.log('Registering API routes...');
-    try {
-      await registerRoutes(app);
-      console.log('API routes registered successfully');
-    } catch (error) {
-      console.error('Route registration error:', error);
-      throw error;
-    }
+    await registerRoutes(app);
 
     // Setup Vite
-    console.log('Setting up Vite...');
-    try {
-      await setupVite(app, server);
-      console.log('Vite setup completed');
-    } catch (error) {
-      console.error('Vite setup error:', error);
-      throw error;
-    }
+    await setupVite(app, server);
 
     // Start HTTP server
     const port = 5000;

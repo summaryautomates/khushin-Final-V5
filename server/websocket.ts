@@ -17,7 +17,12 @@ interface ExtendedSessionData extends SessionData {
 }
 
 export function setupWebSocket(server: Server, sessionMiddleware: any) {
-  const wss = new WebSocketServer({ server, path: '/ws' });
+  const wss = new WebSocketServer({ 
+    server,
+    path: '/ws',
+    clientTracking: true,
+  });
+
   console.log('WebSocket server initialized');
 
   // Authenticate WebSocket connection using session
@@ -42,6 +47,10 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
       // Check authentication
       if (!session?.passport?.user) {
         console.log('WebSocket connection rejected: No authenticated session');
+        ws.send(JSON.stringify({
+          type: 'error',
+          message: 'Authentication required'
+        }));
         ws.close(1008, 'Authentication required');
         return;
       }
@@ -52,13 +61,27 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
 
       // If this is an order-specific connection, verify access
       if (orderRef) {
-        const order = await storage.getOrderByRef(orderRef);
-        if (!order || order.userId.toString() !== session.passport.user.toString()) {
-          console.log('WebSocket connection rejected: Unauthorized access to order');
-          ws.close(1008, 'Unauthorized');
+        try {
+          const order = await storage.getOrderByRef(orderRef);
+          if (!order || order.userId.toString() !== session.passport.user.toString()) {
+            console.log('WebSocket connection rejected: Unauthorized access to order');
+            ws.send(JSON.stringify({
+              type: 'error',
+              message: 'Unauthorized access to order'
+            }));
+            ws.close(1008, 'Unauthorized');
+            return;
+          }
+          ws.orderRef = orderRef;
+        } catch (error) {
+          console.error('Order verification error:', error);
+          ws.send(JSON.stringify({
+            type: 'error',
+            message: 'Error verifying order access'
+          }));
+          ws.close(1011, 'Internal server error');
           return;
         }
-        ws.orderRef = orderRef;
       }
 
       // Setup connection
@@ -86,17 +109,25 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
               break;
             case 'subscribe':
               if (data.orderRef) {
-                const order = await storage.getOrderByRef(data.orderRef);
-                if (order && order.userId.toString() === ws.userId) {
-                  ws.orderRef = data.orderRef;
-                  ws.send(JSON.stringify({ 
-                    type: 'subscribed',
-                    data: { orderRef: data.orderRef }
-                  }));
-                } else {
+                try {
+                  const order = await storage.getOrderByRef(data.orderRef);
+                  if (order && order.userId.toString() === ws.userId) {
+                    ws.orderRef = data.orderRef;
+                    ws.send(JSON.stringify({ 
+                      type: 'subscribed',
+                      data: { orderRef: data.orderRef }
+                    }));
+                  } else {
+                    ws.send(JSON.stringify({ 
+                      type: 'error',
+                      message: 'Unauthorized access to order'
+                    }));
+                  }
+                } catch (error) {
+                  console.error('Subscription error:', error);
                   ws.send(JSON.stringify({ 
                     type: 'error',
-                    message: 'Unauthorized access to order'
+                    message: 'Error processing subscription'
                   }));
                 }
               }
@@ -131,6 +162,10 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
 
     } catch (error) {
       console.error('WebSocket connection error:', error);
+      ws.send(JSON.stringify({
+        type: 'error',
+        message: 'Internal server error'
+      }));
       ws.close(1011, 'Internal server error');
     }
   });
