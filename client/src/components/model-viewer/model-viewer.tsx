@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
@@ -14,10 +14,14 @@ interface LoadProgress {
 
 export function ModelViewer({ modelUrl }: ModelViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!containerRef.current) return;
-    console.log('Setting up 3D viewer');
+
+    let mounted = true;
+    const container = containerRef.current;
 
     // Basic scene setup
     const scene = new THREE.Scene();
@@ -25,19 +29,23 @@ export function ModelViewer({ modelUrl }: ModelViewerProps) {
 
     const camera = new THREE.PerspectiveCamera(
       75,
-      containerRef.current.clientWidth / containerRef.current.clientHeight,
+      container.clientWidth / container.clientHeight,
       0.1,
       1000
     );
     camera.position.z = 5;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
-    containerRef.current.appendChild(renderer.domElement);
+    const renderer = new THREE.WebGLRenderer({ 
+      antialias: true,
+      alpha: true 
+    });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    container.appendChild(renderer.domElement);
 
     // Add lights
-    const light = new THREE.AmbientLight(0xffffff, 1);
-    scene.add(light);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+    scene.add(ambientLight);
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
     directionalLight.position.set(1, 1, 1);
@@ -49,31 +57,39 @@ export function ModelViewer({ modelUrl }: ModelViewerProps) {
     controls.autoRotate = true;
 
     // Load model
-    console.log('Loading model from:', modelUrl);
     const loader = new GLTFLoader();
-
     loader.load(
       modelUrl,
       (gltf: GLTF) => {
-        console.log('Model loaded successfully');
+        if (!mounted) return;
+
         scene.add(gltf.scene);
 
         // Center model
         const box = new THREE.Box3().setFromObject(gltf.scene);
         const center = box.getCenter(new THREE.Vector3());
         gltf.scene.position.sub(center);
+
+        setLoading(false);
       },
       (progress: LoadProgress) => {
-        console.log('Loading progress:', (progress.loaded / progress.total * 100) + '%');
+        if (!mounted) return;
+        const percentage = (progress.loaded / progress.total * 100).toFixed(0);
+        console.log('Loading progress:', percentage + '%');
       },
-      (error: Error) => {
+      (error: ErrorEvent) => {
+        if (!mounted) return;
         console.error('Error loading model:', error);
+        setError('Failed to load 3D model');
+        setLoading(false);
       }
     );
 
     // Animation loop
+    let animationFrameId: number;
     function animate() {
-      requestAnimationFrame(animate);
+      if (!mounted) return;
+      animationFrameId = requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
     }
@@ -81,28 +97,43 @@ export function ModelViewer({ modelUrl }: ModelViewerProps) {
 
     // Handle window resize
     function handleResize() {
-      if (!containerRef.current) return;
+      if (!container) return;
 
-      camera.aspect = containerRef.current.clientWidth / containerRef.current.clientHeight;
+      camera.aspect = container.clientWidth / container.clientHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
+      renderer.setSize(container.clientWidth, container.clientHeight);
     }
     window.addEventListener('resize', handleResize);
 
     // Cleanup
     return () => {
+      mounted = false;
       window.removeEventListener('resize', handleResize);
-      if (containerRef.current) {
-        containerRef.current.removeChild(renderer.domElement);
+      if (container && renderer.domElement) {
+        container.removeChild(renderer.domElement);
       }
+      cancelAnimationFrame(animationFrameId);
       renderer.dispose();
+      // Safely dispose controls if the method exists
+      if (typeof (controls as any).dispose === 'function') {
+        (controls as any).dispose();
+      }
     };
   }, [modelUrl]);
 
   return (
-    <div 
-      ref={containerRef} 
-      className="h-[400px] w-full rounded-lg overflow-hidden bg-zinc-900"
-    />
+    <div className="relative h-[400px] w-full rounded-lg overflow-hidden bg-zinc-900">
+      <div ref={containerRef} className="w-full h-full" />
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+          <div className="text-white">Loading model...</div>
+        </div>
+      )}
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+          <div className="text-red-500">{error}</div>
+        </div>
+      )}
+    </div>
   );
 }

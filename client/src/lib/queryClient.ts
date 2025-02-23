@@ -22,34 +22,32 @@ export async function apiRequest(
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'An error occurred' }));
-      throw new Error(error.message || 'API request failed');
+      throw new Error(error.message || `API request failed: ${response.status}`);
     }
 
-    return await response.json();
+    const data = await response.json().catch(() => null);
+    return data;
   } catch (error) {
-    if (error instanceof Error) {
-      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        console.warn('Network error detected, will retry:', error.message);
-        throw new Error('NetworkError');
-      }
-      console.error('API request error:', error.message);
+    console.error('API request error:', error);
+    // Return null for network errors to prevent unhandled rejections
+    if (error instanceof Error && 
+       (error.message.includes('Failed to fetch') || 
+         error.message.includes('NetworkError'))) {
+      return null;
     }
     throw error;
   }
 }
 
 // Default query function that uses apiRequest
-const defaultQueryFn: QueryFunction = async ({ queryKey, signal }) => {
+const defaultQueryFn: QueryFunction = async ({ queryKey }) => {
   const [endpoint] = queryKey;
   try {
-    return await apiRequest(endpoint as string);
+    const data = await apiRequest(endpoint as string);
+    return data;
   } catch (error) {
-    if (error instanceof Error && error.message === 'NetworkError') {
-      // Allow retry for network errors
-      throw error;
-    }
     console.error('Query function error:', error);
-    throw error;
+    return null; // Return null instead of throwing to prevent unhandled rejections
   }
 };
 
@@ -58,24 +56,17 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: defaultQueryFn,
       retry: (failureCount, error: any) => {
-        // Don't retry auth-related errors
         if (error?.response?.status === 401) return false;
-        // Retry network errors up to 3 times
-        if (error?.message === 'NetworkError') return failureCount < 3;
-        // Default to 2 retries for other errors
         return failureCount < 2;
       },
       staleTime: 5 * 60 * 1000, // 5 minutes
       gcTime: 10 * 60 * 1000, // 10 minutes
       refetchOnWindowFocus: false,
-      refetchOnReconnect: true, // Enable refetch on reconnect
+      refetchOnReconnect: true,
+      throwOnError: (error) => error?.message?.includes('FATAL:')
     },
     mutations: {
-      retry: (failureCount, error: any) => {
-        // Retry network errors up to 2 times for mutations
-        if (error?.message === 'NetworkError') return failureCount < 2;
-        return false; // Don't retry other errors
-      },
+      retry: false,
       onError: (error: Error) => {
         console.error('Mutation error:', error.message);
       }

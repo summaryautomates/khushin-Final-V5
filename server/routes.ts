@@ -218,7 +218,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+  const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
   return app.listen(port, '0.0.0.0', () => {
     console.log(`Server started on port ${port}`);
   });
