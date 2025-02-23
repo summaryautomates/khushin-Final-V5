@@ -6,10 +6,12 @@ import { createServer } from 'net';
 export class PortManager {
   private lockDir: string;
   private lockFiles: Set<string>;
+  private currentPort: number | null;
 
   constructor() {
     this.lockDir = path.join(os.tmpdir(), 'port-locks');
     this.lockFiles = new Set();
+    this.currentPort = null;
 
     // Ensure lock directory exists
     if (!fs.existsSync(this.lockDir)) {
@@ -18,19 +20,21 @@ export class PortManager {
 
     // Always clean up stale locks on startup
     this.cleanupAllLocks();
+
+    // Ensure cleanup on process exit
+    process.on('exit', () => this.releaseAll());
+    process.on('SIGINT', () => {
+      this.releaseAll();
+      process.exit();
+    });
+    process.on('SIGTERM', () => {
+      this.releaseAll();
+      process.exit();
+    });
   }
 
   private getLockPath(port: number): string {
     return path.join(this.lockDir, `port-${port}.lock`);
-  }
-
-  private isProcessRunning(pid: number): boolean {
-    try {
-      process.kill(pid, 0);
-      return true;
-    } catch (err) {
-      return false;
-    }
   }
 
   private cleanupAllLocks(): void {
@@ -55,6 +59,11 @@ export class PortManager {
   }
 
   async acquirePort(startPort: number, endPort: number): Promise<number> {
+    // If we already have a port, release it first
+    if (this.currentPort !== null) {
+      this.releasePort(this.currentPort);
+    }
+
     console.log(`Attempting to acquire port in range ${startPort}-${endPort}`);
 
     // Clean all locks before starting
@@ -72,6 +81,7 @@ export class PortManager {
         const lockPath = this.getLockPath(port);
         fs.writeFileSync(lockPath, process.pid.toString(), { flag: 'wx' });
         this.lockFiles.add(lockPath);
+        this.currentPort = port;
 
         console.log(`Successfully acquired port ${port}`);
         return port;
@@ -113,7 +123,12 @@ export class PortManager {
         resolve();
       });
 
-      server.listen(port, '0.0.0.0');
+      try {
+        server.listen(port, '0.0.0.0');
+      } catch (err) {
+        cleanup();
+        reject(err);
+      }
     });
   }
 
@@ -124,6 +139,9 @@ export class PortManager {
       if (fs.existsSync(lockPath)) {
         fs.unlinkSync(lockPath);
         this.lockFiles.delete(lockPath);
+        if (this.currentPort === port) {
+          this.currentPort = null;
+        }
         console.log(`Released port ${port} successfully`);
       }
     } catch (err) {
@@ -135,24 +153,10 @@ export class PortManager {
     console.log('Releasing all ports...');
     this.cleanupAllLocks();
     this.lockFiles.clear();
+    this.currentPort = null;
     console.log('All ports released');
   }
 }
 
 // Create singleton instance
 export const portManager = new PortManager();
-
-// Cleanup on process exit
-process.on('exit', () => {
-  portManager.releaseAll();
-});
-
-process.on('SIGINT', () => {
-  portManager.releaseAll();
-  process.exit();
-});
-
-process.on('SIGTERM', () => {
-  portManager.releaseAll();
-  process.exit();
-});
