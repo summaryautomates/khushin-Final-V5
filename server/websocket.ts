@@ -6,7 +6,6 @@ import type { Server } from 'http';
 interface AuthenticatedWebSocket extends WebSocket {
   isAlive: boolean;
   userId?: string;
-  orderRef?: string;
   reconnectAttempts?: number;
 }
 
@@ -25,11 +24,14 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
 
   console.log('WebSocket server initialized');
 
-  // Authenticate WebSocket connection using session
   wss.on('connection', async (ws: AuthenticatedWebSocket, req) => {
     console.log('New WebSocket connection attempt');
 
     try {
+      // Set initial connection state
+      ws.isAlive = true;
+      ws.reconnectAttempts = 0;
+
       // Apply session middleware to WebSocket request
       await new Promise((resolve, reject) => {
         sessionMiddleware(req, {}, (err: Error) => {
@@ -44,58 +46,22 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
 
       const session = (req as any).session as ExtendedSessionData;
 
-      // Check authentication
-      if (!session?.passport?.user) {
-        console.log('WebSocket connection rejected: No authenticated session');
-        ws.send(JSON.stringify({
-          type: 'error',
-          message: 'Authentication required'
+      // Handle authenticated users
+      if (session?.passport?.user) {
+        ws.userId = session.passport.user.toString();
+        console.log(`Authenticated WebSocket connection for user: ${ws.userId}`);
+        ws.send(JSON.stringify({ 
+          type: 'connected',
+          data: { userId: ws.userId, isAuthenticated: true }
         }));
-        ws.close(1008, 'Authentication required');
-        return;
+      } else {
+        // Handle public/unauthenticated access
+        console.log('Public WebSocket connection established');
+        ws.send(JSON.stringify({
+          type: 'connected',
+          data: { isAuthenticated: false }
+        }));
       }
-
-      // Extract order reference from URL if it exists
-      const orderMatch = req.url?.match(/\/orders\/([^/?]+)/);
-      const orderRef = orderMatch?.[1];
-
-      // If this is an order-specific connection, verify access
-      if (orderRef) {
-        try {
-          const order = await storage.getOrderByRef(orderRef);
-          if (!order || order.userId.toString() !== session.passport.user.toString()) {
-            console.log('WebSocket connection rejected: Unauthorized access to order');
-            ws.send(JSON.stringify({
-              type: 'error',
-              message: 'Unauthorized access to order'
-            }));
-            ws.close(1008, 'Unauthorized');
-            return;
-          }
-          ws.orderRef = orderRef;
-        } catch (error) {
-          console.error('Order verification error:', error);
-          ws.send(JSON.stringify({
-            type: 'error',
-            message: 'Error verifying order access'
-          }));
-          ws.close(1011, 'Internal server error');
-          return;
-        }
-      }
-
-      // Setup connection
-      ws.isAlive = true;
-      ws.userId = session.passport.user.toString();
-      ws.reconnectAttempts = 0;
-
-      console.log(`WebSocket connection established for user: ${ws.userId}${orderRef ? `, order: ${orderRef}` : ''}`);
-
-      // Send initial connection status
-      ws.send(JSON.stringify({ 
-        type: 'connected',
-        data: { userId: ws.userId }
-      }));
 
       // Handle incoming messages
       ws.on('message', async (message: string) => {
@@ -107,30 +73,16 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
             case 'ping':
               ws.send(JSON.stringify({ type: 'pong' }));
               break;
-            case 'subscribe':
-              if (data.orderRef) {
-                try {
-                  const order = await storage.getOrderByRef(data.orderRef);
-                  if (order && order.userId.toString() === ws.userId) {
-                    ws.orderRef = data.orderRef;
-                    ws.send(JSON.stringify({ 
-                      type: 'subscribed',
-                      data: { orderRef: data.orderRef }
-                    }));
-                  } else {
-                    ws.send(JSON.stringify({ 
-                      type: 'error',
-                      message: 'Unauthorized access to order'
-                    }));
-                  }
-                } catch (error) {
-                  console.error('Subscription error:', error);
-                  ws.send(JSON.stringify({ 
-                    type: 'error',
-                    message: 'Error processing subscription'
+            case 'sync_zoom':
+              // Broadcast zoom sync to all clients except sender
+              wss.clients.forEach(client => {
+                if (client !== ws && client.readyState === WebSocket.OPEN) {
+                  client.send(JSON.stringify({
+                    type: 'zoom_update',
+                    data: data.scale
                   }));
                 }
-              }
+              });
               break;
             default:
               console.log('Unknown message type:', data.type);
@@ -156,7 +108,7 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
 
       // Clean up on close
       ws.on('close', () => {
-        console.log(`WebSocket connection closed for user: ${ws.userId}`);
+        console.log(`WebSocket connection closed${ws.userId ? ` for user: ${ws.userId}` : ''}`);
         ws.isAlive = false;
       });
 
@@ -175,7 +127,7 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
     wss.clients.forEach((client: WebSocket) => {
       const ws = client as AuthenticatedWebSocket;
       if (!ws.isAlive) {
-        console.log(`Terminating inactive WebSocket for user: ${ws.userId}`);
+        console.log(`Terminating inactive WebSocket${ws.userId ? ` for user: ${ws.userId}` : ''}`);
         return ws.terminate();
       }
       ws.isAlive = false;

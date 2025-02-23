@@ -12,12 +12,12 @@ app.use(express.json());
 // Create HTTP server
 const server = createServer(app);
 
-// CORS configuration
+// CORS configuration with credentials support
 app.use(cors({
   origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
 }));
 
 // Health check endpoint
@@ -32,12 +32,12 @@ const startServer = async () => {
     const sessionMiddleware = await setupAuth(app);
 
     // Setup WebSocket after authentication
-    await setupWebSocket(server, sessionMiddleware);
+    const wss = await setupWebSocket(server, sessionMiddleware);
 
     // Setup routes
     await registerRoutes(app);
 
-    // Setup Vite
+    // Setup Vite last to ensure all middleware is properly initialized
     await setupVite(app, server);
 
     // Start HTTP server
@@ -49,9 +49,12 @@ const startServer = async () => {
     // Graceful shutdown handling
     const cleanup = () => {
       console.log('Cleaning up server resources...');
-      server.close(() => {
-        console.log('HTTP server closed');
-        process.exit(0);
+      wss.close(() => {
+        console.log('WebSocket server closed');
+        server.close(() => {
+          console.log('HTTP server closed');
+          process.exit(0);
+        });
       });
     };
 

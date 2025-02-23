@@ -10,6 +10,7 @@ import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import type { Product } from "@shared/schema";
+import { ImageComparison } from "@/components/products/image-comparison";
 
 // Extended product type to include additional comparison fields
 interface ExtendedProduct extends Product {
@@ -117,22 +118,26 @@ export default function ComparePage() {
 
     switch (attribute.type) {
       case "image":
-        return (
-          <motion.div 
-            className={cellClasses}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <div className="aspect-square bg-zinc-100 rounded-lg overflow-hidden">
-              <img
-                src={Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : '/placeholder-product.svg'}
-                alt={product.name}
-                className="w-full h-full object-cover"
+        if (index === 0) {
+          return (
+            <motion.div 
+              className={cellClasses}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <ImageComparison 
+                images={items.map(item => 
+                  Array.isArray(item.images) && item.images.length > 0 
+                    ? item.images[0] 
+                    : '/placeholder-product.svg'
+                )}
+                titles={items.map(item => item.name)}
               />
-            </div>
-          </motion.div>
-        );
+            </motion.div>
+          );
+        }
+        return null;
       case "price":
         return (
           <motion.div 
