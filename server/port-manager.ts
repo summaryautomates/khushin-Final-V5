@@ -64,11 +64,14 @@ export class PortManager {
       this.releasePort(this.currentPort);
     }
 
-    console.log(`Attempting to acquire port in range ${startPort}-${endPort}`);
+    console.log(`Attempting to acquire port ${startPort}`);
 
     // Clean all locks before starting
     this.cleanupAllLocks();
     await this.sleep(1000); // Wait for any cleanup to complete
+
+    // If startPort equals endPort, we're requesting a specific port
+    const isSpecificPort = startPort === endPort;
 
     for (let port = startPort; port <= endPort; port++) {
       console.log(`Testing port ${port}...`);
@@ -87,6 +90,12 @@ export class PortManager {
         return port;
       } catch (err) {
         console.log(`Port ${port} is not available: ${err instanceof Error ? err.message : 'Unknown error'}`);
+
+        // If we're requesting a specific port and it's not available, fail immediately
+        if (isSpecificPort) {
+          throw new Error(`Required port ${port} is not available`);
+        }
+
         continue;
       }
     }

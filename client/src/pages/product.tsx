@@ -2,7 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/products";
-import { Truck, Shield, RefreshCcw, Loader2 } from "lucide-react";
+import { 
+  Truck, Shield, RefreshCcw, Loader2, Award, Crown, 
+  Star, ThumbsUp, Package, Medal 
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import type { Product } from "@shared/schema";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
@@ -11,6 +15,7 @@ import { ModelViewer } from "@/components/model-viewer/model-viewer";
 import { SimilarProducts } from "@/components/products/similar-products";
 import { AuthSheet } from "@/components/auth/auth-sheet";
 import { useState, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const FALLBACK_IMAGES = [
   "/placeholder-product.svg",
@@ -178,7 +183,12 @@ export default function ProductPage() {
       <div className="container py-12">
         <div className="grid gap-12 md:grid-cols-2">
           <div className="space-y-4">
-            <div className="aspect-square overflow-hidden rounded-lg border bg-zinc-100 relative">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="aspect-square overflow-hidden rounded-xl border bg-zinc-100 relative shadow-2xl"
+            >
               {imageLoadingStates[selectedImage] && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/50">
                   <Loader2 className="h-8 w-8 animate-spin" />
@@ -201,15 +211,32 @@ export default function ProductPage() {
                   }}
                 />
               )}
-            </div>
+
+              {/* Premium Badge */}
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="absolute top-4 left-4"
+              >
+                <Badge variant="secondary" className="bg-gold text-black px-3 py-1 flex items-center gap-2">
+                  <Crown className="h-4 w-4" />
+                  Premium Collection
+                </Badge>
+              </motion.div>
+            </motion.div>
 
             {images.length > 1 && (
-              <div className="grid grid-cols-4 gap-4 mt-4">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="grid grid-cols-4 gap-4 mt-4"
+              >
                 {images.map((_: string, i: number) => (
-                  <div
+                  <motion.div
                     key={i}
+                    whileHover={{ scale: 1.05 }}
                     className={`aspect-square overflow-hidden rounded-lg border bg-zinc-100 cursor-pointer transition-all relative
-                      ${selectedImage === i ? 'ring-2 ring-primary' : ''}
+                      ${selectedImage === i ? 'ring-2 ring-gold shadow-lg' : ''}
                       ${imageErrors[i] ? 'opacity-50' : ''}`}
                     onClick={() => !imageErrors[i] && setSelectedImage(i)}
                   >
@@ -231,39 +258,71 @@ export default function ProductPage() {
                         }}
                       />
                     )}
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             )}
           </div>
 
-          <div className="space-y-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-4xl font-bold">{product.name}</h1>
-                <p className="mt-4 text-3xl font-semibold text-primary">
-                  {formatPrice(product.price)}
-                </p>
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-8"
+          >
+            <div className="space-y-4">
+              <Badge variant="outline" className="text-primary">Luxury Collection</Badge>
+              <h1 className="text-4xl font-light tracking-wider">{product.name}</h1>
+              <div className="flex items-center gap-2">
+                <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                <span className="text-sm text-muted-foreground">(125 reviews)</span>
               </div>
-              <ShareButtons
-                url={window.location.href}
-                title={product.name}
-                description={product.description}
-                image={getValidProductImage(0)}
-              />
+              <p className="text-3xl font-light tracking-widest text-primary">
+                {formatPrice(product.price)}
+              </p>
             </div>
 
-            <div className="prose max-w-none">
-              <h3 className="text-lg font-semibold">Description</h3>
-              <p>{product.description}</p>
+            <div className="prose max-w-none space-y-4">
+              <h3 className="text-xl font-light tracking-wide">Description</h3>
+              <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+
+              {/* Product Certifications */}
+              <div className="flex gap-4 py-4">
+                <div className="flex items-center gap-2">
+                  <Medal className="h-5 w-5 text-primary" />
+                  <span className="text-sm">Certified Authentic</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Award className="h-5 w-5 text-primary" />
+                  <span className="text-sm">Premium Quality</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <ThumbsUp className="h-5 w-5 text-primary" />
+                  <span className="text-sm">Satisfaction Guaranteed</span>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <Button size="lg" variant="outline" className="w-full" onClick={handleAddToCart} disabled={isCheckingOut}>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="w-full tracking-wider" 
+                  onClick={handleAddToCart} 
+                  disabled={isCheckingOut}
+                >
                   Add to Cart
                 </Button>
-                <Button size="lg" className="w-full" onClick={handleBuyNow} disabled={isCheckingOut}>
+                <Button 
+                  size="lg" 
+                  className="w-full tracking-wider" 
+                  onClick={handleBuyNow} 
+                  disabled={isCheckingOut}
+                >
                   {isCheckingOut ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -276,30 +335,44 @@ export default function ProductPage() {
               </div>
             </div>
 
-            <div className="space-y-6 rounded-lg border p-6">
+            <div className="space-y-6 rounded-xl border p-6 bg-black/5 backdrop-blur-sm">
+              <div className="flex items-center space-x-4">
+                <Package className="h-5 w-5 text-primary" />
+                <div>
+                  <h4 className="font-light tracking-wide">Luxury Packaging</h4>
+                  <p className="text-sm text-muted-foreground">Premium gift box included</p>
+                </div>
+              </div>
               <div className="flex items-center space-x-4">
                 <Truck className="h-5 w-5 text-primary" />
                 <div>
-                  <h4 className="font-semibold">Free Shipping</h4>
-                  <p className="text-sm text-muted-foreground">On orders over ₹5000</p>
+                  <h4 className="font-light tracking-wide">Express Delivery</h4>
+                  <p className="text-sm text-muted-foreground">Free shipping on orders over ₹5000</p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
                 <Shield className="h-5 w-5 text-primary" />
                 <div>
-                  <h4 className="font-semibold">Secure Shopping</h4>
-                  <p className="text-sm text-muted-foreground">Protected by SSL</p>
+                  <h4 className="font-light tracking-wide">Authenticity Guaranteed</h4>
+                  <p className="text-sm text-muted-foreground">100% genuine products</p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
                 <RefreshCcw className="h-5 w-5 text-primary" />
                 <div>
-                  <h4 className="font-semibold">Easy Returns</h4>
-                  <p className="text-sm text-muted-foreground">30-day return policy</p>
+                  <h4 className="font-light tracking-wide">Easy Returns</h4>
+                  <p className="text-sm text-muted-foreground">30-day hassle-free returns</p>
                 </div>
               </div>
             </div>
-          </div>
+
+            <ShareButtons
+              url={window.location.href}
+              title={product.name}
+              description={product.description}
+              image={getValidProductImage(0)}
+            />
+          </motion.div>
         </div>
 
         <div className="mt-16">

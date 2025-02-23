@@ -27,49 +27,85 @@ async function startServer() {
     res.json({ status: 'ok', timestamp: Date.now() });
   });
 
-  // Start server
-  const startPort = 5000;
-  const endPort = 5100;
-
   try {
-    const port = await portManager.acquirePort(startPort, endPort);
+    // Diagnostic: Log current port status
+    console.log('Starting server initialization...');
+    console.log('Checking port availability...');
+
+    // Release any existing ports to ensure clean state
+    portManager.releaseAll();
+
+    // Wait a bit for any cleanup to complete
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Always try to acquire port 5000 as required
+    const port = 5000;
+    console.log(`Attempting to acquire required port ${port}...`);
+    await portManager.acquirePort(port, port);
+    console.log(`Successfully acquired port ${port}`);
 
     // Setup authentication and get session middleware
     const sessionMiddleware = await setupAuth(app);
+    console.log('Authentication setup complete');
 
     // Setup WebSocket after authentication
     const wss = await setupWebSocket(server, sessionMiddleware);
+    console.log('WebSocket setup complete');
 
     // Setup routes
     await registerRoutes(app);
+    console.log('Routes registered');
 
     // Setup Vite last to ensure all middleware is properly initialized
     await setupVite(app, server);
+    console.log('Vite setup complete');
 
     server.listen(port, '0.0.0.0', () => {
       console.log(`Server running at http://0.0.0.0:${port}`);
     });
 
-    // Graceful shutdown handling
-    const cleanup = () => {
-      console.log('Cleaning up server resources...');
-      wss.close(() => {
-        console.log('WebSocket server closed');
-        server.close(() => {
-          console.log('HTTP server closed');
-          process.exit(0);
+    // Enhanced cleanup handling
+    const cleanup = async () => {
+      console.log('Starting cleanup process...');
+
+      // Close WebSocket connections first
+      await new Promise<void>((resolve) => {
+        wss.close(() => {
+          console.log('WebSocket server closed');
+          resolve();
         });
       });
+
+      // Then close the HTTP server
+      await new Promise<void>((resolve) => {
+        server.close(() => {
+          console.log('HTTP server closed');
+          resolve();
+        });
+      });
+
+      // Release the port
+      portManager.releaseAll();
+      console.log('Ports released');
+
+      process.exit(0);
     };
 
-    // Setup signal handlers
+    // Setup signal handlers with async cleanup
     process.on('SIGTERM', cleanup);
     process.on('SIGINT', cleanup);
 
   } catch (error) {
     console.error('Failed to start server:', error);
+    console.error('Port 5000 is required but unavailable. Please ensure no other process is using port 5000.');
+
+    // Attempt final cleanup before exit
+    portManager.releaseAll();
     process.exit(1);
   }
 }
 
-startServer().catch(console.error);
+startServer().catch(error => {
+  console.error('Unhandled error during server startup:', error);
+  process.exit(1);
+});

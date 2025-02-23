@@ -6,9 +6,10 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/products";
 import type { Product } from "@shared/schema";
-import { Eye, ShoppingCart, Loader2, Scale } from "lucide-react";
+import { Eye, ShoppingCart, Loader2, Scale, Crown, Star } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useCompare } from "@/hooks/use-compare";
 import { useToast } from "@/hooks/use-toast";
@@ -108,13 +109,26 @@ export function ProductCard({ product }: ProductCardProps) {
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="relative overflow-hidden border-none shadow-none group bg-white/[0.02] backdrop-blur-sm hover:bg-white/[0.05] transition-all duration-700">
+      <Card className="relative overflow-hidden border-none shadow-xl group bg-white/[0.02] backdrop-blur-sm hover:bg-white/[0.05] transition-all duration-700">
         <CardHeader className="p-0">
           <motion.div 
-            className="relative aspect-square overflow-hidden bg-zinc-900"
+            className="relative aspect-square overflow-hidden bg-zinc-900 rounded-t-xl"
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
           >
+            {/* Premium Badge */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="absolute top-4 left-4 z-10"
+            >
+              <Badge variant="secondary" className="bg-gold/80 text-black backdrop-blur-sm flex items-center gap-1">
+                <Crown className="h-3 w-3" />
+                Premium
+              </Badge>
+            </motion.div>
+
             {imageLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
                 <Loader2 className="h-8 w-8 animate-spin" />
@@ -143,7 +157,7 @@ export function ProductCard({ product }: ProductCardProps) {
                   <Button
                     size="icon"
                     variant="secondary"
-                    className="rounded-full bg-orange-400/90 hover:bg-orange-500 text-white"
+                    className="rounded-full bg-orange-400/90 hover:bg-orange-500 text-white backdrop-blur-sm"
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
@@ -156,7 +170,7 @@ export function ProductCard({ product }: ProductCardProps) {
                 <Button
                   size="icon"
                   variant="secondary"
-                  className={`rounded-full bg-white text-black hover:bg-gray-100 ${
+                  className={`rounded-full bg-white/80 text-black hover:bg-white backdrop-blur-sm ${
                     isInCompare(product.id) ? 'border-2 border-primary' : ''
                   }`}
                   onClick={handleCompareToggle}
@@ -171,7 +185,7 @@ export function ProductCard({ product }: ProductCardProps) {
                 <Button
                   size="icon"
                   variant="secondary"
-                  className="rounded-full bg-white text-black hover:bg-gray-100"
+                  className="rounded-full bg-white/80 text-black hover:bg-white backdrop-blur-sm"
                   onClick={handleBuyNow}
                   disabled={isAddingToCart}
                 >
@@ -191,11 +205,19 @@ export function ProductCard({ product }: ProductCardProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
+            className="space-y-4"
           >
+            {/* Rating Stars */}
+            <div className="flex justify-center gap-1">
+              {[1, 2, 3, 4, 5].map((_, index) => (
+                <Star key={index} className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+              ))}
+            </div>
+
             <h3 className="font-extralight text-lg tracking-widest text-white">
               {product.name}
             </h3>
-            <p className="mt-3 text-sm leading-relaxed text-zinc-400 tracking-wide line-clamp-2">
+            <p className="text-sm leading-relaxed text-zinc-400 tracking-wide line-clamp-2">
               {product.description}
             </p>
             <motion.div 
