@@ -177,7 +177,7 @@ export default function ComparePage() {
           </motion.div>
         );
       case "features":
-        const features = typeof value === 'object' ? Object.values(value) : [];
+        const features = typeof value === 'object' ? (Object.values(value) as string[]) : [];
         return (
           <motion.div 
             className={cellClasses}
