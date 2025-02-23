@@ -73,15 +73,30 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   const handleCompareToggle = () => {
-    if (isInCompare(product.id)) {
-      removeFromCompare(product.id);
+    try {
+      if (isInCompare(product.id)) {
+        removeFromCompare(product.id);
+        toast({
+          description: `${product.name} removed from comparison`,
+        });
+      } else {
+        addToCompare(product);
+        toast({
+          description: `${product.name} added to comparison`,
+          action: (
+            <Link href="/compare">
+              <Button variant="link" className="gap-2">
+                Compare Now
+              </Button>
+            </Link>
+          ),
+        });
+      }
+    } catch (error) {
       toast({
-        description: `${product.name} removed from comparison`,
-      });
-    } else {
-      addToCompare(product);
-      toast({
-        description: `${product.name} added to comparison`,
+        variant: "destructive",
+        title: "Could not add to comparison",
+        description: error instanceof Error ? error.message : "Maximum 4 products can be compared",
       });
     }
   };
