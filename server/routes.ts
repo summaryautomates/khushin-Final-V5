@@ -1,90 +1,10 @@
 import type { Express } from "express";
 import { storage } from "./storage";
-import { insertOrderSchema, insertCategorySchema } from "@shared/schema";
+import { insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
 import { randomBytes } from "crypto";
 
 export async function registerRoutes(app: Express) {
-  // Category Routes
-  app.get("/api/categories", async (_req, res) => {
-    try {
-      const categories = await storage.getCategories();
-      res.json(categories);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      res.status(500).json({ message: "Failed to fetch categories" });
-    }
-  });
-
-  app.get("/api/categories/featured", async (_req, res) => {
-    try {
-      const categories = await storage.getFeaturedCategories();
-      res.json(categories);
-    } catch (error) {
-      console.error('Error fetching featured categories:', error);
-      res.status(500).json({ message: "Failed to fetch featured categories" });
-    }
-  });
-
-  app.get("/api/categories/:slug", async (req, res) => {
-    try {
-      const category = await storage.getCategoryBySlug(req.params.slug);
-      if (!category) {
-        return res.status(404).json({ message: "Category not found" });
-      }
-      res.json(category);
-    } catch (error) {
-      console.error('Error fetching category:', error);
-      res.status(500).json({ message: "Failed to fetch category" });
-    }
-  });
-
-  app.get("/api/categories/:id/products", async (req, res) => {
-    try {
-      const categoryId = parseInt(req.params.id);
-      if (isNaN(categoryId)) {
-        return res.status(400).json({ message: "Invalid category ID" });
-      }
-
-      const products = await storage.getCategoryProducts(categoryId);
-      res.json(products);
-    } catch (error) {
-      console.error('Error fetching category products:', error);
-      res.status(500).json({ message: "Failed to fetch category products" });
-    }
-  });
-
-  app.get("/api/categories/:id/subcategories", async (req, res) => {
-    try {
-      const parentId = parseInt(req.params.id);
-      if (isNaN(parentId)) {
-        return res.status(400).json({ message: "Invalid category ID" });
-      }
-
-      const subcategories = await storage.getSubcategories(parentId);
-      res.json(subcategories);
-    } catch (error) {
-      console.error('Error fetching subcategories:', error);
-      res.status(500).json({ message: "Failed to fetch subcategories" });
-    }
-  });
-
-  app.get("/api/categories/search", async (req, res) => {
-    try {
-      const query = req.query.q as string;
-      if (!query) {
-        return res.status(400).json({ message: "Search query is required" });
-      }
-
-      const categories = await storage.searchCategoriesByName(query);
-      res.json(categories);
-    } catch (error) {
-      console.error('Error searching categories:', error);
-      res.status(500).json({ message: "Failed to search categories" });
-    }
-  });
-
-  // Existing Product Routes
   app.get("/api/products", async (_req, res) => {
     try {
       const products = await storage.getProducts();
