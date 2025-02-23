@@ -20,9 +20,14 @@ import {
   giftOrders,
   type GiftOrder,
   type InsertGiftOrder,
+  type ProductCategory,
+  type Category,
+  type InsertCategory,
+  categories,
+  productCategories,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql, like, ilike } from "drizzle-orm";
 import { users, type User, type InsertUser } from "@shared/schema";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -78,6 +83,19 @@ export interface IStorage {
 
   // Add new method for updating gift status
   updateCartItemGiftStatus(userId: string, productId: number, isGift: boolean, giftMessage?: string): Promise<void>;
+
+  // Add category methods
+  getCategories(): Promise<Category[]>;
+  getCategory(id: number): Promise<Category | undefined>;
+  getCategoryBySlug(slug: string): Promise<Category | undefined>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  getProductCategories(productId: number): Promise<Category[]>;
+  getFeaturedCategories(): Promise<Category[]>;
+  getCategoryProducts(categoryId: number): Promise<Product[]>;
+  assignProductToCategory(productId: number, categoryId: number): Promise<void>;
+  removeProductFromCategory(productId: number, categoryId: number): Promise<void>;
+  getSubcategories(parentId: number): Promise<Category[]>;
+  searchCategoriesByName(query: string): Promise<Category[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -387,7 +405,7 @@ export class DatabaseStorage implements IStorage {
     try {
       await db
         .update(cartItems)
-        .set({ 
+        .set({
           isGift,
           giftMessage: giftMessage || null
         })
@@ -401,6 +419,90 @@ export class DatabaseStorage implements IStorage {
       console.error('Error updating cart item gift status:', error);
       throw new Error('Failed to update gift status');
     }
+  }
+
+
+  async getCategories(): Promise<Category[]> {
+    return await db.select().from(categories).orderBy(categories.displayOrder);
+  }
+
+  async getCategory(id: number): Promise<Category | undefined> {
+    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+    return category;
+  }
+
+  async getCategoryBySlug(slug: string): Promise<Category | undefined> {
+    const [category] = await db.select().from(categories).where(eq(categories.slug, slug));
+    return category;
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const [newCategory] = await db.insert(categories).values(category).returning();
+    return newCategory;
+  }
+
+  async getProductCategories(productId: number): Promise<Category[]> {
+    const result = await db
+      .select({
+        category: categories
+      })
+      .from(productCategories)
+      .innerJoin(categories, eq(categories.id, productCategories.categoryId))
+      .where(eq(productCategories.productId, productId));
+
+    return result.map(r => r.category);
+  }
+
+  async getFeaturedCategories(): Promise<Category[]> {
+    return await db
+      .select()
+      .from(categories)
+      .where(eq(categories.featured, true))
+      .orderBy(categories.displayOrder);
+  }
+
+  async getCategoryProducts(categoryId: number): Promise<Product[]> {
+    const result = await db
+      .select({
+        product: products
+      })
+      .from(productCategories)
+      .innerJoin(products, eq(products.id, productCategories.productId))
+      .where(eq(productCategories.categoryId, categoryId));
+
+    return result.map(r => r.product);
+  }
+
+  async assignProductToCategory(productId: number, categoryId: number): Promise<void> {
+    await db.insert(productCategories)
+      .values({ productId, categoryId })
+      .onConflictDoNothing();
+  }
+
+  async removeProductFromCategory(productId: number, categoryId: number): Promise<void> {
+    await db.delete(productCategories)
+      .where(
+        and(
+          eq(productCategories.productId, productId),
+          eq(productCategories.categoryId, categoryId)
+        )
+      );
+  }
+
+  async getSubcategories(parentId: number): Promise<Category[]> {
+    return await db
+      .select()
+      .from(categories)
+      .where(eq(categories.parentId, parentId))
+      .orderBy(categories.displayOrder);
+  }
+
+  async searchCategoriesByName(query: string): Promise<Category[]> {
+    return await db
+      .select()
+      .from(categories)
+      .where(ilike(categories.name, `%${query}%`))
+      .orderBy(categories.name);
   }
 }
 

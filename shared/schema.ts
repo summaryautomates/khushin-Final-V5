@@ -1,7 +1,77 @@
-import { pgTable, text, serial, integer, boolean, jsonb, foreignKey, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, jsonb, foreignKey, timestamp, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
+
+// Add categories table schema
+export const categories = pgTable("categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  parentId: integer("parent_id").references(() => categories.id),
+  description: text("description"),
+  icon: text("icon"),
+  thumbnail: text("thumbnail"),
+  seoTitle: text("seo_title"),
+  seoDescription: text("seo_description"),
+  seoKeywords: text("seo_keywords"),
+  attributes: jsonb("attributes").$type<{
+    name: string;
+    type: 'text' | 'number' | 'boolean' | 'select';
+    options?: string[];
+  }[]>(),
+  featured: boolean("featured").default(false),
+  displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Add product-category relationship table
+export const productCategories = pgTable("product_categories", {
+  productId: integer("product_id").notNull().references(() => products.id),
+  categoryId: integer("category_id").notNull().references(() => categories.id)
+}, (t) => ({
+  pk: primaryKey({ columns: [t.productId, t.categoryId] })
+}));
+
+// Add relations
+export const categoriesRelations = relations(categories, ({ many, one }) => ({
+  products: many(productCategories),
+  parent: one(categories, {
+    fields: [categories.parentId],
+    references: [categories.id],
+  }),
+  children: many(categories),
+}));
+
+// Define products table and its relations in one place
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  price: integer("price").notNull(),
+  images: text("images").array().notNull(),
+  customizable: boolean("customizable").notNull().default(false),
+  features: jsonb("features").notNull(),
+});
+
+// Define productsRelations once with all relations
+export const productsRelations = relations(products, ({ many }) => ({
+  categories: many(productCategories),
+  cartItems: many(cartItems)
+}));
+
+// Add product-category relations
+export const productCategoriesRelations = relations(productCategories, ({ one }) => ({
+  product: one(products, {
+    fields: [productCategories.productId],
+    references: [products.id],
+  }),
+  category: one(categories, {
+    fields: [productCategories.categoryId],
+    references: [categories.id],
+  }),
+}));
+
 
 // Add users table schema definition at the top
 export const users = pgTable("users", {
@@ -12,17 +82,6 @@ export const users = pgTable("users", {
   firstName: text("first_name"),
   lastName: text("last_name"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-export const products = pgTable("products", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  description: text("description").notNull(),
-  price: integer("price").notNull(),
-  category: text("category").notNull(),
-  images: text("images").array().notNull(),
-  customizable: boolean("customizable").notNull().default(false),
-  features: jsonb("features").notNull(),
 });
 
 export const blogPosts = pgTable("blog_posts", {
@@ -67,10 +126,6 @@ export const cartItemsRelations = relations(cartItems, ({ one }) => ({
     fields: [cartItems.productId],
     references: [products.id],
   }),
-}));
-
-export const productsRelations = relations(products, ({ many }) => ({
-  cartItems: many(cartItems),
 }));
 
 export const discountCodes = pgTable("discount_codes", {
@@ -315,3 +370,25 @@ export type ReferralCode = typeof referralCodes.$inferSelect;
 export type ReferralHistory = typeof referralHistory.$inferSelect;
 export type InsertReferralCode = z.infer<typeof insertReferralCodeSchema>;
 export type InsertReferralHistory = z.infer<typeof insertReferralHistorySchema>;
+
+// Create insert schemas
+export const insertCategorySchema = createInsertSchema(categories)
+  .omit({ 
+    id: true,
+    createdAt: true 
+  })
+  .extend({
+    name: z.string().min(2, "Category name must be at least 2 characters"),
+    slug: z.string().min(2, "Slug must be at least 2 characters"),
+    parentId: z.number().optional(),
+    attributes: z.array(z.object({
+      name: z.string(),
+      type: z.enum(['text', 'number', 'boolean', 'select']),
+      options: z.array(z.string()).optional()
+    })).optional(),
+  });
+
+// Add types
+export type Category = typeof categories.$inferSelect;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type ProductCategory = typeof productCategories.$inferSelect;
