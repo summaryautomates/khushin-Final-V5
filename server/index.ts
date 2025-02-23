@@ -5,6 +5,7 @@ import { setupVite } from './vite';
 import { setupAuth } from './auth';
 import { setupWebSocket } from './websocket';
 import cors from 'cors';
+import { portManager } from './port-manager';
 
 const app = express();
 app.use(express.json());
@@ -26,46 +27,44 @@ app.get('/api/health', (_req, res) => {
 });
 
 // Start server
-const startServer = async () => {
-  try {
-    // Setup authentication and get session middleware
-    const sessionMiddleware = await setupAuth(app);
+const startPort = 5000;
+const endPort = 5100;
 
-    // Setup WebSocket after authentication
-    const wss = await setupWebSocket(server, sessionMiddleware);
+try {
+  const port = await portManager.acquirePort(startPort, endPort);
+  server.listen(port, '0.0.0.0', () => {
+    console.log(`Server running at http://0.0.0.0:${port}`);
+  });
+} catch (error) {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+}
 
-    // Setup routes
-    await registerRoutes(app);
 
-    // Setup Vite last to ensure all middleware is properly initialized
-    await setupVite(app, server);
+// Setup authentication and get session middleware
+const sessionMiddleware = await setupAuth(app);
 
-    // Start HTTP server
-    const port = 5000;
-    server.listen(port, '0.0.0.0', () => {
-      console.log(`Server running at http://0.0.0.0:${port}`);
+// Setup WebSocket after authentication
+const wss = await setupWebSocket(server, sessionMiddleware);
+
+// Setup routes
+await registerRoutes(app);
+
+// Setup Vite last to ensure all middleware is properly initialized
+await setupVite(app, server);
+
+// Graceful shutdown handling
+const cleanup = () => {
+  console.log('Cleaning up server resources...');
+  wss.close(() => {
+    console.log('WebSocket server closed');
+    server.close(() => {
+      console.log('HTTP server closed');
+      process.exit(0);
     });
-
-    // Graceful shutdown handling
-    const cleanup = () => {
-      console.log('Cleaning up server resources...');
-      wss.close(() => {
-        console.log('WebSocket server closed');
-        server.close(() => {
-          console.log('HTTP server closed');
-          process.exit(0);
-        });
-      });
-    };
-
-    // Setup signal handlers
-    process.on('SIGTERM', cleanup);
-    process.on('SIGINT', cleanup);
-
-  } catch (error) {
-    console.error('Critical server error:', error);
-    process.exit(1);
-  }
+  });
 };
 
-startServer();
+// Setup signal handlers
+process.on('SIGTERM', cleanup);
+process.on('SIGINT', cleanup);
