@@ -11,7 +11,7 @@ import type { Product } from "@shared/schema";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
 import { ShareButtons } from "@/components/products/share-buttons";
-import { ModelViewer } from "@/components/model-viewer/model-viewer";
+import { ModelViewer } from "@/components/model-viewer/ModelViewer";
 import { SimilarProducts } from "@/components/products/similar-products";
 import { AuthSheet } from "@/components/auth/auth-sheet";
 import { useState, useEffect, useMemo, Suspense } from "react";
@@ -202,14 +202,7 @@ export default function ProductPage() {
                         <Loader2 className="h-8 w-8 animate-spin" />
                       </div>
                     }>
-                      <ModelViewer 
-                        modelUrl="/attached_assets/zippo_lighter.glb" 
-                        fallbackUrl={getValidProductImage(selectedImage)}
-                        onError={() => {
-                          console.error("Failed to load 3D model");
-                          handleImageError(selectedImage);
-                        }}
-                      />
+                      <ModelViewer />
                     </Suspense>
                   </div>
                 </div>
