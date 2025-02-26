@@ -28,13 +28,14 @@ export function ProductCard({ product }: ProductCardProps) {
   const [, setLocation] = useLocation();
 
   const getProductImage = () => {
-    if (Array.isArray(product.images) && product.images.length > 0) {
+    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
       const image = product.images[0];
-      if (image && typeof image === 'string') {
+      if (image && typeof image === 'string' && image.trim() !== '') {
         return image;
       }
     }
-    return '/placeholder-product.svg';
+    // Use a full URL for the fallback image
+    return 'https://placehold.co/400x400/png?text=Product+Image';
   };
 
   const handleAddToCart = async () => {
