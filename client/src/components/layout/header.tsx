@@ -29,9 +29,11 @@ export function Header() {
       <div className="container mx-auto px-4">
         <div className="flex h-20 items-center justify-between">
           <Link href="/" className="flex items-center space-x-2 group">
-            <span className="text-2xl font-light tracking-[0.25em] text-white group-hover:text-primary transition-colors duration-300">
-              KHUSH.IN
-            </span>
+            <img 
+              src="https://api.deepai.org/job-view-file/21c38ff0-a48f-49e4-91f0-3094fe3db926/outputs/output.jpg" 
+              alt="KHUSH.IN Logo" 
+              className="h-8 w-auto transition-opacity duration-300 group-hover:opacity-80" 
+            />
           </Link>
 
           <NavigationMenu className="hidden md:flex">
