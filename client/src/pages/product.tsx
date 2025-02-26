@@ -14,16 +14,12 @@ import { ShareButtons } from "@/components/products/share-buttons";
 import { ModelViewer } from "@/components/model-viewer/model-viewer";
 import { SimilarProducts } from "@/components/products/similar-products";
 import { AuthSheet } from "@/components/auth/auth-sheet";
-import { useState, useEffect, useMemo, Suspense } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, Suspense } from "react";
+import { motion } from "framer-motion";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { AdaptiveImage } from "@/components/ui/adaptive-image";
 
-const FALLBACK_IMAGES = [
-  "/product-placeholder.svg",
-  "/placeholder-product-2.svg",
-  "/placeholder-product-3.svg"
-];
+// Simplified fallback image handling
+const FALLBACK_IMAGE = "/product-placeholder.svg";
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:id");
@@ -52,11 +48,9 @@ export default function ProductPage() {
     }
   });
 
-  const getValidProductImage = (index: number): string => {
-    if (!product?.images?.length || index < 0 || index >= product.images.length) {
-      return FALLBACK_IMAGES[0];
-    }
-    return product.images[index] || FALLBACK_IMAGES[0];
+  const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = event.target as HTMLImageElement;
+    img.src = FALLBACK_IMAGE;
   };
 
   const handleAddToCart = async () => {
@@ -132,6 +126,7 @@ export default function ProductPage() {
   }
 
   const images = Array.isArray(product.images) ? product.images : [];
+  const currentImage = images[selectedImage] || FALLBACK_IMAGE;
 
   return (
     <ErrorBoundary>
@@ -166,18 +161,18 @@ export default function ProductPage() {
                         }>
                           <ModelViewer
                             modelUrl="/attached_assets/zippo_lighter.glb"
-                            fallbackUrl={getValidProductImage(selectedImage)}
+                            fallbackUrl={currentImage}
                             onError={() => console.error("Failed to load 3D model")}
                           />
                         </Suspense>
                       </div>
                     </div>
                   ) : (
-                    <AdaptiveImage
-                      src={getValidProductImage(selectedImage)}
+                    <img
+                      src={currentImage}
                       alt={product.name}
                       className="h-full w-full object-contain p-4"
-                      containerClassName="h-full w-full"
+                      onError={handleImageError}
                     />
                   )}
 
@@ -199,7 +194,7 @@ export default function ProductPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="grid grid-cols-4 gap-4 mt-4"
                   >
-                    {images.map((_, i) => (
+                    {images.map((image, i) => (
                       <motion.div
                         key={i}
                         whileHover={{ scale: 1.05 }}
@@ -207,11 +202,11 @@ export default function ProductPage() {
                           ${selectedImage === i ? 'ring-2 ring-gold shadow-lg' : ''}`}
                         onClick={() => setSelectedImage(i)}
                       >
-                        <AdaptiveImage
-                          src={getValidProductImage(i)}
+                        <img
+                          src={image || FALLBACK_IMAGE}
                           alt={`${product.name} view ${i + 1}`}
                           className="h-full w-full object-contain p-2"
-                          containerClassName="h-full w-full"
+                          onError={handleImageError}
                         />
                       </motion.div>
                     ))}
@@ -324,7 +319,7 @@ export default function ProductPage() {
                   url={window.location.href}
                   title={product.name}
                   description={product.description}
-                  image={getValidProductImage(0)}
+                  image={currentImage}
                 />
               </motion.div>
             </div>
