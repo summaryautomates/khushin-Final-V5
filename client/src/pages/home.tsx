@@ -195,7 +195,7 @@ export default function Home() {
 
           <motion.div
             style={{ opacity, scale }}
-            className="container relative z-10"
+            className="container relative z-10 px-4 sm:px-6"
           >
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -207,17 +207,17 @@ export default function Home() {
                 initial={{ letterSpacing: "0.2em", opacity: 0 }}
                 animate={{ letterSpacing: "0.1em", opacity: 1 }}
                 transition={{ duration: 1.5, delay: 0.8 }}
-                className="text-7xl md:text-8xl font-extralight mb-12 tracking-wider"
+                className="text-6xl sm:text-7xl md:text-8xl font-extralight mb-10 md:mb-12 tracking-wider text-center mx-auto leading-tight"
               >
-                <span className="block">Make Your</span>
-                <span className="block mt-2">Loved One Happy!</span>
+                <span className="block bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent">Make Your</span>
+                <span className="block mt-2 bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent">Loved One Happy!</span>
               </motion.h1>
 
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.2, duration: 0.8 }}
-                className="mt-8 text-xl md:text-2xl leading-relaxed text-zinc-400 max-w-2xl mx-auto tracking-wide"
+                className="mt-8 text-xl md:text-2xl leading-relaxed text-zinc-300 max-w-2xl mx-auto tracking-wide text-center font-light"
               >
                 Exclusive luxury lighters - The perfect gift to light up their
                 smile.
