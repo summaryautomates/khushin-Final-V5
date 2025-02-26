@@ -31,7 +31,7 @@ export function Header() {
           <Link href="/" className="flex items-center space-x-2">
             <div className="relative w-32 md:w-40 h-12 md:h-14">
               <img 
-                src="/logo.png" 
+                src="https://i.imghippo.com/files/GqB4409rM.jpg" 
                 alt="KHUSH.IN Logo" 
                 className="object-contain w-full h-full"
                 style={{
