@@ -57,6 +57,8 @@ export async function setupAuth(app: Express) {
     console.error('Session store error:', error);
   });
 
+  const isProduction = process.env.NODE_ENV === 'production';
+
   // Initialize session middleware with enhanced security settings
   const sessionMiddleware = session({
     store: sessionStore,
@@ -67,12 +69,12 @@ export async function setupAuth(app: Express) {
     rolling: true,
     proxy: true,
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
+      secure: isProduction, // Only require secure in production
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: isProduction ? 'strict' : 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       path: '/',
-      domain: process.env.NODE_ENV === 'production' ? '.khush.in' : undefined
+      domain: isProduction ? '.khush.in' : undefined
     }
   });
 
@@ -129,55 +131,9 @@ export async function setupAuth(app: Express) {
   );
 
   // Authentication routes with improved error handling and validation
-  app.post("/api/register", async (req, res) => {
-    try {
-      const { username, password, email, firstName, lastName } = req.body;
-
-      if (!username || !password || !email) {
-        return res.status(400).json({
-          message: "Missing required fields"
-        });
-      }
-
-      const existingUser = await storage.getUserByUsername(username);
-      if (existingUser) {
-        return res.status(400).json({
-          message: "Username already exists"
-        });
-      }
-
-      const hashedPassword = await hashPassword(password);
-      const user = await storage.createUser({
-        username,
-        password: hashedPassword,
-        email,
-        firstName,
-        lastName
-      });
-
-      const { password: _, ...userWithoutPassword } = user;
-
-      req.login(user, (err) => {
-        if (err) {
-          console.error('Login after registration error:', err);
-          return res.status(500).json({
-            message: "Error logging in after registration"
-          });
-        }
-        res.status(201).json(userWithoutPassword);
-      });
-    } catch (error) {
-      console.error("Registration error:", error);
-      res.status(500).json({
-        message: "Error creating user"
-      });
-    }
-  });
 
   app.post("/api/login", (req, res, next) => {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
+    if (!req.body.username || !req.body.password) {
       return res.status(400).json({
         message: "Missing username or password"
       });

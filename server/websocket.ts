@@ -57,12 +57,18 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
           timestamp: new Date().toISOString()
         });
 
-        // Allow connection but track authentication status
-        callback(true, undefined, undefined, {
-          isAuthenticated: !!session?.passport?.user,
-          sessionId: session?.id,
-          userId: session?.passport?.user
-        });
+        // Always allow connection in development, but track authentication status
+        const isProduction = process.env.NODE_ENV === 'production';
+        if (!isProduction || (session && session.passport?.user)) {
+          callback(true, undefined, undefined, {
+            isAuthenticated: !!session?.passport?.user,
+            sessionId: session?.id,
+            userId: session?.passport?.user
+          });
+        } else {
+          // Only enforce authentication in production
+          callback(false, 401, 'Unauthorized');
+        }
       } catch (error) {
         console.error('WebSocket verification error:', {
           error: error instanceof Error ? error.message : 'Unknown error',
@@ -99,6 +105,7 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
       const session = (req as any).session as ExtendedSessionData;
 
       if (!session) {
+        console.error('No session found for WebSocket connection');
         ws.close(1011, 'No session found');
         return;
       }
