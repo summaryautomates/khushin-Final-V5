@@ -36,30 +36,28 @@ export function ProductCard({ product }: ProductCardProps) {
   const [, setLocation] = useLocation();
 
   const getProductImage = () => {
+    // Check if product has valid images array
     if (!imageError && product.images && Array.isArray(product.images) && product.images.length > 0) {
       const image = product.images[0];
       if (image && typeof image === 'string' && image.trim() !== '') {
         return image;
       }
     }
-    return FALLBACK_IMAGES[fallbackIndex];
+    // If no valid image found or error occurred, use fallback
+    return FALLBACK_IMAGES[fallbackIndex % FALLBACK_IMAGES.length];
   };
 
   const handleImageError = () => {
-    console.error('Image failed to load:', getProductImage());
+    console.error('Image failed to load, trying fallback:', getProductImage());
     setImageError(true);
     setImageLoading(false);
 
     // Try next fallback image
-    setFallbackIndex(prev => {
-      if (prev < FALLBACK_IMAGES.length - 1) {
-        return prev + 1;
-      }
-      return prev;
-    });
+    setFallbackIndex(prev => (prev + 1) % FALLBACK_IMAGES.length);
   };
 
   const handleImageLoad = () => {
+    console.log('Image loaded successfully:', getProductImage());
     setImageLoading(false);
     setImageError(false);
   };

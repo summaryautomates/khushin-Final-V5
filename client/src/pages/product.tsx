@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/products";
-import { 
-  Truck, Shield, RefreshCcw, Loader2, Award, Crown, 
-  Star, ThumbsUp, Package, Medal 
+import {
+  Truck, Shield, RefreshCcw, Loader2, Award, Crown,
+  Star, ThumbsUp, Package, Medal
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@shared/schema";
@@ -45,58 +45,54 @@ export default function ProductPage() {
     gcTime: 3600000, // Keep in cache for 1 hour
   });
 
-  // Preload images when product data is available
-  useEffect(() => {
-    if (product?.images) {
-      const images = Array.isArray(product.images) ? product.images : [];
-      images.forEach((imageUrl: string, index: number) => {
-        if (typeof imageUrl === 'string' && !imageErrors[index]) {
-          const img = new Image();
-          img.src = imageUrl;
-        }
-      });
-    }
-  }, [product, imageErrors]);
-
   const getValidProductImage = useMemo(() => (index: number): string => {
-    if (!product?.images) return FALLBACK_IMAGES[0];
+    if (!product?.images || !Array.isArray(product.images)) {
+      return FALLBACK_IMAGES[fallbackImageIndex % FALLBACK_IMAGES.length];
+    }
 
-    const images = Array.isArray(product.images) ? product.images : [];
-    if (images.length > index && !imageErrors[index]) {
-      const image = images[index];
-      if (image && typeof image === 'string') {
+    if (index >= 0 && index < product.images.length && !imageErrors[index]) {
+      const image = product.images[index];
+      if (image && typeof image === 'string' && image.trim() !== '') {
         return image;
       }
     }
-    return FALLBACK_IMAGES[fallbackImageIndex];
+    return FALLBACK_IMAGES[fallbackImageIndex % FALLBACK_IMAGES.length];
   }, [product, imageErrors, fallbackImageIndex]);
 
   useEffect(() => {
-    if (product?.images) {
-      const images = Array.isArray(product.images) ? product.images : [];
-      const initialLoadingStates = images.reduce((acc: Record<number, boolean>, _: string, index: number) => {
+    if (product?.images && Array.isArray(product.images)) {
+      // Reset states when product changes
+      const initialLoadingStates = product.images.reduce((acc, _, index) => {
         acc[index] = true;
         return acc;
-      }, {});
+      }, {} as Record<number, boolean>);
+
       setImageLoadingStates(initialLoadingStates);
       setImageErrors({});
       setSelectedImage(0);
       setFallbackImageIndex(0);
+
+      // Preload all images
+      product.images.forEach((imageUrl, index) => {
+        if (typeof imageUrl === 'string' && imageUrl.trim() !== '') {
+          const img = new Image();
+          img.onload = () => handleImageLoad(index);
+          img.onerror = () => handleImageError(index);
+          img.src = imageUrl;
+        } else {
+          handleImageError(index);
+        }
+      });
     }
   }, [product]);
 
   const handleImageError = (index: number) => {
-    console.log(`Image error at index ${index}:`, getValidProductImage(index));
+    console.error(`Image error at index ${index}:`, getValidProductImage(index));
     setImageErrors(prev => ({ ...prev, [index]: true }));
     setImageLoadingStates(prev => ({ ...prev, [index]: false }));
 
     // Try next fallback image
-    setFallbackImageIndex(prev => {
-      if (prev < FALLBACK_IMAGES.length - 1) {
-        return prev + 1;
-      }
-      return prev;
-    });
+    setFallbackImageIndex(prev => (prev + 1) % FALLBACK_IMAGES.length);
   };
 
   const handleImageLoad = (index: number) => {
@@ -183,7 +179,7 @@ export default function ProductPage() {
       <div className="container py-12">
         <div className="grid gap-12 md:grid-cols-2">
           <div className="space-y-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
@@ -202,8 +198,8 @@ export default function ProductPage() {
                         <Loader2 className="h-8 w-8 animate-spin" />
                       </div>
                     }>
-                      <ModelViewer 
-                        modelUrl="/attached_assets/zippo_lighter.glb" 
+                      <ModelViewer
+                        modelUrl="/attached_assets/zippo_lighter.glb"
                         fallbackUrl={getValidProductImage(selectedImage)}
                         onError={() => {
                           console.error("Failed to load 3D model");
@@ -228,7 +224,7 @@ export default function ProductPage() {
               )}
 
               {/* Premium Badge */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 className="absolute top-4 left-4"
@@ -241,7 +237,7 @@ export default function ProductPage() {
             </motion.div>
 
             {images.length > 1 && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="grid grid-cols-4 gap-4 mt-4"
@@ -279,7 +275,7 @@ export default function ProductPage() {
             )}
           </div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             className="space-y-8"
@@ -323,19 +319,19 @@ export default function ProductPage() {
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="w-full tracking-wider" 
-                  onClick={handleAddToCart} 
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full tracking-wider"
+                  onClick={handleAddToCart}
                   disabled={isCheckingOut}
                 >
                   Add to Cart
                 </Button>
-                <Button 
-                  size="lg" 
-                  className="w-full tracking-wider" 
-                  onClick={handleBuyNow} 
+                <Button
+                  size="lg"
+                  className="w-full tracking-wider"
+                  onClick={handleBuyNow}
                   disabled={isCheckingOut}
                 >
                   {isCheckingOut ? (
