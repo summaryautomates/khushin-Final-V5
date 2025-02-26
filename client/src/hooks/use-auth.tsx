@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { type User as SelectUser, type InsertUser } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -24,19 +24,24 @@ function useLoginMutation() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify(credentials),
-      });
+      try {
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: 'include',
+          body: JSON.stringify(credentials),
+        });
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Login failed");
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.message || "Login failed");
+        }
+
+        return res.json();
+      } catch (error) {
+        console.error('Login error:', error);
+        throw error;
       }
-
-      return res.json();
     },
     onSuccess: (user) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -46,6 +51,7 @@ function useLoginMutation() {
       });
     },
     onError: (error: Error) => {
+      console.error('Login mutation error:', error);
       toast({
         title: "Login failed",
         description: error.message || "Please check your credentials and try again",
@@ -59,19 +65,24 @@ function useRegisterMutation() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async (userData: InsertUser) => {
-      const res = await fetch("/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify(userData),
-      });
+      try {
+        const res = await fetch("/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: 'include',
+          body: JSON.stringify(userData),
+        });
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Registration failed");
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.message || "Registration failed");
+        }
+
+        return res.json();
+      } catch (error) {
+        console.error('Registration error:', error);
+        throw error;
       }
-
-      return res.json();
     },
     onSuccess: (user) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -81,6 +92,7 @@ function useRegisterMutation() {
       });
     },
     onError: (error: Error) => {
+      console.error('Registration mutation error:', error);
       toast({
         title: "Registration failed",
         description: error.message || "Please try again with different credentials",
@@ -94,13 +106,18 @@ function useLogoutMutation() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch("/api/logout", { 
-        method: "POST",
-        credentials: 'include'
-      });
+      try {
+        const res = await fetch("/api/logout", { 
+          method: "POST",
+          credentials: 'include'
+        });
 
-      if (!res.ok) {
-        throw new Error("Logout failed");
+        if (!res.ok) {
+          throw new Error("Logout failed");
+        }
+      } catch (error) {
+        console.error('Logout error:', error);
+        throw error;
       }
     },
     onSuccess: () => {
@@ -112,6 +129,7 @@ function useLogoutMutation() {
       });
     },
     onError: (error: Error) => {
+      console.error('Logout mutation error:', error);
       toast({
         title: "Logout failed",
         description: error.message,
@@ -129,12 +147,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const res = await fetch("/api/user", {
           credentials: 'include'
         });
+
         if (!res.ok) {
           if (res.status === 401) {
             return null;
           }
           throw new Error("Failed to fetch user");
         }
+
         return res.json();
       } catch (error) {
         console.error("Error fetching user:", error);
@@ -145,6 +165,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     retry: false, // Don't retry on failure
     refetchOnMount: false, // Don't refetch on mount
   });
+
+  // Add error logging effect
+  useEffect(() => {
+    if (error) {
+      console.error("Auth provider error:", error);
+    }
+  }, [error]);
 
   const loginMutation = useLoginMutation();
   const registerMutation = useRegisterMutation();
