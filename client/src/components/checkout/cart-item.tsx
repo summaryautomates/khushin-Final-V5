@@ -40,22 +40,13 @@ export function CartItem({
   const [localGiftMessage, setLocalGiftMessage] = useState(giftMessage);
 
   const getProductImage = () => {
-    if (!product?.images || !Array.isArray(product.images) || product.images.length === 0) {
-      return FALLBACK_IMAGES[0];
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      const image = product.images[0];
+      if (image && typeof image === 'string') {
+        return image;
+      }
     }
-
-    const image = product.images[0];
-    if (!image || typeof image !== 'string') {
-      return FALLBACK_IMAGES[0];
-    }
-
-    // If the image path is relative, prepend the public path
-    if (image.startsWith('/')) {
-      return image;
-    }
-
-    // Try to use the image URL directly
-    return image;
+    return '/placeholder-product.svg';
   };
 
   const handleIncrement = () => {
