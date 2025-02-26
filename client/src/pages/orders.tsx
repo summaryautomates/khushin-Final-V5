@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { Image } from "@/components/ui/image";
 
 type OrderStatus = 'pending' | 'completed' | 'failed';
 
@@ -394,10 +395,19 @@ export default function Orders() {
                         </div>
                         <div className="space-y-2 divide-y divide-white/10">
                           {order.items.map((item, index) => (
-                            <div key={index} className="flex justify-between py-2 text-sm font-light">
-                              <div className="flex items-start gap-2">
-                                <span className="text-white/60">{item.quantity}x</span>
-                                <span className="text-white/90">{item.name}</span>
+                            <div key={index} className="flex justify-between items-center py-2 text-sm font-light">
+                              <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-lg overflow-hidden">
+                                  <Image
+                                    src={`/products/${item.productId}.jpg`}
+                                    alt={item.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-white/90">{item.name}</span>
+                                  <span className="text-white/60">Qty: {item.quantity}</span>
+                                </div>
                               </div>
                               <span className="text-white/90 tabular-nums">
                                 {formatPrice(item.price * item.quantity)}
