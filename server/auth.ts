@@ -5,7 +5,7 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import { User as SelectUser, insertUserSchema } from "@shared/schema";
 import { pool } from "./db";
 import pgSession from 'connect-pg-simple';
 
@@ -44,13 +44,7 @@ export async function setupAuth(app: Express) {
       pool,
       tableName: 'session',
       createTableIfMissing: true,
-      pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
-      // Add connection pool settings
-      conObject: {
-        connectionTimeoutMillis: 2000, // 2 seconds
-        idleTimeoutMillis: 30000, // 30 seconds
-        max: 20 // Maximum pool size
-      }
+      pruneSessionInterval: 60 * 15 // Prune expired sessions every 15 minutes
     });
 
     const isProduction = process.env.NODE_ENV === 'production';
@@ -65,12 +59,10 @@ export async function setupAuth(app: Express) {
       rolling: true,
       proxy: true,
       cookie: {
-        secure: isProduction, // Only require secure in production
+        secure: isProduction,
         httpOnly: true,
         sameSite: isProduction ? 'strict' : 'lax',
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
-        path: '/',
-        domain: isProduction ? '.khush.in' : undefined
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
       }
     });
 
@@ -125,6 +117,57 @@ export async function setupAuth(app: Express) {
         }
       })
     );
+
+    // Registration route with improved validation and error handling
+    app.post("/api/register", async (req, res) => {
+      try {
+        // Validate registration data
+        const validationResult = insertUserSchema.safeParse(req.body);
+        if (!validationResult.success) {
+          return res.status(400).json({
+            message: "Invalid registration data",
+            errors: validationResult.error.errors
+          });
+        }
+
+        // Check if username already exists
+        const existingUser = await storage.getUserByUsername(req.body.username);
+        if (existingUser) {
+          return res.status(400).json({
+            message: "Username already exists"
+          });
+        }
+
+        // Hash password and create user
+        const hashedPassword = await hashPassword(req.body.password);
+        const userData = {
+          ...req.body,
+          password: hashedPassword
+        };
+
+        const user = await storage.createUser(userData);
+
+        // Log in the user after successful registration
+        req.login(user, (loginErr) => {
+          if (loginErr) {
+            console.error('Login error after registration:', loginErr);
+            return res.status(500).json({
+              message: "Registration successful but failed to log in"
+            });
+          }
+
+          // Remove password from response
+          const { password: _, ...userWithoutPassword } = user;
+          res.status(201).json(userWithoutPassword);
+        });
+
+      } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({
+          message: "Failed to register user"
+        });
+      }
+    });
 
     // Authentication routes with improved error handling
     app.post("/api/login", (req, res, next) => {
