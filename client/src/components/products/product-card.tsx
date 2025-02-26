@@ -104,15 +104,15 @@ export function ProductCard({ product }: ProductCardProps) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
+      className="w-full max-w-sm"
     >
-      <Card className="relative overflow-hidden border-none shadow-xl group bg-white/[0.02] backdrop-blur-sm hover:bg-white/[0.05] transition-all duration-700">
+      <Card className="relative overflow-hidden border-none shadow-xl group bg-white/[0.02] backdrop-blur-sm hover:bg-white/[0.05] transition-all duration-700 h-full flex flex-col">
         <CardHeader className="p-0">
           <motion.div
-            className="relative aspect-square overflow-hidden bg-zinc-900 rounded-t-xl"
+            className="relative aspect-square overflow-hidden bg-zinc-900 rounded-t-xl w-full"
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
           >
-            {/* Premium Badge */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -182,7 +182,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
           </motion.div>
         </CardHeader>
-        <CardContent className="p-6 text-center">
+        <CardContent className="p-6 text-center flex-grow flex flex-col justify-between">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -190,17 +190,16 @@ export function ProductCard({ product }: ProductCardProps) {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="space-y-4"
           >
-            {/* Rating Stars */}
             <div className="flex justify-center gap-1">
               {[1, 2, 3, 4, 5].map((_, index) => (
                 <Star key={index} className="h-4 w-4 text-yellow-500 fill-yellow-500" />
               ))}
             </div>
 
-            <h3 className="font-extralight text-lg tracking-widest text-white">
+            <h3 className="font-extralight text-lg tracking-widest text-white line-clamp-2 min-h-[3.5rem]">
               {product.name}
             </h3>
-            <p className="text-sm leading-relaxed text-zinc-400 tracking-wide line-clamp-2">
+            <p className="text-sm leading-relaxed text-zinc-400 tracking-wide line-clamp-2 min-h-[2.5rem]">
               {product.description}
             </p>
             <motion.div

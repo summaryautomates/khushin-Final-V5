@@ -10,18 +10,22 @@ interface ProductGridProps {
 export function ProductGrid({ products, isLoading }: ProductGridProps) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8 px-4">
         {Array.from({ length: 8 }).map((_, index) => (
-          <ProductSkeleton key={index} />
+          <div key={index} className="flex justify-center">
+            <ProductSkeleton />
+          </div>
         ))}
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8 px-4">
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+        <div key={product.id} className="flex justify-center">
+          <ProductCard product={product} />
+        </div>
       ))}
     </div>
   );
