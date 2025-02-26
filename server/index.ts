@@ -11,48 +11,56 @@ async function startServer() {
   const app = express();
   const isProduction = process.env.NODE_ENV === 'production';
 
-  // Enhanced CORS configuration for WebSocket support
-  app.use(cors({
-    origin: true, // Allow all origins in development
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With', 'Accept'],
-    exposedHeaders: ['Set-Cookie'],
-    maxAge: 86400 // 24 hours
-  }));
-
-  // Serve static files with enhanced caching and error handling
-  app.use('/placeholders', express.static('client/public/placeholders', {
-    maxAge: '1d',
-    immutable: true,
-    etag: true,
-    lastModified: true,
-    fallthrough: false, // Return 404 for missing files
-    redirect: false // Don't redirect on trailing slash
-  }));
-
-  app.use(express.json());
-
-  // Create HTTP server
-  const server = createServer(app);
-
-  // Health check endpoint with enhanced diagnostics
-  app.get('/api/health', (_req, res) => {
-    res.json({ 
-      status: 'ok', 
-      timestamp: Date.now(),
-      websocket: 'enabled',
-      environment: process.env.NODE_ENV,
-      staticFiles: {
-        placeholdersPath: 'client/public/placeholders',
-        caching: true
-      }
-    });
-  });
-
   try {
-    console.log('Starting server initialization...');
+    console.log('Starting server initialization...', {
+      environment: process.env.NODE_ENV,
+      timestamp: new Date().toISOString()
+    });
 
+    // Enhanced CORS configuration for WebSocket support
+    app.use(cors({
+      origin: true,
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With', 'Accept'],
+      exposedHeaders: ['Set-Cookie'],
+      maxAge: 86400
+    }));
+
+    console.log('CORS configuration applied');
+
+    // Serve static files with enhanced caching and error handling
+    app.use('/placeholders', express.static('client/public/placeholders', {
+      maxAge: '1d',
+      immutable: true,
+      etag: true,
+      lastModified: true,
+      fallthrough: false,
+      redirect: false
+    }));
+
+    console.log('Static file serving configured');
+
+    app.use(express.json());
+
+    // Create HTTP server
+    const server = createServer(app);
+
+    // Health check endpoint with enhanced diagnostics
+    app.get('/api/health', (_req, res) => {
+      res.json({ 
+        status: 'ok', 
+        timestamp: Date.now(),
+        websocket: 'enabled',
+        environment: process.env.NODE_ENV,
+        staticFiles: {
+          placeholdersPath: 'client/public/placeholders',
+          caching: true
+        }
+      });
+    });
+
+    console.log('Starting port management...');
     // Release all ports with retries
     let releaseAttempts = 0;
     const maxReleaseAttempts = 3;
@@ -64,7 +72,12 @@ async function startServer() {
         break;
       } catch (error) {
         releaseAttempts++;
-        console.error(`Port release attempt ${releaseAttempts} failed:`, error);
+        console.error('Port release attempt failed:', {
+          attempt: releaseAttempts,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          timestamp: new Date().toISOString()
+        });
         if (releaseAttempts < maxReleaseAttempts) {
           await new Promise(resolve => setTimeout(resolve, 2000 * releaseAttempts));
         } else {
@@ -90,7 +103,12 @@ async function startServer() {
         break;
       } catch (error) {
         acquireAttempts++;
-        console.error(`Port acquisition attempt ${acquireAttempts} failed:`, error);
+        console.error('Port acquisition attempt failed:', {
+          attempt: acquireAttempts,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          timestamp: new Date().toISOString()
+        });
         if (acquireAttempts < maxAcquireAttempts) {
           await new Promise(resolve => setTimeout(resolve, 2000 * acquireAttempts));
         } else {
@@ -99,10 +117,12 @@ async function startServer() {
       }
     }
 
+    console.log('Setting up authentication...');
     // Setup authentication with proper session configuration
     const sessionMiddleware = await setupAuth(app);
     console.log('Authentication setup complete');
 
+    console.log('Setting up WebSocket...');
     // Setup WebSocket with enhanced error handling
     let wsSetupRetries = 0;
     const maxRetries = 5;
@@ -115,9 +135,16 @@ async function startServer() {
         break;
       } catch (error) {
         wsSetupRetries++;
-        console.error(`WebSocket setup attempt ${wsSetupRetries} failed:`, error);
+        console.error('WebSocket setup failed:', {
+          attempt: wsSetupRetries,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          timestamp: new Date().toISOString()
+        });
         if (wsSetupRetries < maxRetries) {
           await new Promise(resolve => setTimeout(resolve, 2000 * wsSetupRetries));
+        } else {
+          throw new Error('Failed to setup WebSocket after multiple attempts');
         }
       }
     }
@@ -126,10 +153,12 @@ async function startServer() {
       throw new Error('Failed to setup WebSocket after multiple attempts');
     }
 
+    console.log('Registering routes...');
     // Setup routes after WebSocket is ready
     await registerRoutes(app);
     console.log('Routes registered');
 
+    console.log('Setting up Vite...');
     // Setup Vite with WebSocket configuration
     await setupVite(app, server);
     console.log('Vite setup complete');
@@ -137,11 +166,19 @@ async function startServer() {
     // Bind to all interfaces with proper error handling
     await new Promise<void>((resolve, reject) => {
       server.listen(port, '0.0.0.0', () => {
-        console.log(`Server running at http://0.0.0.0:${port}`);
-        console.log(`Environment: ${process.env.NODE_ENV}`);
-        console.log(`WebSocket endpoint: ws://0.0.0.0:${port}/ws`);
+        console.log('Server successfully started:', {
+          url: `http://0.0.0.0:${port}`,
+          environment: process.env.NODE_ENV,
+          websocketEndpoint: `ws://0.0.0.0:${port}/ws`,
+          timestamp: new Date().toISOString()
+        });
         resolve();
       }).on('error', (error) => {
+        console.error('Server listen error:', {
+          error: error.message,
+          stack: error.stack,
+          timestamp: new Date().toISOString()
+        });
         reject(error);
       });
     });
@@ -174,7 +211,11 @@ async function startServer() {
         console.log('Ports released');
 
       } catch (error) {
-        console.error('Error during cleanup:', error);
+        console.error('Cleanup error:', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          timestamp: new Date().toISOString()
+        });
       }
 
       process.exit(0);
@@ -184,19 +225,21 @@ async function startServer() {
     process.on('SIGINT', cleanup);
 
   } catch (error) {
-    console.error('Failed to start server:', error);
-    if (error instanceof Error) {
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-    }
+    console.error('Server startup failed:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
 
     try {
       await portManager.releaseAll();
+      console.log('Ports released after startup failure');
     } catch (cleanupError) {
-      console.error('Failed to cleanup ports:', cleanupError);
+      console.error('Failed to cleanup ports:', {
+        error: cleanupError instanceof Error ? cleanupError.message : 'Unknown error',
+        stack: cleanupError instanceof Error ? cleanupError.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
     }
 
     process.exit(1);
@@ -205,11 +248,19 @@ async function startServer() {
 
 // Add error handling for unhandled rejections
 process.on('unhandledRejection', (error) => {
-  console.error('Unhandled rejection:', error);
+  console.error('Unhandled rejection:', {
+    error: error instanceof Error ? error.message : 'Unknown error',
+    stack: error instanceof Error ? error.stack : undefined,
+    timestamp: new Date().toISOString()
+  });
   process.exit(1);
 });
 
 startServer().catch(error => {
-  console.error('Unhandled error during server startup:', error);
+  console.error('Unhandled error during server startup:', {
+    error: error instanceof Error ? error.message : 'Unknown error',
+    stack: error instanceof Error ? error.stack : undefined,
+    timestamp: new Date().toISOString()
+  });
   process.exit(1);
 });

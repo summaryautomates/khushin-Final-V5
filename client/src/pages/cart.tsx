@@ -446,6 +446,6 @@ export default function Cart() {
         onOpenChange={setIsAuthSheetOpen}
         onSuccess={handleAuthSuccess}
       />
-    </ErrorBoundary>y>
+    </ErrorBoundary>
   );
 }
