@@ -89,20 +89,18 @@ export class DatabaseStorage implements IStorage {
       tableName: 'session',
       createTableIfMissing: true,
       pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
-      // Add optimized pool settings
       conObject: {
-        connectionTimeoutMillis: 2000,
-        idleTimeoutMillis: 30000,
-        max: 20, // Maximum number of clients in the pool
+        connectionTimeoutMillis: 5000, // Increased timeout for better stability
+        idleTimeoutMillis: 30000,     // Keep idle timeout at 30s
+        max: 10,                      // Reduced max connections for better stability
         ssl: process.env.NODE_ENV === 'production',
       },
-      // Enable error logging
       errorLog: (err) => {
         console.error('Session store error:', err);
       }
     });
 
-    // Handle pool errors
+    // Basic pool error handler
     pool.on('error', (err) => {
       console.error('Unexpected database pool error:', err);
     });

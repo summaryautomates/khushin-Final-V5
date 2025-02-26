@@ -30,17 +30,17 @@ async function startServer() {
   try {
     // Diagnostic: Log current port status
     console.log('Starting server initialization...');
-    console.log('Checking port availability...');
 
     // Release any existing ports to ensure clean state
-    portManager.releaseAll();
+    await portManager.releaseAll();
+    console.log('Released all ports');
 
     // Wait a bit for any cleanup to complete
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Always try to acquire port 5000 as required
     const port = 5000;
-    console.log(`Attempting to acquire required port ${port}...`);
+    console.log(`Attempting to acquire port ${port}...`);
     await portManager.acquirePort(port, port);
     console.log(`Successfully acquired port ${port}`);
 
@@ -68,25 +68,30 @@ async function startServer() {
     const cleanup = async () => {
       console.log('Starting cleanup process...');
 
-      // Close WebSocket connections first
-      await new Promise<void>((resolve) => {
-        wss.close(() => {
-          console.log('WebSocket server closed');
-          resolve();
+      try {
+        // Close WebSocket connections first
+        await new Promise<void>((resolve) => {
+          wss.close(() => {
+            console.log('WebSocket server closed');
+            resolve();
+          });
         });
-      });
 
-      // Then close the HTTP server
-      await new Promise<void>((resolve) => {
-        server.close(() => {
-          console.log('HTTP server closed');
-          resolve();
+        // Then close the HTTP server
+        await new Promise<void>((resolve) => {
+          server.close(() => {
+            console.log('HTTP server closed');
+            resolve();
+          });
         });
-      });
 
-      // Release the port
-      portManager.releaseAll();
-      console.log('Ports released');
+        // Release the port
+        await portManager.releaseAll();
+        console.log('Ports released');
+
+      } catch (error) {
+        console.error('Error during cleanup:', error);
+      }
 
       process.exit(0);
     };
@@ -97,13 +102,26 @@ async function startServer() {
 
   } catch (error) {
     console.error('Failed to start server:', error);
-    console.error('Port 5000 is required but unavailable. Please ensure no other process is using port 5000.');
+    // Log more details about the error
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+    }
 
     // Attempt final cleanup before exit
-    portManager.releaseAll();
+    await portManager.releaseAll();
     process.exit(1);
   }
 }
+
+// Add error handling for unhandled rejections
+process.on('unhandledRejection', (error) => {
+  console.error('Unhandled rejection:', error);
+  process.exit(1);
+});
 
 startServer().catch(error => {
   console.error('Unhandled error during server startup:', error);
