@@ -3,31 +3,8 @@ import { storage } from "./storage";
 import { insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
 import { randomBytes } from "crypto";
-import { eventManager } from "./events";
 
 export async function registerRoutes(app: Express) {
-  // SSE endpoint for real-time updates
-  app.get("/api/events", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
-
-    // Setup SSE headers
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive'
-    });
-
-    // Add this client to event manager
-    eventManager.addClient(res);
-
-    // Remove client on connection close
-    req.on('close', () => {
-      res.end();
-    });
-  });
-
   app.get("/api/products", async (_req, res) => {
     try {
       const products = await storage.getProducts();
@@ -225,12 +202,6 @@ export async function registerRoutes(app: Express) {
       console.log("Creating order in database");
       const order = await storage.createOrder(validationResult.data);
       console.log("Order created successfully:", order);
-
-      // Broadcast order creation event
-      eventManager.broadcast('order:created', {
-        orderRef: order.orderRef,
-        userId: order.userId
-      });
 
       console.log("Clearing user cart");
       await storage.clearCart(userId);
