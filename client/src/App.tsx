@@ -9,6 +9,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { Switch, Route, useLocation } from "wouter";
 import { useEffect } from "react";
 import { useWebSocket } from "@/lib/websocket";
+import { useToast } from "@/hooks/use-toast";
 
 // Page imports
 import Home from "@/pages/home";
@@ -37,6 +38,28 @@ import { ProtectedRoute } from "@/components/auth/protected-route";
 import React from 'react';
 
 function WebSocketProvider({ children }: { children: React.ReactNode }) {
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Handle unhandled promise rejections
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      event.preventDefault(); // Prevent the default handling
+      console.error('Unhandled promise rejection:', event.reason);
+
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, [toast]);
+
   useWebSocket(); // Initialize WebSocket connection
   return <>{children}</>;
 }

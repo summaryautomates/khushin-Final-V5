@@ -11,20 +11,24 @@ async function startServer() {
   const app = express();
   const isProduction = process.env.NODE_ENV === 'production';
 
-  // CORS configuration with enhanced WebSocket support
+  // Enhanced CORS configuration for WebSocket support
   app.use(cors({
-    origin: true,
+    origin: true, // Allow all origins in development
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'Upgrade', 'Connection'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With', 'Accept'],
+    exposedHeaders: ['Set-Cookie'],
+    maxAge: 86400 // 24 hours
   }));
 
-  // Serve static files with improved caching
+  // Serve static files with enhanced caching and error handling
   app.use('/placeholders', express.static('client/public/placeholders', {
     maxAge: '1d',
     immutable: true,
     etag: true,
-    lastModified: true
+    lastModified: true,
+    fallthrough: false, // Return 404 for missing files
+    redirect: false // Don't redirect on trailing slash
   }));
 
   app.use(express.json());
@@ -32,13 +36,17 @@ async function startServer() {
   // Create HTTP server
   const server = createServer(app);
 
-  // Health check endpoint with WebSocket status
+  // Health check endpoint with enhanced diagnostics
   app.get('/api/health', (_req, res) => {
     res.json({ 
       status: 'ok', 
       timestamp: Date.now(),
       websocket: 'enabled',
-      environment: process.env.NODE_ENV
+      environment: process.env.NODE_ENV,
+      staticFiles: {
+        placeholdersPath: 'client/public/placeholders',
+        caching: true
+      }
     });
   });
 
@@ -47,20 +55,21 @@ async function startServer() {
     await portManager.releaseAll();
     console.log('Released all ports');
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Increased delay for proper port cleanup
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     const port = 5000;
     console.log(`Attempting to acquire port ${port}...`);
     await portManager.acquirePort(port, port);
     console.log(`Successfully acquired port ${port}`);
 
-    // Setup authentication first
+    // Setup authentication with proper session configuration
     const sessionMiddleware = await setupAuth(app);
     console.log('Authentication setup complete');
 
-    // Setup WebSocket with retry mechanism
+    // Setup WebSocket with enhanced error handling
     let wsSetupRetries = 0;
-    const maxRetries = 3;
+    const maxRetries = 5;
     let wss;
 
     while (wsSetupRetries < maxRetries) {
@@ -71,7 +80,9 @@ async function startServer() {
       } catch (error) {
         wsSetupRetries++;
         console.error(`WebSocket setup attempt ${wsSetupRetries} failed:`, error);
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (wsSetupRetries < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 2000 * wsSetupRetries));
+        }
       }
     }
 
@@ -87,7 +98,7 @@ async function startServer() {
     await setupVite(app, server);
     console.log('Vite setup complete');
 
-    // Bind to all interfaces in development for accessibility
+    // Bind to all interfaces with proper error handling
     server.listen(port, '0.0.0.0', () => {
       console.log(`Server running at http://0.0.0.0:${port}`);
       console.log(`Environment: ${process.env.NODE_ENV}`);
@@ -101,6 +112,9 @@ async function startServer() {
       try {
         if (wss) {
           await new Promise<void>((resolve) => {
+            wss.clients.forEach((client) => {
+              client.close(1000, 'Server shutting down');
+            });
             wss.close(() => {
               console.log('WebSocket server closed');
               resolve();
