@@ -29,25 +29,26 @@ export function Header() {
       <div className="container mx-auto px-4">
         <div className="flex h-20 md:h-24 items-center justify-between">
           <Link href="/" className="flex items-center space-x-2 group">
-            <img
-              src="https://api.deepai.org/job-view-file/21c38ff0-a48f-49e4-91f0-3094fe3db926/outputs/output.jpg"
-              alt="KHUSH.IN Logo"
-              className="h-12 md:h-14 w-auto object-contain transition-opacity duration-300 group-hover:opacity-80 max-w-[180px] md:max-w-[200px]"
+            <img 
+              src="https://api.deepai.org/job-view-file/21c38ff0-a48f-49e4-91f0-3094fe3db926/outputs/output.jpg" 
+              alt="KHUSH.IN Logo" 
+              className="h-16 md:h-20 w-auto transition-opacity duration-300 group-hover:opacity-80" 
+              style={{ maxWidth: '250px', objectFit: 'contain' }}
             />
           </Link>
 
           <NavigationMenu className="hidden md:flex">
             <NavigationMenuList className="space-x-6">
               <NavigationMenuItem>
-                <Link
-                  href="/products"
+                <Link 
+                  href="/products" 
                   className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"}
                 >
                   COLLECTIONS
                 </Link>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link
+                <Link 
                   href="/products/category/lighters"
                   className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"}
                 >
@@ -55,7 +56,7 @@ export function Header() {
                 </Link>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link
+                <Link 
                   href="/refueling"
                   className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"}
                 >
@@ -63,7 +64,7 @@ export function Header() {
                 </Link>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link
+                <Link 
                   href="/customize"
                   className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"}
                 >
@@ -71,7 +72,7 @@ export function Header() {
                 </Link>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link
+                <Link 
                   href="/contact"
                   className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"}
                 >
@@ -85,8 +86,8 @@ export function Header() {
             {user ? (
               <>
                 <Link href="/orders">
-                  <Button
-                    variant="ghost"
+                  <Button 
+                    variant="ghost" 
                     size="sm"
                     className="relative group hover:bg-white/10 transition-all duration-300 border border-white/20 gap-2 backdrop-blur-sm"
                   >
@@ -96,8 +97,8 @@ export function Header() {
                   </Button>
                 </Link>
 
-                <Button
-                  variant="ghost"
+                <Button 
+                  variant="ghost" 
                   size="icon"
                   className="relative group hover:bg-white/10 transition-all duration-300"
                   onClick={handleLogout}
@@ -107,9 +108,9 @@ export function Header() {
                 </Button>
 
                 <Link href="/cart">
-                  <Button
-                    variant="ghost"
-                    size="icon"
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
                     className="relative group hover:bg-white/5 transition-colors duration-300"
                   >
                     <ShoppingCart className="h-4 w-4 text-white group-hover:scale-110 transition-transform duration-300" />
