@@ -18,9 +18,9 @@ import { useState, useEffect, useMemo, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const FALLBACK_IMAGES = [
-  "/placeholder-product.svg",
-  "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500",
-  "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=500",
+  "/product-placeholder.svg",
+  "/placeholder-product-2.svg",
+  "/placeholder-product-3.svg"
 ];
 
 export default function ProductPage() {

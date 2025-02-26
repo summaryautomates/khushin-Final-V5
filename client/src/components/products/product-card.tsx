@@ -15,6 +15,12 @@ import { useCompare } from "@/hooks/use-compare";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
+const FALLBACK_IMAGES = [
+  "/product-placeholder.svg",
+  "/placeholder-product-2.svg",
+  "/placeholder-product-3.svg"
+];
+
 interface ProductCardProps {
   product: Product;
 }
@@ -25,17 +31,37 @@ export function ProductCard({ product }: ProductCardProps) {
   const { toast } = useToast();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+  const [fallbackIndex, setFallbackIndex] = useState(0);
   const [, setLocation] = useLocation();
 
   const getProductImage = () => {
-    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+    if (!imageError && product.images && Array.isArray(product.images) && product.images.length > 0) {
       const image = product.images[0];
       if (image && typeof image === 'string' && image.trim() !== '') {
         return image;
       }
     }
-    // Use a full URL for the fallback image
-    return 'https://placehold.co/400x400/png?text=Product+Image';
+    return FALLBACK_IMAGES[fallbackIndex];
+  };
+
+  const handleImageError = () => {
+    console.error('Image failed to load:', getProductImage());
+    setImageError(true);
+    setImageLoading(false);
+
+    // Try next fallback image
+    setFallbackIndex(prev => {
+      if (prev < FALLBACK_IMAGES.length - 1) {
+        return prev + 1;
+      }
+      return prev;
+    });
+  };
+
+  const handleImageLoad = () => {
+    setImageLoading(false);
+    setImageError(false);
   };
 
   const handleAddToCart = async () => {
@@ -142,8 +168,8 @@ export function ProductCard({ product }: ProductCardProps) {
               initial={{ scale: 1.1 }}
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.7, ease: "easeOut" }}
-              onError={() => setImageLoading(false)}
-              onLoad={() => setImageLoading(false)}
+              onError={handleImageError}
+              onLoad={handleImageLoad}
               style={{
                 opacity: imageLoading ? 0 : 1,
                 transition: 'opacity 0.3s ease-in-out'
