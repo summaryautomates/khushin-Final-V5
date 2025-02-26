@@ -52,16 +52,52 @@ async function startServer() {
 
   try {
     console.log('Starting server initialization...');
-    await portManager.releaseAll();
-    console.log('Released all ports');
+
+    // Release all ports with retries
+    let releaseAttempts = 0;
+    const maxReleaseAttempts = 3;
+
+    while (releaseAttempts < maxReleaseAttempts) {
+      try {
+        await portManager.releaseAll();
+        console.log('Released all ports successfully');
+        break;
+      } catch (error) {
+        releaseAttempts++;
+        console.error(`Port release attempt ${releaseAttempts} failed:`, error);
+        if (releaseAttempts < maxReleaseAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 2000 * releaseAttempts));
+        } else {
+          throw new Error('Failed to release ports after multiple attempts');
+        }
+      }
+    }
 
     // Increased delay for proper port cleanup
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
     const port = 5000;
     console.log(`Attempting to acquire port ${port}...`);
-    await portManager.acquirePort(port, port);
-    console.log(`Successfully acquired port ${port}`);
+
+    // Port acquisition with retries
+    let acquireAttempts = 0;
+    const maxAcquireAttempts = 3;
+
+    while (acquireAttempts < maxAcquireAttempts) {
+      try {
+        await portManager.acquirePort(port, port);
+        console.log(`Successfully acquired port ${port}`);
+        break;
+      } catch (error) {
+        acquireAttempts++;
+        console.error(`Port acquisition attempt ${acquireAttempts} failed:`, error);
+        if (acquireAttempts < maxAcquireAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 2000 * acquireAttempts));
+        } else {
+          throw new Error('Failed to acquire port after multiple attempts');
+        }
+      }
+    }
 
     // Setup authentication with proper session configuration
     const sessionMiddleware = await setupAuth(app);
@@ -99,10 +135,15 @@ async function startServer() {
     console.log('Vite setup complete');
 
     // Bind to all interfaces with proper error handling
-    server.listen(port, '0.0.0.0', () => {
-      console.log(`Server running at http://0.0.0.0:${port}`);
-      console.log(`Environment: ${process.env.NODE_ENV}`);
-      console.log(`WebSocket endpoint: ws://0.0.0.0:${port}/ws`);
+    await new Promise<void>((resolve, reject) => {
+      server.listen(port, '0.0.0.0', () => {
+        console.log(`Server running at http://0.0.0.0:${port}`);
+        console.log(`Environment: ${process.env.NODE_ENV}`);
+        console.log(`WebSocket endpoint: ws://0.0.0.0:${port}/ws`);
+        resolve();
+      }).on('error', (error) => {
+        reject(error);
+      });
     });
 
     // Enhanced cleanup handling
@@ -152,7 +193,12 @@ async function startServer() {
       });
     }
 
-    await portManager.releaseAll();
+    try {
+      await portManager.releaseAll();
+    } catch (cleanupError) {
+      console.error('Failed to cleanup ports:', cleanupError);
+    }
+
     process.exit(1);
   }
 }
