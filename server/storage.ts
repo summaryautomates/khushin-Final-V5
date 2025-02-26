@@ -21,7 +21,7 @@ import {
   type GiftOrder,
   type InsertGiftOrder,
 } from "@shared/schema";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq, and, desc } from "drizzle-orm";
 import { users, type User, type InsertUser } from "@shared/schema";
 import session from "express-session";
@@ -85,11 +85,26 @@ export class DatabaseStorage implements IStorage {
 
   constructor() {
     this.sessionStore = new PostgresSessionStore({
-      conObject: {
-        connectionString: process.env.DATABASE_URL,
-        ssl: process.env.NODE_ENV === "production",
-      },
+      pool,
+      tableName: 'session',
       createTableIfMissing: true,
+      pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
+      // Add optimized pool settings
+      conObject: {
+        connectionTimeoutMillis: 2000,
+        idleTimeoutMillis: 30000,
+        max: 20, // Maximum number of clients in the pool
+        ssl: process.env.NODE_ENV === 'production',
+      },
+      // Enable error logging
+      errorLog: (err) => {
+        console.error('Session store error:', err);
+      }
+    });
+
+    // Handle pool errors
+    pool.on('error', (err) => {
+      console.error('Unexpected database pool error:', err);
     });
   }
 
@@ -387,7 +402,7 @@ export class DatabaseStorage implements IStorage {
     try {
       await db
         .update(cartItems)
-        .set({ 
+        .set({
           isGift,
           giftMessage: giftMessage || null
         })
