@@ -8,11 +8,8 @@ import { Product } from "@shared/schema";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
-const FALLBACK_IMAGES = [
-  "/product-placeholder.svg",
-  "/placeholder-product-2.svg",
-  "/placeholder-product-3.svg"
-];
+// Simplified to use a single reliable fallback image
+const FALLBACK_IMAGE = "/placeholder-product.svg";
 
 interface CartItemProps {
   product: Product;
@@ -36,17 +33,23 @@ export function CartItem({
   isUpdating = false 
 }: CartItemProps) {
   const [imageLoading, setImageLoading] = useState(true);
+  const [imageFailed, setImageFailed] = useState(false);
   const [showGiftMessage, setShowGiftMessage] = useState(false);
   const [localGiftMessage, setLocalGiftMessage] = useState(giftMessage);
 
   const getProductImage = () => {
-    if (Array.isArray(product.images) && product.images.length > 0) {
+    if (!imageFailed && Array.isArray(product.images) && product.images.length > 0) {
       const image = product.images[0];
       if (image && typeof image === 'string') {
         return image;
       }
     }
-    return '/placeholder-product.svg';
+    return FALLBACK_IMAGE;
+  };
+
+  const handleImageError = () => {
+    setImageFailed(true);
+    setImageLoading(false);
   };
 
   const handleIncrement = () => {
@@ -83,7 +86,7 @@ export function CartItem({
   return (
     <Card className="p-4">
       <div className="flex items-start gap-4">
-        {/* Product Image */}
+        {/* Product Image with better error handling */}
         <div className="w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-lg overflow-hidden relative">
           {imageLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-background/50">
@@ -91,10 +94,10 @@ export function CartItem({
             </div>
           )}
           <img 
-            src={getProductImage()} 
+            src={getProductImage()}
             alt={product.name}
             className="w-full h-full object-cover"
-            onError={() => setImageLoading(false)}
+            onError={handleImageError}
             onLoad={() => setImageLoading(false)}
             style={{ 
               opacity: imageLoading ? 0 : 1,
