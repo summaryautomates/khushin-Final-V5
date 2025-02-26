@@ -55,22 +55,39 @@ async function startServer() {
     console.log(`Successfully acquired port ${port}`);
 
     // Setup authentication first
-    await setupAuth(app);
+    const sessionMiddleware = await setupAuth(app);
     console.log('Authentication setup complete');
 
-    // Setup routes
+    // Setup WebSocket with retry mechanism
+    let wsSetupRetries = 0;
+    const maxRetries = 3;
+    let wss;
+
+    while (wsSetupRetries < maxRetries) {
+      try {
+        wss = await setupWebSocket(server, sessionMiddleware);
+        console.log('WebSocket setup complete');
+        break;
+      } catch (error) {
+        wsSetupRetries++;
+        console.error(`WebSocket setup attempt ${wsSetupRetries} failed:`, error);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+
+    if (!wss) {
+      throw new Error('Failed to setup WebSocket after multiple attempts');
+    }
+
+    // Setup routes after WebSocket is ready
     await registerRoutes(app);
     console.log('Routes registered');
 
-    // Setup WebSocket with basic error handling
-    const wss = setupWebSocket(server);
-    console.log('WebSocket setup complete');
-
-    // Setup Vite
+    // Setup Vite with WebSocket configuration
     await setupVite(app, server);
     console.log('Vite setup complete');
 
-    // Bind to all interfaces
+    // Bind to all interfaces in development for accessibility
     server.listen(port, '0.0.0.0', () => {
       console.log(`Server running at http://0.0.0.0:${port}`);
       console.log(`Environment: ${process.env.NODE_ENV}`);
