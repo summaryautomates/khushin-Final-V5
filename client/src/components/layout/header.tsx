@@ -29,15 +29,14 @@ export function Header() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 md:h-20 items-center justify-between">
           <Link href="/" className="flex items-center space-x-2">
-            <div className="relative w-32 md:w-40 h-12 md:h-14">
+            <div className="relative w-28 md:w-36 h-10 md:h-12 flex items-center">
               <img 
                 src="https://i.imghippo.com/files/GqB4409rM.jpg" 
                 alt="KHUSH.IN Logo" 
-                className="object-contain w-full h-full"
+                className="w-full h-full object-contain"
                 style={{
-                  filter: 'brightness(1.1) contrast(1.05)',
-                  maxWidth: '100%',
-                  height: 'auto'
+                  maxHeight: '100%',
+                  width: 'auto'
                 }}
               />
             </div>
