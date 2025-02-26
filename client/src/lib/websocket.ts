@@ -10,9 +10,8 @@ export function useWebSocket() {
 
   const connect = () => {
     try {
-      // Force connection to port 5000
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.hostname}:5000/ws`;
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
 
       console.log('Attempting WebSocket connection to:', wsUrl, {
         protocol,
