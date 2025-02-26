@@ -95,6 +95,15 @@ INSERT INTO products (name, description, price, category, images, customizable, 
 
 -- Refuelling Solutions (5 products)
 (
+  'Crystal Glass Ashtray',
+  'Premium crystal glass ashtray with elegant design and deep bowl for safe ash collection.',
+  149900, -- ₹1,499
+  'accessories',
+  ARRAY['https://images.unsplash.com/photo-1576969500732-12cc9992a5f4?q=80&w=500', 'https://images.unsplash.com/photo-1691850810320-9237b6fbf984?q=80&w=500'],
+  false,
+  '{"material": "Crystal glass", "dimensions": "6.0 x 6.0 x 2.5 inches", "features": ["Deep bowl design", "Non-slip base", "Easy to clean", "Heat resistant"]}'
+),
+(
   'Premium Butane Refill',
   'Ultra-pure butane refill with universal adapter set for all premium lighters.',
   49900, -- ₹499
