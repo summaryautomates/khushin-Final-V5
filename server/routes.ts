@@ -218,7 +218,6 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Add orders route
   app.get("/api/orders", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {
@@ -231,7 +230,7 @@ export async function registerRoutes(app: Express) {
       }
 
       console.log("Fetching orders for user:", userId);
-      const orders = await storage.getOrders(userId);
+      const orders = await storage.getOrdersByUserId(userId);
       console.log("Orders fetched successfully:", orders);
 
       res.json(orders);
