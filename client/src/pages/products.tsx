@@ -46,16 +46,21 @@ export default function Products() {
     const urlCategory = location.match(/\/products\/category\/(.+)/)?.[1];
     if (urlCategory) {
       setCategory(urlCategory);
+    } else {
+      setCategory("all"); // Ensure we default to "all" when no category is specified
     }
   }, [location]);
 
-  // Use different query key based on category
-  const { data: products, isLoading } = useQuery<Product[]>({
-    queryKey: category === "all" ? ["/api/products"] : [`/api/products/category/${category}`],
+  // Always fetch all products regardless of category
+  const { data: allProducts, isLoading } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
   });
 
+  const products = allProducts;
+
+  // Get unique categories from all products
   const categories = products
-    ? ["all", ...Array.from(new Set(products.map(p => p.category)))]
+    ? ["all", ...Array.from(new Set(products.map(p => p.category))).sort()]
     : ["all"];
 
   const saveSearch = () => {
@@ -91,11 +96,13 @@ export default function Products() {
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase());
 
+    const matchesCategory = category === "all" || product.category === category;
+
     const matchesPrice =
       product.price >= priceRange[0] &&
       product.price <= priceRange[1];
 
-    return matchesSearch && matchesPrice;
+    return matchesSearch && matchesCategory && matchesPrice;
   }).sort((a, b) => {
     switch (sortBy) {
       case "price-asc":
