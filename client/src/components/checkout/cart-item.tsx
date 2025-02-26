@@ -40,7 +40,8 @@ export function CartItem({
   const getProductImage = () => {
     if (!imageFailed && Array.isArray(product.images) && product.images.length > 0) {
       const image = product.images[0];
-      if (image && typeof image === 'string') {
+      // Validate the image URL before returning
+      if (image && typeof image === 'string' && image.startsWith('http')) {
         return image;
       }
     }
@@ -48,6 +49,7 @@ export function CartItem({
   };
 
   const handleImageError = () => {
+    console.log('Image failed to load, using fallback:', FALLBACK_IMAGE);
     setImageFailed(true);
     setImageLoading(false);
   };

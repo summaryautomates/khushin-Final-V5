@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" version="1.1" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="200" height="200" fill="#f3f4f6"/>
+  <g transform="translate(60,60)">
+    <path d="M40 40H0V80h40V40zM40 0H0v40h40V0z" fill="#d1d5db"/>
+    <path d="M80 40H40V80h40V40zM80 0H40v40h40V0z" fill="#d1d5db"/>
+  </g>
+  <text x="100" y="160" text-anchor="middle" fill="#6b7280" font-family="sans-serif" font-size="14">
+    Product Image
+  </text>
+</svg>
