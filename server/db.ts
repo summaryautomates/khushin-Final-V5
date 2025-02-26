@@ -17,13 +17,13 @@ if (!process.env.DATABASE_URL) {
 // Configure pool with optimized settings and better error handling
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  connectionTimeoutMillis: 10000, // Increased timeout
-  max: 3, // Reduced pool size for better stability
-  idleTimeoutMillis: 30000, // Increased idle timeout
+  connectionTimeoutMillis: 15000,
+  max: 10,
+  idleTimeoutMillis: 60000,
   keepAlive: true,
   keepAliveInitialDelayMillis: 10000,
-  retryInterval: 1000, // Add retry interval
-  maxRetries: 3 // Add max retries
+  retryInterval: 1000,
+  maxRetries: 5
 });
 
 // Enhanced error handling with detailed logging
