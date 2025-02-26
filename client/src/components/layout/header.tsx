@@ -27,12 +27,12 @@ export function Header() {
   return (
     <header className="fixed top-0 z-50 w-full bg-gradient-to-b from-black/95 to-black/85 backdrop-blur-md supports-[backdrop-filter]:bg-black/60 border-b border-white/10">
       <div className="container mx-auto px-4">
-        <div className="flex h-20 items-center justify-between">
+        <div className="flex h-24 md:h-28 items-center justify-between">
           <Link href="/" className="flex items-center space-x-2 group">
             <img 
               src="https://api.deepai.org/job-view-file/21c38ff0-a48f-49e4-91f0-3094fe3db926/outputs/output.jpg" 
               alt="KHUSH.IN Logo" 
-              className="h-12 w-auto transition-opacity duration-300 group-hover:opacity-80" 
+              className="h-16 md:h-20 w-auto transition-opacity duration-300 group-hover:opacity-80" 
             />
           </Link>
 
