@@ -14,16 +14,18 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { 
   Filter,
+  SortAsc,
+  SortDesc,
   Search,
   X,
   History,
-  Save,
-  Flame
+  Save
 } from "lucide-react";
 import type { Product } from "@shared/schema";
 
 interface SearchHistory {
   term: string;
+  category: string;
   priceRange: [number, number];
   timestamp: Date;
 }
@@ -31,6 +33,7 @@ interface SearchHistory {
 export default function Products() {
   const [searchTerm, setSearchTerm] = useState("");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
+  const [category, setCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("name-asc");
   const [searchHistory, setSearchHistory] = useState<SearchHistory[]>([]);
   const [savedSearches, setSavedSearches] = useState<SearchHistory[]>([]);
@@ -40,9 +43,14 @@ export default function Products() {
     queryKey: ["/api/products"],
   });
 
+  const categories = products 
+    ? ["all", ...Array.from(new Set(products.map(p => p.category)))]
+    : ["all"];
+
   const saveSearch = () => {
     const newSearch: SearchHistory = {
       term: searchTerm,
+      category,
       priceRange,
       timestamp: new Date()
     };
@@ -51,26 +59,28 @@ export default function Products() {
 
   const applySearch = (search: SearchHistory) => {
     setSearchTerm(search.term);
+    setCategory(search.category);
     setPriceRange(search.priceRange);
   };
 
   useEffect(() => {
-    if (searchTerm || priceRange[0] > 0 || priceRange[1] < 50000) {
+    if (searchTerm || category !== "all" || priceRange[0] > 0 || priceRange[1] < 50000) {
       const newHistory: SearchHistory = {
         term: searchTerm,
+        category,
         priceRange,
         timestamp: new Date()
       };
       setSearchHistory(prev => [newHistory, ...prev.slice(0, 9)]);
     }
-  }, [searchTerm, priceRange]);
+  }, [searchTerm, category, priceRange]);
 
   const filteredProducts = products?.filter(product => {
     const matchesSearch = 
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesCategory = product.category === "lighters";
+    const matchesCategory = category === "all" || product.category === category;
 
     const matchesPrice = 
       product.price >= priceRange[0] && 
@@ -94,6 +104,7 @@ export default function Products() {
   const resetFilters = () => {
     setSearchTerm("");
     setPriceRange([0, 50000]);
+    setCategory("all");
     setSortBy("name-asc");
   };
 
@@ -105,16 +116,13 @@ export default function Products() {
     );
   }
 
-  const maxPrice = Math.max(...(filteredProducts?.map(p => p.price) || [100000]));
+  const maxPrice = Math.max(...(products?.map(p => p.price) || [100000]));
 
   return (
     <div className="container py-12">
       <div className="space-y-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Flame className="w-8 h-8 text-primary" />
-            <h1 className="text-4xl font-extralight tracking-wider">Premium Lighters Collection</h1>
-          </div>
+          <h1 className="text-4xl font-extralight tracking-wider">Our Collection</h1>
           <div className="flex gap-2">
             <Button 
               variant="outline" 
@@ -146,7 +154,7 @@ export default function Products() {
                 <div className="flex gap-2">
                   <Input
                     type="search"
-                    placeholder="Search lighters..."
+                    placeholder="Search products..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="flex-grow"
@@ -155,6 +163,22 @@ export default function Products() {
                     <Search className="w-4 h-4" />
                   </Button>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="font-medium">Category</h3>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-4">
@@ -210,9 +234,14 @@ export default function Products() {
                     >
                       <div className="flex items-center gap-2">
                         <Search className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm">{search.term || "All Lighters"}</span>
+                        <span className="text-sm">{search.term || "All Products"}</span>
                       </div>
-                      <div className="mt-1">
+                      <div className="mt-1 flex gap-2">
+                        {search.category !== "all" && (
+                          <Badge variant="outline" className="text-xs">
+                            {search.category}
+                          </Badge>
+                        )}
                         <Badge variant="outline" className="text-xs">
                           ₹{search.priceRange[0].toLocaleString()} - ₹{search.priceRange[1].toLocaleString()}
                         </Badge>
@@ -231,9 +260,14 @@ export default function Products() {
                     >
                       <div className="flex items-center gap-2">
                         <Save className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm">{search.term || "All Lighters"}</span>
+                        <span className="text-sm">{search.term || "All Products"}</span>
                       </div>
-                      <div className="mt-1">
+                      <div className="mt-1 flex gap-2">
+                        {search.category !== "all" && (
+                          <Badge variant="outline" className="text-xs">
+                            {search.category}
+                          </Badge>
+                        )}
                         <Badge variant="outline" className="text-xs">
                           ₹{search.priceRange[0].toLocaleString()} - ₹{search.priceRange[1].toLocaleString()}
                         </Badge>
@@ -251,7 +285,7 @@ export default function Products() {
               <>
                 <div className="mb-6">
                   <p className="text-sm text-muted-foreground">
-                    Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'lighter' : 'lighters'}
+                    Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
                   </p>
                 </div>
                 <ProductGrid products={filteredProducts} isLoading={isLoading} />
@@ -259,7 +293,7 @@ export default function Products() {
             ) : (
               <div className="text-center py-12">
                 <p className="text-lg text-muted-foreground">
-                  No lighters found matching your criteria.
+                  No products found matching your criteria.
                 </p>
               </div>
             )}
