@@ -31,3 +31,52 @@ export function ExperienceBoxes() {
     </div>
   );
 }
+import { motion } from 'framer-motion';
+import { ShoppingBag, PackageCheck, Shield, HeartHandshake } from 'lucide-react';
+
+export function ExperienceBoxes() {
+  const features = [
+    {
+      icon: ShoppingBag,
+      title: "Premium Selection",
+      description: "Discover our carefully curated collection of premium products"
+    },
+    {
+      icon: PackageCheck,
+      title: "Quality Guaranteed",
+      description: "Every product meets our stringent quality standards"
+    },
+    {
+      icon: Shield,
+      title: "Secure Shopping",
+      description: "Shop with confidence with our secure payment options"
+    },
+    {
+      icon: HeartHandshake,
+      title: "Dedicated Support",
+      description: "Our team is ready to assist you with any questions"
+    }
+  ];
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {features.map((feature, index) => (
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: index * 0.1 }}
+          viewport={{ once: true }}
+          whileHover={{ y: -5 }}
+          className="bg-card hover:bg-card/90 border border-border/40 rounded-xl p-6 shadow-soft transition-all duration-300"
+        >
+          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <feature.icon className="h-6 w-6 text-primary" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+          <p className="text-muted-foreground">{feature.description}</p>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
