@@ -49,8 +49,9 @@ export default function Products() {
     }
   }, [location]);
 
+  // Use different query key based on category
   const { data: products, isLoading } = useQuery<Product[]>({
-    queryKey: ["/api/products"],
+    queryKey: category === "all" ? ["/api/products"] : [`/api/products/category/${category}`],
   });
 
   const categories = products
@@ -90,13 +91,11 @@ export default function Products() {
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesCategory = category === "all" || product.category.toLowerCase() === category.toLowerCase();
-
     const matchesPrice =
       product.price >= priceRange[0] &&
       product.price <= priceRange[1];
 
-    return matchesSearch && matchesCategory && matchesPrice;
+    return matchesSearch && matchesPrice;
   }).sort((a, b) => {
     switch (sortBy) {
       case "price-asc":
@@ -132,7 +131,9 @@ export default function Products() {
     <div className="container py-12">
       <div className="space-y-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-4xl font-extralight tracking-wider">Our Collection</h1>
+          <h1 className="text-4xl font-extralight tracking-wider">
+            {category === "all" ? "Our Collection" : `${category.charAt(0).toUpperCase() + category.slice(1)}`}
+          </h1>
           <div className="flex gap-2">
             <Button
               variant="outline"
