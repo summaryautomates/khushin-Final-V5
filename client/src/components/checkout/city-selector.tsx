@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CityMap } from "./city-map";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 
@@ -30,9 +30,9 @@ interface CitySelectorProps {
 export function CitySelector({ onCitySelect, selectedCity }: CitySelectorProps) {
   const [error, setError] = useState<string | null>(null);
 
-  const handleCityChange = (value: string) => {
+  const handleCitySelect = (city: string) => {
     setError(null);
-    onCitySelect(value);
+    onCitySelect(city);
   };
 
   return (
@@ -45,18 +45,11 @@ export function CitySelector({ onCitySelect, selectedCity }: CitySelectorProps) 
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <Select value={selectedCity} onValueChange={handleCityChange}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Choose your delivery city" />
-            </SelectTrigger>
-            <SelectContent>
-              {MAJOR_CITIES.map((city) => (
-                <SelectItem key={city} value={city}>
-                  {city}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CityMap 
+            onCitySelect={handleCitySelect} 
+            selectedCity={selectedCity} 
+            availableCities={MAJOR_CITIES}
+          />
           {error && (
             <p className="text-sm text-destructive">{error}</p>
           )}
