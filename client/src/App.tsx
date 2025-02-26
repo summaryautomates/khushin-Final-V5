@@ -8,7 +8,6 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Switch, Route, useLocation } from "wouter";
 import { useEffect } from "react";
-import { useWebSocket } from "@/lib/websocket";
 
 // Page imports
 import Home from "@/pages/home";
@@ -35,11 +34,6 @@ import Rewards from "@/pages/rewards";
 import Referral from "@/pages/referral";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import React from 'react';
-
-function WebSocketProvider({ children }: { children: React.ReactNode }) {
-  useWebSocket(); // Initialize WebSocket connection
-  return <>{children}</>;
-}
 
 function AppRoutes() {
   const [location] = useLocation();
@@ -121,18 +115,14 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
         <AuthProvider>
-          <ErrorBoundary>
-            <WebSocketProvider>
-              <CartProvider>
-                <div className="min-h-screen flex flex-col bg-background">
-                  <Header />
-                  <AppRoutes />
-                  <Footer />
-                </div>
-                <Toaster />
-              </CartProvider>
-            </WebSocketProvider>
-          </ErrorBoundary>
+          <CartProvider>
+            <div className="min-h-screen flex flex-col bg-background">
+              <Header />
+              <AppRoutes />
+              <Footer />
+            </div>
+            <Toaster />
+          </CartProvider>
         </AuthProvider>
       </ErrorBoundary>
     </QueryClientProvider>
