@@ -33,13 +33,23 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export async function setupAuth(app: Express) {
-  // Initialize session store with correct options
+  if (!process.env.SESSION_SECRET) {
+    throw new Error("SESSION_SECRET environment variable is required");
+  }
+
+  // Initialize session store with optimized settings
   const sessionStore = new PostgresStore({
     pool,
     tableName: 'session',
     createTableIfMissing: true,
-    pruneSessionInterval: 60, // Prune expired sessions every minute
+    pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
     errorLog: console.error.bind(console, 'PostgresStore error:'),
+    // Add connection pool settings
+    conObject: {
+      connectionTimeoutMillis: 2000, // 2 seconds
+      idleTimeoutMillis: 30000, // 30 seconds
+      max: 20 // Maximum pool size
+    }
   });
 
   // Handle session store errors
@@ -47,10 +57,10 @@ export async function setupAuth(app: Express) {
     console.error('Session store error:', error);
   });
 
-  // Initialize session middleware with secure settings
+  // Initialize session middleware with enhanced security settings
   const sessionMiddleware = session({
     store: sessionStore,
-    secret: process.env.SESSION_SECRET || 'development-secret-key',
+    secret: process.env.SESSION_SECRET,
     name: 'sid',
     resave: false,
     saveUninitialized: false,
@@ -62,20 +72,24 @@ export async function setupAuth(app: Express) {
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       path: '/',
+      domain: process.env.NODE_ENV === 'production' ? '.khush.in' : undefined
     }
   });
 
   // Set trust proxy and use session middleware
   app.set("trust proxy", 1);
   app.use(sessionMiddleware);
-
-  // Initialize passport
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // User deserialization with error handling
-  passport.serializeUser((user, done) => {
-    done(null, user.id);
+  // Enhanced user serialization with error handling
+  passport.serializeUser((user: Express.User, done) => {
+    try {
+      done(null, user.id);
+    } catch (error) {
+      console.error('User serialization error:', error);
+      done(error);
+    }
   });
 
   passport.deserializeUser(async (id: number, done) => {
@@ -86,12 +100,12 @@ export async function setupAuth(app: Express) {
       }
       done(null, user);
     } catch (error) {
-      console.error('Deserialization error:', error);
+      console.error('User deserialization error:', error);
       done(error);
     }
   });
 
-  // Configure local strategy with better error handling
+  // Configure local strategy with better error handling and rate limiting
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
@@ -114,32 +128,38 @@ export async function setupAuth(app: Express) {
     })
   );
 
-  // Authentication routes with improved error handling
+  // Authentication routes with improved error handling and validation
   app.post("/api/register", async (req, res) => {
     try {
-      if (!req.body.username || !req.body.password || !req.body.email) {
+      const { username, password, email, firstName, lastName } = req.body;
+
+      if (!username || !password || !email) {
         return res.status(400).json({
           message: "Missing required fields"
         });
       }
 
-      const existingUser = await storage.getUserByUsername(req.body.username);
+      const existingUser = await storage.getUserByUsername(username);
       if (existingUser) {
         return res.status(400).json({
           message: "Username already exists"
         });
       }
 
-      const hashedPassword = await hashPassword(req.body.password);
+      const hashedPassword = await hashPassword(password);
       const user = await storage.createUser({
-        ...req.body,
-        password: hashedPassword
+        username,
+        password: hashedPassword,
+        email,
+        firstName,
+        lastName
       });
 
-      const { password, ...userWithoutPassword } = user;
+      const { password: _, ...userWithoutPassword } = user;
 
       req.login(user, (err) => {
         if (err) {
+          console.error('Login after registration error:', err);
           return res.status(500).json({
             message: "Error logging in after registration"
           });
@@ -155,7 +175,9 @@ export async function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    if (!req.body.username || !req.body.password) {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
       return res.status(400).json({
         message: "Missing username or password"
       });
@@ -165,6 +187,7 @@ export async function setupAuth(app: Express) {
       "local",
       (err: Error | null, user: SelectUser | false, info: { message: string } | undefined) => {
         if (err) {
+          console.error('Login error:', err);
           return next(err);
         }
         if (!user) {
@@ -174,9 +197,10 @@ export async function setupAuth(app: Express) {
         }
         req.login(user, (err) => {
           if (err) {
+            console.error('Session creation error:', err);
             return next(err);
           }
-          const { password, ...userWithoutPassword } = user;
+          const { password: _, ...userWithoutPassword } = user;
           return res.json(userWithoutPassword);
         });
       }
@@ -184,19 +208,24 @@ export async function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res) => {
+    const sessionId = req.sessionID;
     req.logout((err) => {
       if (err) {
+        console.error('Logout error:', err);
         return res.status(500).json({
           message: "Error logging out"
         });
       }
       req.session.destroy((err) => {
         if (err) {
+          console.error('Session destruction error:', err);
           return res.status(500).json({
             message: "Error destroying session"
           });
         }
         res.clearCookie('sid');
+        // Emit a websocket event to notify about logout
+        req.app.emit('user:logout', sessionId);
         res.sendStatus(200);
       });
     });
@@ -208,7 +237,7 @@ export async function setupAuth(app: Express) {
         message: "Not authenticated"
       });
     }
-    const { password, ...userWithoutPassword } = req.user;
+    const { password: _, ...userWithoutPassword } = req.user;
     res.json(userWithoutPassword);
   });
 

@@ -221,8 +221,8 @@ export default function Cart() {
           name: item.product.name
         })),
         shipping: {
+          fullName: shippingData.fullName,
           address: shippingData.address + (shippingData.apartment ? `, ${shippingData.apartment}` : ''),
-          email: shippingData.email,
           city: selectedCity,
           state: shippingData.state,
           pincode: shippingData.pincode,

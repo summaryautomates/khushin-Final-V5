@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
 const shippingSchema = z.object({
+  fullName: z.string().min(2, "Full name is required"),
   email: z.string().email("Please enter a valid email address"),
   address: z.string()
     .min(1, "Address is required")
@@ -43,6 +44,7 @@ export function ShippingForm({ onSubmit, isLoading }: ShippingFormProps) {
     resolver: zodResolver(shippingSchema),
     mode: "onBlur",
     defaultValues: {
+      fullName: "",
       email: "",
       address: "",
       apartment: "",
@@ -67,24 +69,43 @@ export function ShippingForm({ onSubmit, isLoading }: ShippingFormProps) {
         {/* Contact Section */}
         <div>
           <h2 className="text-base font-medium mb-4 text-zinc-100">Contact</h2>
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-zinc-200">Email</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="email" 
-                    placeholder="Email address" 
-                    className="h-11 px-4 py-2 bg-white/[0.05] border-zinc-700 focus-visible:ring-1 focus-visible:ring-primary"
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage className="text-xs" />
-              </FormItem>
-            )}
-          />
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="fullName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-zinc-200">Full Name</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Enter your full name" 
+                      className="h-11 px-4 py-2 bg-white/[0.05] border-zinc-700 focus-visible:ring-1 focus-visible:ring-primary"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-zinc-200">Email</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="email" 
+                      placeholder="Email address" 
+                      className="h-11 px-4 py-2 bg-white/[0.05] border-zinc-700 focus-visible:ring-1 focus-visible:ring-primary"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         {/* Delivery Section */}

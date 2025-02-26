@@ -23,12 +23,6 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
     clientTracking: true,
     verifyClient: async (info: any, callback: any) => {
       try {
-        console.log('WebSocket connection attempt:', {
-          headers: info.req.headers,
-          cookies: info.req.headers.cookie,
-          timestamp: new Date().toISOString()
-        });
-
         // Apply session middleware to WebSocket upgrade request
         await new Promise((resolve, reject) => {
           sessionMiddleware(info.req, {}, (err: Error) => {
@@ -42,42 +36,28 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
         });
 
         const session = info.req.session as ExtendedSessionData;
-        console.log('Session after middleware:', {
-          sessionId: session?.id,
-          isAuthenticated: !!session?.passport?.user,
-          timestamp: new Date().toISOString()
-        });
 
-        // Allow the connection but track authentication status
-        callback(true, 200, '', {
+        // Allow connection but track authentication status
+        callback(true, undefined, undefined, {
           isAuthenticated: !!session?.passport?.user,
-          sessionId: session?.id
+          sessionId: session?.id,
+          userId: session?.passport?.user
         });
       } catch (error) {
-        console.error('WebSocket verification error:', {
-          error,
-          timestamp: new Date().toISOString()
-        });
+        console.error('WebSocket verification error:', error);
         callback(false, 401, 'Unauthorized');
       }
     }
   });
 
-  console.log('WebSocket server initialized');
-
-  // Track active connections with a Map
+  // Track active connections
   const activeConnections = new Map<string, AuthenticatedWebSocket>();
 
-  // Heartbeat interval
+  // Heartbeat interval (every 30 seconds)
   const heartbeatInterval = setInterval(() => {
     wss.clients.forEach((ws: WebSocket) => {
       const client = ws as AuthenticatedWebSocket;
       if (!client.isAlive) {
-        console.log('Terminating inactive connection:', {
-          userId: client.userId,
-          sessionId: client.sessionId,
-          timestamp: new Date().toISOString()
-        });
         if (client.sessionId) {
           activeConnections.delete(client.sessionId);
         }
@@ -89,71 +69,38 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
   }, 30000);
 
   wss.on('connection', async (ws: AuthenticatedWebSocket, req) => {
-    console.log('New WebSocket connection established');
-
     try {
       ws.isAlive = true;
       const session = (req as any).session as ExtendedSessionData;
 
       if (!session) {
-        console.log('No session found for connection');
-        ws.send(JSON.stringify({
-          type: 'error',
-          message: 'No session found',
-          timestamp: new Date().toISOString()
-        }));
         ws.close(1011, 'No session found');
         return;
       }
 
-      // Set session ID for connection tracking
+      // Set connection identifiers
       ws.sessionId = session.id;
+      ws.userId = session?.passport?.user;
 
-      if (session?.passport?.user) {
-        ws.userId = session.passport.user;
-        if (ws.sessionId) {
-          activeConnections.set(ws.sessionId, ws);
-        }
-
-        console.log('Authenticated connection established:', {
-          userId: ws.userId,
-          sessionId: ws.sessionId,
-          timestamp: new Date().toISOString()
-        });
-
-        ws.send(JSON.stringify({
-          type: 'connected',
-          data: {
-            userId: ws.userId,
-            isAuthenticated: true,
-            timestamp: new Date().toISOString()
-          }
-        }));
-      } else {
-        console.log('Public connection established:', {
-          sessionId: ws.sessionId,
-          timestamp: new Date().toISOString()
-        });
-
-        ws.send(JSON.stringify({
-          type: 'connected',
-          data: {
-            isAuthenticated: false,
-            timestamp: new Date().toISOString()
-          }
-        }));
+      if (ws.sessionId) {
+        // Store the connection
+        activeConnections.set(ws.sessionId, ws);
       }
 
-      // Handle WebSocket messages
+      // Send initial connection status
+      ws.send(JSON.stringify({
+        type: 'connected',
+        data: {
+          userId: ws.userId,
+          isAuthenticated: !!ws.userId,
+          timestamp: new Date().toISOString()
+        }
+      }));
+
+      // Handle incoming messages
       ws.on('message', async (message: string) => {
         try {
           const data = JSON.parse(message.toString());
-          console.log('Received message:', {
-            type: data.type,
-            userId: ws.userId,
-            sessionId: ws.sessionId,
-            timestamp: new Date().toISOString()
-          });
 
           switch(data.type) {
             case 'ping':
@@ -164,7 +111,6 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
               break;
 
             default:
-              console.log('Unknown message type:', data.type);
               ws.send(JSON.stringify({
                 type: 'error',
                 message: 'Unknown message type',
@@ -199,24 +145,24 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
         if (ws.sessionId) {
           activeConnections.delete(ws.sessionId);
         }
-        console.log('Connection closed:', {
-          userId: ws.userId,
-          sessionId: ws.sessionId,
-          timestamp: new Date().toISOString()
-        });
       });
 
     } catch (error) {
       console.error('Connection handling error:', error);
-      ws.send(JSON.stringify({
-        type: 'error',
-        message: 'Server error',
-        timestamp: new Date().toISOString()
-      }));
       ws.close(1011, 'Server error');
     }
   });
 
+  // Listen for logout events
+  server.on('user:logout', (sessionId: string) => {
+    const connection = activeConnections.get(sessionId);
+    if (connection) {
+      connection.close(1000, 'User logged out');
+      activeConnections.delete(sessionId);
+    }
+  });
+
+  // Cleanup on server close
   wss.on('close', () => {
     clearInterval(heartbeatInterval);
     activeConnections.clear();
