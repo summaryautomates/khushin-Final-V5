@@ -185,10 +185,12 @@ const Refueling = () => {
             className="max-w-xl mx-auto text-center"
           >
             <h2 className="text-2xl font-light mb-6 tracking-wider">Ready to Enhance Your Experience?</h2>
-            <Button size="lg" className="rounded-full gap-2 bg-primary/90 hover:bg-primary">
-              Shop Refueling Accessories
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+            <Link href="/products/category/refueling">
+              <Button size="lg" className="rounded-full gap-2 bg-primary/90 hover:bg-primary">
+                Shop Refueling Accessories
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </Link>
           </motion.div>
         </div>
       </section>
