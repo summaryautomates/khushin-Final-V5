@@ -1,0 +1,9 @@
+
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="400" fill="#EEF2FF"/>
+  <rect x="100" y="100" width="200" height="200" rx="10" fill="#C7D2FE"/>
+  <path d="M180 160H220V180H180V160Z" fill="#6366F1"/>
+  <path d="M180 190H220V210H180V190Z" fill="#6366F1"/>
+  <path d="M180 220H220V240H180V220Z" fill="#6366F1"/>
+  <text x="200" y="280" text-anchor="middle" font-family="Arial" font-size="16" fill="#4F46E5">Product Image</text>
+</svg>

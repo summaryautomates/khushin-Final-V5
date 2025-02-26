@@ -1,11 +1,9 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
-import { AlertCircle } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
+import { Button } from "./ui/button";
 
 interface Props {
-  children?: ReactNode;
+  children: ReactNode;
   fallback?: ReactNode;
 }
 
@@ -62,37 +60,22 @@ export class ErrorBoundary extends Component<Props, State> {
     }
 
     return (
-      <div className="container py-12">
-        <Card className="max-w-2xl mx-auto">
+      <div className="flex items-center justify-center min-h-screen p-4 bg-background">
+        <Card className="max-w-md w-full">
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-destructive" />
-              <CardTitle>Something went wrong</CardTitle>
-            </div>
+            <CardTitle>Something went wrong</CardTitle>
+            <CardDescription>
+              We've encountered an error in the application
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <AlertDescription>
-              <p>An unexpected error occurred while rendering this component.</p>
-              {this.state.error && (
-                <div className="mt-4 space-y-2">
-                  <p className="font-semibold">Error Details:</p>
-                  <p className="text-sm font-mono bg-muted/50 p-3 rounded-md overflow-x-auto">
-                    {this.state.error.message}
-                  </p>
-                  {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
-                    <details className="mt-2">
-                      <summary className="text-sm text-muted-foreground cursor-pointer">
-                        Component Stack
-                      </summary>
-                      <pre className="text-xs font-mono bg-muted/50 p-3 mt-2 rounded-md overflow-x-auto">
-                        {this.state.errorInfo.componentStack}
-                      </pre>
-                    </details>
-                  )}
-                </div>
+          <CardContent>
+            <div className="bg-muted p-3 rounded-md text-sm mb-4 overflow-auto max-h-[200px]">
+              <p className="font-semibold">Error: {this.state.error?.message || "Unknown error"}</p>
+              {this.state.error?.stack && (
+                <pre className="mt-2 text-xs">{this.state.error.stack.split("\n").slice(0, 3).join("\n")}</pre>
               )}
-            </AlertDescription>
-            <div className="flex gap-4 mt-6">
+            </div>
+            <div className="flex gap-3 justify-end">
               <Button variant="default" onClick={this.handleRetry}>
                 Try Again
               </Button>
