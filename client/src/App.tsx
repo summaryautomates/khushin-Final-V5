@@ -36,22 +36,26 @@ import Referral from "@/pages/referral";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import React from 'react';
 
+// Silent WebSocket Provider that won't block rendering
 function WebSocketProvider({ children }: { children: React.ReactNode }) {
-  useWebSocket(); // Initialize WebSocket connection
+  try {
+    useWebSocket(); // Initialize WebSocket connection
+  } catch (error) {
+    console.error('WebSocket initialization error:', error);
+    // Continue rendering even if WebSocket fails
+  }
   return <>{children}</>;
 }
 
 function AppRoutes() {
   const [location] = useLocation();
 
-  // Scroll to top whenever the location changes
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location]);
 
   return (
     <main className="flex-1">
-      {/* Mobile View Container */}
       <div className="md:hidden w-full">
         <div className="px-4 py-3">
           <Switch>
@@ -60,14 +64,14 @@ function AppRoutes() {
             <Route path="/products/category/:category" component={Products} />
             <Route path="/product/:id" component={Product} />
             <Route path="/compare" component={Compare} />
-            <ProtectedRoute path="/cart" component={Cart} />
-            <ProtectedRoute path="/checkout/payment" component={CheckoutPayment} />
-            <ProtectedRoute path="/checkout/success" component={CheckoutSuccess} />
+            <Route path="/cart" component={Cart} />
+            <Route path="/checkout/payment" component={CheckoutPayment} />
+            <Route path="/checkout/success" component={CheckoutSuccess} />
             <Route path="/contact" component={Contact} />
             <Route path="/customize" component={Customize} />
             <Route path="/refueling" component={Refueling} />
-            <ProtectedRoute path="/orders" component={Orders} />
-            <ProtectedRoute path="/orders/:orderRef" component={OrderDetails} />
+            <Route path="/orders" component={Orders} />
+            <Route path="/orders/:orderRef" component={OrderDetails} />
             <Route path="/faqs" component={FAQs} />
             <Route path="/warranty" component={Warranty} />
             <Route path="/shipping" component={Shipping} />
@@ -82,7 +86,6 @@ function AppRoutes() {
         </div>
       </div>
 
-      {/* Desktop View Container */}
       <div className="hidden md:block w-full">
         <div className="container mx-auto px-6 py-8 max-w-7xl">
           <Switch>
@@ -91,14 +94,14 @@ function AppRoutes() {
             <Route path="/products/category/:category" component={Products} />
             <Route path="/product/:id" component={Product} />
             <Route path="/compare" component={Compare} />
-            <ProtectedRoute path="/cart" component={Cart} />
-            <ProtectedRoute path="/checkout/payment" component={CheckoutPayment} />
-            <ProtectedRoute path="/checkout/success" component={CheckoutSuccess} />
+            <Route path="/cart" component={Cart} />
+            <Route path="/checkout/payment" component={CheckoutPayment} />
+            <Route path="/checkout/success" component={CheckoutSuccess} />
             <Route path="/contact" component={Contact} />
             <Route path="/customize" component={Customize} />
             <Route path="/refueling" component={Refueling} />
-            <ProtectedRoute path="/orders" component={Orders} />
-            <ProtectedRoute path="/orders/:orderRef" component={OrderDetails} />
+            <Route path="/orders" component={Orders} />
+            <Route path="/orders/:orderRef" component={OrderDetails} />
             <Route path="/faqs" component={FAQs} />
             <Route path="/warranty" component={Warranty} />
             <Route path="/shipping" component={Shipping} />
@@ -121,18 +124,14 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
         <AuthProvider>
-          <ErrorBoundary>
-            <WebSocketProvider>
-              <CartProvider>
-                <div className="min-h-screen flex flex-col bg-background">
-                  <Header />
-                  <AppRoutes />
-                  <Footer />
-                </div>
-                <Toaster />
-              </CartProvider>
-            </WebSocketProvider>
-          </ErrorBoundary>
+          <CartProvider>
+            <div className="min-h-screen flex flex-col bg-background">
+              <Header />
+              <AppRoutes />
+              <Footer />
+            </div>
+            <Toaster />
+          </CartProvider>
         </AuthProvider>
       </ErrorBoundary>
     </QueryClientProvider>
