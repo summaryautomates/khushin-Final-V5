@@ -14,7 +14,7 @@ import { ShareButtons } from "@/components/products/share-buttons";
 import { ModelViewer } from "@/components/model-viewer/model-viewer";
 import { SimilarProducts } from "@/components/products/similar-products";
 import { AuthSheet } from "@/components/auth/auth-sheet";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const FALLBACK_IMAGES = [
@@ -196,7 +196,22 @@ export default function ProductPage() {
               )}
               {product.category === "lighters" ? (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <ModelViewer modelUrl="/attached_assets/zippo_lighter.glb" />
+                  <div className="w-full h-full">
+                    <Suspense fallback={
+                      <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                        <Loader2 className="h-8 w-8 animate-spin" />
+                      </div>
+                    }>
+                      <ModelViewer 
+                        modelUrl="/attached_assets/zippo_lighter.glb" 
+                        fallbackUrl={getValidProductImage(selectedImage)}
+                        onError={() => {
+                          console.error("Failed to load 3D model");
+                          handleImageError(selectedImage);
+                        }}
+                      />
+                    </Suspense>
+                  </div>
                 </div>
               ) : (
                 <img

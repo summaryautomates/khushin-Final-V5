@@ -5,6 +5,8 @@ import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 
 interface ModelViewerProps {
   modelUrl: string;
+  fallbackUrl?: string;
+  onError?: () => void;
 }
 
 interface LoadProgress {
@@ -12,10 +14,11 @@ interface LoadProgress {
   total: number;
 }
 
-export function ModelViewer({ modelUrl }: ModelViewerProps) {
+export function ModelViewer({ modelUrl, fallbackUrl, onError }: ModelViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showFallback, setShowFallback] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -82,6 +85,8 @@ export function ModelViewer({ modelUrl }: ModelViewerProps) {
         console.error('Error loading model:', error);
         setError('Failed to load 3D model');
         setLoading(false);
+        setShowFallback(true);
+        if (onError) onError();
       }
     );
 
@@ -114,12 +119,36 @@ export function ModelViewer({ modelUrl }: ModelViewerProps) {
       }
       cancelAnimationFrame(animationFrameId);
       renderer.dispose();
+      scene.traverse((object) => {
+        if (object instanceof THREE.Mesh) {
+          if (object.geometry) object.geometry.dispose();
+          if (object.material) {
+            if (Array.isArray(object.material)) {
+              object.material.forEach(material => material.dispose());
+            } else {
+              object.material.dispose();
+            }
+          }
+        }
+      });
       // Safely dispose controls if the method exists
       if (typeof (controls as any).dispose === 'function') {
         (controls as any).dispose();
       }
     };
-  }, [modelUrl]);
+  }, [modelUrl, onError]);
+
+  if (showFallback && fallbackUrl) {
+    return (
+      <div className="relative h-[400px] w-full rounded-lg overflow-hidden bg-zinc-900">
+        <img
+          src={fallbackUrl}
+          alt="Product"
+          className="w-full h-full object-contain"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-[400px] w-full rounded-lg overflow-hidden bg-zinc-900">
@@ -129,7 +158,7 @@ export function ModelViewer({ modelUrl }: ModelViewerProps) {
           <div className="text-white">Loading model...</div>
         </div>
       )}
-      {error && (
+      {error && !showFallback && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">
           <div className="text-red-500">{error}</div>
         </div>
