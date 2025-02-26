@@ -24,24 +24,19 @@ function useLoginMutation() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      try {
-        const res = await fetch("/api/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: 'include',
-          body: JSON.stringify(credentials),
-        });
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        body: JSON.stringify(credentials),
+      });
 
-        if (!res.ok) {
-          const error = await res.json().catch(() => ({ message: 'Login failed' }));
-          throw new Error(error.message || "Login failed");
-        }
-
-        return res.json();
-      } catch (error) {
-        console.error('Login error:', error);
-        throw error;
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Login failed");
       }
+
+      return res.json();
     },
     onSuccess: (user) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -64,24 +59,19 @@ function useRegisterMutation() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async (userData: InsertUser) => {
-      try {
-        const res = await fetch("/api/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: 'include',
-          body: JSON.stringify(userData),
-        });
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        body: JSON.stringify(userData),
+      });
 
-        if (!res.ok) {
-          const error = await res.json().catch(() => ({ message: 'Registration failed' }));
-          throw new Error(error.message || "Registration failed");
-        }
-
-        return res.json();
-      } catch (error) {
-        console.error('Registration error:', error);
-        throw error;
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Registration failed");
       }
+
+      return res.json();
     },
     onSuccess: (user) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -104,18 +94,13 @@ function useLogoutMutation() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async () => {
-      try {
-        const res = await fetch("/api/logout", { 
-          method: "POST",
-          credentials: 'include'
-        });
+      const res = await fetch("/api/logout", { 
+        method: "POST",
+        credentials: 'include'
+      });
 
-        if (!res.ok) {
-          throw new Error("Logout failed");
-        }
-      } catch (error) {
-        console.error('Logout error:', error);
-        throw error;
+      if (!res.ok) {
+        throw new Error("Logout failed");
       }
     },
     onSuccess: () => {
@@ -139,9 +124,26 @@ function useLogoutMutation() {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: user, error, isLoading } = useQuery<SelectUser | null>({
     queryKey: ["/api/user"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/user", {
+          credentials: 'include'
+        });
+        if (!res.ok) {
+          if (res.status === 401) {
+            return null;
+          }
+          throw new Error("Failed to fetch user");
+        }
+        return res.json();
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        return null;
+      }
+    },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     retry: false, // Don't retry on failure
-    refetchOnMount: false, // Don't refetch on mount to prevent unnecessary API calls
+    refetchOnMount: false, // Don't refetch on mount
   });
 
   const loginMutation = useLoginMutation();
