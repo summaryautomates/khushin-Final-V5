@@ -54,7 +54,7 @@ export function Header() {
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <Link 
-                  href="/refueling"
+                  href="/products/category/refueling"
                   className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"}
                 >
                   REFUELING SOLUTIONS
