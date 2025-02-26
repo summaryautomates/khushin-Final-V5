@@ -31,10 +31,30 @@ export default {
       },
     },
     extend: {
+      boxShadow: {
+        'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
+        'glow': '0 0 20px rgba(var(--primary), 0.2)',
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        'xl': '1rem',
+        '2xl': '1.5rem',
+      },
+      animation: {
+        'smooth-fade': 'fade 0.4s ease-in',
+        'slide-up': 'slideUp 0.5s ease-out',
+      },
+      keyframes: {
+        fade: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
       },
       backdropBlur: {
         xs: '2px',
@@ -43,6 +63,12 @@ export default {
         '18': '4.5rem',
         '112': '28rem',
         '128': '32rem',
+        'navigation': '4.5rem',
+        'header': '5rem',
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-subtle': 'linear-gradient(to right, var(--tw-gradient-stops))',
       },
       scale: {
         '102': '1.02',
