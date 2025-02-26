@@ -30,13 +30,15 @@ export function Header() {
         <div className="flex h-16 md:h-20 items-center justify-between">
           <Link href="/" className="flex items-center space-x-2">
             <div className="relative w-28 md:w-36 h-10 md:h-12 flex items-center">
-              <img 
-                src="https://i.imghippo.com/files/GqB4409rM.jpg" 
-                alt="KHUSH.IN Logo" 
-                className="w-full h-full object-contain"
+              <img
+                src="https://i.imghippo.com/files/GqB4409rM.jpg"
+                alt="KHUSH.IN Logo"
+                className="w-full h-full object-contain mix-blend-screen"
                 style={{
-                  maxHeight: '100%',
-                  width: 'auto'
+                  maxHeight: "100%",
+                  width: "auto",
+                  filter: "brightness(1.2) contrast(1.1)",
+                  backgroundColor: "transparent",
                 }}
               />
             </div>
@@ -45,41 +47,56 @@ export function Header() {
           <NavigationMenu className="hidden md:flex">
             <NavigationMenuList className="space-x-6">
               <NavigationMenuItem>
-                <Link 
-                  href="/products" 
-                  className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"}
+                <Link
+                  href="/products"
+                  className={
+                    navigationMenuTriggerStyle() +
+                    " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"
+                  }
                 >
                   COLLECTIONS
                 </Link>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link 
+                <Link
                   href="/products/category/lighters"
-                  className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"}
+                  className={
+                    navigationMenuTriggerStyle() +
+                    " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"
+                  }
                 >
                   LUXURY LIGHTERS
                 </Link>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link 
+                <Link
                   href="/refueling"
-                  className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"}
+                  className={
+                    navigationMenuTriggerStyle() +
+                    " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"
+                  }
                 >
                   REFUELING SOLUTIONS
                 </Link>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link 
+                <Link
                   href="/customize"
-                  className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"}
+                  className={
+                    navigationMenuTriggerStyle() +
+                    " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"
+                  }
                 >
                   CUSTOMIZE
                 </Link>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link 
+                <Link
                   href="/contact"
-                  className={navigationMenuTriggerStyle() + " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"}
+                  className={
+                    navigationMenuTriggerStyle() +
+                    " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"
+                  }
                 >
                   CONTACT
                 </Link>
@@ -91,19 +108,21 @@ export function Header() {
             {user ? (
               <>
                 <Link href="/orders">
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="sm"
                     className="relative group hover:bg-white/10 transition-all duration-300 border border-white/20 gap-2 backdrop-blur-sm"
                   >
                     <ClockIcon className="h-4 w-4 text-white/90 group-hover:text-primary group-hover:scale-110 transition-all duration-300" />
-                    <span className="text-white/90 font-light tracking-wide group-hover:text-primary transition-colors">Orders</span>
+                    <span className="text-white/90 font-light tracking-wide group-hover:text-primary transition-colors">
+                      Orders
+                    </span>
                     <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   </Button>
                 </Link>
 
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="icon"
                   className="relative group hover:bg-white/10 transition-all duration-300"
                   onClick={handleLogout}
@@ -113,9 +132,9 @@ export function Header() {
                 </Button>
 
                 <Link href="/cart">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className="relative group hover:bg-white/5 transition-colors duration-300"
                   >
                     <ShoppingCart className="h-4 w-4 text-white group-hover:scale-110 transition-transform duration-300" />
