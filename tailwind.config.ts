@@ -32,8 +32,10 @@ export default {
     },
     extend: {
       boxShadow: {
-        'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
-        'glow': '0 0 20px rgba(var(--primary), 0.2)',
+        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.1), 0 12px 24px -4px rgba(0, 0, 0, 0.06)',
+        'glow': '0 0 25px rgba(var(--primary), 0.25)',
+        'card': '0 2px 8px -1px rgba(0, 0, 0, 0.12), 0 4px 16px -2px rgba(0, 0, 0, 0.08)',
+        'hover': '0 8px 30px rgba(0, 0, 0, 0.15)',
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -43,8 +45,10 @@ export default {
         '2xl': '1.5rem',
       },
       animation: {
-        'smooth-fade': 'fade 0.4s ease-in',
-        'slide-up': 'slideUp 0.5s ease-out',
+        'smooth-fade': 'fade 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+        'slide-up': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+        'float': 'float 6s ease-in-out infinite',
+        'pulse-subtle': 'pulseSubtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
       keyframes: {
         fade: {
@@ -54,6 +58,14 @@ export default {
         slideUp: {
           '0%': { transform: 'translateY(10px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+        pulseSubtle: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.85' },
         },
       },
       backdropBlur: {
