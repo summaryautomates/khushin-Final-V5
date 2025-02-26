@@ -23,11 +23,23 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
     clientTracking: true,
     verifyClient: async (info: any, callback: any) => {
       try {
+        // Log verification attempt
+        console.log('WebSocket verification attempt:', {
+          headers: info.req.headers,
+          url: info.req.url,
+          timestamp: new Date().toISOString()
+        });
+
         // Apply session middleware to WebSocket upgrade request
         await new Promise((resolve, reject) => {
           sessionMiddleware(info.req, {}, (err: Error) => {
             if (err) {
-              console.error('Session middleware error:', err);
+              console.error('Session middleware error:', {
+                error: err.message,
+                stack: err.stack,
+                headers: info.req.headers,
+                timestamp: new Date().toISOString()
+              });
               reject(err);
               return;
             }
@@ -37,6 +49,14 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
 
         const session = info.req.session as ExtendedSessionData;
 
+        // Log session details
+        console.log('WebSocket session details:', {
+          sessionId: session?.id,
+          isAuthenticated: !!session?.passport?.user,
+          userId: session?.passport?.user,
+          timestamp: new Date().toISOString()
+        });
+
         // Allow connection but track authentication status
         callback(true, undefined, undefined, {
           isAuthenticated: !!session?.passport?.user,
@@ -44,7 +64,12 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
           userId: session?.passport?.user
         });
       } catch (error) {
-        console.error('WebSocket verification error:', error);
+        console.error('WebSocket verification error:', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          headers: info.req.headers,
+          timestamp: new Date().toISOString()
+        });
         callback(false, 401, 'Unauthorized');
       }
     }

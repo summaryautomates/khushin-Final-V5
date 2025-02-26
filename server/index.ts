@@ -10,18 +10,20 @@ import { portManager } from './port-manager';
 async function startServer() {
   const app = express();
 
-  // CORS configuration with credentials support
+  // CORS configuration with enhanced WebSocket support
   app.use(cors({
     origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'Upgrade', 'Connection'],
   }));
 
-  // Serve static files first, before any middleware
+  // Serve static files with improved caching
   app.use('/placeholders', express.static('client/public/placeholders', {
     maxAge: '1d',
-    immutable: true
+    immutable: true,
+    etag: true,
+    lastModified: true
   }));
 
   app.use(express.json());
@@ -29,41 +31,57 @@ async function startServer() {
   // Create HTTP server
   const server = createServer(app);
 
-  // Health check endpoint
+  // Health check endpoint with WebSocket status
   app.get('/api/health', (_req, res) => {
-    res.json({ status: 'ok', timestamp: Date.now() });
+    res.json({ 
+      status: 'ok', 
+      timestamp: Date.now(),
+      websocket: 'enabled'
+    });
   });
 
   try {
-    // Diagnostic: Log current port status
     console.log('Starting server initialization...');
-
-    // Release any existing ports to ensure clean state
     await portManager.releaseAll();
     console.log('Released all ports');
 
-    // Wait a bit for any cleanup to complete
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Always try to acquire port 5000 as required
     const port = 5000;
     console.log(`Attempting to acquire port ${port}...`);
     await portManager.acquirePort(port, port);
     console.log(`Successfully acquired port ${port}`);
 
-    // Setup authentication and get session middleware
+    // Setup authentication first
     const sessionMiddleware = await setupAuth(app);
     console.log('Authentication setup complete');
 
-    // Setup WebSocket after authentication
-    const wss = await setupWebSocket(server, sessionMiddleware);
-    console.log('WebSocket setup complete');
+    // Setup WebSocket with retry mechanism
+    let wsSetupRetries = 0;
+    const maxRetries = 3;
+    let wss;
 
-    // Setup routes
+    while (wsSetupRetries < maxRetries) {
+      try {
+        wss = await setupWebSocket(server, sessionMiddleware);
+        console.log('WebSocket setup complete');
+        break;
+      } catch (error) {
+        wsSetupRetries++;
+        console.error(`WebSocket setup attempt ${wsSetupRetries} failed:`, error);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+
+    if (!wss) {
+      throw new Error('Failed to setup WebSocket after multiple attempts');
+    }
+
+    // Setup routes after WebSocket is ready
     await registerRoutes(app);
     console.log('Routes registered');
 
-    // Setup Vite last to ensure all middleware is properly initialized
+    // Setup Vite with WebSocket configuration
     await setupVite(app, server);
     console.log('Vite setup complete');
 
@@ -76,15 +94,15 @@ async function startServer() {
       console.log('Starting cleanup process...');
 
       try {
-        // Close WebSocket connections first
-        await new Promise<void>((resolve) => {
-          wss.close(() => {
-            console.log('WebSocket server closed');
-            resolve();
+        if (wss) {
+          await new Promise<void>((resolve) => {
+            wss.close(() => {
+              console.log('WebSocket server closed');
+              resolve();
+            });
           });
-        });
+        }
 
-        // Then close the HTTP server
         await new Promise<void>((resolve) => {
           server.close(() => {
             console.log('HTTP server closed');
@@ -92,7 +110,6 @@ async function startServer() {
           });
         });
 
-        // Release the port
         await portManager.releaseAll();
         console.log('Ports released');
 
@@ -103,13 +120,11 @@ async function startServer() {
       process.exit(0);
     };
 
-    // Setup signal handlers with async cleanup
     process.on('SIGTERM', cleanup);
     process.on('SIGINT', cleanup);
 
   } catch (error) {
     console.error('Failed to start server:', error);
-    // Log more details about the error
     if (error instanceof Error) {
       console.error('Error details:', {
         message: error.message,
@@ -118,7 +133,6 @@ async function startServer() {
       });
     }
 
-    // Attempt final cleanup before exit
     await portManager.releaseAll();
     process.exit(1);
   }
