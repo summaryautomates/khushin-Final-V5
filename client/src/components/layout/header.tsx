@@ -32,8 +32,8 @@ export function Header() {
             <img 
               src="https://api.deepai.org/job-view-file/21c38ff0-a48f-49e4-91f0-3094fe3db926/outputs/output.jpg" 
               alt="KHUSH.IN Logo" 
-              className="h-16 md:h-20 w-auto transition-opacity duration-300 group-hover:opacity-80" 
-              style={{ maxWidth: '250px', objectFit: 'contain' }}
+              className="h-10 md:h-12 w-auto transition-opacity duration-300 group-hover:opacity-80" 
+              style={{ maxWidth: '160px', objectFit: 'contain', aspectRatio: 'auto' }}
             />
           </Link>
 
