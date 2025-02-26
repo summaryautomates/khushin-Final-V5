@@ -175,7 +175,7 @@ export default function Home() {
     >
       <div className="flex flex-col">
         {/* Hero Section */}
-        <section className="h-screen w-full flex items-center justify-center bg-black relative overflow-hidden">
+        <section className="relative min-h-[90vh] w-full flex items-center justify-center bg-black">
           <motion.div
             initial={{ scale: 1.1, opacity: 0 }}
             animate={{ scale: 1, opacity: 0.85 }}
@@ -189,48 +189,51 @@ export default function Home() {
                 alt="Hero background"
                 style={{ objectPosition: "center" }}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black"></div>
+              <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black"></div>
             </div>
           </motion.div>
 
           <motion.div
             style={{ opacity, scale }}
-            className="container relative z-10 px-4 sm:px-6"
+            className="container relative z-10 px-4 sm:px-6 py-16 md:py-24"
           >
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.5 }}
-              className="max-w-4xl mx-auto text-center"
+              className="max-w-4xl mx-auto"
             >
               <motion.h1
                 initial={{ letterSpacing: "0.2em", opacity: 0 }}
                 animate={{ letterSpacing: "0.1em", opacity: 1 }}
                 transition={{ duration: 1.5, delay: 0.8 }}
-                className="text-6xl sm:text-7xl md:text-8xl font-extralight mb-10 md:mb-12 tracking-wider text-center mx-auto leading-tight"
+                className="text-5xl sm:text-6xl md:text-7xl font-extralight mb-8 md:mb-10 tracking-wider text-center mx-auto leading-tight"
               >
-                <span className="block bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent">Make Your</span>
-                <span className="block mt-2 bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent">Loved One Happy!</span>
+                <span className="block bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent">
+                  Make Your
+                </span>
+                <span className="block mt-2 bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent">
+                  Loved One Happy!
+                </span>
               </motion.h1>
 
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.2, duration: 0.8 }}
-                className="mt-8 text-xl md:text-2xl leading-relaxed text-zinc-300 max-w-2xl mx-auto tracking-wide text-center font-light"
+                className="text-lg md:text-xl leading-relaxed text-zinc-300 max-w-2xl mx-auto tracking-wide text-center font-light"
               >
-                Exclusive luxury lighters - The perfect gift to light up their
-                smile.
+                Exclusive luxury lighters - The perfect gift to light up their smile.
               </motion.p>
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.5, duration: 0.8 }}
-                className="mt-16"
+                className="mt-12 md:mt-16"
               >
-                <div className="flex flex-col gap-4 items-center">
-                  <div className="flex flex-col gap-2 w-full max-w-md">
+                <div className="flex flex-col items-center gap-6">
+                  <div className="flex flex-col gap-3 w-full max-w-lg">
                     <div className="flex gap-2">
                       <Input
                         value={searchQuery}
@@ -240,7 +243,7 @@ export default function Home() {
                       />
                       <Button
                         variant="secondary"
-                        className={`rounded-full ${isListening ? "bg-red-500 hover:bg-red-600" : ""}`}
+                        className={`rounded-full min-w-[44px] ${isListening ? "bg-red-500 hover:bg-red-600" : ""}`}
                         onClick={handleVoiceSearch}
                         disabled={isListening}
                       >
@@ -252,7 +255,7 @@ export default function Home() {
                       </Button>
                       <Button
                         variant="secondary"
-                        className="rounded-full"
+                        className="rounded-full min-w-[44px]"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isProcessingImage}
                       >
@@ -271,7 +274,7 @@ export default function Home() {
                       />
                     </div>
                     {suggestions.length > 0 && (
-                      <div className="bg-background/80 backdrop-blur-sm border border-primary/20 rounded-lg p-2 space-y-1">
+                      <div className="bg-background/90 backdrop-blur-sm border border-primary/20 rounded-lg p-2 space-y-1">
                         <p className="text-sm text-muted-foreground px-2">
                           Did you mean:
                         </p>
@@ -292,29 +295,27 @@ export default function Home() {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.8 }}
-                    className="flex flex-wrap justify-center gap-4"
+                    className="flex flex-wrap justify-center gap-3"
                   >
                     <Button
                       variant="outline"
                       size="sm"
-                      className="gap-2 mt-3 rounded-full"
+                      className="gap-2 rounded-full"
                     >
                       <Star className="w-4 h-4" /> Premium Collection
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="gap-2 mt-3 rounded-full hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
-                      onClick={() =>
-                        (window.location.href = "/express-delivery")
-                      }
+                      className="gap-2 rounded-full hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
+                      onClick={() => setLocation("/express-delivery")}
                     >
                       <Clock className="w-4 h-4" /> Express Delivery
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="gap-2 mt-3 rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
+                      className="gap-2 rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
                       onClick={handleBookExperience}
                     >
                       <Calendar className="w-4 h-4" /> Book Experience
@@ -327,20 +328,20 @@ export default function Home() {
         </section>
 
         {/* Featured Products */}
-        <section className="py-32 bg-zinc-950">
+        <section className="py-24 md:py-32 bg-zinc-950">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="container"
+            className="container px-4 sm:px-6"
           >
             <motion.h2
               initial={{ letterSpacing: "0.3em", opacity: 0 }}
               whileInView={{ letterSpacing: "0.2em", opacity: 1 }}
               transition={{ duration: 1 }}
               viewport={{ once: true }}
-              className="text-4xl md:text-5xl font-extralight text-center mb-24 text-white tracking-wider"
+              className="text-3xl md:text-5xl font-extralight text-center mb-16 md:mb-24 text-white tracking-wider"
             >
               Featured Pieces
             </motion.h2>
@@ -357,11 +358,11 @@ export default function Home() {
               <ProductGrid products={products.slice(0, 4)} isLoading={false} />
             )}
 
-            <div className="mt-12 text-center">
+            <div className="mt-16 text-center">
               <Button
                 variant="outline"
                 size="lg"
-                className="rounded-full"
+                className="rounded-full px-8"
                 onClick={() => setLocation("/products")}
               >
                 See More Products
@@ -370,8 +371,8 @@ export default function Home() {
           </motion.div>
         </section>
 
-        {/* Replace Features Section with ExperienceBoxes */}
-        <section className="py-20 px-4">
+        {/* Experience Boxes Section */}
+        <section className="py-16 md:py-24 px-4 sm:px-6">
           <div className="max-w-7xl mx-auto">
             <ExperienceBoxes />
           </div>
