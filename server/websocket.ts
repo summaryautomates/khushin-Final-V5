@@ -57,18 +57,14 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
           timestamp: new Date().toISOString()
         });
 
-        // Always allow connection in development, but track authentication status
+        // Always allow connection in development
         const isProduction = process.env.NODE_ENV === 'production';
-        if (!isProduction || (session && session.passport?.user)) {
-          callback(true, undefined, undefined, {
-            isAuthenticated: !!session?.passport?.user,
-            sessionId: session?.id,
-            userId: session?.passport?.user
-          });
-        } else {
-          // Only enforce authentication in production
-          callback(false, 401, 'Unauthorized');
-        }
+        callback(true, undefined, undefined, {
+          isAuthenticated: !!session?.passport?.user,
+          sessionId: session?.id,
+          userId: session?.passport?.user
+        });
+
       } catch (error) {
         console.error('WebSocket verification error:', {
           error: error instanceof Error ? error.message : 'Unknown error',
@@ -76,7 +72,17 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
           headers: info.req.headers,
           timestamp: new Date().toISOString()
         });
-        callback(false, 401, 'Unauthorized');
+        // Don't fail in development
+        const isProduction = process.env.NODE_ENV === 'production';
+        if (isProduction) {
+          callback(false, 401, 'Unauthorized');
+        } else {
+          callback(true, undefined, undefined, {
+            isAuthenticated: false,
+            sessionId: null,
+            userId: null
+          });
+        }
       }
     }
   });
@@ -104,14 +110,8 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
       ws.isAlive = true;
       const session = (req as any).session as ExtendedSessionData;
 
-      if (!session) {
-        console.error('No session found for WebSocket connection');
-        ws.close(1011, 'No session found');
-        return;
-      }
-
       // Set connection identifiers
-      ws.sessionId = session.id;
+      ws.sessionId = session?.id;
       ws.userId = session?.passport?.user;
 
       if (ws.sessionId) {

@@ -9,6 +9,7 @@ import { portManager } from './port-manager';
 
 async function startServer() {
   const app = express();
+  const isProduction = process.env.NODE_ENV === 'production';
 
   // CORS configuration with enhanced WebSocket support
   app.use(cors({
@@ -36,7 +37,8 @@ async function startServer() {
     res.json({ 
       status: 'ok', 
       timestamp: Date.now(),
-      websocket: 'enabled'
+      websocket: 'enabled',
+      environment: process.env.NODE_ENV
     });
   });
 
@@ -85,8 +87,11 @@ async function startServer() {
     await setupVite(app, server);
     console.log('Vite setup complete');
 
+    // Bind to all interfaces in development for accessibility
     server.listen(port, '0.0.0.0', () => {
       console.log(`Server running at http://0.0.0.0:${port}`);
+      console.log(`Environment: ${process.env.NODE_ENV}`);
+      console.log(`WebSocket endpoint: ws://0.0.0.0:${port}/ws`);
     });
 
     // Enhanced cleanup handling

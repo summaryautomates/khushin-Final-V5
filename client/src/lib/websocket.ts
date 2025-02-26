@@ -56,6 +56,12 @@ export function useWebSocket() {
         });
         wsRef.current = null;
 
+        // Only attempt reconnect if it's not an intentional close
+        if (event.code !== 1000 && !window.navigator.onLine) {
+          console.log('Network is offline, will retry when online');
+          return;
+        }
+
         // Try to reconnect with exponential backoff, unless closed intentionally
         if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
           const timeout = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
@@ -66,19 +72,33 @@ export function useWebSocket() {
             connect();
           }, timeout);
         } else if (reconnectAttempts >= maxReconnectAttempts) {
-          toast({
-            title: "Connection Lost",
-            description: "Unable to maintain connection to server. Please refresh the page.",
-            variant: "destructive"
-          });
+          console.warn('Max reconnection attempts reached');
+          // Don't show toast for intentional closes
+          if (event.code !== 1000) {
+            toast({
+              title: "Connection Lost",
+              description: "Unable to maintain connection to server. Please refresh the page.",
+              variant: "destructive"
+            });
+          }
         }
       };
 
       ws.onerror = (error) => {
         console.error('WebSocket error:', error);
       };
+
+      // Listen for online/offline events
+      window.addEventListener('online', connect);
+      window.addEventListener('offline', () => {
+        if (wsRef.current) {
+          wsRef.current.close(1000, 'Network offline');
+        }
+      });
+
     } catch (error) {
       console.error('Error creating WebSocket:', error);
+      // Don't block app rendering on connection error
     }
   };
 
@@ -87,6 +107,9 @@ export function useWebSocket() {
 
     return () => {
       // Cleanup on unmount
+      window.removeEventListener('online', connect);
+      window.removeEventListener('offline', () => {});
+
       if (wsRef.current) {
         wsRef.current.close(1000, 'Component unmounted');
       }
