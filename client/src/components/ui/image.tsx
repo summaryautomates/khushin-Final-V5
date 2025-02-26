@@ -10,14 +10,18 @@ export function Image({
   src, 
   alt, 
   className, 
-  fallback = '/placeholders/product.svg',
+  fallback,
   type = 'product',
   ...props 
 }: ImageProps) {
   const [error, setError] = useState(false);
-  
+
+  // Default fallbacks based on type
+  const defaultFallback = type === 'banner' 
+    ? '/placeholders/banner.svg' 
+    : '/placeholders/product.svg';
+
   // Use either provided fallback or default based on type
-  const defaultFallback = type === 'banner' ? '/placeholders/banner.svg' : '/placeholders/product.svg';
   const fallbackSrc = fallback || defaultFallback;
 
   return (
@@ -26,11 +30,11 @@ export function Image({
       alt={alt}
       className={cn(
         'transition-opacity duration-300',
-        error ? 'opacity-50' : 'opacity-100',
+        error ? 'opacity-70' : 'opacity-100',
         className
       )}
       onError={() => {
-        console.log('Image failed to load, using fallback:', fallbackSrc);
+        console.log(`Image failed to load: ${src}, using fallback:`, fallbackSrc);
         setError(true);
       }}
       {...props}

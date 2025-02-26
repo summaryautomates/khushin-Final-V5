@@ -397,11 +397,12 @@ export default function Orders() {
                           {order.items.map((item, index) => (
                             <div key={index} className="flex justify-between items-center py-2 text-sm font-light">
                               <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-lg overflow-hidden">
+                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/5 flex items-center justify-center">
                                   <Image
-                                    src={`/products/${item.productId}.jpg`}
+                                    src={`/placeholders/product.svg`}
                                     alt={item.name}
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-contain"
+                                    type="product"
                                   />
                                 </div>
                                 <div className="flex flex-col">

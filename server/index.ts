@@ -9,10 +9,6 @@ import { portManager } from './port-manager';
 
 async function startServer() {
   const app = express();
-  app.use(express.json());
-
-  // Create HTTP server
-  const server = createServer(app);
 
   // CORS configuration with credentials support
   app.use(cors({
@@ -21,6 +17,17 @@ async function startServer() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
   }));
+
+  // Serve static files first, before any middleware
+  app.use('/placeholders', express.static('client/public/placeholders', {
+    maxAge: '1d',
+    immutable: true
+  }));
+
+  app.use(express.json());
+
+  // Create HTTP server
+  const server = createServer(app);
 
   // Health check endpoint
   app.get('/api/health', (_req, res) => {
