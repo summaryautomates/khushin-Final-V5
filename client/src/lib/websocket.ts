@@ -10,13 +10,15 @@ export function useWebSocket() {
 
   const connect = () => {
     try {
-      // Force connection to port 5000
+      // Use the current window location to build the WebSocket URL
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.hostname}:5000/ws`;
+      const host = window.location.host; // This includes hostname and port
+      const wsUrl = `${protocol}//${host}/ws`;
 
       console.log('Attempting WebSocket connection to:', wsUrl, {
         protocol,
         hostname: window.location.hostname,
+        port: window.location.port,
         cookies: document.cookie,
         timestamp: new Date().toISOString()
       });
@@ -88,17 +90,8 @@ export function useWebSocket() {
         console.error('WebSocket error:', error);
       };
 
-      // Listen for online/offline events
-      window.addEventListener('online', connect);
-      window.addEventListener('offline', () => {
-        if (wsRef.current) {
-          wsRef.current.close(1000, 'Network offline');
-        }
-      });
-
     } catch (error) {
       console.error('Error creating WebSocket:', error);
-      // Don't block app rendering on connection error
     }
   };
 
@@ -107,9 +100,6 @@ export function useWebSocket() {
 
     return () => {
       // Cleanup on unmount
-      window.removeEventListener('online', connect);
-      window.removeEventListener('offline', () => {});
-
       if (wsRef.current) {
         wsRef.current.close(1000, 'Component unmounted');
       }

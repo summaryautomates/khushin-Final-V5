@@ -2,6 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { createServer } from 'net';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 export class PortManager {
   private lockDir: string;
@@ -37,6 +41,28 @@ export class PortManager {
     return path.join(this.lockDir, `port-${port}.lock`);
   }
 
+  private async forceKillPort(port: number): Promise<void> {
+    try {
+      console.log(`Attempting to force kill processes on port ${port}...`);
+      if (process.platform === 'win32') {
+        const { stdout } = await execAsync(`netstat -ano | findstr :${port}`);
+        console.log(`Windows port check output:`, stdout);
+      } else {
+        const { stdout, stderr } = await execAsync(`lsof -i:${port}`);
+        console.log(`Port usage check output:`, stdout);
+        if (stderr) console.error(`Port usage check error:`, stderr);
+
+        await execAsync(`lsof -i:${port} -t | xargs kill -9`).catch(() => {
+          console.log('No processes to kill or kill command failed');
+        });
+      }
+      await this.sleep(2000); // Wait for processes to be killed
+      console.log(`Force kill completed for port ${port}`);
+    } catch (err) {
+      console.log(`No active process found on port ${port} or kill command failed:`, err);
+    }
+  }
+
   private cleanupAllLocks(): void {
     console.log('Performing complete lock cleanup...');
     if (fs.existsSync(this.lockDir)) {
@@ -59,48 +85,46 @@ export class PortManager {
   }
 
   async acquirePort(startPort: number, endPort: number): Promise<number> {
-    // If we already have a port, release it first
-    if (this.currentPort !== null) {
-      this.releasePort(this.currentPort);
+    console.log(`Process ID ${process.pid} attempting to acquire port ${startPort}`);
+
+    // Release all ports and clean locks before starting
+    await this.releaseAll();
+    await this.sleep(1000); // Wait for cleanup to complete
+
+    const lockPath = this.getLockPath(startPort);
+    console.log(`Checking for stale lock file: ${lockPath}`);
+    if (fs.existsSync(lockPath)) {
+      console.log(`Found stale lock file for port ${startPort}`);
     }
 
-    console.log(`Attempting to acquire port ${startPort}`);
+    // Force kill any process using the desired port
+    await this.forceKillPort(startPort);
 
-    // Clean all locks before starting
-    this.cleanupAllLocks();
-    await this.sleep(1000); // Wait for any cleanup to complete
-
-    // If startPort equals endPort, we're requesting a specific port
-    const isSpecificPort = startPort === endPort;
-
-    for (let port = startPort; port <= endPort; port++) {
-      console.log(`Testing port ${port}...`);
+    // Multiple retry attempts for specific port
+    const maxRetries = 3;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      console.log(`Attempt ${attempt} of ${maxRetries} to acquire port ${startPort}`);
 
       try {
-        // Test if port is actually available
-        await this.testPort(port);
-
-        // If we get here, the port is available
-        const lockPath = this.getLockPath(port);
+        await this.testPort(startPort);
         fs.writeFileSync(lockPath, process.pid.toString(), { flag: 'wx' });
         this.lockFiles.add(lockPath);
-        this.currentPort = port;
-
-        console.log(`Successfully acquired port ${port}`);
-        return port;
+        this.currentPort = startPort;
+        console.log(`Successfully acquired port ${startPort} on attempt ${attempt}`);
+        return startPort;
       } catch (err) {
-        console.log(`Port ${port} is not available: ${err instanceof Error ? err.message : 'Unknown error'}`);
-
-        // If we're requesting a specific port and it's not available, fail immediately
-        if (isSpecificPort) {
-          throw new Error(`Required port ${port} is not available`);
+        console.log(`Attempt ${attempt} failed:`, err);
+        if (attempt < maxRetries) {
+          console.log(`Waiting before retry...`);
+          await this.sleep(2000 * attempt); // Increasingly longer waits
+          await this.forceKillPort(startPort); // Try killing processes again
+        } else {
+          throw new Error(`Failed to acquire port ${startPort} after ${maxRetries} attempts`);
         }
-
-        continue;
       }
     }
 
-    throw new Error(`No available ports found between ${startPort} and ${endPort}`);
+    throw new Error(`Could not acquire required port ${startPort}`);
   }
 
   private testPort(port: number): Promise<void> {
@@ -141,10 +165,13 @@ export class PortManager {
     });
   }
 
-  releasePort(port: number): void {
+  async releasePort(port: number): Promise<void> {
     const lockPath = this.getLockPath(port);
     console.log(`Releasing port ${port}`);
     try {
+      // Force kill any process using the port
+      await this.forceKillPort(port);
+
       if (fs.existsSync(lockPath)) {
         fs.unlinkSync(lockPath);
         this.lockFiles.delete(lockPath);
@@ -158,8 +185,12 @@ export class PortManager {
     }
   }
 
-  releaseAll(): void {
+  async releaseAll(): Promise<void> {
     console.log('Releasing all ports...');
+    // Force kill the current port if it exists
+    if (this.currentPort !== null) {
+      await this.forceKillPort(this.currentPort);
+    }
     this.cleanupAllLocks();
     this.lockFiles.clear();
     this.currentPort = null;
@@ -167,5 +198,4 @@ export class PortManager {
   }
 }
 
-// Create singleton instance
 export const portManager = new PortManager();
