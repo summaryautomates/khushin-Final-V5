@@ -184,7 +184,7 @@ export default function Home() {
           >
             <div style={{ display: 'contents' }}>
               <img
-                src="https://media.istockphoto.com/id/2184096562/photo/metal-lighter-in-mans-hand.jpg?s=1024x1024&w=is&k=20&c=3BsoTV4_b1iHbHodnKauNgVmrZSffcTgDj0ketZct1w="
+                src="https://api.deepai.org/job-view-file/7971ae63-6c4a-439b-bcfe-afc3778a8c1b/outputs/output.jpg"
                 className="absolute inset-0 w-full h-full object-cover"
                 alt="Hero background"
                 style={{ objectPosition: "center" }}
