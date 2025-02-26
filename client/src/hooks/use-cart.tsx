@@ -186,11 +186,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       dispatch({ type: "SET_LOADING", isLoading: true });
       const response = await fetch('/api/cart', {
+        credentials: 'include',
         headers: {
           'Accept': 'application/json',
           'x-user-id': user.id.toString()
         }
       });
+
+      if (response.status === 401) {
+        dispatch({ type: "CLEAR_CART" });
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('Failed to fetch cart items');
@@ -206,6 +212,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         description: "Failed to load cart items. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      dispatch({ type: "SET_LOADING", isLoading: false });
     }
   };
 
@@ -214,11 +222,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "CLEAR_CART" });
       return;
     }
-    fetchCartItems();
+
+    const fetchWithErrorBoundary = async () => {
+      try {
+        await fetchCartItems();
+      } catch (error) {
+        console.error("Error in cart fetch effect:", error);
+      }
+    };
+
+    fetchWithErrorBoundary();
   }, [user]);
 
   const updateQuantity = async (productId: number, quantity: number) => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to update cart.",
+        variant: "destructive",
+      });
+      throw new Error("AUTH_REQUIRED");
+    }
 
     if (state.pendingUpdates.has(productId)) {
       return;
@@ -244,6 +268,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       const response = await fetch('/api/cart', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -255,14 +280,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
         })
       });
 
+      if (response.status === 401) {
+        throw new Error("AUTH_REQUIRED");
+      }
+
       if (!response.ok) {
-        throw new Error('Failed to update quantity');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update quantity');
       }
 
       await fetchCartItems();
     } catch (error: any) {
       console.error('Failed to update quantity:', error);
-      await fetchCartItems(); // Revert to server state
+      if (error.message === "AUTH_REQUIRED") {
+        throw error;
+      }
+      await fetchCartItems(); 
       toast({
         title: "Error",
         description: "Failed to update quantity. Please try again.",
@@ -280,7 +313,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         description: "Please log in to add items to cart.",
         variant: "destructive",
       });
-      return;
+      throw new Error("AUTH_REQUIRED");
     }
 
     if (state.pendingUpdates.has(product.id)) {
@@ -296,6 +329,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       const response = await fetch('/api/cart', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -309,9 +343,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         })
       });
 
+      if (response.status === 401) {
+        throw new Error("AUTH_REQUIRED");
+      }
+
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.details || 'Failed to add item to cart');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add item to cart');
       }
 
       await fetchCartItems();
@@ -321,7 +359,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       });
     } catch (error: any) {
       console.error('Failed to add item to cart:', error);
-      await fetchCartItems(); // Revert to server state
+      if (error.message === "AUTH_REQUIRED") {
+        throw error;
+      }
+      await fetchCartItems(); 
       toast({
         title: "Error",
         description: error.message || "Failed to add item to cart. Please try again.",
@@ -345,6 +386,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       const response = await fetch(`/api/cart/${productId}`, {
         method: 'DELETE',
+        credentials: 'include',
         headers: {
           'Accept': 'application/json',
           'x-user-id': user.id.toString()
@@ -358,7 +400,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       await fetchCartItems();
     } catch (error: any) {
       console.error('Failed to remove item from cart:', error);
-      await fetchCartItems(); // Revert to server state
+      await fetchCartItems(); 
       toast({
         title: "Error",
         description: "Failed to remove item from cart. Please try again.",
@@ -386,6 +428,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       const response = await fetch(`/api/cart/${productId}/gift`, {
         method: 'PATCH',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -404,7 +447,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       await fetchCartItems();
     } catch (error: any) {
       console.error('Failed to update gift status:', error);
-      await fetchCartItems(); // Revert to server state
+      await fetchCartItems(); 
       toast({
         title: "Error",
         description: "Failed to update gift status. Please try again.",
@@ -421,6 +464,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       const response = await fetch('/api/cart', {
         method: 'DELETE',
+        credentials: 'include',
         headers: {
           'Accept': 'application/json',
           'x-user-id': user.id.toString()
