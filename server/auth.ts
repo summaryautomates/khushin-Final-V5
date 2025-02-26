@@ -33,12 +33,22 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export async function setupAuth(app: Express) {
-  // Check for required environment variables
-  if (!process.env.SESSION_SECRET) {
-    throw new Error("SESSION_SECRET environment variable is required");
-  }
-
   try {
+    console.log('Starting auth setup...', {
+      timestamp: new Date().toISOString()
+    });
+
+    // Check for required environment variables
+    if (!process.env.SESSION_SECRET) {
+      throw new Error("SESSION_SECRET environment variable is required");
+    }
+
+    const isProduction = process.env.NODE_ENV === 'production';
+    console.log('Environment check complete:', {
+      isProduction,
+      timestamp: new Date().toISOString()
+    });
+
     // Initialize session store with optimized settings
     const sessionStore = new PostgresStore({
       pool,
@@ -47,7 +57,7 @@ export async function setupAuth(app: Express) {
       pruneSessionInterval: 60 * 15 // Prune expired sessions every 15 minutes
     });
 
-    const isProduction = process.env.NODE_ENV === 'production';
+    console.log('Session store initialized');
 
     // Initialize session middleware with enhanced security settings
     const sessionMiddleware = session({
@@ -72,12 +82,18 @@ export async function setupAuth(app: Express) {
     app.use(passport.initialize());
     app.use(passport.session());
 
+    console.log('Session and passport middleware configured');
+
     // Enhanced user serialization with error handling
     passport.serializeUser((user: Express.User, done) => {
       try {
         done(null, user.id);
       } catch (error) {
-        console.error('User serialization error:', error);
+        console.error('User serialization error:', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          timestamp: new Date().toISOString()
+        });
         done(error);
       }
     });
@@ -86,11 +102,16 @@ export async function setupAuth(app: Express) {
       try {
         const user = await storage.getUser(id);
         if (!user) {
+          console.log('User not found during deserialization:', { id });
           return done(null, false);
         }
         done(null, user);
       } catch (error) {
-        console.error('User deserialization error:', error);
+        console.error('User deserialization error:', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          timestamp: new Date().toISOString()
+        });
         done(error);
       }
     });
@@ -99,132 +120,192 @@ export async function setupAuth(app: Express) {
     passport.use(
       new LocalStrategy(async (username, password, done) => {
         try {
-          const user = await storage.getUserByUsername(username);
+          console.log('Attempting authentication:', { username });
 
+          const user = await storage.getUserByUsername(username);
           if (!user) {
+            console.log('Authentication failed: User not found', { username });
             return done(null, false, { message: "Invalid username or password" });
           }
 
           const passwordValid = await comparePasswords(password, user.password);
           if (!passwordValid) {
+            console.log('Authentication failed: Invalid password', { username });
             return done(null, false, { message: "Invalid username or password" });
           }
 
+          console.log('Authentication successful:', { username });
           return done(null, user);
         } catch (error) {
-          console.error('Authentication error:', error);
+          console.error('Authentication error:', {
+            username,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined,
+            timestamp: new Date().toISOString()
+          });
           return done(error);
         }
       })
     );
 
-    // Registration route with improved validation and error handling
-    app.post("/api/register", async (req, res) => {
-      try {
-        // Validate registration data
-        const validationResult = insertUserSchema.safeParse(req.body);
-        if (!validationResult.success) {
-          return res.status(400).json({
-            message: "Invalid registration data",
-            errors: validationResult.error.errors
-          });
-        }
+    // Set up auth routes
+    setupAuthRoutes(app);
 
-        // Check if username already exists
-        const existingUser = await storage.getUserByUsername(req.body.username);
-        if (existingUser) {
-          return res.status(400).json({
-            message: "Username already exists"
-          });
-        }
-
-        // Hash password and create user
-        const hashedPassword = await hashPassword(req.body.password);
-        const userData = {
-          ...req.body,
-          password: hashedPassword
-        };
-
-        const user = await storage.createUser(userData);
-
-        // Log in the user after successful registration
-        req.login(user, (loginErr) => {
-          if (loginErr) {
-            console.error('Login error after registration:', loginErr);
-            return res.status(500).json({
-              message: "Registration successful but failed to log in"
-            });
-          }
-
-          // Remove password from response
-          const { password: _, ...userWithoutPassword } = user;
-          res.status(201).json(userWithoutPassword);
-        });
-
-      } catch (error) {
-        console.error('Registration error:', error);
-        res.status(500).json({
-          message: "Failed to register user"
-        });
-      }
-    });
-
-    // Authentication routes with improved error handling
-    app.post("/api/login", (req, res, next) => {
-      passport.authenticate(
-        "local",
-        (err: Error | null, user: SelectUser | false, info: { message: string } | undefined) => {
-          if (err) {
-            console.error('Login error:', err);
-            return res.status(500).json({ message: "Internal server error" });
-          }
-          if (!user) {
-            return res.status(401).json({
-              message: info?.message || "Invalid username or password"
-            });
-          }
-          req.login(user, (loginErr) => {
-            if (loginErr) {
-              console.error('Session creation error:', loginErr);
-              return res.status(500).json({ message: "Failed to create session" });
-            }
-            const { password: _, ...userWithoutPassword } = user;
-            return res.json(userWithoutPassword);
-          });
-        }
-      )(req, res, next);
-    });
-
-    app.post("/api/logout", (req, res) => {
-      const sessionId = req.sessionID;
-      req.logout((err) => {
-        if (err) {
-          console.error('Logout error:', err);
-          return res.status(500).json({ message: "Error logging out" });
-        }
-        req.session.destroy((err) => {
-          if (err) {
-            console.error('Session destruction error:', err);
-            return res.status(500).json({ message: "Error destroying session" });
-          }
-          res.clearCookie('sid');
-          req.app.emit('user:logout', sessionId);
-          res.sendStatus(200);
-        });
-      });
-    });
-
-    app.get("/api/user", (req, res) => {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      const { password: _, ...userWithoutPassword } = req.user;
-      res.json(userWithoutPassword);
-    });
-
+    console.log('Auth setup completed successfully');
     return sessionMiddleware;
+
   } catch (error) {
-    console.error('Auth setup error:', error);
+    console.error('Auth setup error:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
     throw error;
   }
+}
+
+function setupAuthRoutes(app: Express) {
+  // Registration route with improved validation and error handling
+  app.post("/api/register", async (req, res) => {
+    try {
+      console.log('Processing registration request');
+
+      // Validate registration data
+      const validationResult = insertUserSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        console.log('Registration validation failed:', {
+          errors: validationResult.error.errors
+        });
+        return res.status(400).json({
+          message: "Invalid registration data",
+          errors: validationResult.error.errors
+        });
+      }
+
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(req.body.username);
+      if (existingUser) {
+        console.log('Registration failed: Username exists:', {
+          username: req.body.username
+        });
+        return res.status(400).json({
+          message: "Username already exists"
+        });
+      }
+
+      // Hash password and create user
+      const hashedPassword = await hashPassword(req.body.password);
+      const userData = {
+        ...req.body,
+        password: hashedPassword
+      };
+
+      const user = await storage.createUser(userData);
+      console.log('User created successfully:', { id: user.id });
+
+      // Log in the user after successful registration
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          console.error('Login error after registration:', {
+            error: loginErr.message,
+            stack: loginErr.stack,
+            timestamp: new Date().toISOString()
+          });
+          return res.status(500).json({
+            message: "Registration successful but failed to log in"
+          });
+        }
+
+        // Remove password from response
+        const { password: _, ...userWithoutPassword } = user;
+        res.status(201).json(userWithoutPassword);
+      });
+
+    } catch (error) {
+      console.error('Registration error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+      res.status(500).json({
+        message: "Failed to register user"
+      });
+    }
+  });
+
+  // Authentication routes with improved error handling
+  app.post("/api/login", (req, res, next) => {
+    console.log('Processing login request');
+
+    passport.authenticate(
+      "local",
+      (err: Error | null, user: SelectUser | false, info: { message: string } | undefined) => {
+        if (err) {
+          console.error('Login error:', {
+            error: err.message,
+            stack: err.stack,
+            timestamp: new Date().toISOString()
+          });
+          return res.status(500).json({ message: "Internal server error" });
+        }
+        if (!user) {
+          console.log('Login failed:', { message: info?.message });
+          return res.status(401).json({
+            message: info?.message || "Invalid username or password"
+          });
+        }
+        req.login(user, (loginErr) => {
+          if (loginErr) {
+            console.error('Session creation error:', {
+              error: loginErr.message,
+              stack: loginErr.stack,
+              timestamp: new Date().toISOString()
+            });
+            return res.status(500).json({ message: "Failed to create session" });
+          }
+          console.log('Login successful:', { userId: user.id });
+          const { password: _, ...userWithoutPassword } = user;
+          return res.json(userWithoutPassword);
+        });
+      }
+    )(req, res, next);
+  });
+
+  app.post("/api/logout", (req, res) => {
+    const sessionId = req.sessionID;
+    console.log('Processing logout request:', { sessionId });
+
+    req.logout((err) => {
+      if (err) {
+        console.error('Logout error:', {
+          error: err.message,
+          stack: err.stack,
+          timestamp: new Date().toISOString()
+        });
+        return res.status(500).json({ message: "Error logging out" });
+      }
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Session destruction error:', {
+            error: err.message,
+            stack: err.stack,
+            timestamp: new Date().toISOString()
+          });
+          return res.status(500).json({ message: "Error destroying session" });
+        }
+        res.clearCookie('sid');
+        req.app.emit('user:logout', sessionId);
+        console.log('Logout successful:', { sessionId });
+        res.sendStatus(200);
+      });
+    });
+  });
+
+  app.get("/api/user", (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    const { password: _, ...userWithoutPassword } = req.user;
+    res.json(userWithoutPassword);
+  });
 }

@@ -10,14 +10,15 @@ import { portManager } from './port-manager';
 async function startServer() {
   const app = express();
   const isProduction = process.env.NODE_ENV === 'production';
+  const REQUIRED_PORT = 5000;
 
   try {
     console.log('Starting server initialization...', {
       environment: process.env.NODE_ENV,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      requiredPort: REQUIRED_PORT
     });
 
-    // Enhanced CORS configuration for WebSocket support
     app.use(cors({
       origin: true,
       credentials: true,
@@ -29,7 +30,6 @@ async function startServer() {
 
     console.log('CORS configuration applied');
 
-    // Serve static files with enhanced caching and error handling
     app.use('/placeholders', express.static('client/public/placeholders', {
       maxAge: '1d',
       immutable: true,
@@ -43,10 +43,8 @@ async function startServer() {
 
     app.use(express.json());
 
-    // Create HTTP server
     const server = createServer(app);
 
-    // Health check endpoint with enhanced diagnostics
     app.get('/api/health', (_req, res) => {
       res.json({ 
         status: 'ok', 
@@ -61,7 +59,6 @@ async function startServer() {
     });
 
     console.log('Starting port management...');
-    // Release all ports with retries
     let releaseAttempts = 0;
     const maxReleaseAttempts = 3;
 
@@ -86,44 +83,32 @@ async function startServer() {
       }
     }
 
-    // Increased delay for proper port cleanup
     await new Promise(resolve => setTimeout(resolve, 3000));
 
-    const port = 5000;
-    console.log(`Attempting to acquire port ${port}...`);
+    console.log(`Testing availability of required port ${REQUIRED_PORT}...`);
 
-    // Port acquisition with retries
-    let acquireAttempts = 0;
-    const maxAcquireAttempts = 3;
-
-    while (acquireAttempts < maxAcquireAttempts) {
-      try {
-        await portManager.acquirePort(port, port);
-        console.log(`Successfully acquired port ${port}`);
-        break;
-      } catch (error) {
-        acquireAttempts++;
-        console.error('Port acquisition attempt failed:', {
-          attempt: acquireAttempts,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : undefined,
-          timestamp: new Date().toISOString()
-        });
-        if (acquireAttempts < maxAcquireAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 2000 * acquireAttempts));
-        } else {
-          throw new Error('Failed to acquire port after multiple attempts');
-        }
-      }
+    try {
+      await portManager.testPort(REQUIRED_PORT);
+      console.log(`Port ${REQUIRED_PORT} is available`);
+    } catch (error) {
+      console.error(`Port ${REQUIRED_PORT} is not available:`, {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+      throw new Error(`Required port ${REQUIRED_PORT} is not available. Please ensure no other processes are using this port.`);
     }
 
+    const port = await portManager.acquirePort(REQUIRED_PORT, REQUIRED_PORT);
+    if (port !== REQUIRED_PORT) {
+      throw new Error(`Failed to acquire required port ${REQUIRED_PORT}. Got port ${port} instead.`);
+    }
+    console.log(`Successfully acquired required port ${port}`);
+
     console.log('Setting up authentication...');
-    // Setup authentication with proper session configuration
     const sessionMiddleware = await setupAuth(app);
     console.log('Authentication setup complete');
 
     console.log('Setting up WebSocket...');
-    // Setup WebSocket with enhanced error handling
     let wsSetupRetries = 0;
     const maxRetries = 5;
     let wss;
@@ -154,16 +139,13 @@ async function startServer() {
     }
 
     console.log('Registering routes...');
-    // Setup routes after WebSocket is ready
     await registerRoutes(app);
     console.log('Routes registered');
 
     console.log('Setting up Vite...');
-    // Setup Vite with WebSocket configuration
     await setupVite(app, server);
     console.log('Vite setup complete');
 
-    // Bind to all interfaces with proper error handling
     await new Promise<void>((resolve, reject) => {
       server.listen(port, '0.0.0.0', () => {
         console.log('Server successfully started:', {
@@ -175,6 +157,7 @@ async function startServer() {
         resolve();
       }).on('error', (error) => {
         console.error('Server listen error:', {
+          port: REQUIRED_PORT,
           error: error.message,
           stack: error.stack,
           timestamp: new Date().toISOString()
@@ -183,7 +166,6 @@ async function startServer() {
       });
     });
 
-    // Enhanced cleanup handling
     const cleanup = async () => {
       console.log('Starting cleanup process...');
 
@@ -246,7 +228,6 @@ async function startServer() {
   }
 }
 
-// Add error handling for unhandled rejections
 process.on('unhandledRejection', (error) => {
   console.error('Unhandled rejection:', {
     error: error instanceof Error ? error.message : 'Unknown error',
