@@ -184,9 +184,9 @@ export default function Home() {
           >
             <div style={{ display: 'contents' }}>
               <img
-                src="https://api.deepai.org/job-view-file/7971ae63-6c4a-439b-bcfe-afc3778a8c1b/outputs/output.jpg"
+                src="https://api.deepai.org/job-view-file/21c38ff0-a48f-49e4-91f0-3094fe3db926/outputs/output.jpg"
                 className="absolute inset-0 w-full h-full object-cover"
-                alt="Hero background"
+                alt="KHUSH.IN logo"
                 style={{ objectPosition: "center" }}
               />
               <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black"></div>
