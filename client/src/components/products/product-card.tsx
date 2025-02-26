@@ -15,6 +15,12 @@ import { useCompare } from "@/hooks/use-compare";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
+const FALLBACK_IMAGES = [
+  "/product-placeholder.svg",
+  "/placeholder-product-2.svg",
+  "/placeholder-product-3.svg"
+];
+
 interface ProductCardProps {
   product: Product;
 }
@@ -28,13 +34,22 @@ export function ProductCard({ product }: ProductCardProps) {
   const [, setLocation] = useLocation();
 
   const getProductImage = () => {
-    if (Array.isArray(product.images) && product.images.length > 0) {
-      const image = product.images[0];
-      if (image && typeof image === 'string') {
-        return image;
-      }
+    if (!product?.images || !Array.isArray(product.images) || product.images.length === 0) {
+      return FALLBACK_IMAGES[0];
     }
-    return '/placeholder-product.svg';
+
+    const image = product.images[0];
+    if (!image || typeof image !== 'string') {
+      return FALLBACK_IMAGES[0];
+    }
+
+    // If the image path is relative, prepend the public path
+    if (image.startsWith('/')) {
+      return image;
+    }
+
+    // Try to use the image URL directly
+    return image;
   };
 
   const handleAddToCart = async () => {
@@ -111,7 +126,7 @@ export function ProductCard({ product }: ProductCardProps) {
     >
       <Card className="relative overflow-hidden border-none shadow-xl group bg-white/[0.02] backdrop-blur-sm hover:bg-white/[0.05] transition-all duration-700">
         <CardHeader className="p-0">
-          <motion.div 
+          <motion.div
             className="relative aspect-square overflow-hidden bg-zinc-900 rounded-t-xl"
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
@@ -143,7 +158,7 @@ export function ProductCard({ product }: ProductCardProps) {
               transition={{ duration: 0.7, ease: "easeOut" }}
               onError={() => setImageLoading(false)}
               onLoad={() => setImageLoading(false)}
-              style={{ 
+              style={{
                 opacity: imageLoading ? 0 : 1,
                 transition: 'opacity 0.3s ease-in-out'
               }}
@@ -220,7 +235,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <p className="text-sm leading-relaxed text-zinc-400 tracking-wide line-clamp-2">
               {product.description}
             </p>
-            <motion.div 
+            <motion.div
               className="mt-4 font-light text-lg text-white tracking-wider"
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.3 }}

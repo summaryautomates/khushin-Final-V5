@@ -8,6 +8,12 @@ import { Product } from "@shared/schema";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
+const FALLBACK_IMAGES = [
+  "/product-placeholder.svg",
+  "/placeholder-product-2.svg",
+  "/placeholder-product-3.svg"
+];
+
 interface CartItemProps {
   product: Product;
   quantity: number;
@@ -34,13 +40,22 @@ export function CartItem({
   const [localGiftMessage, setLocalGiftMessage] = useState(giftMessage);
 
   const getProductImage = () => {
-    if (Array.isArray(product.images) && product.images.length > 0) {
-      const image = product.images[0];
-      if (image && typeof image === 'string') {
-        return image;
-      }
+    if (!product?.images || !Array.isArray(product.images) || product.images.length === 0) {
+      return FALLBACK_IMAGES[0];
     }
-    return '/placeholder-product.svg';
+
+    const image = product.images[0];
+    if (!image || typeof image !== 'string') {
+      return FALLBACK_IMAGES[0];
+    }
+
+    // If the image path is relative, prepend the public path
+    if (image.startsWith('/')) {
+      return image;
+    }
+
+    // Try to use the image URL directly
+    return image;
   };
 
   const handleIncrement = () => {
