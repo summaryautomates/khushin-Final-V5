@@ -184,12 +184,12 @@ export default function Home() {
           >
             <div style={{ display: 'contents' }}>
               <img
-                src="https://api.deepai.org/job-view-file/7971ae63-6c4a-439b-bcfe-afc3778a8c1b/outputs/output.jpg"
+                src="/hero-background.jpg"
                 className="absolute inset-0 w-full h-full object-cover"
                 alt="Hero background"
                 style={{ objectPosition: "center" }}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black"></div>
+              <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/70 to-black"></div>
             </div>
           </motion.div>
 
