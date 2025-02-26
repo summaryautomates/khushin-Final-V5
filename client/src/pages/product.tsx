@@ -17,6 +17,7 @@ import { AuthSheet } from "@/components/auth/auth-sheet";
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { AdaptiveImage } from "@/components/ui/adaptive-image";
 
 const FALLBACK_IMAGES = [
   "/product-placeholder.svg",
@@ -32,9 +33,6 @@ export default function ProductPage() {
   const [selectedImage, setSelectedImage] = useState<number>(0);
   const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<"add-to-cart" | "buy-now" | null>(null);
-  const [imageLoadingStates, setImageLoadingStates] = useState<Record<number, boolean>>({});
-  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
-  const [fallbackImageIndex, setFallbackImageIndex] = useState(0);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [, setLocation] = useLocation();
 
@@ -42,8 +40,8 @@ export default function ProductPage() {
     queryKey: [`/api/products/${id}`],
     enabled: !!id,
     retry: 3,
-    staleTime: 300000, // Cache for 5 minutes
-    gcTime: 3600000, // Keep in cache for 1 hour
+    staleTime: 300000,
+    gcTime: 3600000,
     onError: (err) => {
       console.error('Product fetch error:', err);
       toast({
@@ -54,56 +52,11 @@ export default function ProductPage() {
     }
   });
 
-  const getValidProductImage = useMemo(() => (index: number): string => {
-    if (!product?.images || !Array.isArray(product.images)) {
-      return FALLBACK_IMAGES[fallbackImageIndex % FALLBACK_IMAGES.length];
+  const getValidProductImage = (index: number): string => {
+    if (!product?.images?.length || index < 0 || index >= product.images.length) {
+      return FALLBACK_IMAGES[0];
     }
-
-    if (index >= 0 && index < product.images.length && !imageErrors[index]) {
-      const image = product.images[index];
-      if (image && typeof image === 'string' && image.trim() !== '') {
-        return image;
-      }
-    }
-    return FALLBACK_IMAGES[fallbackImageIndex % FALLBACK_IMAGES.length];
-  }, [product, imageErrors, fallbackImageIndex]);
-
-  useEffect(() => {
-    if (product?.images && Array.isArray(product.images)) {
-      const initialLoadingStates = product.images.reduce((acc, _, index) => {
-        acc[index] = true;
-        return acc;
-      }, {} as Record<number, boolean>);
-
-      setImageLoadingStates(initialLoadingStates);
-      setImageErrors({});
-      setSelectedImage(0);
-      setFallbackImageIndex(0);
-
-      product.images.forEach((imageUrl, index) => {
-        if (typeof imageUrl === 'string' && imageUrl.trim() !== '') {
-          const img = new Image();
-          img.onload = () => handleImageLoad(index);
-          img.onerror = () => handleImageError(index);
-          img.src = imageUrl;
-        } else {
-          handleImageError(index);
-        }
-      });
-    }
-  }, [product]);
-
-  const handleImageError = (index: number) => {
-    console.error(`Image error at index ${index}:`, getValidProductImage(index));
-    setImageErrors(prev => ({ ...prev, [index]: true }));
-    setImageLoadingStates(prev => ({ ...prev, [index]: false }));
-    setFallbackImageIndex(prev => (prev + 1) % FALLBACK_IMAGES.length);
-  };
-
-  const handleImageLoad = (index: number) => {
-    console.log(`Image loaded successfully at index ${index}:`, getValidProductImage(index));
-    setImageLoadingStates(prev => ({ ...prev, [index]: false }));
-    setImageErrors(prev => ({ ...prev, [index]: false }));
+    return product.images[index] || FALLBACK_IMAGES[0];
   };
 
   const handleAddToCart = async () => {
@@ -203,11 +156,6 @@ export default function ProductPage() {
                   transition={{ duration: 0.5 }}
                   className="aspect-square overflow-hidden rounded-xl border bg-zinc-100 relative shadow-2xl"
                 >
-                  {imageLoadingStates[selectedImage] && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-background/50">
-                      <Loader2 className="h-8 w-8 animate-spin" />
-                    </div>
-                  )}
                   {product.category === "lighters" ? (
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="w-full h-full">
@@ -219,25 +167,17 @@ export default function ProductPage() {
                           <ModelViewer
                             modelUrl="/attached_assets/zippo_lighter.glb"
                             fallbackUrl={getValidProductImage(selectedImage)}
-                            onError={() => {
-                              console.error("Failed to load 3D model");
-                              handleImageError(selectedImage);
-                            }}
+                            onError={() => console.error("Failed to load 3D model")}
                           />
                         </Suspense>
                       </div>
                     </div>
                   ) : (
-                    <img
+                    <AdaptiveImage
                       src={getValidProductImage(selectedImage)}
                       alt={product.name}
                       className="h-full w-full object-contain p-4"
-                      onError={() => handleImageError(selectedImage)}
-                      onLoad={() => handleImageLoad(selectedImage)}
-                      style={{
-                        opacity: imageLoadingStates[selectedImage] ? 0 : 1,
-                        transition: 'opacity 0.3s ease-in-out'
-                      }}
+                      containerClassName="h-full w-full"
                     />
                   )}
 
@@ -259,33 +199,20 @@ export default function ProductPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="grid grid-cols-4 gap-4 mt-4"
                   >
-                    {images.map((_: string, i: number) => (
+                    {images.map((_, i) => (
                       <motion.div
                         key={i}
                         whileHover={{ scale: 1.05 }}
                         className={`aspect-square overflow-hidden rounded-lg border bg-zinc-100 cursor-pointer transition-all relative
-                          ${selectedImage === i ? 'ring-2 ring-gold shadow-lg' : ''}
-                          ${imageErrors[i] ? 'opacity-50' : ''}`}
-                        onClick={() => !imageErrors[i] && setSelectedImage(i)}
+                          ${selectedImage === i ? 'ring-2 ring-gold shadow-lg' : ''}`}
+                        onClick={() => setSelectedImage(i)}
                       >
-                        {imageLoadingStates[i] && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-background/50">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          </div>
-                        )}
-                        {product.category !== "lighters" && (
-                          <img
-                            src={getValidProductImage(i)}
-                            alt={`${product.name} view ${i + 1}`}
-                            className="h-full w-full object-contain p-2"
-                            onError={() => handleImageError(i)}
-                            onLoad={() => handleImageLoad(i)}
-                            style={{
-                              opacity: imageLoadingStates[i] ? 0 : 1,
-                              transition: 'opacity 0.3s ease-in-out'
-                            }}
-                          />
-                        )}
+                        <AdaptiveImage
+                          src={getValidProductImage(i)}
+                          alt={`${product.name} view ${i + 1}`}
+                          className="h-full w-full object-contain p-2"
+                          containerClassName="h-full w-full"
+                        />
                       </motion.div>
                     ))}
                   </motion.div>
