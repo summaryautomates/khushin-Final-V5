@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Star, Clock, Calendar, Mic, Camera, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect, useMemo, lazy, Suspense } from "react";
 import { useToast } from "@/hooks/use-toast";
-import React from 'react';
 
 // Lazy load Tesseract.js
 const initTesseract = async () => {
@@ -175,7 +174,7 @@ export default function Home() {
       }
     >
       <div className="flex flex-col">
-        {/* Enhanced Hero Section */}
+        {/* Hero Section */}
         <section className="h-screen w-full flex items-center justify-center bg-black relative overflow-hidden">
           <motion.div
             initial={{ scale: 1.1, opacity: 0 }}
@@ -190,170 +189,142 @@ export default function Home() {
                 alt="Hero background"
                 style={{ objectPosition: "center" }}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black"></div>
+              <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black"></div>
             </div>
           </motion.div>
 
-          {/* Hero Content */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.8 }}
-            className="relative z-10 text-center px-4 max-w-4xl mx-auto"
+            style={{ opacity, scale }}
+            className="container relative z-10 px-4 sm:px-6"
           >
-            <motion.h1
-              className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.7, duration: 0.8 }}
-            >
-              Welcome to <span className="text-primary">KHUSH.IN</span>
-            </motion.h1>
-            <motion.p
-              className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl mx-auto"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.9, duration: 0.8 }}
-            >
-              Experience our exclusive collection of premium products with unmatched quality and design.
-            </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.1, duration: 0.8 }}
-              className="flex flex-col sm:flex-row justify-center gap-4"
+              transition={{ duration: 1, delay: 0.5 }}
+              className="max-w-4xl mx-auto text-center"
             >
-              <a href="/products" className="bg-primary hover:bg-primary/90 text-white font-medium py-3 px-8 rounded-lg transition-all duration-300 shadow-glow">
-                Explore Products
-              </a>
-              <a href="/auth-page" className="bg-transparent border border-white/30 backdrop-blur-sm hover:bg-white/10 text-white font-medium py-3 px-8 rounded-lg transition-all duration-300">
-                Sign In
-              </a>
-            </motion.div>
-          </motion.div>
+              <motion.h1
+                initial={{ letterSpacing: "0.2em", opacity: 0 }}
+                animate={{ letterSpacing: "0.1em", opacity: 1 }}
+                transition={{ duration: 1.5, delay: 0.8 }}
+                className="text-6xl sm:text-7xl md:text-8xl font-extralight mb-10 md:mb-12 tracking-wider text-center mx-auto leading-tight"
+              >
+                <span className="block bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent">Make Your</span>
+                <span className="block mt-2 bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent">Loved One Happy!</span>
+              </motion.h1>
 
-          {/* Scroll Indicator */}
-          <motion.div
-            className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
-            animate={{ y: [0, 10, 0] }}
-            transition={{ repeat: Infinity, duration: 1.5 }}
-          >
-            <svg className="w-6 h-10 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-          </motion.div>
-        </section>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.2, duration: 0.8 }}
+                className="mt-8 text-xl md:text-2xl leading-relaxed text-zinc-300 max-w-2xl mx-auto tracking-wide text-center font-light"
+              >
+                Exclusive luxury lighters - The perfect gift to light up their
+                smile.
+              </motion.p>
 
-        {/* Experience Boxes Section with Enhanced Styling */}
-        <section className="py-20 px-4 bg-gradient-to-b from-background to-background/90">
-          <div className="max-w-7xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-              className="text-center mb-16"
-            >
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Discover the Experience</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Our curated selection provides an unparalleled luxury experience
-              </p>
-            </motion.div>
-            <ExperienceBoxes />
-          </div>
-        </section>
-
-        {/* Testimonials Section */}
-        <section className="py-20 px-4 bg-accent/5">
-          <div className="max-w-7xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-              className="text-center mb-16"
-            >
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">What Our Customers Say</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Hear from our satisfied customers about their experiences
-              </p>
-            </motion.div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                {
-                  name: "Aisha K.",
-                  quote: "The quality of products I received exceeded my expectations. The attention to detail is remarkable.",
-                  role: "Designer"
-                },
-                {
-                  name: "Rahul S.",
-                  quote: "Fast delivery and impeccable customer service. I'll definitely be shopping here again!",
-                  role: "Entrepreneur"
-                },
-                {
-                  name: "Priya M.",
-                  quote: "The customization options are fantastic. I got exactly what I was looking for.",
-                  role: "Artist"
-                }
-              ].map((testimonial, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: index * 0.2 }}
-                  viewport={{ once: true }}
-                  className="bg-card p-6 rounded-xl shadow-card hover:shadow-hover transition-all duration-300"
-                >
-                  <div className="flex flex-col h-full">
-                    <div className="mb-4 text-primary">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9.82 16H3L7.18 8H12L9.82 16ZM19.82 16H13L17.18 8H22L19.82 16Z" fill="currentColor"/>
-                      </svg>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.5, duration: 0.8 }}
+                className="mt-16"
+              >
+                <div className="flex flex-col gap-4 items-center">
+                  <div className="flex flex-col gap-2 w-full max-w-md">
+                    <div className="flex gap-2">
+                      <Input
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search our luxury collection..."
+                        className="border-primary/20 rounded-full flex-grow"
+                      />
+                      <Button
+                        variant="secondary"
+                        className={`rounded-full ${isListening ? "bg-red-500 hover:bg-red-600" : ""}`}
+                        onClick={handleVoiceSearch}
+                        disabled={isListening}
+                      >
+                        {isListening ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Mic className="w-4 h-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        className="rounded-full"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isProcessingImage}
+                      >
+                        {isProcessingImage ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Camera className="w-4 h-4" />
+                        )}
+                      </Button>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleImageSearch}
+                      />
                     </div>
-                    <p className="text-foreground mb-4 flex-grow">{testimonial.quote}</p>
-                    <div className="mt-auto">
-                      <p className="font-semibold">{testimonial.name}</p>
-                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                    </div>
+                    {suggestions.length > 0 && (
+                      <div className="bg-background/80 backdrop-blur-sm border border-primary/20 rounded-lg p-2 space-y-1">
+                        <p className="text-sm text-muted-foreground px-2">
+                          Did you mean:
+                        </p>
+                        {suggestions.map((suggestion, index) => (
+                          <Button
+                            key={index}
+                            variant="ghost"
+                            className="w-full justify-start text-left"
+                            onClick={() => setSearchQuery(suggestion)}
+                          >
+                            {suggestion}
+                          </Button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Newsletter Section */}
-        <section className="py-20 px-4 bg-primary/5">
-          <div className="max-w-3xl mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-            >
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Stay Updated</h2>
-              <p className="text-lg text-muted-foreground mb-8">
-                Subscribe to our newsletter for exclusive offers and updates
-              </p>
-
-              <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                />
-                <button
-                  type="submit"
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium h-10 px-4 py-2 rounded-md transition-colors"
-                >
-                  Subscribe
-                </button>
-              </form>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.8 }}
+                    className="flex flex-wrap justify-center gap-4"
+                  >
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 mt-3 rounded-full"
+                    >
+                      <Star className="w-4 h-4" /> Premium Collection
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 mt-3 rounded-full hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
+                      onClick={() =>
+                        (window.location.href = "/express-delivery")
+                      }
+                    >
+                      <Clock className="w-4 h-4" /> Express Delivery
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 mt-3 rounded-full hover:bg-primary hover:text-primary-foreground transition-colors"
+                      onClick={handleBookExperience}
+                    >
+                      <Calendar className="w-4 h-4" /> Book Experience
+                    </Button>
+                  </motion.div>
+                </div>
+              </motion.div>
             </motion.div>
-          </div>
+          </motion.div>
         </section>
-
 
         {/* Featured Products */}
         <section className="py-32 bg-zinc-950">
@@ -397,6 +368,13 @@ export default function Home() {
               </Button>
             </div>
           </motion.div>
+        </section>
+
+        {/* Replace Features Section with ExperienceBoxes */}
+        <section className="py-20 px-4">
+          <div className="max-w-7xl mx-auto">
+            <ExperienceBoxes />
+          </div>
         </section>
       </div>
     </Suspense>
