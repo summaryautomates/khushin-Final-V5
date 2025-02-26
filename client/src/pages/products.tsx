@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ProductGrid } from "@/components/products/product-grid";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { 
+import {
   Filter,
   SortAsc,
   SortDesc,
@@ -22,6 +22,7 @@ import {
   Save
 } from "lucide-react";
 import type { Product } from "@shared/schema";
+import { useLocation } from "wouter";
 
 interface SearchHistory {
   term: string;
@@ -31,6 +32,7 @@ interface SearchHistory {
 }
 
 export default function Products() {
+  const [location] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
   const [category, setCategory] = useState<string>("all");
@@ -39,11 +41,19 @@ export default function Products() {
   const [savedSearches, setSavedSearches] = useState<SearchHistory[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
+  // Parse category from URL if present
+  useEffect(() => {
+    const urlCategory = location.match(/\/products\/category\/(.+)/)?.[1];
+    if (urlCategory) {
+      setCategory(urlCategory);
+    }
+  }, [location]);
+
   const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
 
-  const categories = products 
+  const categories = products
     ? ["all", ...Array.from(new Set(products.map(p => p.category)))]
     : ["all"];
 
@@ -76,14 +86,14 @@ export default function Products() {
   }, [searchTerm, category, priceRange]);
 
   const filteredProducts = products?.filter(product => {
-    const matchesSearch = 
+    const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesCategory = category === "all" || product.category === category;
+    const matchesCategory = category === "all" || product.category.toLowerCase() === category.toLowerCase();
 
-    const matchesPrice = 
-      product.price >= priceRange[0] && 
+    const matchesPrice =
+      product.price >= priceRange[0] &&
       product.price <= priceRange[1];
 
     return matchesSearch && matchesCategory && matchesPrice;
@@ -124,8 +134,8 @@ export default function Products() {
         <div className="flex items-center justify-between">
           <h1 className="text-4xl font-extralight tracking-wider">Our Collection</h1>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="icon"
               onClick={() => setShowHistory(!showHistory)}
               className="relative"
@@ -135,8 +145,8 @@ export default function Products() {
                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
               )}
             </Button>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={resetFilters}
               className="gap-2"
             >
@@ -212,8 +222,8 @@ export default function Products() {
                 </Select>
               </div>
 
-              <Button 
-                className="w-full gap-2" 
+              <Button
+                className="w-full gap-2"
                 variant="outline"
                 onClick={saveSearch}
               >
