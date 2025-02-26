@@ -34,7 +34,7 @@ const Refueling = () => {
             initial={{ letterSpacing: "0.2em", opacity: 0 }}
             animate={{ letterSpacing: "0.1em", opacity: 1 }}
             transition={{ duration: 1.5, delay: 0.3 }}
-            className="text-5xl md:text-6xl font-extralight mb-6 tracking-wider text-center hover:text-primary transition-colors cursor-pointer"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extralight mb-4 md:mb-6 tracking-wider text-center hover:text-primary transition-colors cursor-pointer px-4"
           >
             <Link href="/refueling">Refueling Solutions</Link>
           </motion.h1>

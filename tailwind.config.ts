@@ -5,6 +5,7 @@ export default {
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     screens: {
+      '2xs': '320px',
       'xs': '360px',
       'sm': '640px',
       'md': '768px',
