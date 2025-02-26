@@ -58,9 +58,11 @@ export default function Products() {
 
   const products = allProducts;
 
-  // Get unique categories from all products
+  // Get unique categories from all products, excluding refueling
   const categories = products
-    ? ["all", ...Array.from(new Set(products.map(p => p.category))).sort()]
+    ? ["all", ...Array.from(new Set(products.map(p => p.category)))
+        .filter(cat => cat !== 'refueling')
+        .sort()]
     : ["all"];
 
   const saveSearch = () => {
