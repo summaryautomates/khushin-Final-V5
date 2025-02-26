@@ -24,31 +24,19 @@ function useLoginMutation() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      try {
-        const res = await fetch("/api/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: 'include',
-          body: JSON.stringify(credentials),
-        });
-
-        if (!res.ok) {
-          const error = await res.json();
-          throw new Error(error.message || "Login failed");
-        }
-
-        return res.json();
-      } catch (error) {
-        console.error('Login error:', error);
-        throw error;
-      }
-    },
-    onSuccess: (user) => {
-      queryClient.setQueryData(["/api/user"], user);
-      toast({
-        title: "Welcome back!",
-        description: "Successfully logged in",
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        body: JSON.stringify(credentials),
       });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Login failed");
+      }
+
+      return res.json();
     },
     onError: (error: Error) => {
       console.error('Login mutation error:', error);
@@ -58,6 +46,13 @@ function useLoginMutation() {
         variant: "destructive",
       });
     },
+    onSuccess: (user) => {
+      queryClient.setQueryData(["/api/user"], user);
+      toast({
+        title: "Welcome back!",
+        description: "Successfully logged in",
+      });
+    },
   });
 }
 
@@ -65,31 +60,19 @@ function useRegisterMutation() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async (userData: InsertUser) => {
-      try {
-        const res = await fetch("/api/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: 'include',
-          body: JSON.stringify(userData),
-        });
-
-        if (!res.ok) {
-          const error = await res.json();
-          throw new Error(error.message || "Registration failed");
-        }
-
-        return res.json();
-      } catch (error) {
-        console.error('Registration error:', error);
-        throw error;
-      }
-    },
-    onSuccess: (user) => {
-      queryClient.setQueryData(["/api/user"], user);
-      toast({
-        title: "Welcome!",
-        description: "Account created successfully",
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        body: JSON.stringify(userData),
       });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Registration failed");
+      }
+
+      return res.json();
     },
     onError: (error: Error) => {
       console.error('Registration mutation error:', error);
@@ -99,6 +82,13 @@ function useRegisterMutation() {
         variant: "destructive",
       });
     },
+    onSuccess: (user) => {
+      queryClient.setQueryData(["/api/user"], user);
+      toast({
+        title: "Welcome!",
+        description: "Account created successfully",
+      });
+    },
   });
 }
 
@@ -106,27 +96,14 @@ function useLogoutMutation() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async () => {
-      try {
-        const res = await fetch("/api/logout", { 
-          method: "POST",
-          credentials: 'include'
-        });
-
-        if (!res.ok) {
-          throw new Error("Logout failed");
-        }
-      } catch (error) {
-        console.error('Logout error:', error);
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.setQueryData(["/api/user"], null);
-      queryClient.clear();
-      toast({
-        title: "Logged out",
-        description: "Successfully logged out",
+      const res = await fetch("/api/logout", { 
+        method: "POST",
+        credentials: 'include'
       });
+
+      if (!res.ok) {
+        throw new Error("Logout failed");
+      }
     },
     onError: (error: Error) => {
       console.error('Logout mutation error:', error);
@@ -134,6 +111,14 @@ function useLogoutMutation() {
         title: "Logout failed",
         description: error.message,
         variant: "destructive",
+      });
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(["/api/user"], null);
+      queryClient.clear();
+      toast({
+        title: "Logged out",
+        description: "Successfully logged out",
       });
     },
   });
@@ -162,8 +147,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    retry: false, // Don't retry on failure
-    refetchOnMount: false, // Don't refetch on mount
+    retry: 1, // Only retry once
+    retryDelay: 1000, // Wait 1 second before retrying
   });
 
   // Add error logging effect

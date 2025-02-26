@@ -7,9 +7,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
-import { useToast } from "@/hooks/use-toast";
-import { z } from "zod";
 import { UserCircle2 } from "lucide-react";
+import { z } from "zod";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -35,7 +34,6 @@ interface AuthSheetProps {
 
 export function AuthSheet({ open, onOpenChange, onSuccess, showTrigger = true }: AuthSheetProps) {
   const { loginMutation, registerMutation } = useAuth();
-  const { toast } = useToast();
 
   const loginForm = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
@@ -63,7 +61,7 @@ export function AuthSheet({ open, onOpenChange, onSuccess, showTrigger = true }:
       onSuccess?.();
       onOpenChange?.(false);
     } catch (error) {
-      // Error is already handled by the mutation
+      // Error is handled by the mutation
     }
   };
 
@@ -73,7 +71,7 @@ export function AuthSheet({ open, onOpenChange, onSuccess, showTrigger = true }:
       onSuccess?.();
       onOpenChange?.(false);
     } catch (error) {
-      // Error is already handled by the mutation
+      // Error is handled by the mutation
     }
   };
 
@@ -129,7 +127,11 @@ export function AuthSheet({ open, onOpenChange, onSuccess, showTrigger = true }:
                     </p>
                   )}
                 </div>
-                <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={loginMutation.isPending}
+                >
                   {loginMutation.isPending ? "Logging in..." : "Login"}
                 </Button>
               </form>
@@ -210,7 +212,11 @@ export function AuthSheet({ open, onOpenChange, onSuccess, showTrigger = true }:
                     </p>
                   )}
                 </div>
-                <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={registerMutation.isPending}
+                >
                   {registerMutation.isPending ? "Creating account..." : "Create Account"}
                 </Button>
               </form>
