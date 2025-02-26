@@ -14,6 +14,7 @@ import { useCart } from "@/hooks/use-cart";
 import { useCompare } from "@/hooks/use-compare";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { AdaptiveImage } from "@/components/ui/adaptive-image";
 
 const FALLBACK_IMAGES = [
   "/product-placeholder.svg",
@@ -30,37 +31,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const { addItem: addToCompare, removeItem: removeFromCompare, isInCompare } = useCompare();
   const { toast } = useToast();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const [imageLoading, setImageLoading] = useState(true);
-  const [imageError, setImageError] = useState(false);
-  const [fallbackIndex, setFallbackIndex] = useState(0);
   const [, setLocation] = useLocation();
-
-  const getProductImage = () => {
-    // Check if product has valid images array
-    if (!imageError && product.images && Array.isArray(product.images) && product.images.length > 0) {
-      const image = product.images[0];
-      if (image && typeof image === 'string' && image.trim() !== '') {
-        return image;
-      }
-    }
-    // If no valid image found or error occurred, use fallback
-    return FALLBACK_IMAGES[fallbackIndex % FALLBACK_IMAGES.length];
-  };
-
-  const handleImageError = () => {
-    console.error('Image failed to load, trying fallback:', getProductImage());
-    setImageError(true);
-    setImageLoading(false);
-
-    // Try next fallback image
-    setFallbackIndex(prev => (prev + 1) % FALLBACK_IMAGES.length);
-  };
-
-  const handleImageLoad = () => {
-    console.log('Image loaded successfully:', getProductImage());
-    setImageLoading(false);
-    setImageError(false);
-  };
 
   const handleAddToCart = async () => {
     setIsAddingToCart(true);
@@ -154,24 +125,11 @@ export function ProductCard({ product }: ProductCardProps) {
               </Badge>
             </motion.div>
 
-            {imageLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            )}
-            <motion.img
-              src={getProductImage()}
+            <AdaptiveImage
+              src={product.images?.[0] || ""}
               alt={product.name}
               className="h-full w-full object-cover opacity-90 transition-opacity duration-700 group-hover:opacity-100"
-              initial={{ scale: 1.1 }}
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.7, ease: "easeOut" }}
-              onError={handleImageError}
-              onLoad={handleImageLoad}
-              style={{
-                opacity: imageLoading ? 0 : 1,
-                transition: 'opacity 0.3s ease-in-out'
-              }}
+              containerClassName="h-full w-full"
             />
             <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <Link href={`/product/${product.id}`}>

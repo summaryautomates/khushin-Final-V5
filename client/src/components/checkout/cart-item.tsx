@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Product } from "@shared/schema";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AdaptiveImage } from "@/components/ui/adaptive-image";
 
 // Simplified to use a single reliable fallback image
 const FALLBACK_IMAGE = "/placeholder-product.svg";
@@ -32,27 +33,8 @@ export function CartItem({
   onUpdateGiftStatus,
   isUpdating = false 
 }: CartItemProps) {
-  const [imageLoading, setImageLoading] = useState(true);
-  const [imageFailed, setImageFailed] = useState(false);
   const [showGiftMessage, setShowGiftMessage] = useState(false);
   const [localGiftMessage, setLocalGiftMessage] = useState(giftMessage);
-
-  const getProductImage = () => {
-    if (!imageFailed && Array.isArray(product.images) && product.images.length > 0) {
-      const image = product.images[0];
-      // Validate the image URL before returning
-      if (image && typeof image === 'string' && image.startsWith('http')) {
-        return image;
-      }
-    }
-    return FALLBACK_IMAGE;
-  };
-
-  const handleImageError = () => {
-    console.log('Image failed to load, using fallback:', FALLBACK_IMAGE);
-    setImageFailed(true);
-    setImageLoading(false);
-  };
 
   const handleIncrement = () => {
     if (quantity < 10 && !isUpdating) {
@@ -90,21 +72,11 @@ export function CartItem({
       <div className="flex items-start gap-4">
         {/* Product Image with better error handling */}
         <div className="w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-lg overflow-hidden relative">
-          {imageLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/50">
-              <Loader2 className="h-4 w-4 animate-spin" />
-            </div>
-          )}
-          <img 
-            src={getProductImage()}
+          <AdaptiveImage
+            src={product.images?.[0] || ""}
             alt={product.name}
             className="w-full h-full object-cover"
-            onError={handleImageError}
-            onLoad={() => setImageLoading(false)}
-            style={{ 
-              opacity: imageLoading ? 0 : 1,
-              transition: 'opacity 0.3s ease-in-out'
-            }}
+            containerClassName="h-full w-full"
           />
         </div>
 
