@@ -217,4 +217,27 @@ export async function registerRoutes(app: Express) {
       });
     }
   });
+
+  // Add orders route
+  app.get("/api/orders", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const userId = req.user?.id?.toString();
+      if (!userId) {
+        return res.status(401).json({ message: "Invalid user session" });
+      }
+
+      console.log("Fetching orders for user:", userId);
+      const orders = await storage.getOrders(userId);
+      console.log("Orders fetched successfully:", orders);
+
+      res.json(orders);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
 }

@@ -15,6 +15,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Image } from "@/components/ui/image";
+import { Link } from "wouter";
 
 type OrderStatus = 'pending' | 'completed' | 'failed';
 
@@ -311,8 +312,13 @@ function ReturnRequests({ orderRef }: { orderRef: string }) {
 }
 
 export default function Orders() {
-  const { data: orders, isLoading } = useQuery<Order[]>({
+  const { data: orders, isLoading, error } = useQuery<Order[]>({
     queryKey: ['/api/orders'],
+    retry: 3,
+    refetchOnWindowFocus: false,
+    onError: (error) => {
+      console.error('Failed to fetch orders:', error);
+    }
   });
 
   if (isLoading) {
@@ -321,6 +327,32 @@ export default function Orders() {
         <div className="flex justify-center items-center h-[60vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container py-20 min-h-screen bg-black/[0.96] backdrop-blur-sm">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="max-w-lg mx-auto border-none bg-white/[0.02] backdrop-blur-sm">
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-2xl font-light tracking-wide text-center">Error Loading Orders</CardTitle>
+              <p className="text-muted-foreground font-light text-center">
+                There was an error loading your orders. Please try again later.
+              </p>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <Button variant="outline" className="border-white/20" onClick={() => window.location.reload()}>
+                Retry
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     );
   }
@@ -341,9 +373,11 @@ export default function Orders() {
               </p>
             </CardHeader>
             <CardContent className="flex justify-center">
-              <Button variant="outline" className="border-white/20">
-                Start Shopping
-              </Button>
+              <Link href="/products">
+                <Button variant="outline" className="border-white/20">
+                  Start Shopping
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </motion.div>
