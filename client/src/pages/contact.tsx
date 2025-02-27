@@ -266,16 +266,18 @@ export default function Contact() {
           </motion.div>
         </div>
         
-        {/* Map or Image - Optional */}
+        {/* Map Image */}
         <motion.div 
-          className="mt-16 rounded-xl overflow-hidden h-64 border border-primary/20"
+          className="mt-16 rounded-xl overflow-hidden h-96 border border-primary/20"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.5 }}
         >
-          <div className="w-full h-full bg-gradient-to-r from-primary/20 to-primary/5 flex items-center justify-center">
-            <p className="text-muted-foreground">Interactive map will be displayed here</p>
-          </div>
+          <img 
+            src="https://i.imghippo.com/files/Jwn6316QRQ.jpg" 
+            alt="Contact location map" 
+            className="w-full h-full object-cover"
+          />
         </motion.div>
       </motion.div>
     </div>
