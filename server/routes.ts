@@ -3,12 +3,7 @@ import { storage } from "./storage";
 import { insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
 import { randomBytes } from "crypto";
-import Anthropic from '@anthropic-ai/sdk';
-
-// the newest Anthropic model is "claude-3-5-sonnet-20241022" which was released October 22, 2024
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+import fetch from 'node-fetch';
 
 export async function registerRoutes(app: Express) {
   app.get("/api/products", async (_req, res) => {
@@ -134,118 +129,6 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  app.patch("/api/cart/:productId/gift", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
-      const userId = req.user?.id?.toString();
-      if (!userId) {
-        return res.status(401).json({ message: "Invalid user session" });
-      }
-
-      const productId = parseInt(req.params.productId, 10);
-      if (isNaN(productId)) {
-        return res.status(400).json({ message: "Invalid product ID" });
-      }
-
-      const giftSchema = z.object({
-        isGift: z.boolean(),
-        giftMessage: z.string().optional()
-      });
-
-      const validationResult = giftSchema.safeParse(req.body);
-      if (!validationResult.success) {
-        return res.status(400).json({
-          message: "Invalid request data",
-          errors: validationResult.error.errors
-        });
-      }
-
-      const { isGift, giftMessage } = validationResult.data;
-      await storage.updateCartItemGiftStatus(userId, productId, isGift, giftMessage);
-
-      res.json({ message: "Gift status updated successfully" });
-    } catch (error) {
-      console.error('Error updating gift status:', error);
-      res.status(500).json({ message: "Failed to update gift status" });
-    }
-  });
-
-  app.post("/api/checkout", async (req, res) => {
-    try {
-      console.log("Checkout request received:", { body: req.body });
-
-      if (!req.isAuthenticated()) {
-        console.log("Unauthorized checkout attempt");
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
-      const userId = req.user?.id?.toString();
-      if (!userId) {
-        console.log("Invalid user session detected");
-        return res.status(401).json({ message: "Invalid user session" });
-      }
-
-      const orderData = {
-        ...req.body,
-        userId,
-        orderRef: `ORD${randomBytes(4).toString('hex').toUpperCase()}`
-      };
-
-      console.log("Validating order data:", orderData);
-      const validationResult = insertOrderSchema.safeParse(orderData);
-
-      if (!validationResult.success) {
-        console.error("Order validation failed:", validationResult.error);
-        return res.status(400).json({
-          message: "Invalid request data",
-          errors: validationResult.error.errors
-        });
-      }
-
-      console.log("Creating order in database");
-      const order = await storage.createOrder(validationResult.data);
-      console.log("Order created successfully:", order);
-
-      console.log("Clearing user cart");
-      await storage.clearCart(userId);
-
-      res.json({
-        message: "Order created successfully",
-        redirectUrl: `/checkout/payment?ref=${order.orderRef}`
-      });
-    } catch (error) {
-      console.error('Checkout error:', error);
-      res.status(500).json({
-        message: error instanceof Error ? error.message : "Failed to process checkout"
-      });
-    }
-  });
-
-  app.get("/api/orders", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
-      const userId = req.user?.id?.toString();
-      if (!userId) {
-        return res.status(401).json({ message: "Invalid user session" });
-      }
-
-      console.log("Fetching orders for user:", userId);
-      const orders = await storage.getOrdersByUserId(userId);
-      console.log("Orders fetched successfully:", orders);
-
-      res.json(orders);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      res.status(500).json({ message: "Failed to fetch orders" });
-    }
-  });
-
   app.post("/api/ai/chat", async (req, res) => {
     try {
       const messageSchema = z.object({
@@ -260,26 +143,46 @@ export async function registerRoutes(app: Express) {
         });
       }
 
-      if (!process.env.ANTHROPIC_API_KEY) {
+      if (!process.env.DEEPSEEK_API_KEY) {
         return res.status(503).json({
           message: "AI service is temporarily unavailable. Please try again later."
         });
       }
 
       try {
-        const response = await anthropic.messages.create({
-          model: "claude-3-5-sonnet-20241022",
-          max_tokens: 1024,
-          messages: [{
-            role: "user",
-            content: validationResult.data.message
-          }],
-          system: "You are an AI shopping assistant for KHUSH.IN, a premium e-commerce platform. Always be helpful, concise, and polite. Focus on providing accurate product information and shopping assistance."
+        const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: "deepseek-chat",
+            messages: [
+              {
+                role: "system",
+                content: "You are an AI shopping assistant for KHUSH.IN, a premium e-commerce platform. Always be helpful, concise, and polite. Focus on providing accurate product information and shopping assistance."
+              },
+              {
+                role: "user",
+                content: validationResult.data.message
+              }
+            ],
+            max_tokens: 1000,
+            temperature: 0.7
+          })
         });
 
-        res.json({ message: response.content[0].text });
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error('DeepSeek API error:', data);
+          throw new Error(data.error?.message || 'Failed to get AI response');
+        }
+
+        res.json({ message: data.choices[0].message.content });
       } catch (apiError) {
-        console.error('Anthropic API error:', apiError);
+        console.error('DeepSeek API error:', apiError);
 
         // For development environment, provide a fallback response
         if (process.env.NODE_ENV !== 'production') {
