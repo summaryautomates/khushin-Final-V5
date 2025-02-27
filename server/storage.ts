@@ -5,13 +5,34 @@ import {
   type InsertOrder,
   type Product,
 } from "@shared/schema";
-import Database from "@replit/database";
+import pkg from 'pg';
+const { Pool } = pkg;
 import session from "express-session";
 import { type User } from "@shared/schema";
 import MemoryStore from "memorystore";
 
 const MemoryStoreSession = MemoryStore(session);
-const replitDb = new Database();
+
+// Set up PostgreSQL connection using environment variables
+const pool = new Pool({
+  user: process.env.PGUSER,
+  host: process.env.PGHOST,
+  database: process.env.PGDATABASE,
+  password: process.env.PGPASSWORD,
+  port: parseInt(process.env.PGPORT || '5432'),
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
+// Test the database connection
+pool.query('SELECT NOW()', (err, res) => {
+  if (err) {
+    console.error('Error connecting to the database:', err);
+  } else {
+    console.log('Successfully connected to PostgreSQL database');
+  }
+});
 
 const keys = {
   order: (id: number) => `orders:${id}`,
@@ -47,7 +68,7 @@ export interface IStorage {
 
 export class ReplitDBStorage implements IStorage {
   sessionStore: session.Store;
-  private db = replitDb;
+  private pool = pool;
 
   constructor() {
     console.log('Initializing ReplitDBStorage...');
@@ -64,14 +85,33 @@ export class ReplitDBStorage implements IStorage {
     console.log('ReplitDBStorage initialized successfully');
   }
 
-  // Product methods
+  // Product methods - Updated to use PostgreSQL
   async initializeProducts(products: Product[]): Promise<void> {
     try {
       console.log('Initializing products...');
-      await this.db.set(keys.productList(), JSON.stringify(products));
 
+      // Insert products into PostgreSQL
       for (const product of products) {
-        await this.db.set(keys.product(product.id), JSON.stringify(product));
+        await this.pool.query(`
+          INSERT INTO products (name, description, price, category, images, customizable, features)
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          ON CONFLICT (id) DO UPDATE SET
+            name = EXCLUDED.name,
+            description = EXCLUDED.description,
+            price = EXCLUDED.price,
+            category = EXCLUDED.category,
+            images = EXCLUDED.images,
+            customizable = EXCLUDED.customizable,
+            features = EXCLUDED.features
+        `, [
+          product.name,
+          product.description,
+          product.price,
+          product.category,
+          product.images,
+          product.customizable,
+          product.features
+        ]);
       }
 
       console.log('Products initialized successfully:', {
@@ -87,11 +127,8 @@ export class ReplitDBStorage implements IStorage {
   async getProducts(): Promise<Product[]> {
     try {
       console.log('Fetching all products');
-      const productsStr = await this.db.get(keys.productList());
-      if (!productsStr) {
-        return [];
-      }
-      return JSON.parse(typeof productsStr === 'string' ? productsStr : JSON.stringify(productsStr));
+      const result = await this.pool.query('SELECT * FROM products');
+      return result.rows;
     } catch (error) {
       console.error('Error fetching products:', error);
       return [];
@@ -101,11 +138,8 @@ export class ReplitDBStorage implements IStorage {
   async getProduct(id: number): Promise<Product | undefined> {
     try {
       console.log('Fetching product:', id);
-      const productStr = await this.db.get(keys.product(id));
-      if (!productStr) {
-        return undefined;
-      }
-      return JSON.parse(typeof productStr === 'string' ? productStr : JSON.stringify(productStr));
+      const result = await this.pool.query('SELECT * FROM products WHERE id = $1', [id]);
+      return result.rows[0];
     } catch (error) {
       console.error('Error fetching product:', error);
       return undefined;
@@ -115,8 +149,8 @@ export class ReplitDBStorage implements IStorage {
   async getProductsByCategory(category: string): Promise<Product[]> {
     try {
       console.log('Fetching products by category:', category);
-      const products = await this.getProducts();
-      return products.filter(p => p.category.toLowerCase() === category.toLowerCase());
+      const result = await this.pool.query('SELECT * FROM products WHERE category = $1', [category]);
+      return result.rows;
     } catch (error) {
       console.error('Error fetching products by category:', error);
       return [];
@@ -160,8 +194,11 @@ export class ReplitDBStorage implements IStorage {
         estimatedDelivery: null
       };
 
-      await this.db.set(keys.order(orderId), JSON.stringify(newOrder));
-      await this.db.set(keys.orderByRef(newOrder.orderRef), JSON.stringify(newOrder));
+      await this.pool.query(
+        `INSERT INTO orders (id, orderRef, userId, items, shipping, total, status, lastUpdated, createdAt) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [newOrder.id, newOrder.orderRef, newOrder.userId, JSON.stringify(newOrder.items), JSON.stringify(newOrder.shipping), newOrder.total, newOrder.status, newOrder.lastUpdated, newOrder.createdAt]
+      );
+
 
       console.log('Order created successfully:', {
         id: newOrder.id,
@@ -183,22 +220,8 @@ export class ReplitDBStorage implements IStorage {
     try {
       console.log('Fetching orders for user:', userId);
 
-      const keys = await this.db.list('orders:');
-      const orders: Order[] = [];
-
-      for (const key of keys) {
-        const orderStr = await this.db.get(key);
-        if (orderStr) {
-          try {
-            const order = JSON.parse(typeof orderStr === 'string' ? orderStr : JSON.stringify(orderStr));
-            if (order.userId?.toString() === userId) {
-              orders.push(order);
-            }
-          } catch (parseError) {
-            console.error('Error parsing order:', parseError);
-          }
-        }
-      }
+      const result = await this.pool.query('SELECT * FROM orders WHERE userId = $1', [userId]);
+      const orders = result.rows;
 
       console.log('Orders fetched successfully:', {
         userId,
@@ -217,14 +240,14 @@ export class ReplitDBStorage implements IStorage {
   async getOrderByRef(orderRef: string): Promise<Order | undefined> {
     try {
       console.log('Fetching order by ref:', orderRef);
-      const orderStr = await this.db.get(keys.orderByRef(orderRef));
+      const result = await this.pool.query('SELECT * FROM orders WHERE orderRef = $1', [orderRef]);
+      const order = result.rows[0];
 
-      if (!orderStr) {
+      if (!order) {
         console.log('Order not found:', orderRef);
         return undefined;
       }
 
-      const order = JSON.parse(typeof orderStr === 'string' ? orderStr : JSON.stringify(orderStr));
       console.log('Order found:', { ref: orderRef, status: order.status });
 
       return order;
@@ -238,7 +261,8 @@ export class ReplitDBStorage implements IStorage {
     try {
       console.log('Updating order status:', { ref: orderRef, status, method });
 
-      const order = await this.getOrderByRef(orderRef);
+      const result = await this.pool.query('SELECT * FROM orders WHERE orderRef = $1', [orderRef]);
+      let order = result.rows[0];
       if (!order) {
         throw new Error('Order not found');
       }
@@ -249,8 +273,10 @@ export class ReplitDBStorage implements IStorage {
         lastUpdated: new Date()
       };
 
-      await this.db.set(keys.order(order.id), JSON.stringify(updatedOrder));
-      await this.db.set(keys.orderByRef(orderRef), JSON.stringify(updatedOrder));
+      await this.pool.query(
+        `UPDATE orders SET status = $1, lastUpdated = $2 WHERE orderRef = $3`,
+        [updatedOrder.status, updatedOrder.lastUpdated, orderRef]
+      );
 
       console.log('Order status updated successfully:', {
         ref: orderRef,
