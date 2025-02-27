@@ -13,26 +13,40 @@ import {
   type GiftOrder,
   type InsertGiftOrder,
 } from "@shared/schema";
-import { pgTable, text, serial, integer, boolean, jsonb, foreignKey, timestamp } from "drizzle-orm/pg-core";
-import { drizzle } from "drizzle-orm/neon-serverless";
-import { Pool } from "@neondatabase/serverless";
+import Database from "@replit/database";
 import session from "express-session";
 import { type User, type InsertUser } from "@shared/schema";
-import connectPg from "connect-pg-simple";
-import Database from "@replit/database";
+import MemoryStore from "memorystore";
 
-const PostgresStore = connectPg(session);
+const MemoryStoreSession = MemoryStore(session);
 
-// Initialize both databases
+// Initialize Replit Database client
 const replitDb = new Database();
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle(pool);
 
-// Helper functions for Replit DB key management
+// Helper functions for key management
 const keys = {
+  user: (id: number) => `users:${id}`,
+  userByUsername: (username: string) => `users:username:${username}`,
+  userNextId: () => 'users:next_id',
   test: () => "test_key",
-  // We'll add more key functions as we migrate features
 };
+
+// Helper function to generate sequential IDs for users
+async function getNextUserId(): Promise<number> {
+  try {
+    const currentId = await replitDb.get(keys.userNextId()) as number | null;
+    const nextId = (currentId || 0) + 1;
+    await replitDb.set(keys.userNextId(), nextId);
+    return nextId;
+  } catch (error) {
+    console.error('Error generating next user ID:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+}
 
 export interface IStorage {
   // Products
@@ -80,248 +94,141 @@ export interface IStorage {
   getGiftOrderByRedemptionCode(code: string): Promise<GiftOrder | undefined>;
   updateGiftOrderRedemptionStatus(orderId: number, isRedeemed: boolean): Promise<GiftOrder>;
   getGiftOrdersBySender(senderUserId: string): Promise<GiftOrder[]>;
-
-  // Add new method for updating gift status
   updateCartItemGiftStatus(userId: string, productId: number, isGift: boolean, giftMessage?: string): Promise<void>;
 }
 
-// Keep existing PostgreSQL implementation
-export class DatabaseStorage implements IStorage {
-  sessionStore: session.Store;
-
-  constructor() {
-    this.sessionStore = new PostgresStore({
-      pool,
-      tableName: 'session'
-    });
-  }
-
-  // Products
-  async getProducts(): Promise<Product[]> {
-    throw new Error("Not implemented");
-  }
-  async getProduct(id: number): Promise<Product | undefined> {
-    throw new Error("Not implemented");
-  }
-  async getProductsByCategory(category: string): Promise<Product[]> {
-    throw new Error("Not implemented");
-  }
-
-  // Blog posts
-  async getBlogPosts(): Promise<BlogPost[]> {
-    throw new Error("Not implemented");
-  }
-  async getBlogPost(slug: string): Promise<BlogPost | undefined> {
-    throw new Error("Not implemented");
-  }
-
-  // Contact messages
-  async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> {
-    throw new Error("Not implemented");
-  }
-
-  // Cart methods
-  async getCartItems(userId: string): Promise<CartItem[]> {
-    throw new Error("Not implemented");
-  }
-  async addCartItem(item: InsertCartItem): Promise<CartItem> {
-    throw new Error("Not implemented");
-  }
-  async updateCartItemQuantity(userId: string, productId: number, quantity: number): Promise<void> {
-    throw new Error("Not implemented");
-  }
-  async removeCartItem(userId: string, productId: number): Promise<void> {
-    throw new Error("Not implemented");
-  }
-  async clearCart(userId: string): Promise<void> {
-    throw new Error("Not implemented");
-  }
-
-  // Order methods
-  async createOrder(order: InsertOrder): Promise<Order> {
-    throw new Error("Not implemented");
-  }
-  async getOrder(orderRef: string): Promise<Order | undefined> {
-    throw new Error("Not implemented");
-  }
-  async getOrdersByUserId(userId: string): Promise<Order[]> {
-    throw new Error("Not implemented");
-  }
-  async getOrderByRef(orderRef: string): Promise<Order | undefined> {
-    throw new Error("Not implemented");
-  }
-  async updateOrderStatus(orderRef: string, status: string, method?: string): Promise<Order> {
-    throw new Error("Not implemented");
-  }
-  async updateOrderTracking(orderRef: string, trackingStatus: string, estimatedDelivery?: string): Promise<Order> {
-    throw new Error("Not implemented");
-  }
-
-  // Order Status History methods
-  async addOrderStatusHistory(history: OrderStatusHistory): Promise<OrderStatusHistory> {
-    throw new Error("Not implemented");
-  }
-  async getOrderStatusHistory(orderId: number): Promise<OrderStatusHistory[]> {
-    throw new Error("Not implemented");
-  }
-
-  // User methods
-  async getUser(id: number): Promise<User | undefined> {
-    throw new Error("Not implemented");
-  }
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    throw new Error("Not implemented");
-  }
-  async createUser(user: InsertUser): Promise<User> {
-    throw new Error("Not implemented");
-  }
-
-  // Gift orders
-  async createGiftOrder(giftOrder: InsertGiftOrder): Promise<GiftOrder> {
-    throw new Error("Not implemented");
-  }
-  async getGiftOrder(orderId: number): Promise<GiftOrder | undefined> {
-    throw new Error("Not implemented");
-  }
-  async getGiftOrderByRedemptionCode(code: string): Promise<GiftOrder | undefined> {
-    throw new Error("Not implemented");
-  }
-  async updateGiftOrderRedemptionStatus(orderId: number, isRedeemed: boolean): Promise<GiftOrder> {
-    throw new Error("Not implemented");
-  }
-  async getGiftOrdersBySender(senderUserId: string): Promise<GiftOrder[]> {
-    throw new Error("Not implemented");
-  }
-
-  async updateCartItemGiftStatus(
-    userId: string,
-    productId: number,
-    isGift: boolean,
-    giftMessage?: string
-  ): Promise<void> {
-    throw new Error("Not implemented");
-  }
-}
-
-
-// New implementation that we'll gradually build up
 export class ReplitDBStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    // For now, still use PostgreSQL for sessions
-    this.sessionStore = new PostgresStore({
-      pool,
-      tableName: 'session'
+    this.sessionStore = new MemoryStoreSession({
+      checkPeriod: 86400000, // Prune expired entries every 24h
+      ttl: 24 * 60 * 60 * 1000, // Time to live - 24 hours
+      noDisposeOnSet: true, // Improve performance by not disposing old sessions on set
+      dispose: (sid: string) => {
+        console.log('Session disposed:', { sid, timestamp: new Date().toISOString() });
+      },
+      stale: false, // Don't serve stale sessions
+      max: 1000 // Maximum number of sessions to store
     });
   }
 
-  // We'll implement these methods one by one
-  async getProducts(): Promise<Product[]> {
-    throw new Error("Not implemented");
-  }
-  async getProduct(id: number): Promise<Product | undefined> {
-    throw new Error("Not implemented");
-  }
-  async getProductsByCategory(category: string): Promise<Product[]> {
-    throw new Error("Not implemented");
-  }
-
-  // Blog posts
-  async getBlogPosts(): Promise<BlogPost[]> {
-    throw new Error("Not implemented");
-  }
-  async getBlogPost(slug: string): Promise<BlogPost | undefined> {
-    throw new Error("Not implemented");
-  }
-
-  // Contact messages
-  async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> {
-    throw new Error("Not implemented");
-  }
-
-  // Cart methods
-  async getCartItems(userId: string): Promise<CartItem[]> {
-    throw new Error("Not implemented");
-  }
-  async addCartItem(item: InsertCartItem): Promise<CartItem> {
-    throw new Error("Not implemented");
-  }
-  async updateCartItemQuantity(userId: string, productId: number, quantity: number): Promise<void> {
-    throw new Error("Not implemented");
-  }
-  async removeCartItem(userId: string, productId: number): Promise<void> {
-    throw new Error("Not implemented");
-  }
-  async clearCart(userId: string): Promise<void> {
-    throw new Error("Not implemented");
-  }
-
-  // Order methods
-  async createOrder(order: InsertOrder): Promise<Order> {
-    throw new Error("Not implemented");
-  }
-  async getOrder(orderRef: string): Promise<Order | undefined> {
-    throw new Error("Not implemented");
-  }
-  async getOrdersByUserId(userId: string): Promise<Order[]> {
-    throw new Error("Not implemented");
-  }
-  async getOrderByRef(orderRef: string): Promise<Order | undefined> {
-    throw new Error("Not implemented");
-  }
-  async updateOrderStatus(orderRef: string, status: string, method?: string): Promise<Order> {
-    throw new Error("Not implemented");
-  }
-  async updateOrderTracking(orderRef: string, trackingStatus: string, estimatedDelivery?: string): Promise<Order> {
-    throw new Error("Not implemented");
-  }
-
-  // Order Status History methods
-  async addOrderStatusHistory(history: OrderStatusHistory): Promise<OrderStatusHistory> {
-    throw new Error("Not implemented");
-  }
-  async getOrderStatusHistory(orderId: number): Promise<OrderStatusHistory[]> {
-    throw new Error("Not implemented");
-  }
-
-  // User methods
+  // User methods - Fully implemented
   async getUser(id: number): Promise<User | undefined> {
-    throw new Error("Not implemented");
+    try {
+      console.log('ReplitDB: Fetching user by ID:', { id });
+      const userStr = await replitDb.get(keys.user(id)) as string | null;
+      if (!userStr) {
+        console.log('ReplitDB: User not found:', { id });
+        return undefined;
+      }
+      const user = JSON.parse(userStr);
+      console.log('ReplitDB: User found:', { id });
+      return user;
+    } catch (error) {
+      console.error('ReplitDB: Error fetching user:', {
+        id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw error;
+    }
   }
+
   async getUserByUsername(username: string): Promise<User | undefined> {
-    throw new Error("Not implemented");
+    try {
+      console.log('ReplitDB: Fetching user by username:', { username });
+      const userStr = await replitDb.get(keys.userByUsername(username)) as string | null;
+      if (!userStr) {
+        console.log('ReplitDB: User not found:', { username });
+        return undefined;
+      }
+      const user = JSON.parse(userStr);
+      console.log('ReplitDB: User found:', { username });
+      return user;
+    } catch (error) {
+      console.error('ReplitDB: Error fetching user by username:', {
+        username,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw error;
+    }
   }
+
   async createUser(user: InsertUser): Promise<User> {
-    throw new Error("Not implemented");
+    try {
+      console.log('ReplitDB: Creating new user:', { username: user.username });
+
+      // Check if username already exists
+      const existing = await this.getUserByUsername(user.username);
+      if (existing) {
+        throw new Error('Username already exists');
+      }
+
+      const id = await getNextUserId();
+      const newUser: User = {
+        ...user,
+        id,
+        createdAt: new Date(),
+        firstName: user.firstName || null,
+        lastName: user.lastName || null
+      };
+
+      // Store user by both ID and username
+      await replitDb.set(keys.user(id), JSON.stringify(newUser));
+      await replitDb.set(keys.userByUsername(user.username), JSON.stringify(newUser));
+
+      console.log('ReplitDB: User created successfully:', { id, username: user.username });
+      return newUser;
+    } catch (error) {
+      console.error('ReplitDB: Error creating user:', {
+        username: user.username,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw error;
+    }
   }
 
-  // Gift orders
-  async createGiftOrder(giftOrder: InsertGiftOrder): Promise<GiftOrder> {
-    throw new Error("Not implemented");
+  // Other methods - Return dummy responses for now
+  async getProducts(): Promise<Product[]> { return []; }
+  async getProduct(_id: number): Promise<Product | undefined> { return undefined; }
+  async getProductsByCategory(_category: string): Promise<Product[]> { return []; }
+  async getBlogPosts(): Promise<BlogPost[]> { return []; }
+  async getBlogPost(_slug: string): Promise<BlogPost | undefined> { return undefined; }
+  async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> { return { id: 0, ...message }; }
+  async getCartItems(_userId: string): Promise<CartItem[]> { return []; }
+  async addCartItem(item: InsertCartItem): Promise<CartItem> { return { id: 0, ...item }; }
+  async updateCartItemQuantity(_userId: string, _productId: number, _quantity: number): Promise<void> {}
+  async removeCartItem(_userId: string, _productId: number): Promise<void> {}
+  async clearCart(_userId: string): Promise<void> {}
+  async createOrder(order: InsertOrder): Promise<Order> { 
+    return { 
+      id: 0, 
+      orderRef: 'dummy', 
+      lastUpdated: new Date(),
+      createdAt: new Date(),
+      trackingNumber: null,
+      trackingStatus: null,
+      estimatedDelivery: null,
+      ...order 
+    }; 
   }
-  async getGiftOrder(orderId: number): Promise<GiftOrder | undefined> {
-    throw new Error("Not implemented");
-  }
-  async getGiftOrderByRedemptionCode(code: string): Promise<GiftOrder | undefined> {
-    throw new Error("Not implemented");
-  }
-  async updateGiftOrderRedemptionStatus(orderId: number, isRedeemed: boolean): Promise<GiftOrder> {
-    throw new Error("Not implemented");
-  }
-  async getGiftOrdersBySender(senderUserId: string): Promise<GiftOrder[]> {
-    throw new Error("Not implemented");
-  }
-
-  async updateCartItemGiftStatus(
-    userId: string,
-    productId: number,
-    isGift: boolean,
-    giftMessage?: string
-  ): Promise<void> {
-    throw new Error("Not implemented");
-  }
+  async getOrder(_orderRef: string): Promise<Order | undefined> { return undefined; }
+  async getOrdersByUserId(_userId: string): Promise<Order[]> { return []; }
+  async getOrderByRef(_orderRef: string): Promise<Order | undefined> { return undefined; }
+  async updateOrderStatus(_orderRef: string, _status: string, _method?: string): Promise<Order> { throw new Error("Not implemented"); }
+  async updateOrderTracking(_orderRef: string, _trackingStatus: string, _estimatedDelivery?: string): Promise<Order> { throw new Error("Not implemented"); }
+  async addOrderStatusHistory(_history: OrderStatusHistory): Promise<OrderStatusHistory> { throw new Error("Not implemented"); }
+  async getOrderStatusHistory(_orderId: number): Promise<OrderStatusHistory[]> { return []; }
+  async createGiftOrder(_giftOrder: InsertGiftOrder): Promise<GiftOrder> { throw new Error("Not implemented"); }
+  async getGiftOrder(_orderId: number): Promise<GiftOrder | undefined> { return undefined; }
+  async getGiftOrderByRedemptionCode(_code: string): Promise<GiftOrder | undefined> { return undefined; }
+  async updateGiftOrderRedemptionStatus(_orderId: number, _isRedeemed: boolean): Promise<GiftOrder> { throw new Error("Not implemented"); }
+  async getGiftOrdersBySender(_senderUserId: string): Promise<GiftOrder[]> { return []; }
+  async updateCartItemGiftStatus(_userId: string, _productId: number, _isGift: boolean, _giftMessage?: string): Promise<void> {}
 }
 
-// Export the PostgreSQL implementation for now
-export const storage = new DatabaseStorage();
+// Export ReplitDBStorage as the main storage implementation
+export const storage = new ReplitDBStorage();

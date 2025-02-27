@@ -13,7 +13,12 @@ export async function checkDatabaseHealth(): Promise<boolean> {
     await db.set(testKey, testValue);
     const retrieved = await db.get(testKey);
 
-    const success = retrieved === testValue;
+    // Extract the actual value from the response object
+    const actual = (retrieved && typeof retrieved === "object" && "value" in retrieved)
+      ? retrieved.value
+      : retrieved;
+
+    const success = actual === testValue;
 
     if (success) {
       console.log('Database health check passed:', {
@@ -25,7 +30,7 @@ export async function checkDatabaseHealth(): Promise<boolean> {
       console.error('Database health check failed: values do not match', {
         testKey,
         expected: testValue,
-        received: retrieved,
+        received: actual,
         timestamp: new Date().toISOString()
       });
     }

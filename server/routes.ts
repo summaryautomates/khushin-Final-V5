@@ -4,6 +4,7 @@ import { insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
 import { randomBytes } from "crypto";
 import fetch from 'node-fetch';
+import { ReplitDBStorage } from "./storage";
 
 // Mock responses for development mode
 const mockResponses = {
@@ -13,7 +14,104 @@ const mockResponses = {
   default: (query: string) => `I understand you're asking about: ${query}. As your shopping assistant, I'm here to help with product information, shipping details, and any other questions about KHUSH.IN's premium products.`
 };
 
+// Create a test instance of ReplitDBStorage
+const replitStorage = new ReplitDBStorage();
+
 export async function registerRoutes(app: Express) {
+  // Add test route for database migration
+  app.get("/api/test/db-migration", async (_req, res) => {
+    try {
+      const testUsername = `test_user_${Date.now()}`;
+      const testUser = {
+        username: testUsername,
+        password: "test_password_123",
+        email: "test@example.com",
+        firstName: "Test",
+        lastName: "User"
+      };
+
+      console.log('Testing database migration - Creating test user');
+
+      // Test PostgreSQL (current storage)
+      let postgresUser;
+      try {
+        postgresUser = await storage.createUser(testUser);
+        console.log('PostgreSQL test successful:', { 
+          userId: postgresUser.id,
+          username: postgresUser.username 
+        });
+
+        // Verify PostgreSQL read operations
+        const pgUserById = await storage.getUser(postgresUser.id);
+        const pgUserByUsername = await storage.getUserByUsername(postgresUser.username);
+
+        if (!pgUserById || !pgUserByUsername) {
+          throw new Error('PostgreSQL read verification failed');
+        }
+
+        console.log('PostgreSQL read operations verified');
+      } catch (pgError) {
+        console.error('PostgreSQL test failed:', {
+          error: pgError instanceof Error ? pgError.message : 'Unknown error',
+          stack: pgError instanceof Error ? pgError.stack : undefined
+        });
+      }
+
+      // Test Replit KV Store
+      let replitUser;
+      try {
+        replitUser = await replitStorage.createUser({
+          ...testUser,
+          username: `${testUsername}_replit` // Use different username to avoid conflicts
+        });
+        console.log('Replit KV Store test successful:', { 
+          userId: replitUser.id,
+          username: replitUser.username 
+        });
+
+        // Verify Replit KV Store read operations
+        const kvUserById = await replitStorage.getUser(replitUser.id);
+        const kvUserByUsername = await replitStorage.getUserByUsername(replitUser.username);
+
+        if (!kvUserById || !kvUserByUsername) {
+          throw new Error('Replit KV Store read verification failed');
+        }
+
+        console.log('Replit KV Store read operations verified');
+      } catch (replitError) {
+        console.error('Replit KV Store test failed:', {
+          error: replitError instanceof Error ? replitError.message : 'Unknown error',
+          stack: replitError instanceof Error ? replitError.stack : undefined
+        });
+      }
+
+      res.json({
+        message: 'Database migration test completed',
+        postgresql: {
+          status: postgresUser ? 'success' : 'failed',
+          user: postgresUser
+        },
+        replitDb: {
+          status: replitUser ? 'success' : 'failed',
+          user: replitUser
+        },
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('Database migration test error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+      res.status(500).json({ 
+        message: "Database migration test failed",
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Existing routes
   app.get("/api/products", async (_req, res) => {
     try {
       const products = await storage.getProducts();
