@@ -46,7 +46,16 @@ export default function Customize() {
   };
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-12">
+    <div 
+      className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-12"
+      style={{
+        backgroundImage: "url('https://i.imghippo.com/files/nBX4293VBs.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        minHeight: "100vh"
+      }}
+    >
       <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 md:mb-8">Customize Your Product</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
