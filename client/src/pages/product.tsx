@@ -17,9 +17,7 @@ import { AuthSheet } from "@/components/auth/auth-sheet";
 import { useState, Suspense } from "react";
 import { motion } from "framer-motion";
 import { ErrorBoundary } from "@/components/error-boundary";
-
-// Simplified fallback image handling
-const FALLBACK_IMAGE = "/product-placeholder.svg";
+import { AdaptiveImage } from "@/components/ui/adaptive-image";
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:id");
@@ -38,27 +36,10 @@ export default function ProductPage() {
     queryKey: [`/api/products/${id}`],
     enabled: !!id,
     retry: 2,
-    staleTime: 300000,
-    gcTime: 3600000,
-    onError: (err) => {
-      console.error('Product fetch error:', err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load product. Please try again.",
-      });
-    },
+    staleTime: 300000, // 5 minutes
+    gcTime: 3600000, // 1 hour
     useErrorBoundary: false
   });
-
-  const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = event.target as HTMLImageElement;
-    img.src = FALLBACK_IMAGE;
-    console.warn('Image load failed, using fallback:', {
-      originalSrc: img.getAttribute('data-original-src'),
-      fallbackSrc: FALLBACK_IMAGE
-    });
-  };
 
   const handleAddToCart = async () => {
     if (!product) return;
@@ -136,7 +117,7 @@ export default function ProductPage() {
   }
 
   const images = Array.isArray(product.images) ? product.images : [];
-  const currentImage = images[selectedImage] || FALLBACK_IMAGE;
+  const currentImage = images[selectedImage];
 
   return (
     <ErrorBoundary>
@@ -178,11 +159,11 @@ export default function ProductPage() {
                       </div>
                     </div>
                   ) : (
-                    <img
+                    <AdaptiveImage
                       src={currentImage}
                       alt={product.name}
                       className="h-full w-full object-contain p-4"
-                      onError={handleImageError}
+                      onLoadError={(error) => console.error('Image load error:', error)}
                     />
                   )}
 
@@ -212,11 +193,10 @@ export default function ProductPage() {
                           ${selectedImage === i ? 'ring-2 ring-gold shadow-lg' : ''}`}
                         onClick={() => setSelectedImage(i)}
                       >
-                        <img
-                          src={image || FALLBACK_IMAGE}
+                        <AdaptiveImage
+                          src={image}
                           alt={`${product.name} view ${i + 1}`}
                           className="h-full w-full object-contain p-2"
-                          onError={handleImageError}
                         />
                       </motion.div>
                     ))}
