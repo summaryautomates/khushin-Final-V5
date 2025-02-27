@@ -7,10 +7,20 @@ import fetch from 'node-fetch';
 import { ReplitDBStorage } from "./storage";
 import Stripe from 'stripe';
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-02-24.acacia'
-});
+// Initialize Stripe with better error handling
+let stripe: Stripe | null = null;
+try {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not set');
+  }
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-02-24.acacia',
+    typescript: true,
+  });
+  console.log('Stripe initialized successfully');
+} catch (error) {
+  console.error('Failed to initialize Stripe:', error);
+}
 
 // Mock responses for development mode
 const mockResponses = {
@@ -344,6 +354,10 @@ export async function registerRoutes(app: Express) {
     try {
       console.log("Checkout request received");
 
+      if (!stripe) {
+        throw new Error('Stripe is not properly initialized');
+      }
+
       if (!req.isAuthenticated()) {
         console.log("Unauthorized checkout attempt");
         return res.status(401).json({ message: "Authentication required" });
@@ -422,7 +436,7 @@ export async function registerRoutes(app: Express) {
 
         res.status(500).json({
           message: "Payment processing failed. Please try again.",
-          error: process.env.NODE_ENV === 'development' ? stripeError.message : undefined
+          error: process.env.NODE_ENV === 'development' ? stripeError instanceof Error ? stripeError.message : 'Unknown error' : undefined
         });
       }
     } catch (error) {
@@ -478,6 +492,7 @@ export async function registerRoutes(app: Express) {
       res.status(400).send(`Webhook Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   });
+
 
 
   app.post("/api/ai/chat", async (req, res) => {
