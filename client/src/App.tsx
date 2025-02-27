@@ -10,7 +10,7 @@ import { Switch, Route, useLocation } from "wouter";
 import { useEffect } from "react";
 import { useWebSocket } from "@/lib/websocket";
 import { useToast } from "@/hooks/use-toast";
-import { AIAssistant } from "@/components/ai-assistant/AIAssistant"; // Added import
+import { AIAssistant } from "@/components/ai-assistant/AIAssistant";
 
 // Page imports
 import Home from "@/pages/home";
@@ -36,9 +36,7 @@ import Loyalty from "@/pages/loyalty";
 import Rewards from "@/pages/rewards";
 import Referral from "@/pages/referral";
 import { ProtectedRoute } from "@/components/auth/protected-route";
-import React from 'react';
 import PremiumCollection from "@/pages/premium-collection";
-
 
 function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
@@ -156,7 +154,7 @@ function App() {
                   <Header />
                   <AppRoutes />
                   <Footer />
-                  <AIAssistant /> {/* Added AIAssistant component */}
+                  <AIAssistant />
                 </div>
                 <Toaster />
               </CartProvider>
