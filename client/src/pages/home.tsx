@@ -184,7 +184,7 @@ export default function Home() {
           >
             <div style={{ display: 'contents' }}>
               <img
-                src="/hero-background.jpg"
+                src="https://i.imghippo.com/files/bOL6106VBY.jpg"
                 className="absolute inset-0 w-full h-full object-cover"
                 alt="Hero background"
                 style={{ objectPosition: "center" }}
