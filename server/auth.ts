@@ -72,9 +72,9 @@ export async function setupAuth(app: Express) {
       rolling: true,
       proxy: true,
       cookie: {
-        secure: isProduction,
+        secure: isProduction, // Only use secure cookies in production
         httpOnly: true,
-        sameSite: isProduction ? 'strict' : 'lax',
+        sameSite: 'lax', // Changed to 'lax' to allow cross-site requests
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
       }
     });
@@ -90,6 +90,7 @@ export async function setupAuth(app: Express) {
     // Enhanced user serialization with error handling
     passport.serializeUser((user: Express.User, done) => {
       try {
+        console.log('Serializing user:', { userId: user.id });
         done(null, user.id);
       } catch (error) {
         console.error('User serialization error:', {
@@ -103,11 +104,13 @@ export async function setupAuth(app: Express) {
 
     passport.deserializeUser(async (id: number, done) => {
       try {
+        console.log('Deserializing user:', { userId: id });
         const user = await storage.getUser(id);
         if (!user) {
           console.log('User not found during deserialization:', { id });
           return done(null, false);
         }
+        console.log('User deserialized successfully:', { userId: id });
         done(null, user);
       } catch (error) {
         console.error('User deserialization error:', {
@@ -137,7 +140,7 @@ export async function setupAuth(app: Express) {
             return done(null, false, { message: "Invalid username or password" });
           }
 
-          console.log('Authentication successful:', { username });
+          console.log('Authentication successful:', { username, userId: user.id });
           return done(null, user);
         } catch (error) {
           console.error('Authentication error:', {
@@ -238,7 +241,7 @@ function setupAuthRoutes(app: Express) {
 
   // Authentication routes with improved error handling
   app.post("/api/login", (req, res, next) => {
-    console.log('Processing login request');
+    console.log('Processing login request:', { username: req.body.username });
 
     passport.authenticate(
       "local",
@@ -251,12 +254,14 @@ function setupAuthRoutes(app: Express) {
           });
           return res.status(500).json({ message: "Internal server error" });
         }
+
         if (!user) {
           console.log('Login failed:', { message: info?.message });
           return res.status(401).json({
             message: info?.message || "Invalid username or password"
           });
         }
+
         req.login(user, (loginErr) => {
           if (loginErr) {
             console.error('Session creation error:', {
@@ -266,6 +271,7 @@ function setupAuthRoutes(app: Express) {
             });
             return res.status(500).json({ message: "Failed to create session" });
           }
+
           console.log('Login successful:', { userId: user.id });
           const { password: _, ...userWithoutPassword } = user;
           return res.json(userWithoutPassword);
@@ -287,6 +293,7 @@ function setupAuthRoutes(app: Express) {
         });
         return res.status(500).json({ message: "Error logging out" });
       }
+
       req.session.destroy((err) => {
         if (err) {
           console.error('Session destruction error:', {
@@ -296,8 +303,8 @@ function setupAuthRoutes(app: Express) {
           });
           return res.status(500).json({ message: "Error destroying session" });
         }
+
         res.clearCookie('sid');
-        req.app.emit('user:logout', sessionId);
         console.log('Logout successful:', { sessionId });
         res.sendStatus(200);
       });
@@ -305,9 +312,15 @@ function setupAuthRoutes(app: Express) {
   });
 
   app.get("/api/user", (req, res) => {
+    console.log('Get user request:', { 
+      isAuthenticated: req.isAuthenticated(),
+      userId: req.user?.id 
+    });
+
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Not authenticated" });
     }
+
     const { password: _, ...userWithoutPassword } = req.user;
     res.json(userWithoutPassword);
   });

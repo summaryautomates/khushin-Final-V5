@@ -4,7 +4,6 @@ import { insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
 import { randomBytes } from "crypto";
 import fetch from 'node-fetch';
-import { ReplitDBStorage } from "./storage";
 
 // Mock responses for development mode
 const mockResponses = {
@@ -13,9 +12,6 @@ const mockResponses = {
   shipping: () => "We offer worldwide shipping. Standard delivery takes 3-5 business days within India, and international shipping typically takes 7-14 business days.",
   default: (query: string) => `I understand you're asking about: ${query}. As your shopping assistant, I'm here to help with product information, shipping details, and any other questions about KHUSH.IN's premium products.`
 };
-
-// Create a test instance of ReplitDBStorage
-const replitStorage = new ReplitDBStorage();
 
 export async function registerRoutes(app: Express) {
   // Add test route for database migration
@@ -32,80 +28,37 @@ export async function registerRoutes(app: Express) {
 
       console.log('Testing database migration - Creating test user');
 
-      // Test PostgreSQL (current storage)
-      let postgresUser;
-      try {
-        postgresUser = await storage.createUser(testUser);
-        console.log('PostgreSQL test successful:', { 
-          userId: postgresUser.id,
-          username: postgresUser.username 
-        });
+      const user = await storage.createUser(testUser);
+      console.log('Test successful:', { 
+        userId: user.id,
+        username: user.username 
+      });
 
-        // Verify PostgreSQL read operations
-        const pgUserById = await storage.getUser(postgresUser.id);
-        const pgUserByUsername = await storage.getUserByUsername(postgresUser.username);
+      // Verify read operations
+      const userById = await storage.getUser(user.id);
+      const userByUsername = await storage.getUserByUsername(user.username);
 
-        if (!pgUserById || !pgUserByUsername) {
-          throw new Error('PostgreSQL read verification failed');
-        }
-
-        console.log('PostgreSQL read operations verified');
-      } catch (pgError) {
-        console.error('PostgreSQL test failed:', {
-          error: pgError instanceof Error ? pgError.message : 'Unknown error',
-          stack: pgError instanceof Error ? pgError.stack : undefined
-        });
+      if (!userById || !userByUsername) {
+        throw new Error('Read verification failed');
       }
 
-      // Test Replit KV Store
-      let replitUser;
-      try {
-        replitUser = await replitStorage.createUser({
-          ...testUser,
-          username: `${testUsername}_replit` // Use different username to avoid conflicts
-        });
-        console.log('Replit KV Store test successful:', { 
-          userId: replitUser.id,
-          username: replitUser.username 
-        });
-
-        // Verify Replit KV Store read operations
-        const kvUserById = await replitStorage.getUser(replitUser.id);
-        const kvUserByUsername = await replitStorage.getUserByUsername(replitUser.username);
-
-        if (!kvUserById || !kvUserByUsername) {
-          throw new Error('Replit KV Store read verification failed');
-        }
-
-        console.log('Replit KV Store read operations verified');
-      } catch (replitError) {
-        console.error('Replit KV Store test failed:', {
-          error: replitError instanceof Error ? replitError.message : 'Unknown error',
-          stack: replitError instanceof Error ? replitError.stack : undefined
-        });
-      }
+      console.log('Read operations verified');
 
       res.json({
-        message: 'Database migration test completed',
-        postgresql: {
-          status: postgresUser ? 'success' : 'failed',
-          user: postgresUser
-        },
-        replitDb: {
-          status: replitUser ? 'success' : 'failed',
-          user: replitUser
-        },
+        message: 'Database test completed',
+        status: 'success',
+        user,
         timestamp: new Date().toISOString()
       });
 
     } catch (error) {
-      console.error('Database migration test error:', {
+      console.error('Database test error:', {
         error: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
         timestamp: new Date().toISOString()
       });
       res.status(500).json({ 
-        message: "Database migration test failed",
+        message: "Database test failed",
         timestamp: new Date().toISOString()
       });
     }
@@ -274,14 +227,13 @@ export async function registerRoutes(app: Express) {
         return res.status(403).json({ message: "Unauthorized" });
       }
 
-      const { status, method } = validationResult.data;
+      const { status } = validationResult.data;
       console.log("Updating order status:", {
         ref: order.orderRef,
-        status,
-        method
+        status
       });
 
-      await storage.updateOrderStatus(order.orderRef, status, method);
+      await storage.updateOrderStatus(order.orderRef, status);
       console.log("Order status updated successfully");
 
       res.json({ message: "Payment status updated successfully" });
