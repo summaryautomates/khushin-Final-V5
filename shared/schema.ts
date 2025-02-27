@@ -1,4 +1,4 @@
-import { pgTable, serial, text, varchar, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, varchar, timestamp, boolean, integer, jsonb } from 'drizzle-orm/pg-core';
 import { z } from "zod";
 import { createInsertSchema } from 'drizzle-zod';
 
@@ -10,7 +10,20 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).notNull(),
   first_name: varchar('first_name', { length: 255 }),
   last_name: varchar('last_name', { length: 255 }),
-  created_at: timestamp('created_at').defaultNow()
+  created_at: timestamp('created_at').defaultNow().notNull()
+});
+
+// Products table definition
+export const products = pgTable('products', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description').notNull(),
+  price: integer('price').notNull(),
+  category: text('category').notNull(),
+  images: text('images').array().notNull(),
+  customizable: boolean('customizable').notNull().default(false),
+  features: jsonb('features').notNull(),
+  created_at: timestamp('created_at').defaultNow().notNull()
 });
 
 // Type definitions for User
