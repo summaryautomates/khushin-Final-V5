@@ -3,6 +3,12 @@ import { storage } from "./storage";
 import { insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
 import { randomBytes } from "crypto";
+import Anthropic from '@anthropic-ai/sdk';
+
+// the newest Anthropic model is "claude-3-5-sonnet-20241022" which was released October 22, 2024
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
 export async function registerRoutes(app: Express) {
   app.get("/api/products", async (_req, res) => {
@@ -237,6 +243,37 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error('Error fetching orders:', error);
       res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  app.post("/api/ai/chat", async (req, res) => {
+    try {
+      const messageSchema = z.object({
+        message: z.string().min(1, "Message is required")
+      });
+
+      const validationResult = messageSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({
+          message: "Invalid request data",
+          errors: validationResult.error.errors
+        });
+      }
+
+      const response = await anthropic.messages.create({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 1024,
+        messages: [{
+          role: "user",
+          content: validationResult.data.message
+        }],
+        system: "You are an AI shopping assistant for KHUSH.IN, a premium e-commerce platform. Always be helpful, concise, and polite. Focus on providing accurate product information and shopping assistance."
+      });
+
+      res.json({ message: response.content[0].text });
+    } catch (error) {
+      console.error('Error in AI chat:', error);
+      res.status(500).json({ message: "Failed to process AI chat request" });
     }
   });
 }
