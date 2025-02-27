@@ -37,7 +37,7 @@ function useLoginMutation() {
           throw new Error(error.message || "Login failed");
         }
 
-        return res.json();
+        return res.json() as Promise<SelectUser>;
       } catch (error) {
         console.error('Login request failed:', error);
         throw error;
@@ -78,7 +78,7 @@ function useRegisterMutation() {
           throw new Error(error.message || "Registration failed");
         }
 
-        return res.json();
+        return res.json() as Promise<SelectUser>;
       } catch (error) {
         console.error('Registration request failed:', error);
         throw error;
@@ -158,18 +158,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return res.json();
       } catch (error) {
         console.error("Error fetching user:", error);
-        // Return null instead of throwing to prevent unhandled promise rejection
         return null;
       }
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     retry: 1, // Only retry once
     retryDelay: 1000, // Wait 1 second before retrying
-    // Add error boundary handling
-    useErrorBoundary: false,
   });
 
-  // Add error logging effect
   useEffect(() => {
     if (error) {
       console.error("Auth provider error:", error);
@@ -183,7 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        user: user ?? null,
+        user,
         isLoading,
         error: error as Error | null,
         loginMutation,
