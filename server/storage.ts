@@ -40,20 +40,6 @@ const keys = {
   test: () => "test_key",
 };
 
-// Helper functions for generating sequential IDs
-async function getNextId(type: 'users' | 'products'): Promise<number> {
-  try {
-    const key = type === 'users' ? keys.userNextId() : keys.productNextId();
-    const currentId = Number(await replitDb.get(key)) || 0;
-    const nextId = currentId + 1;
-    await replitDb.set(key, nextId);
-    return nextId;
-  } catch (error) {
-    console.error(`Error generating next ${type} ID:`, error);
-    throw error;
-  }
-}
-
 // Helper function to extract value from Replit DB response
 function extractValue<T>(response: unknown): T | null {
   if (response === null || response === undefined) {
@@ -119,6 +105,7 @@ export interface IStorage {
 
 export class ReplitDBStorage implements IStorage {
   sessionStore: session.Store;
+  private nextIdCounter: { [key: string]: number } = { users: 0, products: 0 };
 
   constructor() {
     this.sessionStore = new MemoryStoreSession({
@@ -131,9 +118,35 @@ export class ReplitDBStorage implements IStorage {
       stale: false,
       max: 1000
     });
+
+    // Initialize counter from stored values
+    this.initializeCounters();
   }
 
-  // Product methods - Updated implementations
+  private async initializeCounters() {
+    try {
+      const userNextId = Number(await replitDb.get(keys.userNextId())) || 0;
+      const productNextId = Number(await replitDb.get(keys.productNextId())) || 0;
+      this.nextIdCounter.users = userNextId;
+      this.nextIdCounter.products = productNextId;
+    } catch (error) {
+      console.error('Error initializing counters:', error);
+    }
+  }
+
+  private async getNextId(type: 'users' | 'products'): Promise<number> {
+    try {
+      this.nextIdCounter[type]++;
+      const nextId = this.nextIdCounter[type];
+      await replitDb.set(type === 'users' ? keys.userNextId() : keys.productNextId(), nextId);
+      return nextId;
+    } catch (error) {
+      console.error(`Error generating next ${type} ID:`, error);
+      throw error;
+    }
+  }
+
+  // Product methods
   async getProducts(): Promise<Product[]> {
     try {
       console.log('ReplitDB: Fetching all products');
@@ -301,7 +314,7 @@ export class ReplitDBStorage implements IStorage {
     }
   }
 
-  // User methods - Already implemented
+  // User methods
   async getUser(id: number): Promise<User | undefined> {
     try {
       console.log('ReplitDB: Fetching user by ID:', { id });
@@ -384,7 +397,7 @@ export class ReplitDBStorage implements IStorage {
         throw new Error('Username already exists');
       }
 
-      const id = await getNextId('users');
+      const id = await this.getNextId('users');
       const newUser: User = {
         ...user,
         id,
@@ -416,7 +429,7 @@ export class ReplitDBStorage implements IStorage {
     }
   }
 
-  // Other methods - Return dummy responses for now
+  // Other methods
   async getBlogPosts(): Promise<BlogPost[]> { return []; }
   async getBlogPost(_slug: string): Promise<BlogPost | undefined> { return undefined; }
   async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> { return { id: 0, ...message }; }
@@ -452,5 +465,4 @@ export class ReplitDBStorage implements IStorage {
   async updateCartItemGiftStatus(_userId: string, _productId: number, _isGift: boolean, _giftMessage?: string): Promise<void> {}
 }
 
-// Export ReplitDBStorage as the main storage implementation
 export const storage = new ReplitDBStorage();
