@@ -124,7 +124,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <p className="text-sm opacity-80">Phone</p>
-                    <p className="font-medium">+91 (800) 123-4567</p>
+                    <p className="font-medium">+919373395733</p>
                   </div>
                 </div>
                 
@@ -134,7 +134,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <p className="text-sm opacity-80">Address</p>
-                    <p className="font-medium">123 Innovation Drive, Bangalore, India</p>
+                    <p className="font-medium">Powai, Mumbai, India</p>
                   </div>
                 </div>
               </CardContent>
