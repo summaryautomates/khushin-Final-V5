@@ -24,6 +24,29 @@ const Refueling = () => {
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/90"></div>
           </motion.div>
         </div>
+        <div className="absolute top-8 left-8 z-20">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.2, duration: 0.5 }}
+          >
+            <a 
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                window.open("https://i.imghippo.com/files/ncH5592Qc.png", "_blank");
+              }}
+            >
+              <Button size="sm" className="p-0 h-auto bg-transparent hover:bg-transparent">
+                <img 
+                  src="https://i.imghippo.com/files/ncH5592Qc.png" 
+                  alt="Book Your Appointment"
+                  className="h-14 w-auto"
+                />
+              </Button>
+            </a>
+          </motion.div>
+        </div>
         <div className="absolute top-8 right-8 z-20">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
