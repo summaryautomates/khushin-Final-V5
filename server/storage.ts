@@ -48,6 +48,11 @@ export interface IStorage {
   getProductsByCategory(category: string): Promise<Product[]>;
   initializeProducts(products: Product[]): Promise<void>;
 
+  // User methods
+  createUser(user: any): Promise<User>;
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+
   // Cart methods
   getCartItems(userId: string): Promise<CartItem[]>;
   addCartItem(item: InsertCartItem): Promise<CartItem>;
@@ -288,6 +293,54 @@ export class ReplitDBStorage implements IStorage {
     } catch (error) {
       console.error('Error updating order status:', error);
       throw error;
+    }
+  }
+
+  // User methods implementation
+  async createUser(userData: any): Promise<User> {
+    try {
+      console.log('Creating user:', { username: userData.username });
+
+      const result = await this.pool.query(`
+        INSERT INTO users (username, password, email, firstName, lastName)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING *
+      `, [
+        userData.username,
+        userData.password,
+        userData.email,
+        userData.firstName,
+        userData.lastName
+      ]);
+
+      const user = result.rows[0];
+      console.log('User created successfully:', { id: user.id, username: user.username });
+      return user;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    try {
+      console.log('Fetching user by ID:', id);
+      const result = await this.pool.query('SELECT * FROM users WHERE id = $1', [id]);
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error fetching user by ID:', error);
+      return undefined;
+    }
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    try {
+      console.log('Fetching user by username:', username);
+      const result = await this.pool.query('SELECT * FROM users WHERE username = $1', [username]);
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error fetching user by username:', error);
+      return undefined;
     }
   }
 }
