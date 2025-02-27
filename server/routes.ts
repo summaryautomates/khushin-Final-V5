@@ -174,6 +174,36 @@ export async function registerRoutes(app: Express) {
             warranty: "10 Years",
             special: "Ergonomic Design"
           }
+        },
+        {
+          name: "Sapphire Night Sky",
+          description: "A stunning blend of deep blue sapphire crystal and titanium, featuring our innovative starlight pattern that illuminates in darkness. Includes a precision-controlled blue flame and temperature regulation.",
+          price: 179900, // $1,799.00
+          category: "luxury",
+          images: ["/products/sapphire-lighter.svg"],
+          customizable: true,
+          features: {
+            material: "Titanium & Sapphire Crystal",
+            finish: "Luminescent Pattern",
+            mechanism: "Temperature Controlled",
+            warranty: "Lifetime",
+            special: "Night Glow Technology"
+          }
+        },
+        {
+          name: "Art Deco Masterpiece",
+          description: "Inspired by the roaring twenties, this rose gold and black onyx lighter features geometric art deco patterns and our innovative smokeless flame technology. Each piece comes with a matching display stand.",
+          price: 129900, // $1,299.00
+          category: "luxury",
+          images: ["/products/artdeco-lighter.svg"],
+          customizable: true,
+          features: {
+            material: "Rose Gold & Black Onyx",
+            finish: "Art Deco Pattern",
+            mechanism: "Smokeless Technology",
+            warranty: "20 Years",
+            special: "Display Stand Included"
+          }
         }
       ];
 
