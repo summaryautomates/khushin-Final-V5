@@ -12,6 +12,7 @@ import {
   type InsertOrder,
   type GiftOrder,
   type InsertGiftOrder,
+  type ReturnRequest,
 } from "@shared/schema";
 import Database from "@replit/database";
 import session from "express-session";
@@ -20,69 +21,31 @@ import MemoryStore from "memorystore";
 
 const MemoryStoreSession = MemoryStore(session);
 
-// Initialize Replit Database client
-const replitDb = new Database();
+// Initialize Replit Database client (Unused in the new implementation)
+//const replitDb = new Database();
 
-// Helper functions for key management
-const keys = {
-  // User keys
-  user: (id: number) => `users:${id}`,
-  userByUsername: (username: string) => `users:username:${username}`,
-  userNextId: () => 'users:next_id',
+// Helper functions for key management (Unused in the new implementation)
+//const keys = {
+//  // User keys
+//  user: (id: number) => `users:${id}`,
+//  userByUsername: (username: string) => `users:username:${username}`,
+//  userNextId: () => 'users:next_id',
+//
+//  // Product keys
+//  product: (id: number) => `products:${id}`,
+//  productsByCategory: (category: string) => `products:category:${category}`,
+//  productNextId: () => 'products:next_id',
+//  allProducts: () => 'products:all',
+//
+//  // Test key
+//  test: () => "test_key",
+//};
 
-  // Product keys
-  product: (id: number) => `products:${id}`,
-  productsByCategory: (category: string) => `products:category:${category}`,
-  productNextId: () => 'products:next_id',
-  allProducts: () => 'products:all',
+// Helper functions for generating sequential IDs (Unused in the new implementation)
+//async function getNextId(type: 'users' | 'products'): Promise<number> { ... }
 
-  // Test key
-  test: () => "test_key",
-};
-
-// Helper functions for generating sequential IDs
-async function getNextId(type: 'users' | 'products'): Promise<number> {
-  try {
-    const key = type === 'users' ? keys.userNextId() : keys.productNextId();
-    const response = await replitDb.get(key);
-
-    // Extract value from response if it's an object
-    const currentId = typeof response === 'object' && response !== null && 'value' in response
-      ? Number(response.value) || 0
-      : Number(response) || 0;
-
-    const nextId = currentId + 1;
-    await replitDb.set(key, nextId);
-
-    console.log(`Generated next ${type} ID:`, {
-      currentId,
-      nextId,
-      timestamp: new Date().toISOString()
-    });
-
-    return nextId;
-  } catch (error) {
-    console.error(`Error generating next ${type} ID:`, {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
-    });
-    throw error;
-  }
-}
-
-// Helper function to extract value from Replit DB response
-function extractValue<T>(response: unknown): T | null {
-  if (response === null || response === undefined) {
-    return null;
-  }
-
-  if (typeof response === 'object' && response !== null && 'value' in response) {
-    return response.value as T;
-  }
-
-  return response as T;
-}
+// Helper function to extract value from Replit DB response (Unused in the new implementation)
+//function extractValue<T>(response: unknown): T | null { ... }
 
 export interface IStorage {
   // Products
@@ -130,14 +93,34 @@ export interface IStorage {
   getGiftOrdersBySender(senderUserId: string): Promise<GiftOrder[]>;
   updateCartItemGiftStatus(userId: string, productId: number, isGift: boolean, giftMessage?: string): Promise<void>;
 
+  // Return Request methods
+  createReturnRequest(returnRequest: ReturnRequest): Promise<ReturnRequest>;
+  getReturnRequests(orderRef: string): Promise<ReturnRequest[]>;
+
   // Session store
   sessionStore: session.Store;
 }
 
 export class ReplitDBStorage implements IStorage {
+  private memStore: {
+    products: Product[];
+    users: Map<number, User>;
+    orders: Map<string, Order>;
+    cartItems: Map<string, CartItem[]>;
+    returns: Map<string, ReturnRequest[]>;
+  };
+
   sessionStore: session.Store;
 
   constructor() {
+    this.memStore = {
+      products: [],
+      users: new Map(),
+      orders: new Map(),
+      cartItems: new Map(),
+      returns: new Map()
+    };
+
     this.sessionStore = new MemoryStoreSession({
       checkPeriod: 86400000,
       ttl: 24 * 60 * 60 * 1000,
@@ -150,268 +133,153 @@ export class ReplitDBStorage implements IStorage {
     });
   }
 
-  // Product methods - Updated implementations
+  // Product methods
   async getProducts(): Promise<Product[]> {
-    try {
-      console.log('ReplitDB: Fetching all products');
-      const response = await replitDb.get(keys.allProducts());
-      const productsStr = extractValue<string>(response);
-
-      if (!productsStr) {
-        console.log('ReplitDB: No products found, initializing empty array');
-        await replitDb.set(keys.allProducts(), JSON.stringify([]));
-        return [];
-      }
-
-      try {
-        const products = JSON.parse(productsStr);
-        if (!Array.isArray(products)) {
-          console.error('ReplitDB: Products data is not an array:', {
-            type: typeof products,
-            value: products,
-            timestamp: new Date().toISOString()
-          });
-          await replitDb.set(keys.allProducts(), JSON.stringify([]));
-          return [];
-        }
-
-        console.log('ReplitDB: Products fetched successfully:', {
-          count: products.length,
-          timestamp: new Date().toISOString()
-        });
-        return products;
-      } catch (parseError) {
-        console.error('ReplitDB: Error parsing products data:', {
-          error: parseError instanceof Error ? parseError.message : 'Unknown error',
-          data: productsStr,
-          timestamp: new Date().toISOString()
-        });
-        await replitDb.set(keys.allProducts(), JSON.stringify([]));
-        return [];
-      }
-    } catch (error) {
-      console.error('ReplitDB: Error fetching products:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        timestamp: new Date().toISOString()
-      });
-      return [];
-    }
+    return this.memStore.products;
   }
 
   async getProduct(id: number): Promise<Product | undefined> {
-    try {
-      console.log('ReplitDB: Fetching product:', {
-        id,
-        timestamp: new Date().toISOString()
-      });
-
-      const response = await replitDb.get(keys.product(id));
-      const productStr = extractValue<string>(response);
-
-      if (!productStr) {
-        console.log('ReplitDB: Product not found:', {
-          id,
-          timestamp: new Date().toISOString()
-        });
-        return undefined;
-      }
-
-      try {
-        const product = JSON.parse(productStr);
-        if (!product || typeof product !== 'object' || !('id' in product)) {
-          console.error('ReplitDB: Invalid product data:', {
-            id,
-            data: product,
-            timestamp: new Date().toISOString()
-          });
-          return undefined;
-        }
-
-        console.log('ReplitDB: Product found:', {
-          id,
-          name: product.name,
-          timestamp: new Date().toISOString()
-        });
-        return product;
-      } catch (parseError) {
-        console.error('ReplitDB: Error parsing product data:', {
-          id,
-          error: parseError instanceof Error ? parseError.message : 'Unknown error',
-          data: productStr,
-          timestamp: new Date().toISOString()
-        });
-        return undefined;
-      }
-    } catch (error) {
-      console.error('ReplitDB: Error fetching product:', {
-        id,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        timestamp: new Date().toISOString()
-      });
-      return undefined;
-    }
+    return this.memStore.products.find(p => p.id === id);
   }
 
   async getProductsByCategory(category: string): Promise<Product[]> {
-    try {
-      console.log('ReplitDB: Fetching products by category:', { category });
-      const products = await this.getProducts();
-      const filteredProducts = products.filter(p =>
-        p.category.toLowerCase() === category.toLowerCase()
-      );
-      console.log('ReplitDB: Products found in category:', {
-        category,
-        count: filteredProducts.length
-      });
-      return filteredProducts;
-    } catch (error) {
-      console.error('ReplitDB: Error fetching products by category:', {
-        category,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
-      });
-      return [];
-    }
+    return this.memStore.products.filter(p =>
+      p.category.toLowerCase() === category.toLowerCase()
+    );
   }
 
   async createProduct(product: InsertProduct): Promise<Product> {
-    try {
-      console.log('ReplitDB: Creating new product');
-      const id = await getNextId('products');
-
-      const newProduct: Product = {
-        ...product,
-        id
-      };
-
-      const productStr = JSON.stringify(newProduct);
-      await replitDb.set(keys.product(id), productStr);
-
-      const products = await this.getProducts();
-      await replitDb.set(keys.allProducts(), JSON.stringify([...products, newProduct]));
-
-      console.log('ReplitDB: Product created successfully:', { id });
-      return newProduct;
-    } catch (error) {
-      console.error('ReplitDB: Error creating product:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
-      });
-      throw error;
-    }
+    const id = this.memStore.products.length + 1;
+    const newProduct: Product = {
+      ...product,
+      id
+    };
+    this.memStore.products.push(newProduct);
+    return newProduct;
   }
 
-  // User methods - Already implemented
+  // User methods
   async getUser(id: number): Promise<User | undefined> {
-    try {
-      console.log('ReplitDB: Fetching user by ID:', { id });
-      const response = await replitDb.get(keys.user(id));
-      const userStr = extractValue<string>(response);
-
-      if (!userStr) {
-        console.log('ReplitDB: User not found:', { id });
-        return undefined;
-      }
-
-      const user = JSON.parse(userStr);
-      console.log('ReplitDB: User found:', { id });
-      return user;
-    } catch (error) {
-      console.error('ReplitDB: Error fetching user:', {
-        id,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
-      });
-      throw error;
-    }
+    return this.memStore.users.get(id);
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    try {
-      console.log('ReplitDB: Fetching user by username:', { username });
-      const response = await replitDb.get(keys.userByUsername(username));
-      const userStr = extractValue<string>(response);
-
-      if (!userStr) {
-        console.log('ReplitDB: User not found:', { username });
-        return undefined;
-      }
-
-      const user = JSON.parse(userStr);
-      console.log('ReplitDB: User found:', { username });
-      return user;
-    } catch (error) {
-      console.error('ReplitDB: Error fetching user by username:', {
-        username,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
-      });
-      throw error;
-    }
+    return Array.from(this.memStore.users.values())
+      .find(u => u.username === username);
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    try {
-      console.log('ReplitDB: Creating new user:', { username: user.username });
+    const id = this.memStore.users.size + 1;
+    const newUser: User = {
+      ...user,
+      id,
+      createdAt: new Date(),
+      firstName: user.firstName || null,
+      lastName: user.lastName || null
+    };
+    this.memStore.users.set(id, newUser);
+    return newUser;
+  }
 
-      // Check if username already exists
-      const existing = await this.getUserByUsername(user.username);
-      if (existing) {
-        throw new Error('Username already exists');
-      }
+  // Cart methods
+  async getCartItems(userId: string): Promise<CartItem[]> {
+    return this.memStore.cartItems.get(userId) || [];
+  }
 
-      const id = await getNextId('users');
-      const newUser: User = {
-        ...user,
-        id,
-        createdAt: new Date(),
-        firstName: user.firstName || null,
-        lastName: user.lastName || null
-      };
+  async addCartItem(item: InsertCartItem): Promise<CartItem> {
+    const cartItems = this.memStore.cartItems.get(item.userId) || [];
+    const newItem: CartItem = {
+      ...item,
+      id: cartItems.length + 1,
+      isGift: item.isGift || false // Fix for isGift type error
+    };
+    cartItems.push(newItem);
+    this.memStore.cartItems.set(item.userId, cartItems);
+    return newItem;
+  }
 
-      // Store user by both ID and username
-      await replitDb.set(keys.user(id), JSON.stringify(newUser));
-      await replitDb.set(keys.userByUsername(user.username), JSON.stringify(newUser));
-
-      console.log('ReplitDB: User created successfully:', { id, username: user.username });
-      return newUser;
-    } catch (error) {
-      console.error('ReplitDB: Error creating user:', {
-        username: user.username,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
-      });
-      throw error;
+  async updateCartItemQuantity(userId: string, productId: number, quantity: number): Promise<void> {
+    const cartItems = this.memStore.cartItems.get(userId) || [];
+    const item = cartItems.find(i => i.productId === productId);
+    if (item) {
+      item.quantity = quantity;
+      this.memStore.cartItems.set(userId, cartItems);
     }
   }
 
-  // Other methods - Return dummy responses for now
+  async removeCartItem(userId: string, productId: number): Promise<void> {
+    const cartItems = this.memStore.cartItems.get(userId) || [];
+    const filtered = cartItems.filter(i => i.productId !== productId);
+    this.memStore.cartItems.set(userId, filtered);
+  }
+
+  async clearCart(userId: string): Promise<void> {
+    this.memStore.cartItems.delete(userId);
+  }
+
+  // Order methods
+  async createOrder(order: InsertOrder): Promise<Order> {
+    const orderRef = `ORD${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    const newOrder: Order = {
+      id: this.memStore.orders.size + 1,
+      orderRef,
+      status: order.status,
+      userId: order.userId,
+      items: order.items,
+      shipping: order.shipping,
+      total: order.total || 0, // Fix for total type error
+      method: order.method,
+      createdAt: new Date(),
+      lastUpdated: new Date(),
+      trackingNumber: null,
+      trackingStatus: null,
+      estimatedDelivery: null
+    };
+    this.memStore.orders.set(orderRef, newOrder);
+    return newOrder;
+  }
+
+  async getOrder(orderRef: string): Promise<Order | undefined> {
+    return this.memStore.orders.get(orderRef);
+  }
+
+  async getOrdersByUserId(userId: string): Promise<Order[]> {
+    return Array.from(this.memStore.orders.values())
+      .filter(o => o.userId === userId);
+  }
+
+  async getOrderByRef(orderRef: string): Promise<Order | undefined> {
+    return this.memStore.orders.get(orderRef);
+  }
+
+  async updateOrderStatus(orderRef: string, status: string, method?: string): Promise<Order> {
+    const order = this.memStore.orders.get(orderRef);
+    if (!order) throw new Error("Order not found");
+
+    order.status = status as "pending" | "completed" | "failed";
+    if (method) order.method = method;
+    order.lastUpdated = new Date();
+
+    this.memStore.orders.set(orderRef, order);
+    return order;
+  }
+
+  // Return Request methods
+  async createReturnRequest(returnRequest: ReturnRequest): Promise<ReturnRequest> {
+    const returns = this.memStore.returns.get(returnRequest.orderRef) || [];
+    returns.push(returnRequest);
+    this.memStore.returns.set(returnRequest.orderRef, returns);
+    return returnRequest;
+  }
+
+  async getReturnRequests(orderRef: string): Promise<ReturnRequest[]> {
+    return this.memStore.returns.get(orderRef) || [];
+  }
+
+  // Other required interface methods with default implementations
   async getBlogPosts(): Promise<BlogPost[]> { return []; }
   async getBlogPost(_slug: string): Promise<BlogPost | undefined> { return undefined; }
   async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> { return { id: 0, ...message }; }
-  async getCartItems(_userId: string): Promise<CartItem[]> { return []; }
-  async addCartItem(item: InsertCartItem): Promise<CartItem> { return { id: 0, ...item }; }
-  async updateCartItemQuantity(_userId: string, _productId: number, _quantity: number): Promise<void> {}
-  async removeCartItem(_userId: string, _productId: number): Promise<void> {}
-  async clearCart(_userId: string): Promise<void> {}
-  async createOrder(order: InsertOrder): Promise<Order> {
-    return {
-      id: 0,
-      orderRef: 'dummy',
-      lastUpdated: new Date(),
-      createdAt: new Date(),
-      trackingNumber: null,
-      trackingStatus: null,
-      estimatedDelivery: null,
-      ...order
-    };
-  }
-  async getOrder(_orderRef: string): Promise<Order | undefined> { return undefined; }
-  async getOrdersByUserId(_userId: string): Promise<Order[]> { return []; }
-  async getOrderByRef(_orderRef: string): Promise<Order | undefined> { return undefined; }
-  async updateOrderStatus(_orderRef: string, _status: string, _method?: string): Promise<Order> { throw new Error("Not implemented"); }
   async updateOrderTracking(_orderRef: string, _trackingStatus: string, _estimatedDelivery?: string): Promise<Order> { throw new Error("Not implemented"); }
   async addOrderStatusHistory(_history: OrderStatusHistory): Promise<OrderStatusHistory> { throw new Error("Not implemented"); }
   async getOrderStatusHistory(_orderId: number): Promise<OrderStatusHistory[]> { return []; }
@@ -423,5 +291,5 @@ export class ReplitDBStorage implements IStorage {
   async updateCartItemGiftStatus(_userId: string, _productId: number, _isGift: boolean, _giftMessage?: string): Promise<void> {}
 }
 
-// Export ReplitDBStorage as the main storage implementation
+// Export an instance of the storage implementation
 export const storage = new ReplitDBStorage();
