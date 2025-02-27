@@ -15,11 +15,9 @@ const execAsync = promisify(exec);
 async function forceCleanupPort(port: number) {
   try {
     console.log(`Attempting to force cleanup port ${port}...`);
-    // Try to kill any process using the port
     await execAsync(`fuser -k ${port}/tcp`);
     console.log(`Force cleanup of port ${port} completed`);
   } catch (error) {
-    // If fuser fails, it likely means no process was using the port
     console.log(`No process found using port ${port}`);
   }
 }
@@ -41,9 +39,6 @@ async function startServer() {
 
       // Force cleanup of the required port
       await forceCleanupPort(REQUIRED_PORT);
-
-      // Release all ports managed by portManager
-      console.log('Performing complete port cleanup...');
       await portManager.releaseAll();
       console.log('Complete port cleanup finished');
 
@@ -58,7 +53,7 @@ async function startServer() {
       }
       console.log('Database health check passed');
 
-      // Setup middleware
+      // Setup CORS with credentials support
       app.use(cors({
         origin: true,
         credentials: true,
@@ -68,6 +63,11 @@ async function startServer() {
         maxAge: 86400
       }));
       console.log('CORS configuration applied');
+
+      // Configure express middleware
+      app.use(express.json());
+      app.use(express.urlencoded({ extended: true }));
+      app.set("trust proxy", 1);
 
       app.use('/placeholders', express.static('client/public/placeholders', {
         maxAge: '1d',
@@ -79,7 +79,6 @@ async function startServer() {
       }));
       console.log('Static file serving configured');
 
-      app.use(express.json());
       const server = createServer(app);
 
       // Health check endpoint
@@ -94,12 +93,15 @@ async function startServer() {
         });
       });
 
-      // Setup authentication
+      // Set up auth with session support
       console.log('Setting up authentication...');
+      if (!process.env.SESSION_SECRET) {
+        throw new Error('SESSION_SECRET environment variable is required');
+      }
       const sessionMiddleware = await setupAuth(app);
       console.log('Authentication setup complete');
 
-      // Setup WebSocket
+      // Setup WebSocket with session support
       console.log('Setting up WebSocket...');
       const wss = await setupWebSocket(server, sessionMiddleware);
       console.log('WebSocket setup complete');
@@ -188,7 +190,6 @@ async function startServer() {
       process.on('SIGTERM', cleanup);
       process.on('SIGINT', cleanup);
 
-      // If we got here, server started successfully
       return;
 
     } catch (error) {
@@ -199,7 +200,6 @@ async function startServer() {
         timestamp: new Date().toISOString()
       });
 
-      // Release ports before retrying
       try {
         await forceCleanupPort(REQUIRED_PORT);
         await portManager.releaseAll();
@@ -208,9 +208,8 @@ async function startServer() {
         console.error('Failed to cleanup ports:', cleanupError);
       }
 
-      // If we haven't exceeded max retries, wait before trying again
       if (startupAttempts < MAX_STARTUP_RETRIES) {
-        const delay = startupAttempts * 2000; // Exponential backoff
+        const delay = startupAttempts * 2000;
         console.log(`Waiting ${delay}ms before next attempt...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       } else {

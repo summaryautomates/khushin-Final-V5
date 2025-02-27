@@ -1,4 +1,17 @@
+import { pgTable, serial, text, varchar, timestamp } from 'drizzle-orm/pg-core';
 import { z } from "zod";
+import { createInsertSchema } from 'drizzle-zod';
+
+// User table definition
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  username: varchar('username', { length: 255 }).notNull().unique(),
+  password: varchar('password', { length: 255 }).notNull(),
+  email: varchar('email', { length: 255 }).notNull(),
+  firstName: varchar('firstName', { length: 255 }),
+  lastName: varchar('lastName', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow()
+});
 
 // Type definitions for User
 export interface User {
@@ -157,8 +170,8 @@ export const insertUserSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   email: z.string().email("Invalid email address"),
-  firstName: z.string().optional(),
-  lastName: z.string().optional()
+  firstName: z.string().nullable(),
+  lastName: z.string().nullable()
 });
 
 export const insertProductSchema = z.object({

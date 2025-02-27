@@ -74,7 +74,7 @@ export async function setupAuth(app: Express) {
       cookie: {
         secure: isProduction,
         httpOnly: true,
-        sameSite: isProduction ? 'strict' : 'lax',
+        sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
       }
     });
@@ -90,6 +90,7 @@ export async function setupAuth(app: Express) {
     // Enhanced user serialization with error handling
     passport.serializeUser((user: Express.User, done) => {
       try {
+        console.log('Serializing user:', { id: user.id });
         done(null, user.id);
       } catch (error) {
         console.error('User serialization error:', {
@@ -103,11 +104,13 @@ export async function setupAuth(app: Express) {
 
     passport.deserializeUser(async (id: number, done) => {
       try {
+        console.log('Deserializing user:', { id });
         const user = await storage.getUser(id);
         if (!user) {
           console.log('User not found during deserialization:', { id });
           return done(null, false);
         }
+        console.log('User deserialized successfully:', { id: user.id });
         done(null, user);
       } catch (error) {
         console.error('User deserialization error:', {
@@ -171,7 +174,10 @@ function setupAuthRoutes(app: Express) {
   // Registration route with improved validation and error handling
   app.post("/api/register", async (req, res) => {
     try {
-      console.log('Processing registration request');
+      console.log('Processing registration request:', {
+        username: req.body.username,
+        timestamp: new Date().toISOString()
+      });
 
       // Validate registration data
       const validationResult = insertUserSchema.safeParse(req.body);
@@ -238,7 +244,10 @@ function setupAuthRoutes(app: Express) {
 
   // Authentication routes with improved error handling
   app.post("/api/login", (req, res, next) => {
-    console.log('Processing login request');
+    console.log('Processing login request:', {
+      username: req.body.username,
+      timestamp: new Date().toISOString()
+    });
 
     passport.authenticate(
       "local",

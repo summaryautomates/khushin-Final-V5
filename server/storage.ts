@@ -5,11 +5,14 @@ import {
   type InsertOrder,
   type Product,
   type InsertUser,
+  users
 } from "@shared/schema";
 import pg from 'pg';
 import session from "express-session";
 import { type User } from "@shared/schema";
 import MemoryStore from "memorystore";
+import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/node-postgres";
 
 const { Pool } = pg;
 const MemoryStoreSession = MemoryStore(session);
@@ -25,6 +28,9 @@ const pool = new Pool({
     rejectUnauthorized: false
   }
 });
+
+// Initialize drizzle
+const db = drizzle(pool);
 
 // Test the database connection
 pool.query('SELECT NOW()', (err, res) => {
@@ -75,6 +81,7 @@ export interface IStorage {
 export class ReplitDBStorage implements IStorage {
   sessionStore: session.Store;
   private pool = pool;
+  private db = db;
 
   constructor() {
     console.log('Initializing ReplitDBStorage...');
@@ -302,19 +309,15 @@ export class ReplitDBStorage implements IStorage {
     try {
       console.log('Creating user:', { username: userData.username });
 
-      const result = await this.pool.query(`
-        INSERT INTO users (username, password, email, "firstName", "lastName")
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING *
-      `, [
-        userData.username,
-        userData.password,
-        userData.email,
-        userData.firstName,
-        userData.lastName
-      ]);
+      const result = await this.db.insert(users).values({
+        username: userData.username,
+        password: userData.password,
+        email: userData.email,
+        firstName: userData.firstName || null,
+        lastName: userData.lastName || null
+      }).returning();
 
-      const user = result.rows[0];
+      const user = result[0];
       console.log('User created successfully:', { id: user.id, username: user.username });
       return user;
     } catch (error) {
@@ -326,8 +329,8 @@ export class ReplitDBStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
     try {
       console.log('Fetching user by ID:', id);
-      const result = await this.pool.query('SELECT * FROM users WHERE id = $1', [id]);
-      return result.rows[0];
+      const result = await this.db.select().from(users).where(eq(users.id, id));
+      return result[0];
     } catch (error) {
       console.error('Error fetching user by ID:', error);
       return undefined;
@@ -337,8 +340,8 @@ export class ReplitDBStorage implements IStorage {
   async getUserByUsername(username: string): Promise<User | undefined> {
     try {
       console.log('Fetching user by username:', username);
-      const result = await this.pool.query('SELECT * FROM users WHERE username = $1', [username]);
-      return result.rows[0];
+      const result = await this.db.select().from(users).where(eq(users.username, username));
+      return result[0];
     } catch (error) {
       console.error('Error fetching user by username:', error);
       return undefined;
