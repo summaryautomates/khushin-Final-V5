@@ -36,6 +36,8 @@ import Rewards from "@/pages/rewards";
 import Referral from "@/pages/referral";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import React from 'react';
+import PremiumCollection from "@/pages/premium-collection"; // Import the new component
+
 
 function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
@@ -100,6 +102,7 @@ function AppRoutes() {
             <Route path="/loyalty" component={Loyalty} />
             <Route path="/rewards" component={Rewards} />
             <Route path="/referral" component={Referral} />
+            <Route path="/premium-collection" component={PremiumCollection} /> {/* Added Premium Collection route */}
             <Route component={NotFound} />
           </Switch>
         </div>
@@ -131,6 +134,7 @@ function AppRoutes() {
             <Route path="/loyalty" component={Loyalty} />
             <Route path="/rewards" component={Rewards} />
             <Route path="/referral" component={Referral} />
+            <Route path="/premium-collection" component={PremiumCollection} /> {/* Added Premium Collection route */}
             <Route component={NotFound} />
           </Switch>
         </div>

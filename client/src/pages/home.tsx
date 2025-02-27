@@ -300,7 +300,8 @@ export default function Home() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="gap-2 rounded-full"
+                      className="gap-2 rounded-full hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
+                      onClick={() => setLocation("/premium-collection")}
                     >
                       <Star className="w-4 h-4" /> Premium Collection
                     </Button>
