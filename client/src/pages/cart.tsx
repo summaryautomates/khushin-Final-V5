@@ -211,7 +211,6 @@ export default function Cart() {
 
     setIsCheckingOut(true);
     try {
-      // Prepare the order payload according to the InsertOrder schema
       const orderPayload: Omit<InsertOrder, "orderRef"> = {
         userId: user.id.toString(),
         items: items.map(item => ({
@@ -269,16 +268,11 @@ export default function Cart() {
         throw new Error(responseData?.message || "Checkout process failed");
       }
 
-      if (!responseData?.redirectUrl) {
-        throw new Error("Missing payment redirect URL");
-      }
-
-      // Redirect to payment page
       window.location.href = responseData.redirectUrl;
     } catch (error: any) {
       console.error("Checkout error:", error);
       if (error instanceof Error && error.message === "AUTH_REQUIRED") {
-        return; // AuthSheet is already shown
+        return; 
       }
       toast({
         title: "Checkout Error",
