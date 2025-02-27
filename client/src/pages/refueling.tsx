@@ -39,7 +39,7 @@ const Refueling = () => {
             >
               <Button size="sm" className="p-0 h-auto bg-transparent hover:bg-transparent">
                 <img 
-                  src="https://i.imghippo.com/files/ncH5592Qc.png" 
+                  src="https://i.imghippo.com/files/cfz5924gY.png" 
                   alt="Book Your Appointment"
                   className="h-20 w-auto mix-blend-screen filter contrast-125 brightness-110"
                   style={{
