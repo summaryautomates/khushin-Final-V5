@@ -31,11 +31,13 @@ export default function ProductPage() {
   const [pendingAction, setPendingAction] = useState<"add-to-cart" | "buy-now" | null>(null);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [, setLocation] = useLocation();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+
 
   const { data: product, isLoading, error } = useQuery<Product>({
     queryKey: [`/api/products/${id}`],
     enabled: !!id,
-    retry: 3,
+    retry: 2,
     staleTime: 300000,
     gcTime: 3600000,
     onError: (err) => {
@@ -45,17 +47,23 @@ export default function ProductPage() {
         title: "Error",
         description: "Failed to load product. Please try again.",
       });
-    }
+    },
+    useErrorBoundary: false
   });
 
   const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
     const img = event.target as HTMLImageElement;
     img.src = FALLBACK_IMAGE;
+    console.warn('Image load failed, using fallback:', {
+      originalSrc: img.getAttribute('data-original-src'),
+      fallbackSrc: FALLBACK_IMAGE
+    });
   };
 
   const handleAddToCart = async () => {
     if (!product) return;
 
+    setIsAddingToCart(true);
     try {
       await addItem(product);
       toast({
@@ -72,6 +80,8 @@ export default function ProductPage() {
         variant: "destructive",
         description: "Failed to add item to cart. Please try again.",
       });
+    } finally {
+      setIsAddingToCart(false);
     }
   };
 
@@ -262,9 +272,16 @@ export default function ProductPage() {
                       variant="outline"
                       className="w-full tracking-wider"
                       onClick={handleAddToCart}
-                      disabled={isCheckingOut}
+                      disabled={isCheckingOut || isAddingToCart}
                     >
-                      Add to Cart
+                      {isAddingToCart ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Adding...
+                        </>
+                      ) : (
+                        "Add to Cart"
+                      )}
                     </Button>
                     <Button
                       size="lg"

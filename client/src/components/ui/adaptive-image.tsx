@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,11 +34,31 @@ export function AdaptiveImage({
   const [isLoading, setIsLoading] = useState(true);
   const [fallbackIndex, setFallbackIndex] = useState(-1); // -1 means using original src
   const [hasError, setHasError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
+
+  // Reset states when src changes
+  useEffect(() => {
+    setCurrentSrc(src);
+    setFallbackIndex(-1);
+    setHasError(false);
+    setIsLoading(true);
+    setRetryCount(0);
+  }, [src]);
 
   const handleError = () => {
+    // First try to reload the original image
+    if (retryCount < MAX_RETRIES && fallbackIndex === -1) {
+      setRetryCount(prev => prev + 1);
+      // Add cache buster to force reload
+      setCurrentSrc(`${src}?retry=${Date.now()}`);
+      console.warn(`Retrying original image load (${retryCount + 1}/${MAX_RETRIES}):`, src);
+      return;
+    }
+
     const nextIndex = fallbackIndex + 1;
     if (nextIndex < fallbackImages.length) {
-      console.log(`Image load failed for ${currentSrc}, trying fallback: ${fallbackImages[nextIndex]}`);
+      console.warn(`Image load failed for ${currentSrc}, trying fallback: ${fallbackImages[nextIndex]}`);
       setCurrentSrc(fallbackImages[nextIndex]);
       setFallbackIndex(nextIndex);
       onLoadError?.(`Failed to load image: ${currentSrc}`);
