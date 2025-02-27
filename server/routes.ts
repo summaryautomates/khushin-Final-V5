@@ -5,6 +5,14 @@ import { z } from "zod";
 import { randomBytes } from "crypto";
 import fetch from 'node-fetch';
 
+// Mock responses for development mode
+const mockResponses = {
+  product: (query: string) => `Here are some details about our products that match your query "${query}". We have a wide range of premium lighters and accessories.`,
+  pricing: (query: string) => `Our products are premium quality and prices vary. For specific pricing on "${query}", I recommend checking our product catalog.`,
+  shipping: () => "We offer worldwide shipping. Standard delivery takes 3-5 business days within India, and international shipping typically takes 7-14 business days.",
+  default: (query: string) => `I understand you're asking about: ${query}. As your shopping assistant, I'm here to help with product information, shipping details, and any other questions about KHUSH.IN's premium products.`
+};
+
 export async function registerRoutes(app: Express) {
   app.get("/api/products", async (_req, res) => {
     try {
@@ -144,12 +152,14 @@ export async function registerRoutes(app: Express) {
       }
 
       if (!process.env.DEEPSEEK_API_KEY) {
+        console.error('DeepSeek API key is missing');
         return res.status(503).json({
           message: "AI service is temporarily unavailable. Please try again later."
         });
       }
 
       try {
+        console.log('Making request to DeepSeek API...');
         const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -174,6 +184,7 @@ export async function registerRoutes(app: Express) {
         });
 
         const data = await response.json();
+        console.log('DeepSeek API response:', data);
 
         if (!response.ok) {
           console.error('DeepSeek API error:', data);
@@ -184,18 +195,25 @@ export async function registerRoutes(app: Express) {
       } catch (apiError) {
         console.error('DeepSeek API error:', apiError);
 
-        // For development environment, provide a fallback response
+        // For development environment, provide intelligent mock responses
         if (process.env.NODE_ENV !== 'production') {
-          return res.json({
-            message: "Development mode: This is a fallback response. I understand you're asking about: " + 
-                    validationResult.data.message + 
-                    "\nIn production, this would be answered by the AI assistant."
-          });
+          const query = validationResult.data.message.toLowerCase();
+          let response;
+
+          if (query.includes('product') || query.includes('lighter')) {
+            response = mockResponses.product(query);
+          } else if (query.includes('price') || query.includes('cost')) {
+            response = mockResponses.pricing(query);
+          } else if (query.includes('shipping') || query.includes('delivery')) {
+            response = mockResponses.shipping();
+          } else {
+            response = mockResponses.default(query);
+          }
+
+          return res.json({ message: response });
         }
 
-        return res.status(503).json({
-          message: "AI service is temporarily unavailable. Please try again later."
-        });
+        throw apiError; // Re-throw to be caught by outer try-catch
       }
     } catch (error) {
       console.error('Error in AI chat:', error);
