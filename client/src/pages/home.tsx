@@ -223,7 +223,7 @@ export default function Home() {
                 transition={{ delay: 1.2, duration: 0.8 }}
                 className="text-lg md:text-xl leading-relaxed text-zinc-300 max-w-2xl mx-auto tracking-wide text-center font-light"
               >
-                Exclusive luxury lighters - The perfect gift to light up their smile.
+                Exclusive luxury lighters - The perfect gift to light up our smile.
               </motion.p>
 
               <motion.div
