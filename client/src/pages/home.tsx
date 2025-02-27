@@ -11,6 +11,7 @@ import { Star, Clock, Calendar, Mic, Camera, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect, useMemo, lazy, Suspense } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AdaptiveImage } from "@/components/ui/adaptive-image";
+import { AnimatedText } from "@/components/ui/animated-text";
 
 // Lazy load Tesseract.js
 const initTesseract = async () => {
@@ -214,16 +215,19 @@ export default function Home() {
               className="max-w-4xl mx-auto"
             >
               <motion.h1
-                initial={{ letterSpacing: "0.2em", opacity: 0 }}
-                animate={{ letterSpacing: "0.1em", opacity: 1 }}
-                transition={{ duration: 1.5, delay: 0.8 }}
                 className="text-5xl sm:text-6xl md:text-7xl font-extralight mb-8 md:mb-10 tracking-wider text-center mx-auto leading-tight"
               >
-                <span className="block bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent">
-                  Make Your
+                <span className="block">
+                  <AnimatedText 
+                    text="Make Your"
+                    className="bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent"
+                  />
                 </span>
-                <span className="block mt-2 bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent">
-                  Loved One Happy!
+                <span className="block mt-2">
+                  <AnimatedText 
+                    text="Loved One Happy!"
+                    className="bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent"
+                  />
                 </span>
               </motion.h1>
 
