@@ -31,7 +31,7 @@ const Refueling = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="relative"
           >
-            <a href="#appointment" className="inline-block">
+            <a href="https://khushi.setmore.com/saransh" target="_blank" rel="noopener noreferrer">
               <img 
                 src="https://i.imghippo.com/files/cfz5924gY.png" 
                 alt="Book Your Appointment" 
