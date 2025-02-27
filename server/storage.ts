@@ -22,7 +22,7 @@ import {
   type InsertGiftOrder,
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, and, desc, gt } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { users, type User, type InsertUser } from "@shared/schema";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -34,7 +34,6 @@ export interface IStorage {
   getProducts(): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
   getProductsByCategory(category: string): Promise<Product[]>;
-  getLuxuryProducts(): Promise<Product[]>; // Added getLuxuryProducts method
 
   // Blog posts
   getBlogPosts(): Promise<BlogPost[]>;
@@ -122,15 +121,6 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(products)
       .where(eq(products.category, category.toLowerCase()));
-  }
-
-  async getLuxuryProducts(): Promise<Product[]> {
-    // Get all products where price is above a luxury threshold (₹1,500)
-    return await db.select().from(products)
-      .where(and(
-        eq(products.category, 'lighters'),
-        gt(products.price, 150000)
-      ));
   }
 
   async getBlogPosts(): Promise<BlogPost[]> {

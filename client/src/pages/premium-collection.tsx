@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Crown } from "lucide-react";
@@ -11,20 +12,25 @@ export default function PremiumCollection() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
+    const fetchPremiumProducts = async () => {
       try {
-        const response = await fetch('/api/products/luxury');
+        const response = await fetch("/api/products");
         const data = await response.json();
-        setProducts(data);
+        
+        // Filter for premium products only
+        const premiumProducts = data.filter((product: Product) => 
+          product.tags?.includes("premium")
+        );
+        
+        setProducts(premiumProducts);
+        setLoading(false);
       } catch (error) {
-        console.error('Error fetching products:', error);
-      } finally {
+        console.error("Error fetching premium products:", error);
         setLoading(false);
       }
     };
 
-    fetchProducts();
+    fetchPremiumProducts();
   }, []);
 
   return (
@@ -36,7 +42,7 @@ export default function PremiumCollection() {
       >
         <div className="flex items-center gap-3 mb-8">
           <Crown className="h-8 w-8 text-gold" />
-          <h1 className="text-3xl md:text-4xl font-bold">Luxury Lighters Collection</h1>
+          <h1 className="text-3xl md:text-4xl font-bold">Premium Collection</h1>
         </div>
 
         <motion.div
@@ -45,7 +51,9 @@ export default function PremiumCollection() {
           transition={{ delay: 0.2 }}
         >
           <p className="text-muted-foreground mb-8 max-w-3xl">
-            Discover our exclusive collection of premium luxury lighters, each piece a testament to unparalleled craftsmanship and timeless elegance.
+            Discover our exclusive premium collection, featuring the finest craftsmanship and
+            luxurious materials. Each piece is meticulously designed to provide an exceptional
+            experience for those who value sophistication and elegance.
           </p>
         </motion.div>
 
