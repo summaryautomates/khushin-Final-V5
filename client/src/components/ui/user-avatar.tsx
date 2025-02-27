@@ -21,10 +21,10 @@ export function UserAvatar({ user, className, useLighter = false }: UserAvatarPr
     <Avatar className={className}>
       {!imageError && (useLighter || !user?.image) ? (
         <AvatarImage 
-          src="/lighter-icon.png"  // Using the default lighter icon
+          src="/images/lighter.png"
           alt="Lighter Icon" 
           onError={() => setImageError(true)} 
-          className="object-contain p-1 bg-gradient-to-br from-orange-400/80 to-orange-600/80"
+          className="object-contain p-1.5 bg-red-500"
         />
       ) : user?.image ? (
         <AvatarImage 
@@ -33,7 +33,7 @@ export function UserAvatar({ user, className, useLighter = false }: UserAvatarPr
           onError={() => setImageError(true)} 
         />
       ) : null}
-      <AvatarFallback className="bg-orange-500/20 text-orange-600">
+      <AvatarFallback className="bg-red-100 text-red-600">
         {fallbackLetter}
       </AvatarFallback>
     </Avatar>
