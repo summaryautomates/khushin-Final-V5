@@ -199,7 +199,7 @@ const Refueling = () => {
             className="max-w-xl mx-auto text-center"
           >
             <h2 className="text-2xl font-light mb-6 tracking-wider">Ready to Enhance Your Experience?</h2>
-            <a href="https://infograph.venngage.com/ps/JsjiW4koe8" target="_blank" rel="noopener noreferrer">
+            <a href="https://i.imghippo.com/files/nCr6709jA.png" target="_blank" rel="noopener noreferrer">
               <Button size="lg" className="rounded-full gap-2 bg-primary/90 hover:bg-primary">
                 Shop Refueling Accessories
                 <ChevronRight className="w-4 h-4" />
