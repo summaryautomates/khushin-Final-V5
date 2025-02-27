@@ -16,7 +16,7 @@ const Refueling = () => {
             transition={{ duration: 1.5 }}
           >
             <img 
-              src="https://media.istockphoto.com/id/2149504210/photo/cylinder-with-compressed-gas-for-filling-lighters.jpg?s=1024x1024&w=is&k=20&c=wlpY-lGOarowzfXRYq-UALJMc2CTlQ2l8FwSk5sxnNI="
+              src="https://i.imghippo.com/files/I2429lk.jpg"
               className="w-full h-full object-cover"
               alt="Luxury refueling background"
             />
