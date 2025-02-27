@@ -34,8 +34,11 @@ const Refueling = () => {
               <img 
                 src="https://i.imghippo.com/files/cfz5924gY.png" 
                 alt="Book Your Appointment" 
-                className="h-24 w-auto object-contain"
-                style={{ filter: "drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))" }}
+                className="h-40 w-auto object-contain"
+                style={{ 
+                  filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.9))",
+                  transform: "scale(1.1)",
+                }}
               />
             </a>
           </motion.div>
