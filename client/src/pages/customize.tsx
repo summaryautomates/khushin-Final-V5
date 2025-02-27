@@ -53,9 +53,21 @@ export default function Customize() {
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
-        minHeight: "100vh"
+        minHeight: "100vh",
+        position: "relative"
       }}
     >
+      <div 
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.6)", /* Adjust opacity here (0.6 = 40% visible) */
+          zIndex: -1
+        }}
+      ></div>
       <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 md:mb-8">Customize Your Product</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
