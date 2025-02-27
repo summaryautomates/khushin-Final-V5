@@ -268,7 +268,7 @@ export default function Contact() {
         
         {/* Map Image */}
         <motion.div 
-          className="mt-16 rounded-xl overflow-hidden h-96 border border-primary/20"
+          className="mt-16 rounded-xl overflow-hidden h-auto max-h-[600px] border border-primary/20"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.5 }}
@@ -276,7 +276,9 @@ export default function Contact() {
           <img 
             src="https://i.imghippo.com/files/Jwn6316QRQ.jpg" 
             alt="Contact location map" 
-            className="w-full h-full object-cover"
+            className="w-full object-contain"
+            style={{ imageRendering: 'high-quality' }}
+            loading="eager"
           />
         </motion.div>
       </motion.div>
