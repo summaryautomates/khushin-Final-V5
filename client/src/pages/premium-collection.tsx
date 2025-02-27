@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Crown } from "lucide-react";
@@ -6,32 +5,17 @@ import { ProductCard } from "@/components/products/product-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
 
 export default function PremiumCollection() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: products, isLoading } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+  });
 
-  useEffect(() => {
-    const fetchPremiumProducts = async () => {
-      try {
-        const response = await fetch("/api/products");
-        const data = await response.json();
-        
-        // Filter for premium products only
-        const premiumProducts = data.filter((product: Product) => 
-          product.tags?.includes("premium")
-        );
-        
-        setProducts(premiumProducts);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching premium products:", error);
-        setLoading(false);
-      }
-    };
-
-    fetchPremiumProducts();
-  }, []);
+  // Filter for premium/luxury products
+  const premiumProducts = products?.filter(product => 
+    product.category === "luxury" || product.price > 200000 // Products over ₹2000
+  ) || [];
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -58,7 +42,7 @@ export default function PremiumCollection() {
         </motion.div>
 
         <div className="mt-10">
-          {loading ? (
+          {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {Array(8)
                 .fill(0)
@@ -71,9 +55,9 @@ export default function PremiumCollection() {
                   </div>
                 ))}
             </div>
-          ) : products.length > 0 ? (
+          ) : premiumProducts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {products.map((product) => (
+              {premiumProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
