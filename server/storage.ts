@@ -44,29 +44,12 @@ const keys = {
 async function getNextId(type: 'users' | 'products'): Promise<number> {
   try {
     const key = type === 'users' ? keys.userNextId() : keys.productNextId();
-    const response = await replitDb.get(key);
-
-    // Extract value from response if it's an object
-    const currentId = typeof response === 'object' && response !== null && 'value' in response
-      ? Number(response.value) || 0
-      : Number(response) || 0;
-
+    const currentId = Number(await replitDb.get(key)) || 0;
     const nextId = currentId + 1;
     await replitDb.set(key, nextId);
-
-    console.log(`Generated next ${type} ID:`, {
-      currentId,
-      nextId,
-      timestamp: new Date().toISOString()
-    });
-
     return nextId;
   } catch (error) {
-    console.error(`Error generating next ${type} ID:`, {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
-    });
+    console.error(`Error generating next ${type} ID:`, error);
     throw error;
   }
 }
@@ -279,7 +262,7 @@ export class ReplitDBStorage implements IStorage {
   async createProduct(product: InsertProduct): Promise<Product> {
     try {
       console.log('ReplitDB: Creating new product');
-      const id = await getNextId('products');
+      const id = await this.getNextId('products');
 
       const newProduct: Product = {
         ...product,
@@ -289,15 +272,30 @@ export class ReplitDBStorage implements IStorage {
       const productStr = JSON.stringify(newProduct);
       await replitDb.set(keys.product(id), productStr);
 
+      // Update the all products list
       const products = await this.getProducts();
-      await replitDb.set(keys.allProducts(), JSON.stringify([...products, newProduct]));
+      const existingIndex = products.findIndex(p => p.id === id);
 
-      console.log('ReplitDB: Product created successfully:', { id });
+      if (existingIndex !== -1) {
+        products[existingIndex] = newProduct;
+      } else {
+        products.push(newProduct);
+      }
+
+      await replitDb.set(keys.allProducts(), JSON.stringify(products));
+
+      console.log('ReplitDB: Product created successfully:', {
+        id,
+        name: product.name,
+        timestamp: new Date().toISOString()
+      });
+
       return newProduct;
     } catch (error) {
       console.error('ReplitDB: Error creating product:', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
       });
       throw error;
     }
@@ -402,8 +400,8 @@ export class ReplitDBStorage implements IStorage {
       await replitDb.set(keys.user(id), userStr);
       await replitDb.set(keys.userByUsername(user.username), userStr);
 
-      console.log('ReplitDB: User created successfully:', { 
-        id, 
+      console.log('ReplitDB: User created successfully:', {
+        id,
         username: user.username,
         timestamp: new Date().toISOString()
       });
