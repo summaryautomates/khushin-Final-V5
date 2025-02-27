@@ -53,72 +53,81 @@ export default function Products() {
     }
   }, [location]);
 
-  const { data: allProducts, isLoading } = useQuery<Product[]>({
+  const { data: allProducts = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
 
-  const products = allProducts;
+  // Filter and sort products
+  const filteredProducts = allProducts
+    .filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          product.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = category === "all" || product.category === category;
+      const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+      return matchesSearch && matchesCategory && matchesPrice;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "price-asc":
+          return a.price - b.price;
+        case "price-desc":
+          return b.price - a.price;
+        case "name-desc":
+          return b.name.localeCompare(a.name);
+        default: // name-asc
+          return a.name.localeCompare(b.name);
+      }
+    });
 
   // Get unique categories from all products
-  const categories = products
-    ? ["all", ...Array.from(new Set(products.map(p => p.category)))
+  const categories = allProducts
+    ? ["all", ...Array.from(new Set(allProducts.map(p => p.category)))
         .filter(cat => cat !== 'refueling')
         .sort()]
     : ["all"];
 
-  // Category specific hero section for lighters
-  const renderCategoryHero = () => {
-    if (category === "lighters") {
-      return (
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-12 relative overflow-hidden rounded-2xl bg-gradient-to-r from-zinc-900 to-zinc-800 p-8 md:p-12"
-        >
-          <div 
-            className="absolute inset-0 bg-cover bg-center" 
-            style={{ backgroundImage: "url('https://i.imghippo.com/files/GI4149xtI.png')", opacity: 0.3 }}
-          />
-          <div className="relative z-10 max-w-3xl">
-            <div className="flex items-center gap-2 mb-6">
-              <Crown className="h-8 w-8 text-gold" />
-              <h1 className="text-4xl font-light tracking-wider text-white">Luxury Lighters Collection</h1>
-            </div>
-            <p className="text-zinc-300 leading-relaxed mb-8">
-              Discover our exquisite collection of premium lighters, each piece a testament to unparalleled craftsmanship
-              and timeless elegance. From limited editions to bespoke designs, find your perfect companion of sophistication.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Badge variant="outline" className="bg-gold/10 text-gold border-gold/20 px-3 py-1.5">
-                <Diamond className="w-4 h-4 mr-2" />
-                Premium Materials
-              </Badge>
-              <Badge variant="outline" className="bg-gold/10 text-gold border-gold/20 px-3 py-1.5">
-                <Flame className="w-4 h-4 mr-2" />
-                Lifetime Warranty
-              </Badge>
-            </div>
-          </div>
-        </motion.div>
-      );
-    }
-    return null;
+  const applySearch = (search: SearchHistory) => {
+    setSearchTerm(search.term);
+    setCategory(search.category);
+    setPriceRange(search.priceRange);
+    setShowHistory(false);
   };
-
-  if (isLoading) {
-    return (
-      <div className="container min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading products...</div>
-      </div>
-    );
-  }
-
-  const maxPrice = Math.max(...(products?.map(p => p.price) || [100000]));
 
   return (
     <div className="container py-12">
       <div className="space-y-8">
-        {renderCategoryHero()}
+        {category === "lighters" && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-12 relative overflow-hidden rounded-2xl bg-gradient-to-r from-zinc-900 to-zinc-800 p-8 md:p-12"
+          >
+            <div 
+              className="absolute inset-0 bg-cover bg-center opacity-30"
+              style={{ backgroundImage: "url('https://i.imghippo.com/files/GI4149xtI.png')" }}
+            />
+            <div className="relative z-10 max-w-3xl">
+              <div className="flex items-center gap-2 mb-6">
+                <Crown className="h-8 w-8 text-gold" />
+                <h1 className="text-4xl font-light tracking-wider text-white">Luxury Lighters Collection</h1>
+              </div>
+              <p className="text-zinc-300 leading-relaxed mb-8">
+                Discover our exquisite collection of premium lighters, each piece a testament to unparalleled craftsmanship
+                and timeless elegance. From limited editions to bespoke designs, find your perfect companion of sophistication.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <Badge variant="outline" className="bg-gold/10 text-gold border-gold/20 px-3 py-1.5">
+                  <Diamond className="w-4 h-4 mr-2" />
+                  Premium Materials
+                </Badge>
+                <Badge variant="outline" className="bg-gold/10 text-gold border-gold/20 px-3 py-1.5">
+                  <Flame className="w-4 h-4 mr-2" />
+                  Lifetime Warranty
+                </Badge>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         <div className="flex items-center justify-between">
           <h2 className="text-3xl font-extralight tracking-wider">
@@ -140,7 +149,7 @@ export default function Products() {
               variant="ghost"
               onClick={() => {
                 setSearchTerm("");
-                setPriceRange([0, maxPrice]);
+                setPriceRange([0, Math.max(...allProducts.map(p => p.price))]);
                 setCategory("all");
                 setSortBy("name-asc");
               }}
@@ -192,10 +201,25 @@ export default function Products() {
               </div>
 
               <div className="space-y-4">
+                <h3 className="font-medium">Sort By</h3>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sort by..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                    <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                    <SelectItem value="price-asc">Price (Low to High)</SelectItem>
+                    <SelectItem value="price-desc">Price (High to Low)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-4">
                 <h3 className="font-medium">Price Range</h3>
                 <Slider
                   min={0}
-                  max={maxPrice}
+                  max={Math.max(...allProducts.map(p => p.price))}
                   step={100}
                   value={[priceRange[0], priceRange[1]]}
                   onValueChange={(value) => setPriceRange(value as [number, number])}
@@ -206,23 +230,6 @@ export default function Products() {
                   <span>₹{priceRange[1].toLocaleString()}</span>
                 </div>
               </div>
-
-              {category === "lighters" && (
-                <div className="space-y-2">
-                  <h3 className="font-medium">Collections</h3>
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select collection" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="premium">Premium Collection</SelectItem>
-                      <SelectItem value="limited">Limited Edition</SelectItem>
-                      <SelectItem value="classic">Classic Collection</SelectItem>
-                      <SelectItem value="modern">Modern Series</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
 
               <Button
                 className="w-full gap-2"
@@ -305,7 +312,9 @@ export default function Products() {
 
           {/* Product Grid */}
           <div>
-            {products && products.length > 0 ? (
+            {isLoading ? (
+              <ProductGrid products={[]} isLoading={true} />
+            ) : filteredProducts.length > 0 ? (
               <>
                 <motion.div 
                   initial={{ opacity: 0 }}
@@ -313,10 +322,10 @@ export default function Products() {
                   className="mb-6"
                 >
                   <p className="text-sm text-muted-foreground">
-                    Showing {products.length} {products.length === 1 ? 'product' : 'products'}
+                    Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
                   </p>
                 </motion.div>
-                <ProductGrid products={products} isLoading={isLoading} />
+                <ProductGrid products={filteredProducts} isLoading={false} />
               </>
             ) : (
               <motion.div 
