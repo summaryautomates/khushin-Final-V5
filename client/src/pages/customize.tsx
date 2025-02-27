@@ -49,12 +49,13 @@ export default function Customize() {
     <div 
       className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-12"
       style={{
-        backgroundImage: "url('https://i.imghippo.com/files/eb8638iY.jpg')",
+        backgroundImage: "url('https://www.easygifanimator.net/images/samples/video-to-gif-sample.gif')",  // Replaced with a higher-resolution image.  Consider a placeholder if this URL is unavailable.
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
         minHeight: "100vh",
-        position: "relative"
+        position: "relative",
+        filter: "blur(2px)" // Added a slight blur to the background for better contrast
       }}
     >
       <div 
@@ -64,7 +65,7 @@ export default function Customize() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.6)", /* Adjust opacity here (0.6 = 40% visible) */
+          backgroundColor: "rgba(255, 255, 255, 0.8)", /* Changed background color and opacity for better visibility */
           zIndex: -1
         }}
       ></div>
