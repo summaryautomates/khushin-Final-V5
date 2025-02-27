@@ -123,22 +123,24 @@ export default function Customize() {
 
   return (
     <div
-      className="min-h-screen py-8 relative"
+      className="flex flex-col"
       style={{
-        backgroundImage: "url('/attached_assets/customize-bg.jpg')",
+        backgroundImage: "url('https://i.imghippo.com/files/I2429lk.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
-        backgroundAttachment: "fixed"
+        backgroundRepeat: "no-repeat",
+        minHeight: "100vh",
+        position: "relative"
       }}
     >
       {/* Add a semi-transparent overlay */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+      <div 
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         style={{ zIndex: 0 }}
       />
 
       {/* Main content with higher z-index */}
-      <div className="container mx-auto px-4 relative" style={{ zIndex: 1 }}>
+      <div className="container mx-auto px-4 relative py-8" style={{ zIndex: 1 }}>
         <h1 className="text-3xl md:text-4xl font-bold mb-8 text-white">Customize Your Product</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
