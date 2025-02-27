@@ -30,23 +30,13 @@ const Refueling = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2, duration: 0.5 }}
           >
-            <a 
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                window.open("https://i.imghippo.com/files/ncH5592Qc.png", "_blank");
-              }}
-            >
-              <Button size="sm" className="p-0 h-auto bg-transparent hover:bg-transparent">
-                <img 
-                  src="https://i.imghippo.com/files/cfz5924gY.png" 
-                  alt="Book Your Appointment"
-                  className="h-40 w-auto mix-blend-screen filter contrast-125 brightness-110"
-                  style={{
-                    filter: "drop-shadow(0 0 12px rgba(255, 255, 255, 0.8))"
-                  }}
-                />
-              </Button>
+            <a href="#" className="block">
+              <img 
+                src="https://i.imghippo.com/files/cfz5924gY.png" 
+                alt="Book Your Appointment" 
+                className="h-24 w-auto object-contain"
+                style={{ filter: "drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))" }}
+              />
             </a>
           </motion.div>
         </div>
