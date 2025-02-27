@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Default fallback images that will be tried in order
@@ -18,6 +18,7 @@ interface AdaptiveImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   className?: string;
   containerClassName?: string;
   onLoadError?: (error: string) => void;
+  priority?: boolean;
 }
 
 export function AdaptiveImage({
@@ -28,23 +29,35 @@ export function AdaptiveImage({
   className,
   containerClassName,
   onLoadError,
+  priority = false,
   ...props
 }: AdaptiveImageProps) {
   const [currentSrc, setCurrentSrc] = useState(src);
   const [isLoading, setIsLoading] = useState(true);
-  const [fallbackIndex, setFallbackIndex] = useState(-1); // -1 means using original src
+  const [fallbackIndex, setFallbackIndex] = useState(-1);
   const [hasError, setHasError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 3;
 
-  // Reset states when src changes
   useEffect(() => {
     setCurrentSrc(src);
     setFallbackIndex(-1);
     setHasError(false);
     setIsLoading(true);
     setRetryCount(0);
-  }, [src]);
+
+    // Preload the image if priority is true
+    if (priority) {
+      const preloadLink = document.createElement('link');
+      preloadLink.rel = 'preload';
+      preloadLink.as = 'image';
+      preloadLink.href = src;
+      document.head.appendChild(preloadLink);
+      return () => {
+        document.head.removeChild(preloadLink);
+      };
+    }
+  }, [src, priority]);
 
   const handleError = () => {
     // First try to reload the original image
@@ -78,27 +91,35 @@ export function AdaptiveImage({
   return (
     <div className={cn("relative overflow-hidden", containerClassName)}>
       {isLoading && showLoader && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/50">
-          <Loader2 className="h-4 w-4 animate-spin" />
+        <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm">
+          <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       )}
       {hasError ? (
-        <div className="flex items-center justify-center h-full min-h-[100px] bg-muted">
-          <span className="text-sm text-muted-foreground">Image not available</span>
+        <div className="flex items-center justify-center h-full min-h-[100px] bg-muted rounded-md">
+          <div className="flex flex-col items-center gap-2 text-center p-4">
+            <ImageIcon className="h-8 w-8 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Image not available</p>
+          </div>
         </div>
       ) : (
-        <img
-          {...props}
-          src={currentSrc}
-          alt={alt}
-          className={cn(
-            className,
-            "transition-opacity duration-300",
-            isLoading ? "opacity-0" : "opacity-100"
-          )}
-          onError={handleError}
-          onLoad={handleLoad}
-        />
+        <picture>
+          <source srcSet={currentSrc} type="image/webp" />
+          <source srcSet={currentSrc} type="image/jpeg" />
+          <img
+            {...props}
+            src={currentSrc}
+            alt={alt}
+            className={cn(
+              "transition-opacity duration-300 w-full h-full object-cover",
+              isLoading ? "opacity-0" : "opacity-100",
+              className
+            )}
+            onError={handleError}
+            onLoad={handleLoad}
+            loading={priority ? "eager" : "lazy"}
+          />
+        </picture>
       )}
     </div>
   );

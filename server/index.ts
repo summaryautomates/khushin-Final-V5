@@ -7,275 +7,217 @@ import { setupWebSocket } from './websocket';
 import cors from 'cors';
 import { portManager } from './port-manager';
 import { db, checkDatabaseHealth } from './db';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
+
+async function forceCleanupPort(port: number) {
+  try {
+    console.log(`Attempting to force cleanup port ${port}...`);
+    // Try to kill any process using the port
+    await execAsync(`fuser -k ${port}/tcp`);
+    console.log(`Force cleanup of port ${port} completed`);
+  } catch (error) {
+    // If fuser fails, it likely means no process was using the port
+    console.log(`No process found using port ${port}`);
+  }
+}
 
 async function startServer() {
   const app = express();
   const isProduction = process.env.NODE_ENV === 'production';
   const REQUIRED_PORT = 5000;
+  const MAX_STARTUP_RETRIES = 3;
+  let startupAttempts = 0;
 
-  try {
-    console.log('Starting server initialization...', {
-      environment: process.env.NODE_ENV,
-      timestamp: new Date().toISOString(),
-      requiredPort: REQUIRED_PORT
-    });
-
-    // Verify database connection first
-    console.log('Checking database health...');
+  while (startupAttempts < MAX_STARTUP_RETRIES) {
     try {
+      console.log(`Starting server initialization (attempt ${startupAttempts + 1}/${MAX_STARTUP_RETRIES})...`, {
+        environment: process.env.NODE_ENV,
+        timestamp: new Date().toISOString(),
+        requiredPort: REQUIRED_PORT
+      });
+
+      // Force cleanup of the required port
+      await forceCleanupPort(REQUIRED_PORT);
+
+      // Release all ports managed by portManager
+      console.log('Performing complete port cleanup...');
+      await portManager.releaseAll();
+      console.log('Complete port cleanup finished');
+
+      // Wait a moment for ports to fully release
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Verify database connection
+      console.log('Checking database health...');
       const isHealthy = await checkDatabaseHealth();
       if (!isHealthy) {
         throw new Error('Database health check failed');
       }
       console.log('Database health check passed');
-    } catch (dbError) {
-      console.error('Database initialization failed:', {
-        error: dbError instanceof Error ? dbError.message : 'Unknown error',
-        stack: dbError instanceof Error ? dbError.stack : undefined,
-        timestamp: new Date().toISOString()
-      });
-      throw new Error('Failed to initialize database');
-    }
 
-    app.use(cors({
-      origin: true,
-      credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With', 'Accept'],
-      exposedHeaders: ['Set-Cookie'],
-      maxAge: 86400
-    }));
+      // Setup middleware
+      app.use(cors({
+        origin: true,
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With', 'Accept'],
+        exposedHeaders: ['Set-Cookie'],
+        maxAge: 86400
+      }));
+      console.log('CORS configuration applied');
 
-    console.log('CORS configuration applied');
+      app.use('/placeholders', express.static('client/public/placeholders', {
+        maxAge: '1d',
+        immutable: true,
+        etag: true,
+        lastModified: true,
+        fallthrough: false,
+        redirect: false
+      }));
+      console.log('Static file serving configured');
 
-    app.use('/placeholders', express.static('client/public/placeholders', {
-      maxAge: '1d',
-      immutable: true,
-      etag: true,
-      lastModified: true,
-      fallthrough: false,
-      redirect: false
-    }));
+      app.use(express.json());
+      const server = createServer(app);
 
-    console.log('Static file serving configured');
-
-    app.use(express.json());
-
-    const server = createServer(app);
-
-    app.get('/api/health', (_req, res) => {
-      res.json({ 
-        status: 'ok', 
-        timestamp: Date.now(),
-        websocket: 'enabled',
-        environment: process.env.NODE_ENV,
-        staticFiles: {
-          placeholdersPath: 'client/public/placeholders',
-          caching: true
-        }
-      });
-    });
-
-    console.log('Starting port management...');
-    let releaseAttempts = 0;
-    const maxReleaseAttempts = 3;
-
-    while (releaseAttempts < maxReleaseAttempts) {
-      try {
-        await portManager.releaseAll();
-        console.log('Released all ports successfully');
-        break;
-      } catch (error) {
-        releaseAttempts++;
-        console.error('Port release attempt failed:', {
-          attempt: releaseAttempts,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : undefined,
-          timestamp: new Date().toISOString()
+      // Health check endpoint
+      app.get('/api/health', (_req, res) => {
+        res.json({ 
+          status: 'ok',
+          timestamp: Date.now(),
+          websocket: 'enabled',
+          environment: process.env.NODE_ENV,
+          port: REQUIRED_PORT,
+          startupAttempt: startupAttempts + 1
         });
-        if (releaseAttempts < maxReleaseAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 2000 * releaseAttempts));
-        } else {
-          throw new Error('Failed to release ports after multiple attempts');
-        }
-      }
-    }
+      });
 
-    await new Promise(resolve => setTimeout(resolve, 3000));
+      // Setup authentication
+      console.log('Setting up authentication...');
+      const sessionMiddleware = await setupAuth(app);
+      console.log('Authentication setup complete');
 
-    console.log(`Testing availability of required port ${REQUIRED_PORT}...`);
+      // Setup WebSocket
+      console.log('Setting up WebSocket...');
+      const wss = await setupWebSocket(server, sessionMiddleware);
+      console.log('WebSocket setup complete');
 
-    try {
+      // Register routes
+      console.log('Registering routes...');
+      await registerRoutes(app);
+      console.log('Routes registered successfully');
+
+      // Setup Vite
+      console.log('Setting up Vite...');
+      await setupVite(app, server);
+      console.log('Vite setup complete');
+
+      // Attempt to acquire and bind to the required port
+      console.log(`Attempting to acquire port ${REQUIRED_PORT}...`);
       const port = await portManager.acquirePort(REQUIRED_PORT, REQUIRED_PORT);
+
       if (port !== REQUIRED_PORT) {
         throw new Error(`Failed to acquire required port ${REQUIRED_PORT}. Got port ${port} instead.`);
       }
-      console.log(`Successfully acquired required port ${port}`);
-    } catch (error) {
-      console.error(`Port ${REQUIRED_PORT} acquisition failed:`, {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      });
-      throw new Error(`Required port ${REQUIRED_PORT} is not available. Please ensure no other processes are using this port.`);
-    }
 
-    console.log('Setting up authentication...');
-    let sessionMiddleware;
-    try {
-      sessionMiddleware = await setupAuth(app);
-      console.log('Authentication setup complete');
-    } catch (authError) {
-      console.error('Authentication setup failed:', {
-        error: authError instanceof Error ? authError.message : 'Unknown error',
-        stack: authError instanceof Error ? authError.stack : undefined,
-        timestamp: new Date().toISOString()
-      });
-      throw new Error('Failed to setup authentication');
-    }
-
-    console.log('Setting up WebSocket...');
-    let wsSetupRetries = 0;
-    const maxRetries = 5;
-    let wss;
-
-    while (wsSetupRetries < maxRetries) {
-      try {
-        wss = await setupWebSocket(server, sessionMiddleware);
-        console.log('WebSocket setup complete');
-        break;
-      } catch (error) {
-        wsSetupRetries++;
-        console.error('WebSocket setup failed:', {
-          attempt: wsSetupRetries,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : undefined,
-          timestamp: new Date().toISOString()
+      // Start the server
+      await new Promise<void>((resolve, reject) => {
+        const serverInstance = server.listen(port, '0.0.0.0', () => {
+          console.log('Server successfully started:', {
+            url: `http://0.0.0.0:${port}`,
+            environment: process.env.NODE_ENV,
+            websocketEndpoint: `ws://0.0.0.0:${port}/ws`,
+            timestamp: new Date().toISOString()
+          });
+          resolve();
         });
-        if (wsSetupRetries < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 2000 * wsSetupRetries));
-        } else {
-          throw new Error('Failed to setup WebSocket after multiple attempts');
-        }
-      }
-    }
 
-    if (!wss) {
-      throw new Error('Failed to setup WebSocket after multiple attempts');
-    }
-
-    console.log('Registering routes...');
-    try {
-      await registerRoutes(app);
-      console.log('Routes registered successfully');
-    } catch (routeError) {
-      console.error('Route registration failed:', {
-        error: routeError instanceof Error ? routeError.message : 'Unknown error',
-        stack: routeError instanceof Error ? routeError.stack : undefined,
-        timestamp: new Date().toISOString()
-      });
-      throw new Error('Failed to register routes');
-    }
-
-    console.log('Setting up Vite...');
-    try {
-      await setupVite(app, server);
-      console.log('Vite setup complete');
-    } catch (viteError) {
-      console.error('Vite setup failed:', {
-        error: viteError instanceof Error ? viteError.message : 'Unknown error',
-        stack: viteError instanceof Error ? viteError.stack : undefined,
-        timestamp: new Date().toISOString()
-      });
-      throw new Error('Failed to setup Vite');
-    }
-
-    await new Promise<void>((resolve, reject) => {
-      server.listen(REQUIRED_PORT, '0.0.0.0', () => {
-        console.log('Server successfully started:', {
-          url: `http://0.0.0.0:${REQUIRED_PORT}`,
-          environment: process.env.NODE_ENV,
-          websocketEndpoint: `ws://0.0.0.0:${REQUIRED_PORT}/ws`,
-          timestamp: new Date().toISOString()
+        serverInstance.on('error', async (error: NodeJS.ErrnoException) => {
+          if (error.code === 'EADDRINUSE') {
+            console.error(`Port ${port} is still in use, attempting force cleanup...`);
+            try {
+              await forceCleanupPort(port);
+              reject(new Error(`Port ${port} was in use and has been force-cleaned`));
+            } catch (cleanupError) {
+              reject(new Error(`Failed to clean up port ${port}: ${cleanupError}`));
+            }
+          } else {
+            reject(new Error(`Failed to start server: ${error.message}`));
+          }
         });
-        resolve();
-      }).on('error', (error) => {
-        console.error('Server listen error:', {
-          port: REQUIRED_PORT,
-          error: error.message,
-          stack: error.stack,
-          timestamp: new Date().toISOString()
-        });
-        reject(error);
       });
-    });
 
-    const cleanup = async () => {
-      console.log('Starting cleanup process...');
-
-      try {
-        if (wss) {
-          await new Promise<void>((resolve) => {
-            wss.clients.forEach((client) => {
-              client.close(1000, 'Server shutting down');
+      // Setup cleanup handlers
+      const cleanup = async () => {
+        console.log('Starting cleanup process...');
+        try {
+          if (wss) {
+            await new Promise<void>((resolve) => {
+              wss.clients.forEach((client) => {
+                client.close(1000, 'Server shutting down');
+              });
+              wss.close(() => {
+                console.log('WebSocket server closed');
+                resolve();
+              });
             });
-            wss.close(() => {
-              console.log('WebSocket server closed');
+          }
+
+          await new Promise<void>((resolve) => {
+            server.close(() => {
+              console.log('HTTP server closed');
               resolve();
             });
           });
-        }
 
-        await new Promise<void>((resolve) => {
-          server.close(() => {
-            console.log('HTTP server closed');
-            resolve();
+          await forceCleanupPort(REQUIRED_PORT);
+          await portManager.releaseAll();
+          console.log('All ports released');
+        } catch (error) {
+          console.error('Cleanup error:', {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined,
+            timestamp: new Date().toISOString()
           });
-        });
+        }
+        process.exit(0);
+      };
 
-        await portManager.releaseAll();
-        console.log('Ports released');
+      process.on('SIGTERM', cleanup);
+      process.on('SIGINT', cleanup);
 
-      } catch (error) {
-        console.error('Cleanup error:', {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : undefined,
-          timestamp: new Date().toISOString()
-        });
-      }
+      // If we got here, server started successfully
+      return;
 
-      process.exit(0);
-    };
-
-    process.on('SIGTERM', cleanup);
-    process.on('SIGINT', cleanup);
-
-  } catch (error) {
-    console.error('Server startup failed:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString(),
-      // Additional diagnostic information
-      nodeVersion: process.version,
-      platform: process.platform,
-      arch: process.arch,
-      env: {
-        NODE_ENV: process.env.NODE_ENV,
-        // Add other relevant env vars, but exclude sensitive ones
-      }
-    });
-
-    try {
-      await portManager.releaseAll();
-      console.log('Ports released after startup failure');
-    } catch (cleanupError) {
-      console.error('Failed to cleanup ports:', {
-        error: cleanupError instanceof Error ? cleanupError.message : 'Unknown error',
-        stack: cleanupError instanceof Error ? cleanupError.stack : undefined,
+    } catch (error) {
+      startupAttempts++;
+      console.error(`Server startup attempt ${startupAttempts} failed:`, {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
         timestamp: new Date().toISOString()
       });
-    }
 
-    process.exit(1);
+      // Release ports before retrying
+      try {
+        await forceCleanupPort(REQUIRED_PORT);
+        await portManager.releaseAll();
+        console.log('Ports released after failed attempt');
+      } catch (cleanupError) {
+        console.error('Failed to cleanup ports:', cleanupError);
+      }
+
+      // If we haven't exceeded max retries, wait before trying again
+      if (startupAttempts < MAX_STARTUP_RETRIES) {
+        const delay = startupAttempts * 2000; // Exponential backoff
+        console.log(`Waiting ${delay}ms before next attempt...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        console.error('Server startup failed after maximum retry attempts');
+        process.exit(1);
+      }
+    }
   }
 }
 
@@ -283,11 +225,7 @@ process.on('unhandledRejection', (error) => {
   console.error('Unhandled rejection:', {
     error: error instanceof Error ? error.message : 'Unknown error',
     stack: error instanceof Error ? error.stack : undefined,
-    timestamp: new Date().toISOString(),
-    // Additional diagnostic information
-    nodeVersion: process.version,
-    platform: process.platform,
-    arch: process.arch
+    timestamp: new Date().toISOString()
   });
   process.exit(1);
 });
@@ -296,11 +234,7 @@ startServer().catch(error => {
   console.error('Unhandled error during server startup:', {
     error: error instanceof Error ? error.message : 'Unknown error',
     stack: error instanceof Error ? error.stack : undefined,
-    timestamp: new Date().toISOString(),
-    // Additional diagnostic information
-    nodeVersion: process.version,
-    platform: process.platform,
-    arch: process.arch
+    timestamp: new Date().toISOString()
   });
   process.exit(1);
 });

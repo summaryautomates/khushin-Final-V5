@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Star, Clock, Calendar, Mic, Camera, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect, useMemo, lazy, Suspense } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { AdaptiveImage } from "@/components/ui/adaptive-image";
 
 // Lazy load Tesseract.js
 const initTesseract = async () => {
@@ -183,11 +184,20 @@ export default function Home() {
             className="absolute inset-0 w-full h-full"
           >
             <div style={{ display: 'contents' }}>
-              <img
+              <AdaptiveImage
                 src="https://i.imghippo.com/files/bOL6106VBY.jpg"
-                className="absolute inset-0 w-full h-full object-cover"
                 alt="Hero background"
-                style={{ objectPosition: "center" }}
+                className="absolute inset-0 w-full h-full object-cover"
+                containerClassName="absolute inset-0"
+                priority={true}
+                onLoadError={(error) => {
+                  console.error('Hero image load error:', error);
+                  toast({
+                    title: "Image Load Error",
+                    description: "Failed to load hero image. Please refresh the page.",
+                    variant: "destructive",
+                  });
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/70 to-black"></div>
             </div>
