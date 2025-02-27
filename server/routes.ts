@@ -114,55 +114,93 @@ export async function registerRoutes(app: Express) {
   // Add test route for product migration
   app.get("/api/test/product-migration", async (_req, res) => {
     try {
-      const testProduct = {
-        name: `Test Product ${Date.now()}`,
-        description: "A test product for migration verification",
-        price: 99.99,
-        category: "test",
-        images: ["test-image.jpg"],
-        customizable: false,
-        features: {
-          color: "blue",
-          size: "medium"
+      const luxuryLighters = [
+        {
+          name: "Royal Golden Symphony",
+          description: "An exquisite 18K gold-plated lighter featuring intricate hand-engraved patterns and a signature flame adjustment system. Each piece is individually numbered and comes in a handcrafted wooden presentation box.",
+          price: 149900, // $1,499.00
+          category: "luxury",
+          images: ["/products/golden-lighter.svg"],
+          customizable: true,
+          features: {
+            material: "18K Gold-Plated Brass",
+            finish: "Hand-Engraved",
+            mechanism: "Premium Flint Wheel",
+            warranty: "Lifetime",
+            special: "Individual Serial Number"
+          }
+        },
+        {
+          name: "Diamond Celestial Elite",
+          description: "A masterpiece adorned with ethically sourced diamonds set in a platinum-coated case. Features our innovative wind-resistant flame technology and comes with a premium leather carrying case.",
+          price: 299900, // $2,999.00
+          category: "luxury",
+          images: ["/products/diamond-lighter.svg"],
+          customizable: true,
+          features: {
+            material: "Platinum-Coated Steel",
+            embellishment: "Natural Diamonds",
+            mechanism: "Electronic Piezo",
+            warranty: "Lifetime",
+            special: "Certificate of Authenticity"
+          }
+        },
+        {
+          name: "Vintage 1923 Collection",
+          description: "A meticulously recreated vintage design from our 1923 archives, featuring aged brass construction and our patented soft flame technology. Each piece tells a story of timeless craftsmanship.",
+          price: 89900, // $899.00
+          category: "luxury",
+          images: ["/products/vintage-lighter.svg"],
+          customizable: false,
+          features: {
+            material: "Aged Brass",
+            finish: "Antique Patina",
+            mechanism: "Traditional Flint",
+            warranty: "25 Years",
+            special: "Collector's Edition"
+          }
+        },
+        {
+          name: "Classic Elegance Signature",
+          description: "The epitome of understated luxury, featuring brushed stainless steel construction, precision-engineered flame control, and our signature comfort-grip design. Perfect for daily sophistication.",
+          price: 59900, // $599.00
+          category: "luxury",
+          images: ["/products/classic-lighter.svg"],
+          customizable: true,
+          features: {
+            material: "Premium Stainless Steel",
+            finish: "Brushed Metallic",
+            mechanism: "Dual Flame System",
+            warranty: "10 Years",
+            special: "Ergonomic Design"
+          }
         }
-      };
+      ];
 
-      console.log('Testing product migration - Creating test product');
+      console.log('Adding luxury lighters to database...');
 
-      // Create a new product
-      const product = await storage.createProduct(testProduct);
-      console.log('Product created successfully:', { 
-        id: product.id,
-        name: product.name 
+      const createdProducts = await Promise.all(
+        luxuryLighters.map(product => storage.createProduct(product))
+      );
+
+      console.log('Products created successfully:', {
+        count: createdProducts.length,
+        products: createdProducts.map(p => ({
+          id: p.id,
+          name: p.name
+        }))
       });
 
-      // Verify read operations
-      const productById = await storage.getProduct(product.id);
-      const productsByCategory = await storage.getProductsByCategory(product.category);
-      const allProducts = await storage.getProducts();
-
-      if (!productById) {
-        throw new Error('Product read verification failed');
-      }
-
       res.json({
-        message: 'Product migration test completed',
-        success: true,
-        product: productById,
-        categoryCount: productsByCategory.length,
-        totalProducts: allProducts.length,
-        timestamp: new Date().toISOString()
+        message: 'Luxury lighters added successfully',
+        products: createdProducts
       });
 
     } catch (error) {
-      console.error('Product migration test error:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        timestamp: new Date().toISOString()
-      });
+      console.error('Error adding luxury lighters:', error);
       res.status(500).json({ 
-        message: "Product migration test failed",
-        timestamp: new Date().toISOString()
+        message: "Failed to add luxury lighters",
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
