@@ -35,10 +35,10 @@ const Refueling = () => {
               <img 
                 src="https://i.imghippo.com/files/cfz5924gY.png" 
                 alt="Book Your Appointment" 
-                className="h-28 w-auto object-contain"
+                className="h-36 w-auto object-contain"
                 style={{ 
                   filter: "drop-shadow(0 0 20px rgba(255, 255, 255, 1))",
-                  maxWidth: "200px"
+                  maxWidth: "240px"
                 }}
               />
             </a>
