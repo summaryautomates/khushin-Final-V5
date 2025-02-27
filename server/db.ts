@@ -6,10 +6,37 @@ export const db = new Database();
 // Simple health check function
 export async function checkDatabaseHealth(): Promise<boolean> {
   try {
-    await db.list(); // Simple operation to verify connection
-    return true;
+    // Test the connection by attempting to write and read a value
+    const testKey = "health_check";
+    const testValue = new Date().toISOString();
+
+    await db.set(testKey, testValue);
+    const retrieved = await db.get(testKey);
+
+    const success = retrieved === testValue;
+
+    if (success) {
+      console.log('Database health check passed:', {
+        testKey,
+        matched: true,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      console.error('Database health check failed: values do not match', {
+        testKey,
+        expected: testValue,
+        received: retrieved,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    return success;
   } catch (error) {
-    console.error('Database health check failed:', error);
+    console.error('Database health check failed:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
     return false;
   }
 }
