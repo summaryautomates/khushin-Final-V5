@@ -138,20 +138,33 @@ export default function Customize() {
             <TabsContent value="text">
               <Card>
                 <CardHeader>
-                  <CardTitle>Add Custom Text</CardTitle>
+                  <CardTitle>Add Text</CardTitle>
                   <CardDescription>
-                    Add text to your product
+                    Add text to customize your product
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Label htmlFor="text">Custom Text</Label>
+                  <Label htmlFor="text">Text</Label>
                   <Input
                     id="text"
-                    value={customText}
-                    onChange={(e) => setCustomText(e.target.value)}
-                    placeholder="Enter your text here"
+                    placeholder="Enter your text"
                     className="mt-2"
+                    onChange={(e) => setCustomText(e.target.value)}
+                    value={customText}
                   />
+                  <div className="mt-4">
+                    <Label htmlFor="textColor">Text Color</Label>
+                    <div className="flex items-center gap-2 mt-2">
+                      <input
+                        type="color"
+                        id="textColor"
+                        value={selectedColor}
+                        onChange={(e) => setSelectedColor(e.target.value)}
+                        className="w-10 h-10 rounded cursor-pointer"
+                      />
+                      <span className="text-sm">{selectedColor}</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
