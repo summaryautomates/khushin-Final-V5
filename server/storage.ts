@@ -4,13 +4,14 @@ import {
   type Order,
   type InsertOrder,
   type Product,
+  type InsertUser,
 } from "@shared/schema";
-import pkg from 'pg';
-const { Pool } = pkg;
+import pg from 'pg';
 import session from "express-session";
 import { type User } from "@shared/schema";
 import MemoryStore from "memorystore";
 
+const { Pool } = pg;
 const MemoryStoreSession = MemoryStore(session);
 
 // Set up PostgreSQL connection using environment variables
@@ -49,7 +50,7 @@ export interface IStorage {
   initializeProducts(products: Product[]): Promise<void>;
 
   // User methods
-  createUser(user: any): Promise<User>;
+  createUser(user: InsertUser): Promise<User>;
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
 
@@ -78,8 +79,8 @@ export class ReplitDBStorage implements IStorage {
   constructor() {
     console.log('Initializing ReplitDBStorage...');
     this.sessionStore = new MemoryStoreSession({
-      checkPeriod: 86400000,
-      ttl: 24 * 60 * 60 * 1000,
+      checkPeriod: 86400000, // Prune expired entries every 24h
+      ttl: 24 * 60 * 60 * 1000, // Time to live - 24 hours
       noDisposeOnSet: true,
       dispose: (sid: string) => {
         console.log('Session disposed:', { sid, timestamp: new Date().toISOString() });
@@ -297,12 +298,12 @@ export class ReplitDBStorage implements IStorage {
   }
 
   // User methods implementation
-  async createUser(userData: any): Promise<User> {
+  async createUser(userData: InsertUser): Promise<User> {
     try {
       console.log('Creating user:', { username: userData.username });
 
       const result = await this.pool.query(`
-        INSERT INTO users (username, password, email, firstName, lastName)
+        INSERT INTO users (username, password, email, "firstName", "lastName")
         VALUES ($1, $2, $3, $4, $5)
         RETURNING *
       `, [
