@@ -24,7 +24,7 @@ const Refueling = () => {
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/90"></div>
           </motion.div>
         </div>
-        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 flex justify-center items-center gap-6 z-20">
+        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 flex justify-center items-center gap-8 z-20">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -35,9 +35,10 @@ const Refueling = () => {
               <img 
                 src="https://i.imghippo.com/files/cfz5924gY.png" 
                 alt="Book Your Appointment" 
-                className="h-32 w-auto object-contain"
+                className="h-36 w-auto object-contain"
                 style={{ 
                   filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.9))",
+                  maxWidth: "180px"
                 }}
               />
             </a>
@@ -59,9 +60,10 @@ const Refueling = () => {
                 <img 
                   src="https://i.imghippo.com/files/Wfm7659yCM.png" 
                   alt="Shop Refueling Accessories" 
-                  className="h-32 w-auto hover:opacity-90 transition-opacity"
+                  className="h-36 w-auto hover:opacity-90 transition-opacity"
                   style={{ 
                     filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.9))",
+                    maxWidth: "180px"
                   }}
                 />
               </Button>
