@@ -87,13 +87,15 @@ export default function Contact() {
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <MapPin className="h-6 w-6 text-primary" />
+                    <MapPin className="h-6 w-6 text-primary animate-pulse" />
                     <div>
                       <h3 className="font-medium">Address</h3>
-                      <p className="text-muted-foreground">
-                        123 Business District,<br />
-                        New Delhi, India 110001
-                      </p>
+                      <div className="group relative">
+                        <p className="text-muted-foreground hover:text-primary transition-colors duration-300">
+                          Powai, Mumbai, India
+                        </p>
+                        <div className="absolute left-0 -bottom-1 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></div>
+                      </div>
                     </div>
                   </div>
                 </div>
