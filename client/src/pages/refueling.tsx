@@ -41,7 +41,10 @@ const Refueling = () => {
                 <img 
                   src="https://i.imghippo.com/files/ncH5592Qc.png" 
                   alt="Book Your Appointment"
-                  className="h-14 w-auto"
+                  className="h-20 w-auto mix-blend-screen filter contrast-125 brightness-110"
+                  style={{
+                    filter: "drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))"
+                  }}
                 />
               </Button>
             </a>
