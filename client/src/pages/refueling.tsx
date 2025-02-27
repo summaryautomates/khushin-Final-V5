@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Droplet, Zap, Shield, Settings, ChevronRight } from "lucide-react";
+import { Droplet, Zap, Shield, Settings, ChevronRight, Clock, MapPin, CreditCard } from "lucide-react";
 
 const Refueling = () => {
   return (
@@ -158,7 +158,7 @@ const Refueling = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
             viewport={{ once: true, margin: "-100px" }}
-            className="max-w-4xl mx-auto"
+            className="max-w-5xl mx-auto"
           >
             <h2 className="text-3xl font-light text-center mb-16 tracking-wider relative pb-4 inline-block mx-auto w-full">
               <span className="bg-gradient-to-r from-primary/70 via-white to-primary/70 bg-clip-text text-transparent">Essential Guide</span>
@@ -170,10 +170,13 @@ const Refueling = () => {
                 viewport={{ once: true }}
               ></motion.div>
             </h2>
-            <div className="grid gap-8 md:grid-cols-2">
+            <div className="grid gap-8 md:grid-cols-3">
               <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300">
                 <CardHeader>
-                  <CardTitle className="text-xl font-light">Refueling Steps</CardTitle>
+                  <CardTitle className="text-xl font-light flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-primary" />
+                    Refueling Steps
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ol className="space-y-4 text-muted-foreground">
@@ -204,7 +207,10 @@ const Refueling = () => {
 
               <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300">
                 <CardHeader>
-                  <CardTitle className="text-xl font-light">Safety Precautions</CardTitle>
+                  <CardTitle className="text-xl font-light flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-primary" />
+                    Safety Precautions
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-4 text-muted-foreground">
@@ -227,6 +233,61 @@ const Refueling = () => {
                         <span>{precaution}</span>
                       </motion.li>
                     ))}
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300">
+                <CardHeader>
+                  <CardTitle className="text-xl font-light flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-primary" />
+                    Station Hours & Services
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-4 text-muted-foreground">
+                    <motion.li
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: 0.1 }}
+                      viewport={{ once: true }}
+                      className="flex items-center gap-2"
+                    >
+                      <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
+                      <span>Premium locations for quick refuels</span>
+                    </motion.li>
+                    <motion.li
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: 0.2 }}
+                      viewport={{ once: true }}
+                      className="flex items-center gap-2"
+                    >
+                      <Clock className="w-4 h-4 text-primary flex-shrink-0" />
+                      <span>9 AM - 5 PM, Extended hours available</span>
+                    </motion.li>
+                    <motion.li
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: 0.3 }}
+                      viewport={{ once: true }}
+                      className="flex items-center gap-2"
+                    >
+                      <CreditCard className="w-4 h-4 text-primary flex-shrink-0" />
+                      <span>Subscription benefits & cost savings</span>
+                    </motion.li>
+                    <div className="pt-4">
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          window.open('https://khushi.setmore.com/saransh', '_blank');
+                        }}
+                      >
+                        Book Refuel Session
+                        <ChevronRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </div>
                   </ul>
                 </CardContent>
               </Card>
