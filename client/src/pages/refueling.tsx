@@ -24,7 +24,7 @@ const Refueling = () => {
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/90"></div>
           </motion.div>
         </div>
-        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-30">
+        <div className="absolute top-5 left-1/2 transform -translate-x-1/2 z-30">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
