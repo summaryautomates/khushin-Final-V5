@@ -170,7 +170,7 @@ const Refueling = () => {
                 }}
               >
                 <Droplet className="w-5 h-5 mr-2 text-primary" />
-                Refueling Guide & Services
+                Refuel Info
                 <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
             </div>
