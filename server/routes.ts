@@ -296,7 +296,7 @@ export async function registerRoutes(app: Express) {
 
       const statusSchema = z.object({
         status: z.enum(['completed', 'failed']),
-        method: z.enum(['upi', 'cod'])
+        method: z.enum(['upi', 'cod', 'stripe'])
       });
 
       const validationResult = statusSchema.safeParse(req.body);
