@@ -440,25 +440,83 @@ export class ReplitDBStorage implements IStorage {
   async removeCartItem(_userId: string, _productId: number): Promise<void> {}
   async clearCart(_userId: string): Promise<void> {}
   async createOrder(order: InsertOrder): Promise<Order> {
-    const orderId = Date.now();
-    const newOrder: Order = {
-      id: orderId,
-      orderRef: `order-${orderId}`, // Generate a unique orderRef
-      lastUpdated: new Date(),
-      createdAt: new Date(),
-      trackingNumber: null,
-      trackingStatus: null,
-      estimatedDelivery: null,
-      ...order
-    };
-    await this.db.set(`orders:${newOrder.id}`, newOrder);
-    await this.db.set(`order:${newOrder.orderRef}`, newOrder);
-    return newOrder;
+    try {
+      const orderId = Date.now();
+      const newOrder: Order = {
+        id: orderId,
+        orderRef: order.orderRef || `order-${orderId}`,
+        userId: order.userId,
+        items: order.items.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.price || 0,
+          name: item.name || 'Product'
+        })),
+        shipping: order.shipping,
+        total: order.total,
+        status: order.status,
+        lastUpdated: new Date(),
+        createdAt: new Date(),
+        trackingNumber: null,
+        trackingStatus: null,
+        estimatedDelivery: null
+      };
+
+      // Store the order with both ID and reference
+      await this.db.set(`orders:${newOrder.id}`, JSON.stringify(newOrder));
+      await this.db.set(`order:${newOrder.orderRef}`, JSON.stringify(newOrder));
+
+      console.log('Order created:', {
+        id: newOrder.id,
+        ref: newOrder.orderRef,
+        total: newOrder.total
+      });
+
+      return newOrder;
+    } catch (error) {
+      console.error('Error creating order:', error);
+      throw error;
+    }
   }
   async getOrder(_orderRef: string): Promise<Order | undefined> { return undefined; }
   async getOrdersByUserId(_userId: string): Promise<Order[]> { return []; }
-  async getOrderByRef(_orderRef: string): Promise<Order | undefined> { return undefined; }
-  async updateOrderStatus(_orderRef: string, _status: string, _method?: string): Promise<Order> { throw new Error("Not implemented"); }
+  async getOrderByRef(orderRef: string): Promise<Order | undefined> {
+    try {
+      const orderStr = await this.db.get(`order:${orderRef}`);
+      if (!orderStr) return undefined;
+
+      return typeof orderStr === 'string' ? JSON.parse(orderStr) : orderStr;
+    } catch (error) {
+      console.error('Error fetching order by ref:', error);
+      return undefined;
+    }
+  }
+  async updateOrderStatus(orderRef: string, status: string, method?: string): Promise<Order> {
+    try {
+      const order = await this.getOrderByRef(orderRef);
+      if (!order) throw new Error('Order not found');
+
+      const updatedOrder: Order = {
+        ...order,
+        status: status as 'pending' | 'completed' | 'failed',
+        lastUpdated: new Date()
+      };
+
+      await this.db.set(`orders:${order.id}`, JSON.stringify(updatedOrder));
+      await this.db.set(`order:${orderRef}`, JSON.stringify(updatedOrder));
+
+      console.log('Order status updated:', {
+        ref: orderRef,
+        status,
+        method
+      });
+
+      return updatedOrder;
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      throw error;
+    }
+  }
   async updateOrderTracking(_orderRef: string, _trackingStatus: string, _estimatedDelivery?: string): Promise<Order> { throw new Error("Not implemented"); }
   async addOrderStatusHistory(_history: OrderStatusHistory): Promise<OrderStatusHistory> { throw new Error("Not implemented"); }
   async getOrderStatusHistory(_orderId: number): Promise<OrderStatusHistory[]> { return []; }

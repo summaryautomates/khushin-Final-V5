@@ -9,7 +9,7 @@ import Stripe from 'stripe';
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16'
+  apiVersion: '2025-02-24.acacia'
 });
 
 // Mock responses for development mode
@@ -365,7 +365,8 @@ export async function registerRoutes(app: Express) {
       // Create the order in the database
       const orderData = {
         ...validationResult.data,
-        orderRef
+        orderRef,
+        total: validationResult.data.total || 0 // Ensure total is always set
       };
 
       console.log("Creating order:", {
@@ -385,7 +386,6 @@ export async function registerRoutes(app: Express) {
           mode: 'payment',
           success_url: `${req.protocol}://${req.get('host')}/checkout/success?ref=${orderRef}`,
           cancel_url: `${req.protocol}://${req.get('host')}/checkout/payment?ref=${orderRef}&status=cancelled`,
-          customer_email: orderData.shipping.email,
           metadata: {
             orderRef: orderRef,
             userId: req.user?.id?.toString()
@@ -394,15 +394,17 @@ export async function registerRoutes(app: Express) {
             price_data: {
               currency: 'inr',
               product_data: {
-                name: item.name,
+                name: item.name || 'Product',
+                description: `Quantity: ${item.quantity}`
               },
-              unit_amount: item.price,
+              unit_amount: item.price || 0,
             },
             quantity: item.quantity,
           })),
           shipping_address_collection: {
             allowed_countries: ['IN'],
           },
+          customer_email: req.user?.email || undefined,
         });
 
         // Return both the order reference and Stripe session URL
@@ -466,6 +468,7 @@ export async function registerRoutes(app: Express) {
       res.status(400).send(`Webhook Error: ${err.message}`);
     }
   });
+
 
 
   app.post("/api/ai/chat", async (req, res) => {
