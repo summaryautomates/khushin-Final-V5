@@ -5,6 +5,12 @@ import { z } from "zod";
 import { randomBytes } from "crypto";
 import fetch from 'node-fetch';
 import { ReplitDBStorage } from "./storage";
+import Stripe from 'stripe';
+
+// Initialize Stripe
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2023-10-16'
+});
 
 // Mock responses for development mode
 const mockResponses = {
@@ -36,9 +42,9 @@ export async function registerRoutes(app: Express) {
       let postgresUser;
       try {
         postgresUser = await storage.createUser(testUser);
-        console.log('PostgreSQL test successful:', { 
+        console.log('PostgreSQL test successful:', {
           userId: postgresUser.id,
-          username: postgresUser.username 
+          username: postgresUser.username
         });
 
         // Verify PostgreSQL read operations
@@ -64,9 +70,9 @@ export async function registerRoutes(app: Express) {
           ...testUser,
           username: `${testUsername}_replit` // Use different username to avoid conflicts
         });
-        console.log('Replit KV Store test successful:', { 
+        console.log('Replit KV Store test successful:', {
           userId: replitUser.id,
-          username: replitUser.username 
+          username: replitUser.username
         });
 
         // Verify Replit KV Store read operations
@@ -104,7 +110,7 @@ export async function registerRoutes(app: Express) {
         stack: error instanceof Error ? error.stack : undefined,
         timestamp: new Date().toISOString()
       });
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Database migration test failed",
         timestamp: new Date().toISOString()
       });
@@ -202,7 +208,7 @@ export async function registerRoutes(app: Express) {
 
     } catch (error) {
       console.error('Error adding luxury lighters:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to add luxury lighters",
         error: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -332,19 +338,19 @@ export async function registerRoutes(app: Express) {
       res.status(500).json({ message: "Failed to update payment status" });
     }
   });
-  
+
   app.post("/api/checkout", async (req, res) => {
     try {
       console.log("Checkout request received");
-      
+
       if (!req.isAuthenticated()) {
         console.log("Unauthorized checkout attempt");
         return res.status(401).json({ message: "Authentication required" });
       }
-      
+
       // Validate the order data
       const validationResult = insertOrderSchema.safeParse(req.body);
-      
+
       if (!validationResult.success) {
         console.error("Order validation failed:", validationResult.error);
         return res.status(400).json({
@@ -352,39 +358,115 @@ export async function registerRoutes(app: Express) {
           errors: validationResult.error.errors
         });
       }
-      
+
       // Generate a unique order reference
       const orderRef = randomBytes(8).toString('hex');
-      
+
       // Create the order in the database
       const orderData = {
         ...validationResult.data,
         orderRef
       };
-      
+
       console.log("Creating order:", {
         ref: orderRef,
         userId: req.user?.id,
         itemCount: orderData.items.length,
         total: orderData.total
       });
-      
+
       const order = await storage.createOrder(orderData);
       console.log("Order created successfully:", { ref: order.orderRef });
-      
-      // Return the redirect URL for payment page
-      res.json({
-        message: "Order created successfully",
-        redirectUrl: `/checkout/payment?ref=${orderRef}`
-      });
-      
+
+      // Create Stripe Checkout session
+      try {
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          mode: 'payment',
+          success_url: `${req.protocol}://${req.get('host')}/checkout/success?ref=${orderRef}`,
+          cancel_url: `${req.protocol}://${req.get('host')}/checkout/payment?ref=${orderRef}&status=cancelled`,
+          customer_email: orderData.shipping.email,
+          metadata: {
+            orderRef: orderRef,
+            userId: req.user?.id?.toString()
+          },
+          line_items: orderData.items.map(item => ({
+            price_data: {
+              currency: 'inr',
+              product_data: {
+                name: item.name,
+              },
+              unit_amount: item.price,
+            },
+            quantity: item.quantity,
+          })),
+          shipping_address_collection: {
+            allowed_countries: ['IN'],
+          },
+        });
+
+        // Return both the order reference and Stripe session URL
+        res.json({
+          message: "Order created successfully",
+          redirectUrl: session.url || `/checkout/payment?ref=${orderRef}`,
+          stripeSessionId: session.id
+        });
+      } catch (stripeError) {
+        console.error('Stripe session creation error:', stripeError);
+        // Fallback to traditional payment methods if Stripe fails
+        res.json({
+          message: "Order created successfully",
+          redirectUrl: `/checkout/payment?ref=${orderRef}`
+        });
+      }
     } catch (error) {
       console.error('Error processing checkout:', error);
-      res.status(500).json({ 
-        message: "Failed to process checkout. Please try again." 
+      res.status(500).json({
+        message: "Failed to process checkout. Please try again."
       });
     }
   });
+
+  // Add Stripe webhook handler
+  app.post("/api/webhooks/stripe", async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+
+    try {
+      const event = stripe.webhooks.constructEvent(
+        req.body,
+        sig as string,
+        process.env.STRIPE_WEBHOOK_SECRET || ''
+      );
+
+      switch (event.type) {
+        case 'checkout.session.completed':
+          const session = event.data.object as Stripe.Checkout.Session;
+          const orderRef = session.metadata?.orderRef;
+
+          if (orderRef) {
+            await storage.updateOrderStatus(orderRef, 'completed', 'stripe');
+          }
+          break;
+
+        case 'checkout.session.expired':
+          const expiredSession = event.data.object as Stripe.Checkout.Session;
+          const expiredOrderRef = expiredSession.metadata?.orderRef;
+
+          if (expiredOrderRef) {
+            await storage.updateOrderStatus(expiredOrderRef, 'failed', 'stripe');
+          }
+          break;
+        default:
+          console.log(`Unhandled event type ${event.type}`)
+      }
+
+      res.json({ received: true });
+    } catch (err) {
+      console.error('Stripe webhook error:', err);
+      res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+  });
+
 
   app.post("/api/ai/chat", async (req, res) => {
     try {
@@ -466,7 +548,7 @@ export async function registerRoutes(app: Express) {
       }
     } catch (error) {
       console.error('Error in AI chat:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "An unexpected error occurred. Please try again later."
       });
     }

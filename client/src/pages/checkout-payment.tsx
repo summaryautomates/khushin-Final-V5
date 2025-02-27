@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CheckCircle2, XCircle, Banknote, QrCode } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Banknote, QrCode, CreditCard } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import QRCode from "qrcode";
 import { useToast } from "@/hooks/use-toast";
@@ -15,23 +15,35 @@ interface PaymentDetails {
   merchantName: string;
   amount: number;
   orderRef: string;
+  stripeSessionId?: string;
 }
 
 export default function CheckoutPayment() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const orderRef = new URLSearchParams(window.location.search).get('ref');
+  const status = new URLSearchParams(window.location.search).get('status');
   const { clearCart } = useCart();
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'completed' | 'failed'>('pending');
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'upi' | 'cod'>('upi');
+  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'upi' | 'cod'>('stripe');
 
   const { data: paymentDetails, isLoading, error } = useQuery<PaymentDetails>({
     queryKey: [`/api/payment/${orderRef}`],
     enabled: !!orderRef,
     retry: 3,
   });
+
+  useEffect(() => {
+    if (status === 'cancelled') {
+      toast({
+        title: "Payment Cancelled",
+        description: "Your payment was cancelled. Please try again or choose a different payment method.",
+        variant: "destructive",
+      });
+    }
+  }, [status, toast]);
 
   useEffect(() => {
     if (!orderRef) {
@@ -74,6 +86,18 @@ export default function CheckoutPayment() {
       setLocation(`/checkout/success?ref=${orderRef}`);
     }
   }, [paymentStatus, clearCart, orderRef, setLocation]);
+
+  const handleStripeCheckout = async () => {
+    if (!paymentDetails?.stripeSessionId) {
+      toast({
+        title: "Error",
+        description: "Payment session not found. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    window.location.href = `https://checkout.stripe.com/pay/${paymentDetails.stripeSessionId}`;
+  };
 
   const handlePaymentStatusUpdate = async (newStatus: 'completed' | 'failed') => {
     if (isUpdatingStatus) return;
@@ -156,8 +180,13 @@ export default function CheckoutPayment() {
           <CardTitle className="text-xl md:text-2xl">Complete Your Payment</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Tabs defaultValue="upi" onValueChange={(value) => setPaymentMethod(value as 'upi' | 'cod')}>
-            <TabsList className="grid w-full grid-cols-2 h-auto">
+          <Tabs defaultValue="stripe" onValueChange={(value) => setPaymentMethod(value as 'stripe' | 'upi' | 'cod')}>
+            <TabsList className="grid w-full grid-cols-3 h-auto">
+              <TabsTrigger value="stripe" className="flex items-center gap-2 px-2 py-2 md:px-4">
+                <CreditCard className="h-4 w-4" />
+                <span className="hidden md:inline">Card Payment</span>
+                <span className="md:hidden">Card</span>
+              </TabsTrigger>
               <TabsTrigger value="upi" className="flex items-center gap-2 px-2 py-2 md:px-4">
                 <QrCode className="h-4 w-4" />
                 <span className="hidden md:inline">UPI Payment</span>
@@ -169,6 +198,29 @@ export default function CheckoutPayment() {
                 <span className="md:hidden">COD</span>
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="stripe">
+              <div className="space-y-4 text-center py-4 md:py-6">
+                <CreditCard className="h-8 w-8 md:h-12 md:w-12 mx-auto text-primary" />
+                <div>
+                  <h3 className="text-base md:text-lg font-medium">Secure Card Payment</h3>
+                  <p className="text-xs md:text-sm text-muted-foreground mt-1">
+                    Pay securely using your credit or debit card
+                  </p>
+                </div>
+                <div className="bg-muted p-3 md:p-4 rounded-lg">
+                  <p className="font-semibold text-sm md:text-base">Amount to be paid: ₹{paymentDetails?.amount}</p>
+                </div>
+                <Button
+                  className="w-full"
+                  onClick={handleStripeCheckout}
+                  disabled={!paymentDetails?.stripeSessionId}
+                >
+                  Proceed to Pay
+                </Button>
+              </div>
+            </TabsContent>
+
             <TabsContent value="upi">
               <div className="flex justify-center mt-4">
                 {qrCodeUrl ? (
@@ -182,6 +234,7 @@ export default function CheckoutPayment() {
                 )}
               </div>
             </TabsContent>
+
             <TabsContent value="cod">
               <div className="space-y-4 text-center py-4 md:py-6">
                 <Banknote className="h-8 w-8 md:h-12 md:w-12 mx-auto text-primary" />
@@ -205,20 +258,6 @@ export default function CheckoutPayment() {
                 Scan the QR code using any UPI app to complete your payment
               </p>
             )}
-          </div>
-          <div className="flex items-center justify-center space-x-2">
-            {paymentStatus === 'pending' && (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            )}
-            {paymentStatus === 'completed' && (
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-            )}
-            {paymentStatus === 'failed' && (
-              <XCircle className="h-4 w-4 text-red-500" />
-            )}
-            <p className="text-xs md:text-sm font-medium">
-              Payment Status: {paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1)}
-            </p>
           </div>
         </CardContent>
         <CardFooter className="flex flex-col md:flex-row gap-4 md:gap-2 md:justify-between">
