@@ -35,10 +35,10 @@ const Refueling = () => {
               <img 
                 src="https://i.imghippo.com/files/cfz5924gY.png" 
                 alt="Book Your Appointment" 
-                className="h-36 w-auto object-contain"
+                className="h-24 w-auto object-contain"
                 style={{ 
                   filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.9))",
-                  maxWidth: "180px"
+                  maxWidth: "140px"
                 }}
               />
             </a>
@@ -60,10 +60,10 @@ const Refueling = () => {
                 <img 
                   src="https://i.imghippo.com/files/Wfm7659yCM.png" 
                   alt="Shop Refueling Accessories" 
-                  className="h-36 w-auto hover:opacity-90 transition-opacity"
+                  className="h-24 w-auto hover:opacity-90 transition-opacity"
                   style={{ 
                     filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.9))",
-                    maxWidth: "180px"
+                    maxWidth: "140px"
                   }}
                 />
               </Button>
