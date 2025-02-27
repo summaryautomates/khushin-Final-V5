@@ -25,21 +25,31 @@ const replitDb = new Database();
 
 // Helper functions for key management
 const keys = {
+  // User keys
   user: (id: number) => `users:${id}`,
   userByUsername: (username: string) => `users:username:${username}`,
   userNextId: () => 'users:next_id',
+
+  // Product keys
+  product: (id: number) => `products:${id}`,
+  productsByCategory: (category: string) => `products:category:${category}`,
+  productNextId: () => 'products:next_id',
+  allProducts: () => 'products:all',
+
+  // Test key
   test: () => "test_key",
 };
 
-// Helper function to generate sequential IDs for users
-async function getNextUserId(): Promise<number> {
+// Helper functions for generating sequential IDs
+async function getNextId(type: 'users' | 'products'): Promise<number> {
   try {
-    const currentId = await replitDb.get(keys.userNextId()) as number | null;
+    const key = type === 'users' ? keys.userNextId() : keys.productNextId();
+    const currentId = await replitDb.get(key) as number | null;
     const nextId = (currentId || 0) + 1;
-    await replitDb.set(keys.userNextId(), nextId);
+    await replitDb.set(key, nextId);
     return nextId;
   } catch (error) {
-    console.error('Error generating next user ID:', {
+    console.error(`Error generating next ${type} ID:`, {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
@@ -48,11 +58,13 @@ async function getNextUserId(): Promise<number> {
   }
 }
 
+// Keep existing interface
 export interface IStorage {
   // Products
   getProducts(): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
   getProductsByCategory(category: string): Promise<Product[]>;
+  createProduct(product: InsertProduct): Promise<Product>;
 
   // Blog posts
   getBlogPosts(): Promise<BlogPost[]>;
@@ -102,18 +114,18 @@ export class ReplitDBStorage implements IStorage {
 
   constructor() {
     this.sessionStore = new MemoryStoreSession({
-      checkPeriod: 86400000, // Prune expired entries every 24h
-      ttl: 24 * 60 * 60 * 1000, // Time to live - 24 hours
-      noDisposeOnSet: true, // Improve performance by not disposing old sessions on set
+      checkPeriod: 86400000,
+      ttl: 24 * 60 * 60 * 1000,
+      noDisposeOnSet: true,
       dispose: (sid: string) => {
         console.log('Session disposed:', { sid, timestamp: new Date().toISOString() });
       },
-      stale: false, // Don't serve stale sessions
-      max: 1000 // Maximum number of sessions to store
+      stale: false,
+      max: 1000
     });
   }
 
-  // User methods - Fully implemented
+  // User methods - Already implemented
   async getUser(id: number): Promise<User | undefined> {
     try {
       console.log('ReplitDB: Fetching user by ID:', { id });
@@ -166,7 +178,7 @@ export class ReplitDBStorage implements IStorage {
         throw new Error('Username already exists');
       }
 
-      const id = await getNextUserId();
+      const id = await getNextId('users');
       const newUser: User = {
         ...user,
         id,
@@ -191,10 +203,185 @@ export class ReplitDBStorage implements IStorage {
     }
   }
 
+  // Product methods - New implementations
+  async getProducts(): Promise<Product[]> {
+    try {
+      console.log('ReplitDB: Fetching all products');
+      const productsData = await replitDb.get(keys.allProducts());
+
+      // Initialize empty array if no products exist
+      if (!productsData) {
+        console.log('ReplitDB: No products found, initializing empty array');
+        await replitDb.set(keys.allProducts(), JSON.stringify([]));
+        return [];
+      }
+
+      let productsArray;
+      try {
+        // Handle the case where data might be already parsed
+        const productsStr = typeof productsData === 'string'
+          ? productsData
+          : JSON.stringify(productsData);
+
+        productsArray = JSON.parse(productsStr);
+
+        // Validate that we have an array
+        if (!Array.isArray(productsArray)) {
+          console.error('ReplitDB: Products data is not an array:', {
+            type: typeof productsArray,
+            value: productsArray,
+            timestamp: new Date().toISOString()
+          });
+          // Reset to empty array if data is invalid
+          await replitDb.set(keys.allProducts(), JSON.stringify([]));
+          return [];
+        }
+
+      } catch (parseError) {
+        console.error('ReplitDB: Error parsing products data:', {
+          error: parseError instanceof Error ? parseError.message : 'Unknown error',
+          data: productsData,
+          timestamp: new Date().toISOString()
+        });
+        // Reset to empty array if data is corrupted
+        await replitDb.set(keys.allProducts(), JSON.stringify([]));
+        return [];
+      }
+
+      console.log('ReplitDB: Products fetched successfully:', {
+        count: productsArray.length,
+        timestamp: new Date().toISOString()
+      });
+      return productsArray;
+
+    } catch (error) {
+      console.error('ReplitDB: Error fetching products:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+      // Return empty array instead of throwing to prevent app crash
+      return [];
+    }
+  }
+
+  async getProduct(id: number): Promise<Product | undefined> {
+    try {
+      console.log('ReplitDB: Fetching product:', {
+        id,
+        timestamp: new Date().toISOString()
+      });
+
+      const productData = await replitDb.get(keys.product(id));
+
+      if (!productData) {
+        console.log('ReplitDB: Product not found:', {
+          id,
+          timestamp: new Date().toISOString()
+        });
+        return undefined;
+      }
+
+      let product;
+      try {
+        // Handle the case where data might be already parsed
+        const productStr = typeof productData === 'string'
+          ? productData
+          : JSON.stringify(productData);
+
+        product = JSON.parse(productStr);
+
+        // Basic validation that we have a product object
+        if (!product || typeof product !== 'object' || !('id' in product)) {
+          console.error('ReplitDB: Invalid product data:', {
+            id,
+            data: product,
+            timestamp: new Date().toISOString()
+          });
+          return undefined;
+        }
+
+      } catch (parseError) {
+        console.error('ReplitDB: Error parsing product data:', {
+          id,
+          error: parseError instanceof Error ? parseError.message : 'Unknown error',
+          data: productData,
+          timestamp: new Date().toISOString()
+        });
+        return undefined;
+      }
+
+      console.log('ReplitDB: Product found:', {
+        id,
+        name: product.name,
+        timestamp: new Date().toISOString()
+      });
+      return product;
+
+    } catch (error) {
+      console.error('ReplitDB: Error fetching product:', {
+        id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+      return undefined;
+    }
+  }
+
+  async getProductsByCategory(category: string): Promise<Product[]> {
+    try {
+      console.log('ReplitDB: Fetching products by category:', { category });
+      const products = await this.getProducts();
+      const filteredProducts = products.filter(p =>
+        p.category.toLowerCase() === category.toLowerCase()
+      );
+      console.log('ReplitDB: Products found in category:', {
+        category,
+        count: filteredProducts.length
+      });
+      return filteredProducts;
+    } catch (error) {
+      console.error('ReplitDB: Error fetching products by category:', {
+        category,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      // Return empty array instead of throwing to prevent app crash
+      return [];
+    }
+  }
+
+  async createProduct(product: InsertProduct): Promise<Product> {
+    try {
+      console.log('ReplitDB: Creating new product');
+      const id = await getNextId('products');
+
+      const newProduct: Product = {
+        ...product,
+        id
+      };
+
+      // Convert to string before storing
+      const productStr = JSON.stringify(newProduct);
+      await replitDb.set(keys.product(id), productStr);
+
+      // Update all products list
+      const products = await this.getProducts();
+      await replitDb.set(keys.allProducts(), JSON.stringify([...products, newProduct]));
+
+      console.log('ReplitDB: Product created successfully:', { id });
+      return newProduct;
+    } catch (error) {
+      console.error('ReplitDB: Error creating product:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw error;
+    }
+  }
+
   // Other methods - Return dummy responses for now
-  async getProducts(): Promise<Product[]> { return []; }
-  async getProduct(_id: number): Promise<Product | undefined> { return undefined; }
-  async getProductsByCategory(_category: string): Promise<Product[]> { return []; }
   async getBlogPosts(): Promise<BlogPost[]> { return []; }
   async getBlogPost(_slug: string): Promise<BlogPost | undefined> { return undefined; }
   async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> { return { id: 0, ...message }; }
@@ -203,17 +390,17 @@ export class ReplitDBStorage implements IStorage {
   async updateCartItemQuantity(_userId: string, _productId: number, _quantity: number): Promise<void> {}
   async removeCartItem(_userId: string, _productId: number): Promise<void> {}
   async clearCart(_userId: string): Promise<void> {}
-  async createOrder(order: InsertOrder): Promise<Order> { 
-    return { 
-      id: 0, 
-      orderRef: 'dummy', 
+  async createOrder(order: InsertOrder): Promise<Order> {
+    return {
+      id: 0,
+      orderRef: 'dummy',
       lastUpdated: new Date(),
       createdAt: new Date(),
       trackingNumber: null,
       trackingStatus: null,
       estimatedDelivery: null,
-      ...order 
-    }; 
+      ...order
+    };
   }
   async getOrder(_orderRef: string): Promise<Order | undefined> { return undefined; }
   async getOrdersByUserId(_userId: string): Promise<Order[]> { return []; }

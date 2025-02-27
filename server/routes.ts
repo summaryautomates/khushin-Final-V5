@@ -111,6 +111,62 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Add test route for product migration
+  app.get("/api/test/product-migration", async (_req, res) => {
+    try {
+      const testProduct = {
+        name: `Test Product ${Date.now()}`,
+        description: "A test product for migration verification",
+        price: 99.99,
+        category: "test",
+        images: ["test-image.jpg"],
+        customizable: false,
+        features: {
+          color: "blue",
+          size: "medium"
+        }
+      };
+
+      console.log('Testing product migration - Creating test product');
+
+      // Create a new product
+      const product = await storage.createProduct(testProduct);
+      console.log('Product created successfully:', { 
+        id: product.id,
+        name: product.name 
+      });
+
+      // Verify read operations
+      const productById = await storage.getProduct(product.id);
+      const productsByCategory = await storage.getProductsByCategory(product.category);
+      const allProducts = await storage.getProducts();
+
+      if (!productById) {
+        throw new Error('Product read verification failed');
+      }
+
+      res.json({
+        message: 'Product migration test completed',
+        success: true,
+        product: productById,
+        categoryCount: productsByCategory.length,
+        totalProducts: allProducts.length,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('Product migration test error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+      res.status(500).json({ 
+        message: "Product migration test failed",
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   // Existing routes
   app.get("/api/products", async (_req, res) => {
     try {
