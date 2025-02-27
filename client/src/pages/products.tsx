@@ -53,12 +53,15 @@ export default function Products() {
     }
   }, [location]);
 
-  const { data: allProducts, isLoading } = useQuery<Product[]>({
+  const { data, isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
 
+  // Ensure we have an array to work with
+  const allProducts = Array.isArray(data) ? data : [];
+
   // Filter and sort products
-  const filteredProducts = (allProducts || [])
+  const filteredProducts = allProducts
     .filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -80,11 +83,9 @@ export default function Products() {
     });
 
   // Get unique categories from all products
-  const categories = allProducts
-    ? ["all", ...Array.from(new Set(allProducts.map(p => p.category)))
-        .filter(cat => cat !== 'refueling')
-        .sort()]
-    : ["all"];
+  const categories = ["all", ...Array.from(new Set(allProducts.map(p => p.category)))
+    .filter(cat => cat !== 'refueling')
+    .sort()];
 
   const applySearch = (search: SearchHistory) => {
     setSearchTerm(search.term);
@@ -92,6 +93,11 @@ export default function Products() {
     setPriceRange(search.priceRange);
     setShowHistory(false);
   };
+
+  // Calculate max price for slider
+  const maxPrice = allProducts.length > 0 
+    ? Math.max(...allProducts.map(p => p.price)) 
+    : 1000000;
 
   return (
     <div className="container py-12">
@@ -149,7 +155,7 @@ export default function Products() {
               variant="ghost"
               onClick={() => {
                 setSearchTerm("");
-                setPriceRange([0, Math.max(...(allProducts || []).map(p => p.price))]);
+                setPriceRange([0, maxPrice]);
                 setCategory("all");
                 setSortBy("name-asc");
               }}
@@ -219,7 +225,7 @@ export default function Products() {
                 <h3 className="font-medium">Price Range</h3>
                 <Slider
                   min={0}
-                  max={Math.max(...(allProducts || []).map(p => p.price))}
+                  max={maxPrice}
                   step={100}
                   value={[priceRange[0], priceRange[1]]}
                   onValueChange={(value) => setPriceRange(value as [number, number])}
