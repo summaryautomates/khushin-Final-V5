@@ -24,14 +24,14 @@ const Refueling = () => {
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/90"></div>
           </motion.div>
         </div>
-        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 flex justify-center items-center gap-8 z-20">
+        <div className="absolute top-8 left-8 z-20">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.2, duration: 0.5 }}
-            className="flex-shrink-0"
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="relative"
           >
-            <a href="#" className="block">
+            <a href="#appointment" className="inline-block">
               <img 
                 src="https://i.imghippo.com/files/cfz5924gY.png" 
                 alt="Book Your Appointment" 
@@ -43,20 +43,20 @@ const Refueling = () => {
               />
             </a>
           </motion.div>
+        </div>
+
+        <div className="absolute top-8 right-8 z-20">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.2, duration: 0.5 }}
-            className="flex-shrink-0"
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="relative"
           >
-            <a 
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                window.open("https://i.imghippo.com/files/tWL4487r.png", "_blank");
-              }}
-            >
-              <Button size="sm" className="p-0 h-auto bg-transparent hover:bg-transparent">
+              <Button 
+                variant="ghost" 
+                asChild
+                className="p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-transparent"
+              >
                 <img 
                   src="https://i.imghippo.com/files/Wfm7659yCM.png" 
                   alt="Shop Refueling Accessories" 
@@ -67,7 +67,6 @@ const Refueling = () => {
                   }}
                 />
               </Button>
-            </a>
           </motion.div>
         </div>
 
