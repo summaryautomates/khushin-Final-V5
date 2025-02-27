@@ -29,7 +29,7 @@ export function Header() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 md:h-20 items-center justify-between">
           <Link href="/" className="flex items-center space-x-2">
-            <div className="relative w-28 md:w-36 h-10 md:h-12 flex items-center">
+            <div className="relative w-36 md:w-48 h-12 md:h-16 flex items-center">
               <img
                 src="https://i.imghippo.com/files/vBvE2134ap.png"
                 alt="KHUSH.IN Logo"
