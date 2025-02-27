@@ -44,7 +44,6 @@ const Refueling = () => {
             </a>
           </motion.div>
         </div>
-
         <div className="absolute top-8 right-8 z-20">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -160,6 +159,20 @@ const Refueling = () => {
             viewport={{ once: true, margin: "-100px" }}
             className="max-w-5xl mx-auto"
           >
+            <div className="text-center mb-16">
+              <Button
+                variant="outline"
+                size="lg"
+                className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300 text-lg font-light tracking-wider"
+                onClick={() => {
+                  window.open('https://khushi.setmore.com/saransh', '_blank');
+                }}
+              >
+                <Droplet className="w-5 h-5 mr-2 text-primary" />
+                Refueling Guide & Services
+                <ChevronRight className="w-5 h-5 ml-2" />
+              </Button>
+            </div>
             <div className="grid gap-8 md:grid-cols-3">
               <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300">
                 <CardHeader>
@@ -194,7 +207,6 @@ const Refueling = () => {
                   </ol>
                 </CardContent>
               </Card>
-
               <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300">
                 <CardHeader>
                   <CardTitle className="text-xl font-light flex items-center gap-2">
@@ -226,7 +238,6 @@ const Refueling = () => {
                   </ul>
                 </CardContent>
               </Card>
-
               <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300">
                 <CardHeader>
                   <CardTitle className="text-xl font-light flex items-center gap-2">
