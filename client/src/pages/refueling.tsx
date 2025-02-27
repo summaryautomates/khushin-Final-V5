@@ -24,33 +24,61 @@ const Refueling = () => {
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/90"></div>
           </motion.div>
         </div>
-        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 z-30">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="relative"
-          >
-            <a href="https://khushi.setmore.com/saransh" target="_blank" rel="noopener noreferrer">
-              <img 
-                src="https://i.imghippo.com/files/cfz5924gY.png" 
-                alt="Book Your Appointment" 
-                className="h-44 w-auto object-contain"
-                style={{ 
-                  filter: "drop-shadow(0 0 20px rgba(255, 255, 255, 1))",
-                  maxWidth: "280px"
-                }}
-              />
-            </a>
-          </motion.div>
-        </div>
-        <div className="absolute top-8 right-8 z-20">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="relative"
-          >
+
+        <div className="container relative z-10 px-4 py-16 max-w-7xl mx-auto">
+          <div className="flex flex-col items-center justify-center gap-8">
+            {/* Appointment Button */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="relative"
+            >
+              <a href="https://khushi.setmore.com/saransh" target="_blank" rel="noopener noreferrer">
+                <img 
+                  src="https://i.imghippo.com/files/cfz5924gY.png" 
+                  alt="Book Your Appointment" 
+                  className="h-44 w-auto object-contain"
+                  style={{ 
+                    filter: "drop-shadow(0 0 20px rgba(255, 255, 255, 1))",
+                    maxWidth: "280px"
+                  }}
+                />
+              </a>
+            </motion.div>
+
+            {/* Main Heading */}
+            <motion.h1 
+              initial={{ letterSpacing: "0.2em", opacity: 0, y: -20 }}
+              animate={{ letterSpacing: "0.1em", opacity: 1, y: 0 }}
+              transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extralight tracking-wider text-center"
+            >
+              <span className="bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent pb-2">
+                Refueling Solutions
+              </span>
+            </motion.h1>
+
+            {/* Description */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8, duration: 1, ease: "easeOut" }}
+              className="backdrop-blur-sm bg-black/30 p-6 rounded-lg border border-primary/10 max-w-3xl"
+            >
+              <motion.p className="text-lg md:text-xl text-white text-center leading-relaxed">
+                Experience the perfect blend of convenience and reliability with our premium refueling solutions.
+                Each refill is carefully engineered to maintain the integrity of your luxury lighter.
+              </motion.p>
+            </motion.div>
+
+            {/* Shop Button */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="absolute top-8 right-8"
+            >
               <Button 
                 variant="ghost" 
                 className="p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-transparent"
@@ -68,37 +96,9 @@ const Refueling = () => {
                   }}
                 />
               </Button>
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
-
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.2 }}
-          className="container relative z-10 px-4 py-16"
-        >
-          <motion.h1 
-            initial={{ letterSpacing: "0.2em", opacity: 0, y: -20 }}
-            animate={{ letterSpacing: "0.1em", opacity: 1, y: 0 }}
-            transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extralight mb-8 md:mb-10 tracking-wider text-center bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent pb-2"
-          >
-            <Link href="/refueling">Refueling Solutions</Link>
-          </motion.h1>
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 1, ease: "easeOut" }}
-            className="backdrop-blur-sm bg-black/30 p-6 rounded-lg border border-primary/10 max-w-3xl mx-auto"
-          >
-            <motion.p 
-              className="text-lg md:text-xl text-white text-center mx-auto leading-relaxed"
-            >
-              Experience the perfect blend of convenience and reliability with our premium refueling solutions.
-              Each refill is carefully engineered to maintain the integrity of your luxury lighter.
-            </motion.p>
-          </motion.div>
-        </motion.div>
       </section>
 
       {/* Features Grid and Guide Section */}
@@ -296,8 +296,6 @@ const Refueling = () => {
           </motion.div>
         </div>
       </section>
-
-      {/* Removed CTA Section */}
     </div>
   );
 };
