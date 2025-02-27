@@ -48,26 +48,7 @@ export default function Customize() {
   return (
     <div 
       className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-12"
-      style={{
-        backgroundImage: "url('https://i.imghippo.com/files/eb8638iY.jpg')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        minHeight: "100vh",
-        position: "relative"
-      }}
     >
-      <div 
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.6)", /* Adjust opacity here (0.6 = 40% visible) */
-          zIndex: -1
-        }}
-      ></div>
       <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 md:mb-8">Customize Your Product</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
@@ -193,7 +174,7 @@ export default function Customize() {
 
           <div className="mt-6 md:mt-8 space-y-3 md:space-y-4">
             <Button 
-              className="w-full" 
+              className="w-full relative overflow-hidden group" 
               size={isMobile ? "default" : "lg"}
               onClick={() => {
                 toast({
@@ -203,15 +184,34 @@ export default function Customize() {
                 setLocation("/products");
               }}
             >
-              Save Design
+              <div 
+                className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity duration-300"
+                style={{
+                  backgroundImage: "url('https://i.imghippo.com/files/bOL6106VBY.jpg')",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  zIndex: 0
+                }}
+              />
+              <span className="relative z-10">Save Design</span>
             </Button>
             <Button 
               variant="outline" 
-              className="w-full"
+              className="w-full relative overflow-hidden group"
               size={isMobile ? "default" : "lg"}
               onClick={() => setLocation("/products")}
             >
-              Cancel
+              <div 
+                className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity duration-300 group-hover:scale-110"
+                style={{
+                  backgroundImage: "url('https://i.imghippo.com/files/GI4149xtI.png')",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  zIndex: 0,
+                  transition: "transform 0.3s ease-in-out"
+                }}
+              />
+              <span className="relative z-10">Cancel</span>
             </Button>
           </div>
         </div>
