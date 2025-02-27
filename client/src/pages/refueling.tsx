@@ -41,7 +41,7 @@ const Refueling = () => {
                 <img 
                   src="https://i.imghippo.com/files/Wfm7659yCM.png" 
                   alt="Shop Refueling Accessories" 
-                  className="h-12 w-auto hover:opacity-90 transition-opacity"
+                  className="h-20 w-auto hover:opacity-90 transition-opacity" 
                 />
               </Button>
             </a>
