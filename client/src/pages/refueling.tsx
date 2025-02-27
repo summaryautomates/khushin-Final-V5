@@ -31,12 +31,10 @@ const Refueling = () => {
             transition={{ delay: 1.2, duration: 0.5 }}
           >
             <a 
-              href="https://i.imghippo.com/files/Wfm7659yCM.png" 
-              target="_blank" 
-              rel="noopener noreferrer"
+              href="#"
               onClick={(e) => {
                 e.preventDefault();
-                window.open("https://i.imghippo.com/files/Wfm7659yCM.png", "_blank");
+                window.open("https://i.imghippo.com/files/tWL4487r.png", "_blank");
               }}
             >
               <Button size="sm" className="p-0 h-auto bg-transparent hover:bg-transparent">
