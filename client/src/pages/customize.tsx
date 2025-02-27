@@ -49,7 +49,7 @@ export default function Customize() {
     <div 
       className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-12"
       style={{
-        backgroundImage: "url('https://i.imghippo.com/files/nBX4293VBs.png')",
+        backgroundImage: "url('https://i.imghippo.com/files/eb8638iY.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
