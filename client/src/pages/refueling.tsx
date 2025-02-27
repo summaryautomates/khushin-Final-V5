@@ -24,7 +24,7 @@ const Refueling = () => {
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/90"></div>
           </motion.div>
         </div>
-        <div className="absolute top-8 left-8 z-20">
+        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-30">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -35,10 +35,10 @@ const Refueling = () => {
               <img 
                 src="https://i.imghippo.com/files/cfz5924gY.png" 
                 alt="Book Your Appointment" 
-                className="h-24 w-auto object-contain"
+                className="h-28 w-auto object-contain"
                 style={{ 
-                  filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.9))",
-                  maxWidth: "140px"
+                  filter: "drop-shadow(0 0 20px rgba(255, 255, 255, 1))",
+                  maxWidth: "200px"
                 }}
               />
             </a>
