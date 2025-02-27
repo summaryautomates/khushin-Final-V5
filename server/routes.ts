@@ -332,6 +332,59 @@ export async function registerRoutes(app: Express) {
       res.status(500).json({ message: "Failed to update payment status" });
     }
   });
+  
+  app.post("/api/checkout", async (req, res) => {
+    try {
+      console.log("Checkout request received");
+      
+      if (!req.isAuthenticated()) {
+        console.log("Unauthorized checkout attempt");
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      // Validate the order data
+      const validationResult = insertOrderSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        console.error("Order validation failed:", validationResult.error);
+        return res.status(400).json({
+          message: "Invalid order data",
+          errors: validationResult.error.errors
+        });
+      }
+      
+      // Generate a unique order reference
+      const orderRef = randomBytes(8).toString('hex');
+      
+      // Create the order in the database
+      const orderData = {
+        ...validationResult.data,
+        orderRef
+      };
+      
+      console.log("Creating order:", {
+        ref: orderRef,
+        userId: req.user?.id,
+        itemCount: orderData.items.length,
+        total: orderData.total
+      });
+      
+      const order = await storage.createOrder(orderData);
+      console.log("Order created successfully:", { ref: order.orderRef });
+      
+      // Return the redirect URL for payment page
+      res.json({
+        message: "Order created successfully",
+        redirectUrl: `/checkout/payment?ref=${orderRef}`
+      });
+      
+    } catch (error) {
+      console.error('Error processing checkout:', error);
+      res.status(500).json({ 
+        message: "Failed to process checkout. Please try again." 
+      });
+    }
+  });
 
   app.post("/api/ai/chat", async (req, res) => {
     try {

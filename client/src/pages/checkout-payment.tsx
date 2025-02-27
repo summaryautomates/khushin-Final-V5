@@ -232,7 +232,7 @@ export default function CheckoutPayment() {
           </Button>
           {paymentMethod === 'cod' ? (
             <Button
-              variant="default"
+              variant="default"t"
               onClick={() => handlePaymentStatusUpdate('completed')}
               disabled={paymentStatus === 'completed' || isUpdatingStatus}
               className="w-full md:w-auto"

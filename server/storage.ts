@@ -106,6 +106,7 @@ export interface IStorage {
 export class ReplitDBStorage implements IStorage {
   sessionStore: session.Store;
   private nextIdCounter: { [key: string]: number } = { users: 0, products: 0 };
+  private db = replitDb; //Added this line
 
   constructor() {
     this.sessionStore = new MemoryStoreSession({
@@ -439,9 +440,10 @@ export class ReplitDBStorage implements IStorage {
   async removeCartItem(_userId: string, _productId: number): Promise<void> {}
   async clearCart(_userId: string): Promise<void> {}
   async createOrder(order: InsertOrder): Promise<Order> {
-    return {
-      id: 0,
-      orderRef: 'dummy',
+    const orderId = Date.now();
+    const newOrder: Order = {
+      id: orderId,
+      orderRef: `order-${orderId}`, // Generate a unique orderRef
       lastUpdated: new Date(),
       createdAt: new Date(),
       trackingNumber: null,
@@ -449,6 +451,9 @@ export class ReplitDBStorage implements IStorage {
       estimatedDelivery: null,
       ...order
     };
+    await this.db.set(`orders:${newOrder.id}`, newOrder);
+    await this.db.set(`order:${newOrder.orderRef}`, newOrder);
+    return newOrder;
   }
   async getOrder(_orderRef: string): Promise<Order | undefined> { return undefined; }
   async getOrdersByUserId(_userId: string): Promise<Order[]> { return []; }
