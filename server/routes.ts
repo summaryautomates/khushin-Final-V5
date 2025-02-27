@@ -2,257 +2,55 @@ import type { Express } from "express";
 import { storage } from "./storage";
 import { insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
-import { randomBytes } from "crypto";
 
 export async function registerRoutes(app: Express) {
-  // Add test route for database migration
-  app.get("/api/test/db-migration", async (_req, res) => {
+  // Authentication endpoints
+  app.post("/api/register", async (req, res) => {
     try {
-      const testUsername = `test_user_${Date.now()}`;
-      const testUser = {
-        username: testUsername,
-        password: "test_password_123",
-        email: "test@example.com",
-        firstName: "Test",
-        lastName: "User"
-      };
-
-      console.log('Testing database migration - Creating test user');
-
-      // Test PostgreSQL (current storage)
-      let postgresUser;
-      try {
-        postgresUser = await storage.createUser(testUser);
-        console.log('PostgreSQL test successful:', {
-          userId: postgresUser.id,
-          username: postgresUser.username
-        });
-
-        // Verify PostgreSQL read operations
-        const pgUserById = await storage.getUser(postgresUser.id);
-        const pgUserByUsername = await storage.getUserByUsername(postgresUser.username);
-
-        if (!pgUserById || !pgUserByUsername) {
-          throw new Error('PostgreSQL read verification failed');
-        }
-
-        console.log('PostgreSQL read operations verified');
-      } catch (pgError) {
-        console.error('PostgreSQL test failed:', {
-          error: pgError instanceof Error ? pgError.message : 'Unknown error',
-          stack: pgError instanceof Error ? pgError.stack : undefined
-        });
-      }
-
-      res.json({
-        message: 'Database migration test completed',
-        postgresql: {
-          status: postgresUser ? 'success' : 'failed',
-          user: postgresUser
-        },
+      console.log('Processing registration request:', {
+        username: req.body.username,
         timestamp: new Date().toISOString()
       });
 
-    } catch (error) {
-      console.error('Database migration test error:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        timestamp: new Date().toISOString()
-      });
-      res.status(500).json({
-        message: "Database migration test failed",
-        timestamp: new Date().toISOString()
-      });
-    }
-  });
-
-  // Add test route for product initialization
-  app.get("/api/test/init-products", async (_req, res) => {
-    try {
-      const products = await storage.getProducts();
-      if (products.length === 0) {
-        console.log('Initializing test products...');
-
-        const luxuryLighters = [
-          {
-            id: 1,
-            name: "Diamond Celestial Elite",
-            description: "A masterpiece adorned with ethically sourced diamonds set in a platinum-coated case.",
-            price: 299900,
-            category: "luxury",
-            images: ["/products/diamond-lighter.svg"],
-            customizable: true,
-            features: {
-              material: "Platinum-Coated Steel",
-              embellishment: "Natural Diamonds",
-              mechanism: "Electronic Piezo",
-              warranty: "Lifetime"
-            }
-          },
-          {
-            id: 2,
-            name: "Royal Golden Symphony",
-            description: "An exquisite 18K gold-plated lighter featuring intricate hand-engraved patterns.",
-            price: 149900,
-            category: "luxury",
-            images: ["/products/golden-lighter.svg"],
-            customizable: true,
-            features: {
-              material: "18K Gold-Plated Brass",
-              finish: "Hand-Engraved",
-              mechanism: "Premium Flint Wheel",
-              warranty: "Lifetime"
-            }
-          }
-        ];
-
-        await storage.initializeProducts(luxuryLighters);
-        console.log('Test products initialized');
-
-        res.json({ message: "Test products initialized", products: luxuryLighters });
-      } else {
-        res.json({ message: "Products already exist", count: products.length });
-      }
-    } catch (error) {
-      console.error('Error initializing test products:', error);
-      res.status(500).json({ message: "Failed to initialize test products" });
-    }
-  });
-
-
-  // Add test route for product migration (This section is largely replaced but kept for context)
-  app.get("/api/test/product-migration", async (_req, res) => {
-    try {
-      // First, clear existing products
-      const clearProducts = await storage.getProducts();
-      console.log('Clearing existing products...');
-
-      const luxuryLighters = [
-        {
-          name: "Diamond Celestial Elite",
-          description: "A masterpiece adorned with ethically sourced diamonds set in a platinum-coated case. Features our innovative wind-resistant flame technology and comes with a premium leather carrying case.",
-          price: 299900, // $2,999.00
-          category: "luxury",
-          images: ["/products/diamond-lighter.svg"],
-          customizable: true,
-          features: {
-            material: "Platinum-Coated Steel",
-            embellishment: "Natural Diamonds",
-            mechanism: "Electronic Piezo",
-            warranty: "Lifetime",
-            special: "Certificate of Authenticity"
-          }
-        },
-        {
-          name: "Royal Golden Symphony",
-          description: "An exquisite 18K gold-plated lighter featuring intricate hand-engraved patterns and a signature flame adjustment system. Each piece is individually numbered and comes in a handcrafted wooden presentation box.",
-          price: 149900, // $1,499.00
-          category: "luxury",
-          images: ["/products/golden-lighter.svg"],
-          customizable: true,
-          features: {
-            material: "18K Gold-Plated Brass",
-            finish: "Hand-Engraved",
-            mechanism: "Premium Flint Wheel",
-            warranty: "Lifetime",
-            special: "Individual Serial Number"
-          }
-        },
-        {
-          name: "Vintage 1923 Collection",
-          description: "A meticulously recreated vintage design from our 1923 archives, featuring aged brass construction and our patented soft flame technology. Each piece tells a story of timeless craftsmanship.",
-          price: 89900, // $899.00
-          category: "luxury",
-          images: ["/products/vintage-lighter.svg"],
-          customizable: false,
-          features: {
-            material: "Aged Brass",
-            finish: "Antique Patina",
-            mechanism: "Traditional Flint",
-            warranty: "25 Years",
-            special: "Collector's Edition"
-          }
-        },
-        {
-          name: "Classic Elegance Signature",
-          description: "The epitome of understated luxury, featuring brushed stainless steel construction, precision-engineered flame control, and our signature comfort-grip design. Perfect for daily sophistication.",
-          price: 59900, // $599.00
-          category: "luxury",
-          images: ["/products/classic-lighter.svg"],
-          customizable: true,
-          features: {
-            material: "Premium Stainless Steel",
-            finish: "Brushed Metallic",
-            mechanism: "Dual Flame System",
-            warranty: "10 Years",
-            special: "Ergonomic Design"
-          }
-        }
-      ];
-
-      console.log('Adding luxury lighters to database...');
-
-      const createdProducts = await Promise.all(
-        luxuryLighters.map(product => storage.createProduct(product))
-      );
-
-      console.log('Products created successfully:', {
-        count: createdProducts.length,
-        products: createdProducts.map(p => ({
-          id: p.id,
-          name: p.name
-        }))
-      });
-
-      res.json({
-        message: 'Luxury lighters added successfully',
-        products: createdProducts
-      });
-
-    } catch (error) {
-      console.error('Error adding luxury lighters:', error);
-      res.status(500).json({
-        message: "Failed to add luxury lighters",
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  // Product endpoints (Replaced with updated versions from edited snippet)
-  app.get("/api/products", async (_req, res) => {
-    try {
-      const products = await storage.getProducts();
-      res.json(products);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      res.status(500).json({ message: "Failed to fetch products" });
-    }
-  });
-
-  app.get("/api/products/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id, 10);
-      const product = await storage.getProduct(id);
-
-      if (!product) {
-        return res.status(404).json({ message: "Product not found" });
+      const existingUser = await storage.getUserByUsername(req.body.username);
+      if (existingUser) {
+        console.log('Username already exists:', req.body.username);
+        return res.status(400).json({ message: "Username already exists" });
       }
 
-      res.json(product);
+      const user = await storage.createUser({
+        username: req.body.username,
+        password: req.body.password,
+        email: req.body.email,
+        first_name: req.body.first_name || null,
+        last_name: req.body.last_name || null
+      });
+
+      console.log('User created successfully:', {
+        id: user.id,
+        username: user.username,
+        timestamp: new Date().toISOString()
+      });
+
+      return res.status(201).json(user);
     } catch (error) {
-      console.error('Error fetching product:', error);
-      res.status(500).json({ message: "Failed to fetch product" });
+      console.error('Registration error:', error);
+      return res.status(500).json({ message: "Failed to register user" });
     }
   });
 
-  app.get("/api/products/category/:category", async (req, res) => {
-    try {
-      const products = await storage.getProductsByCategory(req.params.category);
-      res.json(products);
-    } catch (error) {
-      console.error('Error fetching products by category:', error);
-      res.status(500).json({ message: "Failed to fetch products" });
+  // Health check endpoint
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "healthy", timestamp: new Date().toISOString() });
+  });
+
+  // User endpoints
+  app.get("/api/user", (req, res) => {
+    if (!req.isAuthenticated()) {
+      console.log('Unauthorized access attempt to /api/user');
+      return res.status(401).json({ message: "Not authenticated" });
     }
+    res.json(req.user);
   });
 
   // Checkout endpoint
@@ -413,7 +211,6 @@ export async function registerRoutes(app: Express) {
       res.status(500).json({ message: "Failed to fetch orders" });
     }
   });
-
 
   // AI chat endpoint
   app.post("/api/ai/chat", async (req, res) => {

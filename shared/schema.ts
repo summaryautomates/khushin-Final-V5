@@ -8,9 +8,9 @@ export const users = pgTable('users', {
   username: varchar('username', { length: 255 }).notNull().unique(),
   password: varchar('password', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }).notNull(),
-  firstName: varchar('firstName', { length: 255 }),
-  lastName: varchar('lastName', { length: 255 }),
-  createdAt: timestamp('created_at').defaultNow()
+  first_name: varchar('first_name', { length: 255 }),
+  last_name: varchar('last_name', { length: 255 }),
+  created_at: timestamp('created_at').defaultNow()
 });
 
 // Type definitions for User
@@ -19,9 +19,9 @@ export interface User {
   username: string;
   password: string;
   email: string;
-  firstName: string | null;
-  lastName: string | null;
-  createdAt: Date;
+  first_name: string | null;
+  last_name: string | null;
+  created_at: Date;
 }
 
 // Type definitions for Product
@@ -170,8 +170,8 @@ export const insertUserSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   email: z.string().email("Invalid email address"),
-  firstName: z.string().nullable(),
-  lastName: z.string().nullable()
+  first_name: z.string().nullable(),
+  last_name: z.string().nullable()
 });
 
 export const insertProductSchema = z.object({
