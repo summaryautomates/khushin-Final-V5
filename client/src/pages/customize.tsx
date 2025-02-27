@@ -15,11 +15,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Type, 
-  Image as ImageIcon, 
-  Palette, 
-  MoveVertical, 
+import {
+  Type,
+  Image as ImageIcon,
+  Palette,
+  MoveVertical,
   MoveHorizontal,
   ZoomIn,
   RotateCw,
@@ -122,9 +122,24 @@ export default function Customize() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-background/80 py-8">
-      <div className="container mx-auto px-4">
-        <h1 className="text-3xl md:text-4xl font-bold mb-8">Customize Your Product</h1>
+    <div
+      className="min-h-screen py-8 relative"
+      style={{
+        backgroundImage: "url('/attached_assets/customize-bg.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed"
+      }}
+    >
+      {/* Add a semi-transparent overlay */}
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        style={{ zIndex: 0 }}
+      />
+
+      {/* Main content with higher z-index */}
+      <div className="container mx-auto px-4 relative" style={{ zIndex: 1 }}>
+        <h1 className="text-3xl md:text-4xl font-bold mb-8 text-white">Customize Your Product</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Preview Section */}
@@ -135,7 +150,7 @@ export default function Customize() {
                 <CardDescription>See your customization in real-time</CardDescription>
               </CardHeader>
               <CardContent>
-                <div 
+                <div
                   className="aspect-square bg-white rounded-lg flex items-center justify-center relative overflow-hidden"
                   style={{
                     backgroundImage: "linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)",
@@ -159,7 +174,7 @@ export default function Customize() {
                     </div>
                   )}
                   {customization.text && (
-                    <div 
+                    <div
                       className="absolute pointer-events-none"
                       style={{
                         fontFamily: customization.font,
