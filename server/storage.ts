@@ -1,7 +1,8 @@
 import {
   type User,
   type InsertUser,
-  users
+  users,
+  products
 } from "@shared/schema";
 import pg from 'pg';
 import session from "express-session";
@@ -42,6 +43,10 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   sessionStore: session.Store;
+  // Product methods
+  getProducts(): Promise<typeof products.$inferSelect[]>;
+  getProductById(id: number): Promise<typeof products.$inferSelect | undefined>;
+  getProductsByCategory(category: string): Promise<typeof products.$inferSelect[]>;
 }
 
 export class ReplitDBStorage implements IStorage {
@@ -104,6 +109,40 @@ export class ReplitDBStorage implements IStorage {
     } catch (error) {
       console.error('Error fetching user by username:', error);
       return undefined;
+    }
+  }
+
+  // Product methods
+  async getProducts(): Promise<typeof products.$inferSelect[]> {
+    try {
+      console.log('Fetching all products');
+      const result = await this.db.select().from(products);
+      return result;
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      throw error;
+    }
+  }
+
+  async getProductById(id: number): Promise<typeof products.$inferSelect | undefined> {
+    try {
+      console.log('Fetching product by ID:', id);
+      const result = await this.db.select().from(products).where(eq(products.id, id));
+      return result[0];
+    } catch (error) {
+      console.error('Error fetching product by ID:', error);
+      return undefined;
+    }
+  }
+
+  async getProductsByCategory(category: string): Promise<typeof products.$inferSelect[]> {
+    try {
+      console.log('Fetching products by category:', category);
+      const result = await this.db.select().from(products).where(eq(products.category, category));
+      return result;
+    } catch (error) {
+      console.error('Error fetching products by category:', error);
+      throw error;
     }
   }
 }

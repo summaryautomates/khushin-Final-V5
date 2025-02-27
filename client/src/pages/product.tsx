@@ -38,7 +38,6 @@ export default function ProductPage() {
     retry: 2,
     staleTime: 300000, // 5 minutes
     gcTime: 3600000, // 1 hour
-    useErrorBoundary: false
   });
 
   const handleAddToCart = async () => {

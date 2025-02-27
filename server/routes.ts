@@ -2,8 +2,44 @@ import type { Express } from "express";
 import { storage } from "./storage";
 import { insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
+import { sql } from "drizzle-orm";
+import { randomBytes } from "crypto";
 
 export async function registerRoutes(app: Express) {
+  // Product endpoints
+  app.get("/api/products", async (_req, res) => {
+    try {
+      const products = await storage.getProducts();
+      res.json(products);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      res.status(500).json({ message: "Failed to fetch products" });
+    }
+  });
+
+  app.get("/api/products/:id", async (req, res) => {
+    try {
+      const product = await storage.getProductById(parseInt(req.params.id));
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      res.json(product);
+    } catch (error) {
+      console.error('Error fetching product:', error);
+      res.status(500).json({ message: "Failed to fetch product" });
+    }
+  });
+
+  app.get("/api/products/category/:category", async (req, res) => {
+    try {
+      const products = await storage.getProductsByCategory(req.params.category);
+      res.json(products);
+    } catch (error) {
+      console.error('Error fetching products by category:', error);
+      res.status(500).json({ message: "Failed to fetch products" });
+    }
+  });
+
   // Authentication endpoints
   app.post("/api/register", async (req, res) => {
     try {
