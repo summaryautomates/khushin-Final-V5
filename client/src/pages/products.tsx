@@ -53,15 +53,15 @@ export default function Products() {
     }
   }, [location]);
 
-  const { data: allProducts = [], isLoading } = useQuery<Product[]>({
+  const { data: allProducts, isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
 
   // Filter and sort products
-  const filteredProducts = allProducts
+  const filteredProducts = (allProducts || [])
     .filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          product.description.toLowerCase().includes(searchTerm.toLowerCase());
+                         product.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = category === "all" || product.category === category;
       const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
       return matchesSearch && matchesCategory && matchesPrice;
@@ -149,7 +149,7 @@ export default function Products() {
               variant="ghost"
               onClick={() => {
                 setSearchTerm("");
-                setPriceRange([0, Math.max(...allProducts.map(p => p.price))]);
+                setPriceRange([0, Math.max(...(allProducts || []).map(p => p.price))]);
                 setCategory("all");
                 setSortBy("name-asc");
               }}
@@ -219,7 +219,7 @@ export default function Products() {
                 <h3 className="font-medium">Price Range</h3>
                 <Slider
                   min={0}
-                  max={Math.max(...allProducts.map(p => p.price))}
+                  max={Math.max(...(allProducts || []).map(p => p.price))}
                   step={100}
                   value={[priceRange[0], priceRange[1]]}
                   onValueChange={(value) => setPriceRange(value as [number, number])}
