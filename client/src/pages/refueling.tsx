@@ -56,7 +56,7 @@ const Refueling = () => {
                 variant="ghost" 
                 className="p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-transparent"
                 onClick={() => {
-                  window.open("https://i.imghippo.com/files/Wfm7659yCM.png", "_blank", "noopener,noreferrer");
+                  window.open("https://i.imghippo.com/files/Ojp4347XDA.png", "_blank", "noopener,noreferrer");
                 }}
               >
                 <img 
