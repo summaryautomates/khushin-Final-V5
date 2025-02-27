@@ -7,37 +7,56 @@ interface AnimatedTextProps {
 
 export function AnimatedText({ text, className = "" }: AnimatedTextProps) {
   const letters = Array.from(text);
-  
-  const letterAnimation = {
-    initial: { opacity: 0, y: 50 },
-    animate: (i: number) => ({
+
+  const container = {
+    hidden: { opacity: 0 },
+    visible: (i = 1) => ({
+      opacity: 1,
+      transition: { staggerChildren: 0.03, delayChildren: 0.04 * i },
+    }),
+  };
+
+  const child = {
+    visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 1,
-        ease: [0.2, 0.65, 0.3, 0.9],
-        delay: i * 0.1,
-        repeat: Infinity,
-        repeatType: "reverse",
-        repeatDelay: 2
-      }
-    })
+        type: "spring",
+        damping: 12,
+        stiffness: 200,
+      },
+    },
+    hidden: {
+      opacity: 0,
+      y: 20,
+      transition: {
+        type: "spring",
+        damping: 12,
+        stiffness: 200,
+      },
+    },
   };
 
   return (
-    <span className={`inline-flex ${className}`}>
-      {letters.map((letter, i) => (
+    <motion.span
+      className={`inline-flex ${className}`}
+      variants={container}
+      initial="hidden"
+      animate="visible"
+    >
+      {letters.map((letter, index) => (
         <motion.span
-          key={i}
-          custom={i}
-          variants={letterAnimation}
-          initial="initial"
-          animate="animate"
-          className="inline-block"
+          key={index}
+          className="inline-block hover:scale-110 hover:text-primary transition-colors duration-200 cursor-default"
+          variants={child}
+          whileHover={{
+            scale: 1.2,
+            transition: { type: "spring", damping: 10 },
+          }}
         >
           {letter === " " ? "\u00A0" : letter}
         </motion.span>
       ))}
-    </span>
+    </motion.span>
   );
 }
