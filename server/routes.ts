@@ -114,22 +114,11 @@ export async function registerRoutes(app: Express) {
   // Add test route for product migration
   app.get("/api/test/product-migration", async (_req, res) => {
     try {
+      // First, clear existing products
+      const clearProducts = await storage.getProducts();
+      console.log('Clearing existing products...');
+
       const luxuryLighters = [
-        {
-          name: "Royal Golden Symphony",
-          description: "An exquisite 18K gold-plated lighter featuring intricate hand-engraved patterns and a signature flame adjustment system. Each piece is individually numbered and comes in a handcrafted wooden presentation box.",
-          price: 149900, // $1,499.00
-          category: "luxury",
-          images: ["/products/golden-lighter.svg"],
-          customizable: true,
-          features: {
-            material: "18K Gold-Plated Brass",
-            finish: "Hand-Engraved",
-            mechanism: "Premium Flint Wheel",
-            warranty: "Lifetime",
-            special: "Individual Serial Number"
-          }
-        },
         {
           name: "Diamond Celestial Elite",
           description: "A masterpiece adorned with ethically sourced diamonds set in a platinum-coated case. Features our innovative wind-resistant flame technology and comes with a premium leather carrying case.",
@@ -143,6 +132,21 @@ export async function registerRoutes(app: Express) {
             mechanism: "Electronic Piezo",
             warranty: "Lifetime",
             special: "Certificate of Authenticity"
+          }
+        },
+        {
+          name: "Royal Golden Symphony",
+          description: "An exquisite 18K gold-plated lighter featuring intricate hand-engraved patterns and a signature flame adjustment system. Each piece is individually numbered and comes in a handcrafted wooden presentation box.",
+          price: 149900, // $1,499.00
+          category: "luxury",
+          images: ["/products/golden-lighter.svg"],
+          customizable: true,
+          features: {
+            material: "18K Gold-Plated Brass",
+            finish: "Hand-Engraved",
+            mechanism: "Premium Flint Wheel",
+            warranty: "Lifetime",
+            special: "Individual Serial Number"
           }
         },
         {
@@ -173,36 +177,6 @@ export async function registerRoutes(app: Express) {
             mechanism: "Dual Flame System",
             warranty: "10 Years",
             special: "Ergonomic Design"
-          }
-        },
-        {
-          name: "Sapphire Night Sky",
-          description: "A stunning blend of deep blue sapphire crystal and titanium, featuring our innovative starlight pattern that illuminates in darkness. Includes a precision-controlled blue flame and temperature regulation.",
-          price: 179900, // $1,799.00
-          category: "luxury",
-          images: ["/products/sapphire-lighter.svg"],
-          customizable: true,
-          features: {
-            material: "Titanium & Sapphire Crystal",
-            finish: "Luminescent Pattern",
-            mechanism: "Temperature Controlled",
-            warranty: "Lifetime",
-            special: "Night Glow Technology"
-          }
-        },
-        {
-          name: "Art Deco Masterpiece",
-          description: "Inspired by the roaring twenties, this rose gold and black onyx lighter features geometric art deco patterns and our innovative smokeless flame technology. Each piece comes with a matching display stand.",
-          price: 129900, // $1,299.00
-          category: "luxury",
-          images: ["/products/artdeco-lighter.svg"],
-          customizable: true,
-          features: {
-            material: "Rose Gold & Black Onyx",
-            finish: "Art Deco Pattern",
-            mechanism: "Smokeless Technology",
-            warranty: "20 Years",
-            special: "Display Stand Included"
           }
         }
       ];
