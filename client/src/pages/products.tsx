@@ -14,15 +14,17 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import {
   Filter,
-  SortAsc,
-  SortDesc,
+  Crown,
   Search,
   X,
   History,
-  Save
+  Save,
+  Flame,
+  Diamond
 } from "lucide-react";
 import type { Product } from "@shared/schema";
 import { useLocation } from "wouter";
+import { motion } from "framer-motion";
 
 interface SearchHistory {
   term: string;
@@ -47,83 +49,57 @@ export default function Products() {
     if (urlCategory) {
       setCategory(urlCategory);
     } else {
-      setCategory("all"); // Ensure we default to "all" when no category is specified
+      setCategory("all");
     }
   }, [location]);
 
-  // Always fetch all products regardless of category
   const { data: allProducts, isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
 
   const products = allProducts;
 
-  // Get unique categories from all products, excluding refueling
+  // Get unique categories from all products
   const categories = products
     ? ["all", ...Array.from(new Set(products.map(p => p.category)))
         .filter(cat => cat !== 'refueling')
         .sort()]
     : ["all"];
 
-  const saveSearch = () => {
-    const newSearch: SearchHistory = {
-      term: searchTerm,
-      category,
-      priceRange,
-      timestamp: new Date()
-    };
-    setSavedSearches(prev => [...prev, newSearch]);
-  };
-
-  const applySearch = (search: SearchHistory) => {
-    setSearchTerm(search.term);
-    setCategory(search.category);
-    setPriceRange(search.priceRange);
-  };
-
-  useEffect(() => {
-    if (searchTerm || category !== "all" || priceRange[0] > 0 || priceRange[1] < 50000) {
-      const newHistory: SearchHistory = {
-        term: searchTerm,
-        category,
-        priceRange,
-        timestamp: new Date()
-      };
-      setSearchHistory(prev => [newHistory, ...prev.slice(0, 9)]);
+  // Category specific hero section for lighters
+  const renderCategoryHero = () => {
+    if (category === "lighters") {
+      return (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-12 relative overflow-hidden rounded-2xl bg-gradient-to-r from-zinc-900 to-zinc-800 p-8 md:p-12"
+        >
+          <div className="absolute inset-0 bg-[url('/luxury-pattern.svg')] opacity-10" />
+          <div className="relative z-10 max-w-3xl">
+            <div className="flex items-center gap-2 mb-6">
+              <Crown className="h-8 w-8 text-gold" />
+              <h1 className="text-4xl font-light tracking-wider text-white">Luxury Lighters Collection</h1>
+            </div>
+            <p className="text-zinc-300 leading-relaxed mb-8">
+              Discover our exquisite collection of premium lighters, each piece a testament to unparalleled craftsmanship
+              and timeless elegance. From limited editions to bespoke designs, find your perfect companion of sophistication.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Badge variant="outline" className="bg-gold/10 text-gold border-gold/20 px-3 py-1.5">
+                <Diamond className="w-4 h-4 mr-2" />
+                Premium Materials
+              </Badge>
+              <Badge variant="outline" className="bg-gold/10 text-gold border-gold/20 px-3 py-1.5">
+                <Flame className="w-4 h-4 mr-2" />
+                Lifetime Warranty
+              </Badge>
+            </div>
+          </div>
+        </motion.div>
+      );
     }
-  }, [searchTerm, category, priceRange]);
-
-  const filteredProducts = products?.filter(product => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesCategory = category === "all" || product.category === category;
-
-    const matchesPrice =
-      product.price >= priceRange[0] &&
-      product.price <= priceRange[1];
-
-    return matchesSearch && matchesCategory && matchesPrice;
-  }).sort((a, b) => {
-    switch (sortBy) {
-      case "price-asc":
-        return a.price - b.price;
-      case "price-desc":
-        return b.price - a.price;
-      case "name-desc":
-        return b.name.localeCompare(a.name);
-      case "name-asc":
-      default:
-        return a.name.localeCompare(b.name);
-    }
-  });
-
-  const resetFilters = () => {
-    setSearchTerm("");
-    setPriceRange([0, 50000]);
-    setCategory("all");
-    setSortBy("name-asc");
+    return null;
   };
 
   if (isLoading) {
@@ -139,10 +115,12 @@ export default function Products() {
   return (
     <div className="container py-12">
       <div className="space-y-8">
+        {renderCategoryHero()}
+
         <div className="flex items-center justify-between">
-          <h1 className="text-4xl font-extralight tracking-wider">
+          <h2 className="text-3xl font-extralight tracking-wider">
             {category === "all" ? "Our Collection" : `${category.charAt(0).toUpperCase() + category.slice(1)}`}
-          </h1>
+          </h2>
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -157,7 +135,12 @@ export default function Products() {
             </Button>
             <Button
               variant="ghost"
-              onClick={resetFilters}
+              onClick={() => {
+                setSearchTerm("");
+                setPriceRange([0, maxPrice]);
+                setCategory("all");
+                setSortBy("name-asc");
+              }}
               className="gap-2"
             >
               <X className="w-4 h-4" /> Reset Filters
@@ -168,7 +151,11 @@ export default function Products() {
         <div className="grid gap-6 md:grid-cols-[300px,1fr]">
           {/* Filters Sidebar */}
           <div className="space-y-6">
-            <div className="p-6 bg-white/[0.02] backdrop-blur-sm rounded-lg space-y-6">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="p-6 bg-white/[0.02] backdrop-blur-sm rounded-lg space-y-6 border border-white/10"
+            >
               <div className="space-y-2">
                 <h3 className="font-medium">Search</h3>
                 <div className="flex gap-2">
@@ -217,33 +204,47 @@ export default function Products() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <h3 className="font-medium">Sort By</h3>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                    <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                    <SelectItem value="price-asc">Price (Low to High)</SelectItem>
-                    <SelectItem value="price-desc">Price (High to Low)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {category === "lighters" && (
+                <div className="space-y-2">
+                  <h3 className="font-medium">Collections</h3>
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select collection" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="premium">Premium Collection</SelectItem>
+                      <SelectItem value="limited">Limited Edition</SelectItem>
+                      <SelectItem value="classic">Classic Collection</SelectItem>
+                      <SelectItem value="modern">Modern Series</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <Button
                 className="w-full gap-2"
                 variant="outline"
-                onClick={saveSearch}
+                onClick={() => {
+                  const newSearch: SearchHistory = {
+                    term: searchTerm,
+                    category,
+                    priceRange,
+                    timestamp: new Date()
+                  };
+                  setSavedSearches(prev => [...prev, newSearch]);
+                }}
               >
                 <Save className="w-4 h-4" /> Save Search
               </Button>
-            </div>
+            </motion.div>
 
             {/* Search History Panel */}
             {showHistory && (
-              <div className="p-6 bg-white/[0.02] backdrop-blur-sm rounded-lg space-y-4">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-6 bg-white/[0.02] backdrop-blur-sm rounded-lg space-y-4 border border-white/10"
+              >
                 <h3 className="font-medium">Recent Searches</h3>
                 <div className="space-y-2">
                   {searchHistory.map((search, index) => (
@@ -295,27 +296,35 @@ export default function Products() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
           </div>
 
           {/* Product Grid */}
           <div>
-            {filteredProducts && filteredProducts.length > 0 ? (
+            {products && products.length > 0 ? (
               <>
-                <div className="mb-6">
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="mb-6"
+                >
                   <p className="text-sm text-muted-foreground">
-                    Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
+                    Showing {products.length} {products.length === 1 ? 'product' : 'products'}
                   </p>
-                </div>
-                <ProductGrid products={filteredProducts} isLoading={isLoading} />
+                </motion.div>
+                <ProductGrid products={products} isLoading={isLoading} />
               </>
             ) : (
-              <div className="text-center py-12">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-12"
+              >
                 <p className="text-lg text-muted-foreground">
                   No products found matching your criteria.
                 </p>
-              </div>
+              </motion.div>
             )}
           </div>
         </div>
