@@ -332,23 +332,47 @@ export class ReplitDBStorage implements IStorage {
     try {
       console.log('ReplitDB: Fetching user by username:', { username });
       const response = await replitDb.get(keys.userByUsername(username));
-      const userStr = extractValue<string>(response);
 
-      if (!userStr) {
+      if (!response) {
         console.log('ReplitDB: User not found:', { username });
         return undefined;
       }
 
-      const user = JSON.parse(userStr);
-      console.log('ReplitDB: User found:', { username });
-      return user;
+      // Handle both string and object responses
+      let userStr: string;
+      if (typeof response === 'object' && response !== null && 'value' in response) {
+        userStr = response.value as string;
+      } else if (typeof response === 'string') {
+        userStr = response;
+      } else {
+        console.error('ReplitDB: Invalid user data format:', {
+          username,
+          responseType: typeof response,
+          timestamp: new Date().toISOString()
+        });
+        return undefined;
+      }
+
+      try {
+        const user = JSON.parse(userStr);
+        console.log('ReplitDB: User found:', { username });
+        return user;
+      } catch (parseError) {
+        console.error('ReplitDB: Error parsing user data:', {
+          username,
+          error: parseError instanceof Error ? parseError.message : 'Unknown error',
+          data: userStr,
+          timestamp: new Date().toISOString()
+        });
+        return undefined;
+      }
     } catch (error) {
       console.error('ReplitDB: Error fetching user by username:', {
         username,
         error: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined
       });
-      throw error;
+      return undefined;
     }
   }
 
@@ -371,11 +395,18 @@ export class ReplitDBStorage implements IStorage {
         lastName: user.lastName || null
       };
 
-      // Store user by both ID and username
-      await replitDb.set(keys.user(id), JSON.stringify(newUser));
-      await replitDb.set(keys.userByUsername(user.username), JSON.stringify(newUser));
+      // Convert user object to string before storing
+      const userStr = JSON.stringify(newUser);
 
-      console.log('ReplitDB: User created successfully:', { id, username: user.username });
+      // Store user by both ID and username
+      await replitDb.set(keys.user(id), userStr);
+      await replitDb.set(keys.userByUsername(user.username), userStr);
+
+      console.log('ReplitDB: User created successfully:', { 
+        id, 
+        username: user.username,
+        timestamp: new Date().toISOString()
+      });
       return newUser;
     } catch (error) {
       console.error('ReplitDB: Error creating user:', {
