@@ -24,6 +24,20 @@ const Refueling = () => {
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/90"></div>
           </motion.div>
         </div>
+        <div className="absolute top-8 right-8 z-20">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.2, duration: 0.5 }}
+          >
+            <a href="https://i.imghippo.com/files/nCr6709jA.png" target="_blank" rel="noopener noreferrer">
+              <Button size="sm" className="rounded-full gap-2 bg-primary/90 hover:bg-primary">
+                Shop Refueling Accessories
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </a>
+          </motion.div>
+        </div>
 
         <motion.div 
           initial={{ opacity: 0 }}
@@ -188,26 +202,7 @@ const Refueling = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-zinc-950">
-        <div className="container px-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
-            className="max-w-xl mx-auto text-center"
-          >
-            <h2 className="text-2xl font-light mb-6 tracking-wider">Ready to Enhance Your Experience?</h2>
-            <a href="https://i.imghippo.com/files/nCr6709jA.png" target="_blank" rel="noopener noreferrer">
-              <Button size="lg" className="rounded-full gap-2 bg-primary/90 hover:bg-primary">
-                Shop Refueling Accessories
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </a>
-          </motion.div>
-        </div>
-      </section>
+      {/* Removed CTA Section */}
     </div>
   );
 };
