@@ -339,6 +339,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Update the checkout endpoint
   app.post("/api/checkout", async (req, res) => {
     try {
       console.log("Checkout request received");
@@ -384,8 +385,8 @@ export async function registerRoutes(app: Express) {
         const session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
           mode: 'payment',
-          success_url: `${req.protocol}://${req.get('host')}/checkout/success?ref=${orderRef}`,
-          cancel_url: `${req.protocol}://${req.get('host')}/checkout/payment?ref=${orderRef}&status=cancelled`,
+          success_url: `${process.env.APP_URL || `${req.protocol}://${req.get('host')}`}/checkout/success?ref=${orderRef}`,
+          cancel_url: `${process.env.APP_URL || `${req.protocol}://${req.get('host')}`}/checkout/payment?ref=${orderRef}&status=cancelled`,
           metadata: {
             orderRef: orderRef,
             userId: req.user?.id?.toString()
@@ -397,7 +398,7 @@ export async function registerRoutes(app: Express) {
                 name: item.name || 'Product',
                 description: `Quantity: ${item.quantity}`
               },
-              unit_amount: item.price || 0,
+              unit_amount: Math.round(item.price || 0), // Ensure integer value
             },
             quantity: item.quantity,
           })),
@@ -410,15 +411,18 @@ export async function registerRoutes(app: Express) {
         // Return both the order reference and Stripe session URL
         res.json({
           message: "Order created successfully",
-          redirectUrl: session.url || `/checkout/payment?ref=${orderRef}`,
+          redirectUrl: session.url,
           stripeSessionId: session.id
         });
       } catch (stripeError) {
         console.error('Stripe session creation error:', stripeError);
-        // Fallback to traditional payment methods if Stripe fails
-        res.json({
-          message: "Order created successfully",
-          redirectUrl: `/checkout/payment?ref=${orderRef}`
+
+        // Update order status to failed
+        await storage.updateOrderStatus(orderRef, 'failed', 'stripe_error');
+
+        res.status(500).json({
+          message: "Payment processing failed. Please try again.",
+          error: process.env.NODE_ENV === 'development' ? stripeError.message : undefined
         });
       }
     } catch (error) {
@@ -429,7 +433,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Add Stripe webhook handler
+  // Update webhook handler
   app.post("/api/webhooks/stripe", async (req, res) => {
     const sig = req.headers['stripe-signature'];
 
@@ -440,35 +444,40 @@ export async function registerRoutes(app: Express) {
         process.env.STRIPE_WEBHOOK_SECRET || ''
       );
 
+      console.log('Stripe webhook received:', event.type);
+
       switch (event.type) {
-        case 'checkout.session.completed':
+        case 'checkout.session.completed': {
           const session = event.data.object as Stripe.Checkout.Session;
           const orderRef = session.metadata?.orderRef;
 
           if (orderRef) {
             await storage.updateOrderStatus(orderRef, 'completed', 'stripe');
+            console.log('Order marked as completed:', orderRef);
           }
           break;
+        }
 
-        case 'checkout.session.expired':
+        case 'checkout.session.expired': {
           const expiredSession = event.data.object as Stripe.Checkout.Session;
           const expiredOrderRef = expiredSession.metadata?.orderRef;
 
           if (expiredOrderRef) {
             await storage.updateOrderStatus(expiredOrderRef, 'failed', 'stripe');
+            console.log('Order marked as failed (expired):', expiredOrderRef);
           }
           break;
+        }
         default:
-          console.log(`Unhandled event type ${event.type}`)
+          console.log(`Unhandled event type ${event.type}`);
       }
 
       res.json({ received: true });
     } catch (err) {
       console.error('Stripe webhook error:', err);
-      res.status(400).send(`Webhook Error: ${err.message}`);
+      res.status(400).send(`Webhook Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   });
-
 
 
   app.post("/api/ai/chat", async (req, res) => {
