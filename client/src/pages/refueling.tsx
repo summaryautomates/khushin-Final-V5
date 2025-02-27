@@ -72,30 +72,7 @@ const Refueling = () => {
             </motion.div>
 
             {/* Shop Button */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="absolute top-8 right-8"
-            >
-              <Button 
-                variant="ghost" 
-                className="p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-transparent"
-                onClick={() => {
-                  window.open("https://i.imghippo.com/files/Ojp4347XDA.png", "_blank", "noopener,noreferrer");
-                }}
-              >
-                <img 
-                  src="https://i.imghippo.com/files/Wfm7659yCM.png" 
-                  alt="Shop Refueling Accessories" 
-                  className="h-24 w-auto hover:opacity-90 transition-opacity"
-                  style={{ 
-                    filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.9))",
-                    maxWidth: "140px"
-                  }}
-                />
-              </Button>
-            </motion.div>
+            
           </div>
         </div>
       </section>
@@ -194,6 +171,25 @@ const Refueling = () => {
                   </ol>
                 </CardContent>
               </Card>
+
+              {/* Image Component (Moved Above Safety Precautions) */}
+              <Button 
+                variant="ghost" 
+                className="p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-transparent"
+                onClick={() => {
+                  window.open("https://i.imghippo.com/files/Ojp4347XDA.png", "_blank", "noopener,noreferrer");
+                }}
+              >
+                <img 
+                  src="https://i.imghippo.com/files/Wfm7659yCM.png" 
+                  alt="Shop Refueling Accessories" 
+                  className="h-24 w-auto hover:opacity-90 transition-opacity"
+                  style={{ 
+                    filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.9))",
+                    maxWidth: "140px"
+                  }}
+                />
+              </Button>
 
               {/* Safety Precautions */}
               <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300 h-full flex flex-col">
