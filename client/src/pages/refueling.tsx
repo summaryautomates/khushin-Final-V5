@@ -24,26 +24,28 @@ const Refueling = () => {
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/90"></div>
           </motion.div>
         </div>
-        <div className="absolute top-8 left-8 z-20">
+        <div className="absolute top-12 left-1/2 transform -translate-x-1/2 z-20">
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.2, duration: 0.5 }}
+            transition={{ delay: 1.2, duration: 0.7 }}
+            className="flex justify-center items-center"
           >
             <a 
               href="#"
               onClick={(e) => {
                 e.preventDefault();
-                window.open("https://i.imghippo.com/files/ncH5592Qc.png", "_blank");
+                window.open("https://i.imghippo.com/files/cfz5924gY.png", "_blank");
               }}
+              className="flex justify-center"
             >
               <Button size="sm" className="p-0 h-auto bg-transparent hover:bg-transparent">
                 <img 
                   src="https://i.imghippo.com/files/cfz5924gY.png" 
                   alt="Book Your Appointment"
-                  className="h-40 w-auto mix-blend-screen filter contrast-125 brightness-110"
+                  className="h-36 w-auto object-contain mix-blend-screen filter contrast-125 brightness-125"
                   style={{
-                    filter: "drop-shadow(0 0 12px rgba(255, 255, 255, 0.8))"
+                    filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.9))"
                   }}
                 />
               </Button>
