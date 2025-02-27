@@ -75,7 +75,10 @@ export default function Products() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-12 relative overflow-hidden rounded-2xl bg-gradient-to-r from-zinc-900 to-zinc-800 p-8 md:p-12"
         >
-          <div className="absolute inset-0 bg-[url('/luxury-pattern.svg')] opacity-10" />
+          <div 
+            className="absolute inset-0 bg-cover bg-center" 
+            style={{ backgroundImage: "url('https://i.imghippo.com/files/GI4149xtI.png')", opacity: 0.3 }}
+          />
           <div className="relative z-10 max-w-3xl">
             <div className="flex items-center gap-2 mb-6">
               <Crown className="h-8 w-8 text-gold" />
