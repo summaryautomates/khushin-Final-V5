@@ -6,10 +6,9 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser, insertUserSchema } from "@shared/schema";
-import { pool } from "./db";
-import pgSession from 'connect-pg-simple';
+import MemoryStore from "memorystore";
 
-const PostgresStore = pgSession(session);
+const MemoryStoreSession = MemoryStore(session);
 
 declare global {
   namespace Express {
@@ -50,11 +49,15 @@ export async function setupAuth(app: Express) {
     });
 
     // Initialize session store with optimized settings
-    const sessionStore = new PostgresStore({
-      pool,
-      tableName: 'session',
-      createTableIfMissing: true,
-      pruneSessionInterval: 60 * 15 // Prune expired sessions every 15 minutes
+    const sessionStore = new MemoryStoreSession({
+      checkPeriod: 86400000, // Prune expired entries every 24h
+      ttl: 24 * 60 * 60 * 1000, // Time to live - 24 hours
+      noDisposeOnSet: true, // Improve performance by not disposing old sessions on set
+      dispose: (sid: string) => {
+        console.log('Session disposed:', { sid, timestamp: new Date().toISOString() });
+      },
+      stale: false, // Don't serve stale sessions
+      max: 1000 // Maximum number of sessions to store
     });
 
     console.log('Session store initialized');

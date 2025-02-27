@@ -10,24 +10,45 @@ import {
   type Order,
   type OrderStatusHistory,
   type InsertOrder,
-  type InsertOrderStatusHistory,
-  products,
-  blogPosts,
-  contactMessages,
-  cartItems,
-  orders,
-  orderStatusHistory,
-  giftOrders,
   type GiftOrder,
   type InsertGiftOrder,
 } from "@shared/schema";
-import { db, pool } from "./db";
-import { eq, and, desc } from "drizzle-orm";
-import { users, type User, type InsertUser } from "@shared/schema";
+import Database from "@replit/database";
 import session from "express-session";
-import connectPg from "connect-pg-simple";
+import MemoryStore from "memorystore";
+import { type User, type InsertUser } from "@shared/schema";
 
-const PostgresSessionStore = connectPg(session);
+const MemoryStoreSession = MemoryStore(session);
+
+// Initialize Replit Database client
+const db = new Database();
+
+// Helper functions for key management
+const keys = {
+  user: (id: number) => `users:${id}`,
+  userByUsername: (username: string) => `users:username:${username}`,
+  product: (id: number) => `products:${id}`,
+  allProducts: () => "products:all",
+  blogPost: (slug: string) => `blog_posts:${slug}`,
+  allBlogPosts: () => "blog_posts:all",
+  cartItem: (userId: string, productId: number) => `cart_items:${userId}:${productId}`,
+  userCart: (userId: string) => `cart_items:${userId}`,
+  order: (orderRef: string) => `orders:${orderRef}`,
+  userOrders: (userId: string) => `orders:user:${userId}`,
+  orderStatusHistory: (orderId: number) => `order_status_history:${orderId}`,
+  giftOrder: (orderId: number) => `gift_orders:${orderId}`,
+  giftOrderByCode: (code: string) => `gift_orders:code:${code}`,
+  nextId: (type: string) => `${type}:next_id`,
+};
+
+// Helper function to generate sequential IDs
+async function getNextId(type: string): Promise<number> {
+  const key = keys.nextId(type);
+  const currentId = await db.get(key) || 0;
+  const nextId = currentId + 1;
+  await db.set(key, nextId);
+  return nextId;
+}
 
 export interface IStorage {
   // Products
@@ -58,7 +79,7 @@ export interface IStorage {
   updateOrderTracking(orderRef: string, trackingStatus: string, estimatedDelivery?: string): Promise<Order>;
 
   // Order Status History methods
-  addOrderStatusHistory(history: InsertOrderStatusHistory): Promise<OrderStatusHistory>;
+  addOrderStatusHistory(history: OrderStatusHistory): Promise<OrderStatusHistory>;
   getOrderStatusHistory(orderId: number): Promise<OrderStatusHistory[]>;
 
   // User methods
@@ -80,91 +101,70 @@ export interface IStorage {
   updateCartItemGiftStatus(userId: string, productId: number, isGift: boolean, giftMessage?: string): Promise<void>;
 }
 
-export class DatabaseStorage implements IStorage {
+export class ReplitDBStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    this.sessionStore = new PostgresSessionStore({
-      pool,
-      tableName: 'session',
-      createTableIfMissing: true,
-      pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
-      conObject: {
-        connectionTimeoutMillis: 5000, // Increased timeout for better stability
-        idleTimeoutMillis: 30000,     // Keep idle timeout at 30s
-        max: 10,                      // Reduced max connections for better stability
-        ssl: process.env.NODE_ENV === 'production',
-      },
-      errorLog: (err) => {
-        console.error('Session store error:', err);
-      }
-    });
-
-    // Basic pool error handler
-    pool.on('error', (err) => {
-      console.error('Unexpected database pool error:', err);
+    this.sessionStore = new MemoryStoreSession({
+      checkPeriod: 86400000 // prune expired entries every 24h
     });
   }
 
+  // Products
   async getProducts(): Promise<Product[]> {
-    return await db.select().from(products);
+    const productsStr = await db.get(keys.allProducts()) as string;
+    return productsStr ? JSON.parse(productsStr) : [];
   }
 
   async getProduct(id: number): Promise<Product | undefined> {
     if (isNaN(id)) return undefined;
-    const [product] = await db.select().from(products).where(eq(products.id, id));
-    return product;
+    const product = await db.get(keys.product(id)) as string;
+    return product ? JSON.parse(product) : undefined;
   }
 
   async getProductsByCategory(category: string): Promise<Product[]> {
-    return await db
-      .select()
-      .from(products)
-      .where(eq(products.category, category.toLowerCase()));
+    const products = await this.getProducts();
+    return products.filter(p => p.category.toLowerCase() === category.toLowerCase());
   }
 
+  // Blog posts
   async getBlogPosts(): Promise<BlogPost[]> {
-    return await db.select().from(blogPosts);
+    const postsStr = await db.get(keys.allBlogPosts()) as string;
+    return postsStr ? JSON.parse(postsStr) : [];
   }
 
   async getBlogPost(slug: string): Promise<BlogPost | undefined> {
-    const [post] = await db.select().from(blogPosts).where(eq(blogPosts.slug, slug));
-    return post;
+    const post = await db.get(keys.blogPost(slug)) as string;
+    return post ? JSON.parse(post) : undefined;
   }
 
+  // Contact messages
   async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> {
-    const [newMessage] = await db.insert(contactMessages).values(message).returning();
+    const id = await getNextId('contact_messages');
+    const newMessage = { ...message, id };
+    await db.set(`contact_messages:${id}`, JSON.stringify(newMessage));
     return newMessage;
   }
 
+  // Cart methods
   async getCartItems(userId: string): Promise<CartItem[]> {
-    return await db
-      .select({
-        id: cartItems.id,
-        userId: cartItems.userId,
-        productId: cartItems.productId,
-        quantity: cartItems.quantity,
-        isGift: cartItems.isGift,
-        giftMessage: cartItems.giftMessage,
-        giftWrapType: cartItems.giftWrapType,
-        giftWrapCost: cartItems.giftWrapCost,
-        product: products
+    const cartStr = await db.get(keys.userCart(userId)) as string;
+    const cartItems = cartStr ? JSON.parse(cartStr) : [];
+
+    // Fetch associated products
+    const itemsWithProducts = await Promise.all(
+      cartItems.map(async (item: CartItem) => {
+        const product = await this.getProduct(item.productId);
+        return { ...item, product };
       })
-      .from(cartItems)
-      .innerJoin(products, eq(cartItems.productId, products.id))
-      .where(eq(cartItems.userId, userId));
+    );
+
+    return itemsWithProducts;
   }
 
   async addCartItem(item: InsertCartItem): Promise<CartItem> {
-    const [existingItem] = await db
-      .select()
-      .from(cartItems)
-      .where(
-        and(
-          eq(cartItems.userId, item.userId),
-          eq(cartItems.productId, item.productId)
-        )
-      );
+    const existingItems = await this.getCartItems(item.userId);
+    const existingItem = existingItems.find(i => i.productId === item.productId);
 
     if (existingItem) {
       const newQuantity = existingItem.quantity + item.quantity;
@@ -172,19 +172,20 @@ export class DatabaseStorage implements IStorage {
         throw new Error("Maximum quantity per item is 10");
       }
 
-      const [updatedItem] = await db
-        .update(cartItems)
-        .set({ quantity: newQuantity })
-        .where(eq(cartItems.id, existingItem.id))
-        .returning();
+      const updatedItem = { ...existingItem, quantity: newQuantity };
+      const updatedItems = existingItems.map(i =>
+        i.productId === item.productId ? updatedItem : i
+      );
+
+      await db.set(keys.userCart(item.userId), JSON.stringify(updatedItems));
       return updatedItem;
     }
 
-    const [cartItem] = await db
-      .insert(cartItems)
-      .values(item)
-      .returning();
-    return cartItem;
+    const id = await getNextId('cart_items');
+    const newItem = { ...item, id };
+    const updatedItems = [...existingItems, newItem];
+    await db.set(keys.userCart(item.userId), JSON.stringify(updatedItems));
+    return newItem;
   }
 
   async updateCartItemQuantity(userId: string, productId: number, quantity: number): Promise<void> {
@@ -197,35 +198,27 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Maximum quantity per item is 10");
     }
 
-    await db
-      .update(cartItems)
-      .set({ quantity })
-      .where(
-        and(
-          eq(cartItems.userId, userId),
-          eq(cartItems.productId, productId)
-        )
-      );
+    const items = await this.getCartItems(userId);
+    const updatedItems = items.map(item =>
+      item.productId === productId ? { ...item, quantity } : item
+    );
+
+    await db.set(keys.userCart(userId), JSON.stringify(updatedItems));
   }
 
   async removeCartItem(userId: string, productId: number): Promise<void> {
-    await db
-      .delete(cartItems)
-      .where(
-        and(
-          eq(cartItems.userId, userId),
-          eq(cartItems.productId, productId)
-        )
-      );
+    const items = await this.getCartItems(userId);
+    const filteredItems = items.filter(item => item.productId !== productId);
+    await db.set(keys.userCart(userId), JSON.stringify(filteredItems));
   }
 
   async clearCart(userId: string): Promise<void> {
-    await db.delete(cartItems).where(eq(cartItems.userId, userId));
+    await db.set(keys.userCart(userId), JSON.stringify([]));
   }
 
+  // Orders
   async createOrder(order: InsertOrder): Promise<Order> {
     try {
-      // Validate and prepare order items
       const validatedItems = await Promise.all(
         order.items.map(async (item) => {
           const product = await this.getProduct(item.productId);
@@ -241,12 +234,11 @@ export class DatabaseStorage implements IStorage {
         })
       );
 
-      // Calculate total from validated items
       const total = validatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const orderRef = order.orderRef || `ORD${Date.now()}`;
 
-      // Prepare the order data
       const orderData = {
-        orderRef: order.orderRef || `ORD${Date.now()}`,
+        orderRef,
         userId: order.userId,
         status: order.status || 'pending',
         total: order.total || total,
@@ -256,13 +248,14 @@ export class DatabaseStorage implements IStorage {
         lastUpdated: new Date()
       };
 
-      const [newOrder] = await db.insert(orders).values(orderData).returning();
+      await db.set(keys.order(orderRef), JSON.stringify(orderData));
 
-      if (!newOrder) {
-        throw new Error("Failed to create order");
-      }
+      // Update user orders index
+      const userOrdersKey = keys.userOrders(order.userId);
+      const userOrders = await db.get(userOrdersKey) as string[];
+      await db.set(userOrdersKey, [...(userOrders || []), orderRef]);
 
-      return newOrder;
+      return orderData;
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;
@@ -270,8 +263,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrder(orderRef: string): Promise<Order | undefined> {
-    const [order] = await db.select().from(orders).where(eq(orders.orderRef, orderRef));
-    return order;
+    const orderStr = await db.get(keys.order(orderRef)) as string;
+    return orderStr ? JSON.parse(orderStr) : undefined;
   }
 
   async getOrderByRef(orderRef: string): Promise<Order | undefined> {
@@ -279,35 +272,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrdersByUserId(userId: string): Promise<Order[]> {
-    return await db
-      .select()
-      .from(orders)
-      .where(eq(orders.userId, userId))
-      .orderBy(desc(orders.createdAt));
+    const userOrdersKey = keys.userOrders(userId);
+    const orderRefs = await db.get(userOrdersKey) as string[];
+
+    if (!orderRefs) return [];
+
+    const orders = await Promise.all(
+      orderRefs.map(ref => this.getOrder(ref))
+    );
+
+    return orders
+      .filter((order): order is Order => order !== undefined)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   async updateOrderStatus(orderRef: string, status: string, method?: string): Promise<Order> {
-    const updates: Partial<Order> = {
-      status,
-      lastUpdated: new Date()
-    };
-
-    // Add tracking number based on payment method if provided
-    if (method) {
-      updates.trackingNumber = method === 'cod' ? `COD${Date.now()}` : undefined;
-    }
-
-    const [updatedOrder] = await db
-      .update(orders)
-      .set(updates)
-      .where(eq(orders.orderRef, orderRef))
-      .returning();
-
-    if (!updatedOrder) {
+    const order = await this.getOrder(orderRef);
+    if (!order) {
       throw new Error(`Order not found: ${orderRef}`);
     }
 
-    return updatedOrder;
+    const updates = {
+      ...order,
+      status,
+      lastUpdated: new Date(),
+      trackingNumber: method === 'cod' ? `COD${Date.now()}` : order.trackingNumber
+    };
+
+    await db.set(keys.order(orderRef), JSON.stringify(updates));
+    return updates;
   }
 
   async updateOrderTracking(
@@ -315,104 +308,142 @@ export class DatabaseStorage implements IStorage {
     trackingStatus: string,
     estimatedDelivery?: string
   ): Promise<Order> {
-    const [updatedOrder] = await db
-      .update(orders)
-      .set({
-        trackingStatus,
-        estimatedDelivery,
-        lastUpdated: new Date(),
-      })
-      .where(eq(orders.orderRef, orderRef))
-      .returning();
-    return updatedOrder;
+    const order = await this.getOrder(orderRef);
+    if (!order) {
+      throw new Error(`Order not found: ${orderRef}`);
+    }
+
+    const updates = {
+      ...order,
+      trackingStatus,
+      estimatedDelivery,
+      lastUpdated: new Date()
+    };
+
+    await db.set(keys.order(orderRef), JSON.stringify(updates));
+    return updates;
   }
 
+  // Order status history
   async addOrderStatusHistory(history: InsertOrderStatusHistory): Promise<OrderStatusHistory> {
-    const [newHistory] = await db.insert(orderStatusHistory).values(history).returning();
+    const id = await getNextId('order_status_history');
+    const newHistory = {
+      ...history,
+      id,
+      timestamp: new Date()
+    };
+
+    const key = keys.orderStatusHistory(history.orderId);
+    const existingHistory = await db.get(key) as OrderStatusHistory[];
+    const updatedHistory = [...(existingHistory || []), newHistory];
+
+    await db.set(key, JSON.stringify(updatedHistory));
     return newHistory;
   }
 
   async getOrderStatusHistory(orderId: number): Promise<OrderStatusHistory[]> {
-    return await db
-      .select()
-      .from(orderStatusHistory)
-      .where(eq(orderStatusHistory.orderId, orderId))
-      .orderBy(desc(orderStatusHistory.timestamp));
+    const historyStr = await db.get(keys.orderStatusHistory(orderId)) as string;
+    const history = historyStr ? JSON.parse(historyStr) : [];
+    return history.sort((a: OrderStatusHistory, b: OrderStatusHistory) =>
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
   }
 
+  // User methods
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    const userStr = await db.get(keys.user(id)) as string;
+    return userStr ? JSON.parse(userStr) : undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
+    const userStr = await db.get(keys.userByUsername(username)) as string;
+    return userStr ? JSON.parse(userStr) : undefined;
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const [newUser] = await db.insert(users).values(user).returning();
+    const id = await getNextId('users');
+    const newUser = {
+      ...user,
+      id,
+      createdAt: new Date()
+    };
+
+    await db.set(keys.user(id), JSON.stringify(newUser));
+    await db.set(keys.userByUsername(user.username), JSON.stringify(newUser));
     return newUser;
   }
 
+  // Gift orders
   async createGiftOrder(giftOrder: InsertGiftOrder): Promise<GiftOrder> {
-    // Generate a redemption code if not provided
-    const giftOrderData = {
+    const redemptionCode = giftOrder.redemptionCode ||
+      `GIFT${Date.now()}${Math.random().toString(36).substring(2, 7)}`;
+
+    const newGiftOrder = {
       ...giftOrder,
-      redemptionCode: giftOrder.redemptionCode || `GIFT${Date.now()}${Math.random().toString(36).substring(2, 7)}`,
+      redemptionCode,
+      isRedeemed: false,
+      createdAt: new Date()
     };
 
-    const [newGiftOrder] = await db.insert(giftOrders).values(giftOrderData).returning();
+    await db.set(keys.giftOrder(giftOrder.orderId), JSON.stringify(newGiftOrder));
+    await db.set(keys.giftOrderByCode(redemptionCode), JSON.stringify(newGiftOrder));
     return newGiftOrder;
   }
 
   async getGiftOrder(orderId: number): Promise<GiftOrder | undefined> {
-    const [giftOrder] = await db
-      .select()
-      .from(giftOrders)
-      .where(eq(giftOrders.orderId, orderId));
-    return giftOrder;
+    const giftOrderStr = await db.get(keys.giftOrder(orderId)) as string;
+    return giftOrderStr ? JSON.parse(giftOrderStr) : undefined;
   }
 
   async getGiftOrderByRedemptionCode(code: string): Promise<GiftOrder | undefined> {
-    const [giftOrder] = await db
-      .select()
-      .from(giftOrders)
-      .where(eq(giftOrders.redemptionCode, code));
-    return giftOrder;
+    const giftOrderStr = await db.get(keys.giftOrderByCode(code)) as string;
+    return giftOrderStr ? JSON.parse(giftOrderStr) : undefined;
   }
 
   async updateGiftOrderRedemptionStatus(orderId: number, isRedeemed: boolean): Promise<GiftOrder> {
-    const [updatedGiftOrder] = await db
-      .update(giftOrders)
-      .set({ isRedeemed })
-      .where(eq(giftOrders.orderId, orderId))
-      .returning();
+    const giftOrder = await this.getGiftOrder(orderId);
+    if (!giftOrder) {
+      throw new Error(`Gift order not found: ${orderId}`);
+    }
+
+    const updatedGiftOrder = { ...giftOrder, isRedeemed };
+    await db.set(keys.giftOrder(orderId), JSON.stringify(updatedGiftOrder));
+    await db.set(keys.giftOrderByCode(giftOrder.redemptionCode), JSON.stringify(updatedGiftOrder));
     return updatedGiftOrder;
   }
 
   async getGiftOrdersBySender(senderUserId: string): Promise<GiftOrder[]> {
-    return await db
-      .select()
-      .from(giftOrders)
-      .where(eq(giftOrders.senderUserId, senderUserId))
-      .orderBy(desc(giftOrders.createdAt));
+    // For Replit DB, we'll need to list all gift orders and filter
+    const list = await db.list(`gift_orders:`);
+    const giftOrders = await Promise.all(
+      list.map(async (key) => {
+        const orderStr = await db.get(key) as string;
+        return JSON.parse(orderStr);
+      })
+    );
+
+    return giftOrders
+      .filter((order: GiftOrder) => order.senderUserId === senderUserId)
+      .sort((a: GiftOrder, b: GiftOrder) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
   }
 
-  async updateCartItemGiftStatus(userId: string, productId: number, isGift: boolean, giftMessage?: string): Promise<void> {
+  async updateCartItemGiftStatus(
+    userId: string,
+    productId: number,
+    isGift: boolean,
+    giftMessage?: string
+  ): Promise<void> {
     try {
-      await db
-        .update(cartItems)
-        .set({
-          isGift,
-          giftMessage: giftMessage || null
-        })
-        .where(
-          and(
-            eq(cartItems.userId, userId),
-            eq(cartItems.productId, productId)
-          )
-        );
+      const items = await this.getCartItems(userId);
+      const updatedItems = items.map(item =>
+        item.productId === productId
+          ? { ...item, isGift, giftMessage: giftMessage || null }
+          : item
+      );
+
+      await db.set(keys.userCart(userId), JSON.stringify(updatedItems));
     } catch (error) {
       console.error('Error updating cart item gift status:', error);
       throw new Error('Failed to update gift status');
@@ -420,4 +451,4 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new ReplitDBStorage();
