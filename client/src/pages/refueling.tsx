@@ -102,7 +102,7 @@ const Refueling = () => {
         </motion.div>
       </section>
 
-      {/* Features Grid */}
+      {/* Features Grid and Guide Section */}
       <section className="py-24 bg-zinc-950">
         <div className="container px-4">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -150,7 +150,7 @@ const Refueling = () => {
         </div>
       </section>
 
-      {/* Guide Section */}
+      {/* Refueling Information Section */}
       <section className="py-28 bg-gradient-to-b from-black to-black/95">
         <div className="container px-4">
           <motion.div
@@ -160,16 +160,6 @@ const Refueling = () => {
             viewport={{ once: true, margin: "-100px" }}
             className="max-w-5xl mx-auto"
           >
-            <h2 className="text-3xl font-light text-center mb-16 tracking-wider relative pb-4 inline-block mx-auto w-full">
-              <span className="bg-gradient-to-r from-primary/70 via-white to-primary/70 bg-clip-text text-transparent">Essential Guide</span>
-              <motion.div 
-                className="absolute bottom-0 left-1/2 h-0.5 bg-primary/30 w-24 transform -translate-x-1/2"
-                initial={{ width: 0 }}
-                whileInView={{ width: "6rem" }}
-                transition={{ delay: 0.3, duration: 0.8 }}
-                viewport={{ once: true }}
-              ></motion.div>
-            </h2>
             <div className="grid gap-8 md:grid-cols-3">
               <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300">
                 <CardHeader>
