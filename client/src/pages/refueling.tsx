@@ -39,9 +39,12 @@ const Refueling = () => {
                 window.open("https://i.imghippo.com/files/Wfm7659yCM.png", "_blank");
               }}
             >
-              <Button size="sm" className="rounded-full gap-2 bg-primary/90 hover:bg-primary">
-                Shop Refueling Accessories
-                <ChevronRight className="w-4 h-4" />
+              <Button size="sm" className="p-0 h-auto bg-transparent hover:bg-transparent">
+                <img 
+                  src="https://i.imghippo.com/files/Wfm7659yCM.png" 
+                  alt="Shop Refueling Accessories" 
+                  className="h-12 w-auto hover:opacity-90 transition-opacity"
+                />
               </Button>
             </a>
           </motion.div>
