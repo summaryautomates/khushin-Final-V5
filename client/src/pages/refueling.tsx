@@ -30,7 +30,7 @@ const Refueling = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2, duration: 0.5 }}
           >
-            <a href="https://i.imghippo.com/files/nCr6709jA.png" target="_blank" rel="noopener noreferrer">
+            <a href="https://i.imghippo.com/files/Wfm7659yCM.png" target="_blank" rel="noopener noreferrer">
               <Button size="sm" className="rounded-full gap-2 bg-primary/90 hover:bg-primary">
                 Shop Refueling Accessories
                 <ChevronRight className="w-4 h-4" />
