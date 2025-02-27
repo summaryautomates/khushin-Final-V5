@@ -8,45 +8,50 @@ const Refueling = () => {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="min-h-[60vh] flex items-center justify-center bg-black relative overflow-hidden pt-20">
+      <section className="min-h-[70vh] flex items-center justify-center bg-black relative overflow-hidden pt-20">
         <div className="absolute inset-0 z-0">
           <motion.div
-            initial={{ scale: 1.1, opacity: 0 }}
-            animate={{ scale: 1, opacity: 0.5 }}
-            transition={{ duration: 1.5 }}
+            initial={{ scale: 1.2, opacity: 0 }}
+            animate={{ scale: 1, opacity: 0.85 }}
+            transition={{ duration: 2, ease: "easeOut" }}
+            className="h-full w-full"
           >
             <img 
               src="https://i.imghippo.com/files/I2429lk.jpg"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-center"
               alt="Luxury refueling background"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black"></div>
+            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/90"></div>
           </motion.div>
         </div>
 
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
-          className="container relative z-10 px-4"
+          transition={{ duration: 1.2 }}
+          className="container relative z-10 px-4 py-16"
         >
           <motion.h1 
-            initial={{ letterSpacing: "0.2em", opacity: 0 }}
-            animate={{ letterSpacing: "0.1em", opacity: 1 }}
-            transition={{ duration: 1.5, delay: 0.3 }}
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extralight mb-4 md:mb-6 tracking-wider text-center hover:text-primary transition-colors cursor-pointer px-4"
+            initial={{ letterSpacing: "0.2em", opacity: 0, y: -20 }}
+            animate={{ letterSpacing: "0.1em", opacity: 1, y: 0 }}
+            transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extralight mb-8 md:mb-10 tracking-wider text-center bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent pb-2"
           >
             <Link href="/refueling">Refueling Solutions</Link>
           </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.8 }}
-            className="text-lg md:text-xl text-zinc-400 text-center max-w-2xl mx-auto leading-relaxed"
+            transition={{ delay: 0.8, duration: 1, ease: "easeOut" }}
+            className="backdrop-blur-sm bg-black/30 p-6 rounded-lg border border-primary/10 max-w-3xl mx-auto"
           >
-            Experience the perfect blend of convenience and reliability with our premium refueling solutions.
-            Each refill is carefully engineered to maintain the integrity of your luxury lighter.
-          </motion.p>
+            <motion.p 
+              className="text-lg md:text-xl text-white text-center mx-auto leading-relaxed"
+            >
+              Experience the perfect blend of convenience and reliability with our premium refueling solutions.
+              Each refill is carefully engineered to maintain the integrity of your luxury lighter.
+            </motion.p>
+          </motion.div>
         </motion.div>
       </section>
 
@@ -99,16 +104,25 @@ const Refueling = () => {
       </section>
 
       {/* Guide Section */}
-      <section className="py-24 bg-black">
+      <section className="py-28 bg-gradient-to-b from-black to-black/95">
         <div className="container px-4">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+            viewport={{ once: true, margin: "-100px" }}
             className="max-w-4xl mx-auto"
           >
-            <h2 className="text-3xl font-light text-center mb-12 tracking-wider">Essential Guide</h2>
+            <h2 className="text-3xl font-light text-center mb-16 tracking-wider relative pb-4 inline-block mx-auto w-full">
+              <span className="bg-gradient-to-r from-primary/70 via-white to-primary/70 bg-clip-text text-transparent">Essential Guide</span>
+              <motion.div 
+                className="absolute bottom-0 left-1/2 h-0.5 bg-primary/30 w-24 transform -translate-x-1/2"
+                initial={{ width: 0 }}
+                whileInView={{ width: "6rem" }}
+                transition={{ delay: 0.3, duration: 0.8 }}
+                viewport={{ once: true }}
+              ></motion.div>
+            </h2>
             <div className="grid gap-8 md:grid-cols-2">
               <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300">
                 <CardHeader>
