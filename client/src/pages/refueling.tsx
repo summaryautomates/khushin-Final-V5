@@ -69,21 +69,6 @@ const Refueling = () => {
                 Experience the perfect blend of convenience and reliability with our premium refueling solutions.
                 Each refill is carefully engineered to maintain the integrity of your luxury lighter.
               </motion.p>
-              
-              <div className="mt-6 flex justify-center">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300 text-lg font-light tracking-wider"
-                  onClick={() => {
-                    window.open('https://khushi.setmore.com/saransh', '_blank');
-                  }}
-                >
-                  <Droplet className="w-5 h-5 mr-2 text-primary" />
-                  Refuel Info
-                  <ChevronRight className="w-5 h-5 ml-2" />
-                </Button>
-              </div>
             </motion.div>
 
             {/* Shop Button */}
