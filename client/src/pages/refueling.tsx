@@ -133,13 +133,14 @@ const Refueling = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 viewport={{ once: true }}
+                className="h-full"
               >
-                <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300 hover:scale-[1.02]">
+                <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300 hover:scale-[1.02] h-full flex flex-col">
                   <CardHeader>
                     <feature.icon className="w-8 h-8 mb-2 text-primary" />
                     <CardTitle className="text-xl font-light">{feature.title}</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="flex-grow">
                     <p className="text-muted-foreground">{feature.description}</p>
                   </CardContent>
                 </Card>
@@ -174,14 +175,15 @@ const Refueling = () => {
               </Button>
             </div>
             <div className="grid gap-8 md:grid-cols-3">
-              <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300">
+              {/* Refueling Steps */}
+              <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300 h-full flex flex-col">
                 <CardHeader>
                   <CardTitle className="text-xl font-light flex items-center gap-2">
                     <Settings className="w-5 h-5 text-primary" />
                     Refueling Steps
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-grow">
                   <ol className="space-y-4 text-muted-foreground">
                     {[
                       "Turn the lighter upside down",
@@ -207,14 +209,16 @@ const Refueling = () => {
                   </ol>
                 </CardContent>
               </Card>
-              <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300">
+
+              {/* Safety Precautions */}
+              <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300 h-full flex flex-col">
                 <CardHeader>
                   <CardTitle className="text-xl font-light flex items-center gap-2">
                     <Shield className="w-5 h-5 text-primary" />
                     Safety Precautions
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-grow">
                   <ul className="space-y-4 text-muted-foreground">
                     {[
                       "Refill in a well-ventilated area",
@@ -238,14 +242,16 @@ const Refueling = () => {
                   </ul>
                 </CardContent>
               </Card>
-              <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300">
+
+              {/* Station Hours & Services */}
+              <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300 h-full flex flex-col">
                 <CardHeader>
                   <CardTitle className="text-xl font-light flex items-center gap-2">
                     <Clock className="w-5 h-5 text-primary" />
                     Station Hours & Services
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-grow flex flex-col justify-between">
                   <ul className="space-y-4 text-muted-foreground">
                     <motion.li
                       initial={{ opacity: 0, x: -20 }}
@@ -277,19 +283,19 @@ const Refueling = () => {
                       <CreditCard className="w-4 h-4 text-primary flex-shrink-0" />
                       <span>Subscription benefits & cost savings</span>
                     </motion.li>
-                    <div className="pt-4">
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => {
-                          window.open('https://khushi.setmore.com/saransh', '_blank');
-                        }}
-                      >
-                        Book Refuel Session
-                        <ChevronRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </div>
                   </ul>
+                  <div className="pt-4 mt-auto">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        window.open('https://khushi.setmore.com/saransh', '_blank');
+                      }}
+                    >
+                      Book Refuel Session
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
