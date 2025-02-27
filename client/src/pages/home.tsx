@@ -366,7 +366,10 @@ export default function Home() {
                 <ProductGrid products={[]} isLoading={true} />
               </motion.div>
             ) : (
-              <ProductGrid products={products.slice(0, 4)} isLoading={false} />
+              <ProductGrid 
+                products={Array.isArray(products) ? products.slice(0, 4) : []} 
+                isLoading={false} 
+              />
             )}
 
             <div className="mt-16 text-center">
