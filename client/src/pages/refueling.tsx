@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Droplet, Zap, Shield, Settings, ChevronRight, Clock, MapPin, CreditCard, AlertCircle, ShieldCheck, Info } from "lucide-react";
+import { Droplet, Zap, Shield, Settings, ChevronRight, Clock, MapPin, CreditCard } from "lucide-react";
 
 const Refueling = () => {
   return (
@@ -24,8 +24,28 @@ const Refueling = () => {
           </motion.div>
         </div>
 
-        <div className="container px-4 relative z-10 flex flex-col items-center">
-          <div className="text-center">
+        <div className="container relative z-10 px-4 py-16 max-w-7xl mx-auto">
+          <div className="flex flex-col items-center justify-center gap-8">
+            {/* Appointment Button */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="relative"
+            >
+              <a href="https://khushi.setmore.com/saransh" target="_blank" rel="noopener noreferrer">
+                <img 
+                  src="https://i.imghippo.com/files/cfz5924gY.png" 
+                  alt="Book Your Appointment" 
+                  className="h-44 w-auto object-contain"
+                  style={{ 
+                    filter: "drop-shadow(0 0 20px rgba(255, 255, 255, 1))",
+                    maxWidth: "280px"
+                  }}
+                />
+              </a>
+            </motion.div>
+
             {/* Main Heading */}
             <motion.h1 
               initial={{ letterSpacing: "0.2em", opacity: 0, y: -20 }}
@@ -50,164 +70,36 @@ const Refueling = () => {
                 Each refill is carefully engineered to maintain the integrity of your luxury lighter.
               </motion.p>
             </motion.div>
+
+            {/* Shop Button */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="absolute top-8 right-8"
+            >
+              <Button 
+                variant="ghost" 
+                className="p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-transparent"
+                onClick={() => {
+                  window.open("https://i.imghippo.com/files/Ojp4347XDA.png", "_blank", "noopener,noreferrer");
+                }}
+              >
+                <img 
+                  src="https://i.imghippo.com/files/Wfm7659yCM.png" 
+                  alt="Shop Refueling Accessories" 
+                  className="h-24 w-auto hover:opacity-90 transition-opacity"
+                  style={{ 
+                    filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.9))",
+                    maxWidth: "140px"
+                  }}
+                />
+              </Button>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Refueling Information Section */}
-      <section className="py-28 bg-gradient-to-b from-black to-black/95">
-        <div className="container px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            viewport={{ once: true, margin: "-100px" }}
-            className="max-w-5xl mx-auto"
-          >
-            {/* Refuel Button - Repositioned to top middle */}
-            <div className="flex justify-center mb-12">
-              <Button
-                variant="outline"
-                className="border-primary hover:bg-primary/10 transition-all duration-300"
-                onClick={() => {
-                  window.open('https://khushi.setmore.com/saransh', '_blank');
-                }}
-              >
-                Book Refuel Session
-                <ChevronRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-
-            <div className="grid gap-8 md:grid-cols-3">
-              {/* Refueling Steps */}
-              <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300 h-full flex flex-col">
-                <CardHeader>
-                  <CardTitle className="text-xl font-light flex items-center gap-2">
-                    <Settings className="w-5 h-5 text-primary" />
-                    Refueling Steps
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <ol className="space-y-4 text-muted-foreground">
-                    {[
-                      "Turn the lighter upside down",
-                      "Locate the refill valve at the bottom",
-                      "Press the fuel canister nozzle firmly into the valve",
-                      "Hold for 5-10 seconds until full",
-                      "Wait 2 minutes before use"
-                    ].map((step, index) => (
-                      <motion.li
-                        key={index}
-                        initial={{ opacity: 0, x: -20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
-                        viewport={{ once: true }}
-                        className="flex items-start gap-2"
-                      >
-                        <span className="bg-primary/20 text-primary h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0">
-                          {index + 1}
-                        </span>
-                        <span>{step}</span>
-                      </motion.li>
-                    ))}
-                  </ol>
-                </CardContent>
-              </Card>
-
-              {/* Safety Precautions */}
-              <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300 h-full flex flex-col">
-                <CardHeader>
-                  <CardTitle className="text-xl font-light flex items-center gap-2">
-                    <ShieldCheck className="w-5 h-5 text-primary" />
-                    Safety Precautions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <ul className="space-y-4 text-muted-foreground">
-                    {[
-                      "Keep away from direct heat sources",
-                      "Use in a well-ventilated area",
-                      "Never expose to temperatures above 50°C (122°F)",
-                      "Store upright when not in use",
-                      "Keep away from children"
-                    ].map((precaution, index) => (
-                      <motion.li
-                        key={index}
-                        initial={{ opacity: 0, x: -20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
-                        viewport={{ once: true }}
-                        className="flex items-start gap-2"
-                      >
-                        <span className="text-red-500">
-                          <AlertCircle className="h-5 w-5 flex-shrink-0" />
-                        </span>
-                        <span>{precaution}</span>
-                      </motion.li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-
-              {/* Service Information */}
-              <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300 h-full flex flex-col">
-                <CardHeader>
-                  <CardTitle className="text-xl font-light flex items-center gap-2">
-                    <Info className="w-5 h-5 text-primary" />
-                    Service Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <ul className="space-y-4 text-muted-foreground">
-                    <motion.li
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.5, delay: 0.1 }}
-                      viewport={{ once: true }}
-                      className="flex items-center gap-2"
-                    >
-                      <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
-                      <span>In-store & at-home service available</span>
-                    </motion.li>
-                    <motion.li
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.5, delay: 0.2 }}
-                      viewport={{ once: true }}
-                      className="flex items-center gap-2"
-                    >
-                      <Clock className="w-4 h-4 text-primary flex-shrink-0" />
-                      <span>9 AM - 5 PM, Extended hours available</span>
-                    </motion.li>
-                    <motion.li
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.5, delay: 0.3 }}
-                      viewport={{ once: true }}
-                      className="flex items-center gap-2"
-                    >
-                      <CreditCard className="w-4 h-4 text-primary flex-shrink-0" />
-                      <span>Subscription benefits & cost savings</span>
-                    </motion.li>
-                  </ul>
-                  <div className="pt-4 mt-auto">
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => {
-                        window.open('https://khushi.setmore.com/saransh', '_blank');
-                      }}
-                    >
-                      Book Refuel Session
-                      <ChevronRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </motion.div>
-        </div>
-      </section>
       {/* Features Grid and Guide Section */}
       <section className="py-24 bg-zinc-950">
         <div className="container px-4">
@@ -254,6 +146,145 @@ const Refueling = () => {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Refueling Information Section */}
+      <section className="py-28 bg-gradient-to-b from-black to-black/95">
+        <div className="container px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="max-w-5xl mx-auto"
+          >
+            <div className="grid gap-8 md:grid-cols-3">
+              {/* Refueling Steps */}
+              <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300 h-full flex flex-col">
+                <CardHeader>
+                  <CardTitle className="text-xl font-light flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-primary" />
+                    Refueling Steps
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  <ol className="space-y-4 text-muted-foreground">
+                    {[
+                      "Turn the lighter upside down",
+                      "Locate the refill valve at the bottom",
+                      "Press the fuel canister nozzle firmly into the valve",
+                      "Hold for 5-10 seconds until full",
+                      "Wait 2 minutes before use"
+                    ].map((step, index) => (
+                      <motion.li
+                        key={index}
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.1 * (index + 1) }}
+                        viewport={{ once: true }}
+                        className="flex items-center gap-2"
+                      >
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-sm">
+                          {index + 1}
+                        </span>
+                        <span>{step}</span>
+                      </motion.li>
+                    ))}
+                  </ol>
+                </CardContent>
+              </Card>
+
+              {/* Safety Precautions */}
+              <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300 h-full flex flex-col">
+                <CardHeader>
+                  <CardTitle className="text-xl font-light flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-primary" />
+                    Safety Precautions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  <ul className="space-y-4 text-muted-foreground">
+                    {[
+                      "Refill in a well-ventilated area",
+                      "Keep away from open flames",
+                      "Use only premium butane fuel",
+                      "Don't overfill",
+                      "Allow gas to stabilize before use"
+                    ].map((precaution, index) => (
+                      <motion.li
+                        key={index}
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.1 * (index + 1) }}
+                        viewport={{ once: true }}
+                        className="flex items-center gap-2"
+                      >
+                        <Shield className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span>{precaution}</span>
+                      </motion.li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* Station Hours & Services */}
+              <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300 h-full flex flex-col">
+                <CardHeader>
+                  <CardTitle className="text-xl font-light flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-primary" />
+                    Station Hours & Services
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow flex flex-col justify-between">
+                  <ul className="space-y-4 text-muted-foreground">
+                    <motion.li
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: 0.1 }}
+                      viewport={{ once: true }}
+                      className="flex items-center gap-2"
+                    >
+                      <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
+                      <span>Premium locations for quick refuels</span>
+                    </motion.li>
+                    <motion.li
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: 0.2 }}
+                      viewport={{ once: true }}
+                      className="flex items-center gap-2"
+                    >
+                      <Clock className="w-4 h-4 text-primary flex-shrink-0" />
+                      <span>9 AM - 5 PM, Extended hours available</span>
+                    </motion.li>
+                    <motion.li
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: 0.3 }}
+                      viewport={{ once: true }}
+                      className="flex items-center gap-2"
+                    >
+                      <CreditCard className="w-4 h-4 text-primary flex-shrink-0" />
+                      <span>Subscription benefits & cost savings</span>
+                    </motion.li>
+                  </ul>
+                  <div className="pt-4 mt-auto">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        window.open('https://khushi.setmore.com/saransh', '_blank');
+                      }}
+                    >
+                      Book Refuel Session
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </motion.div>
         </div>
       </section>
     </div>
