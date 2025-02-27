@@ -1,0 +1,41 @@
+
+:root {
+  --gold-primary: 43 77% 50%;
+  --gold-primary-foreground: 0 0% 100%;
+  --gold-accent: 45 80% 60%;
+  --gold-accent-light: 45 80% 85%;
+  --gold-accent-dark: 40 70% 40%;
+}
+
+.gold-accent {
+  color: hsl(var(--gold-primary));
+}
+
+.gold-bg {
+  background-color: hsl(var(--gold-primary));
+  color: hsl(var(--gold-primary-foreground));
+}
+
+.gold-border {
+  border-color: hsl(var(--gold-primary));
+}
+
+.gold-hover:hover {
+  background-color: hsl(var(--gold-accent));
+  transition: background-color 0.3s ease;
+}
+
+.gold-shadow {
+  box-shadow: 0 4px 20px -2px rgba(241, 196, 15, 0.25), 0 12px 24px -4px rgba(241, 196, 15, 0.15);
+}
+
+.gold-glow {
+  box-shadow: 0 0 15px rgba(241, 196, 15, 0.4);
+}
+
+.gold-text-gradient {
+  background: linear-gradient(45deg, #f1c40f, #f5d76e, #f39c12);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

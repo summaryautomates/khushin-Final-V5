@@ -89,6 +89,21 @@ export default {
         'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)',
       },
       colors: {
+        gold: {
+          light: "#f5d76e",
+          DEFAULT: "#f1c40f",
+          dark: "#e6b80d",
+          50: "#fff9e6",
+          100: "#fef2c0",
+          200: "#fce794",
+          300: "#f9d867",
+          400: "#f5ca45",
+          500: "#f1c40f",
+          600: "#e6b80d",
+          700: "#ba940a",
+          800: "#8f7208",
+          900: "#655106"
+        },
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
