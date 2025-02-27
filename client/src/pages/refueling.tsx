@@ -136,7 +136,28 @@ const Refueling = () => {
             viewport={{ once: true, margin: "-100px" }}
             className="max-w-5xl mx-auto"
           >
-            <div className="grid gap-8 md:grid-cols-3">
+            {/* Shop Button Moved Here */}
+            <div className="flex justify-center mb-12">
+              <Button 
+                variant="ghost" 
+                className="p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-transparent"
+                onClick={() => {
+                  window.open("https://i.imghippo.com/files/Ojp4347XDA.png", "_blank", "noopener,noreferrer");
+                }}
+              >
+                <img 
+                  src="https://i.imghippo.com/files/Wfm7659yCM.png" 
+                  alt="Shop Refueling Accessories" 
+                  className="h-24 w-auto hover:opacity-90 transition-opacity"
+                  style={{ 
+                    filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.9))",
+                    maxWidth: "140px"
+                  }}
+                />
+              </Button>
+            </div>
+
+            <div className="grid gap-8 grid-cols-1 md:grid-cols-3">
               {/* Refueling Steps */}
               <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300 h-full flex flex-col">
                 <CardHeader>
@@ -171,25 +192,6 @@ const Refueling = () => {
                   </ol>
                 </CardContent>
               </Card>
-
-              {/* Image Component (Moved Above Safety Precautions) */}
-              <Button 
-                variant="ghost" 
-                className="p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-transparent"
-                onClick={() => {
-                  window.open("https://i.imghippo.com/files/Ojp4347XDA.png", "_blank", "noopener,noreferrer");
-                }}
-              >
-                <img 
-                  src="https://i.imghippo.com/files/Wfm7659yCM.png" 
-                  alt="Shop Refueling Accessories" 
-                  className="h-24 w-auto hover:opacity-90 transition-opacity"
-                  style={{ 
-                    filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.9))",
-                    maxWidth: "140px"
-                  }}
-                />
-              </Button>
 
               {/* Safety Precautions */}
               <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300 h-full flex flex-col">
