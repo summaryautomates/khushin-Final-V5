@@ -9,10 +9,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { MessageCircle, Loader2, Bot, User } from "lucide-react";
+import { MessageCircle, Loader2, Bot, User, AlertCircle } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   role: 'assistant' | 'user';
@@ -22,6 +23,7 @@ interface Message {
 export const AIAssistant = () => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
+  const { toast } = useToast();
 
   const askAI = useMutation({
     mutationFn: async (message: string) => {
@@ -30,12 +32,28 @@ export const AIAssistant = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message })
       });
-      if (!response.ok) throw new Error('Failed to get AI response');
-      return response.json();
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to get AI response');
+      }
+
+      return data;
     },
     onSuccess: (data) => {
       setMessages(prev => [...prev, 
         { role: 'assistant', content: data.message }
+      ]);
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to get AI response",
+      });
+      setMessages(prev => [...prev,
+        { role: 'assistant', content: "I apologize, but I'm having trouble responding right now. Please try again later." }
       ]);
     }
   });
@@ -55,7 +73,7 @@ export const AIAssistant = () => {
         <Button 
           variant="outline" 
           size="icon" 
-          className="fixed bottom-4 right-4 h-12 w-12 rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+          className="fixed bottom-4 right-4 h-12 w-12 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 z-50"
         >
           <MessageCircle className="h-6 w-6" />
         </Button>
@@ -98,6 +116,12 @@ export const AIAssistant = () => {
               <div className="flex items-center gap-2 text-muted-foreground ml-4">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span>Thinking...</span>
+              </div>
+            )}
+            {askAI.isError && (
+              <div className="flex items-center gap-2 text-destructive ml-4">
+                <AlertCircle className="h-4 w-4" />
+                <span className="text-sm">Error: {askAI.error?.message}</span>
               </div>
             )}
           </ScrollArea>

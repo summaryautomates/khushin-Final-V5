@@ -260,20 +260,45 @@ export async function registerRoutes(app: Express) {
         });
       }
 
-      const response = await anthropic.messages.create({
-        model: "claude-3-5-sonnet-20241022",
-        max_tokens: 1024,
-        messages: [{
-          role: "user",
-          content: validationResult.data.message
-        }],
-        system: "You are an AI shopping assistant for KHUSH.IN, a premium e-commerce platform. Always be helpful, concise, and polite. Focus on providing accurate product information and shopping assistance."
-      });
+      if (!process.env.ANTHROPIC_API_KEY) {
+        return res.status(503).json({
+          message: "AI service is temporarily unavailable. Please try again later."
+        });
+      }
 
-      res.json({ message: response.content[0].text });
+      try {
+        const response = await anthropic.messages.create({
+          model: "claude-3-5-sonnet-20241022",
+          max_tokens: 1024,
+          messages: [{
+            role: "user",
+            content: validationResult.data.message
+          }],
+          system: "You are an AI shopping assistant for KHUSH.IN, a premium e-commerce platform. Always be helpful, concise, and polite. Focus on providing accurate product information and shopping assistance."
+        });
+
+        res.json({ message: response.content[0].text });
+      } catch (apiError) {
+        console.error('Anthropic API error:', apiError);
+
+        // For development environment, provide a fallback response
+        if (process.env.NODE_ENV !== 'production') {
+          return res.json({
+            message: "Development mode: This is a fallback response. I understand you're asking about: " + 
+                    validationResult.data.message + 
+                    "\nIn production, this would be answered by the AI assistant."
+          });
+        }
+
+        return res.status(503).json({
+          message: "AI service is temporarily unavailable. Please try again later."
+        });
+      }
     } catch (error) {
       console.error('Error in AI chat:', error);
-      res.status(500).json({ message: "Failed to process AI chat request" });
+      res.status(500).json({ 
+        message: "An unexpected error occurred. Please try again later."
+      });
     }
   });
 }
