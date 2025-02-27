@@ -50,6 +50,23 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  app.get("/api/products/luxury", async (req, res) => {
+    try {
+      // Get all products
+      const allProducts = await storage.getProducts();
+      
+      // Filter for luxury products (price > 150000, which is ₹1,500)
+      const luxuryProducts = allProducts.filter(product => 
+        product.price > 150000 && product.category === 'lighters'
+      );
+      
+      res.json(luxuryProducts);
+    } catch (error) {
+      console.error('Error fetching luxury products:', error);
+      res.status(500).json({ message: "Failed to fetch luxury products" });
+    }
+  });
+
   app.get("/api/payment/:ref", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {

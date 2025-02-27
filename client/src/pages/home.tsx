@@ -225,6 +225,20 @@ export default function Home() {
               >
                 Exclusive luxury lighters - The perfect gift to light up our smile.
               </motion.p>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.4, duration: 0.8 }}
+                className="mt-8"
+              >
+                <Link 
+                  to="/premium-collection" 
+                  className="inline-flex items-center gap-2 bg-gold/10 hover:bg-gold/20 text-gold px-6 py-3 rounded-full transition-all duration-300"
+                >
+                  <span>Explore Luxury Collection</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </motion.div>
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
