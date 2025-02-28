@@ -4,38 +4,12 @@ import {
   users,
   products
 } from "@shared/schema";
-import pg from 'pg';
+import { eq } from "drizzle-orm";
 import session from "express-session";
 import MemoryStore from "memorystore";
-import { eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/node-postgres";
+import { db } from "./db";
 
-const { Pool } = pg;
 const MemoryStoreSession = MemoryStore(session);
-
-// Set up PostgreSQL connection using environment variables
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: parseInt(process.env.PGPORT || '5432'),
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
-
-// Initialize drizzle
-const db = drizzle(pool);
-
-// Test the database connection
-pool.query('SELECT NOW()', (err, res) => {
-  if (err) {
-    console.error('Error connecting to the database:', err);
-  } else {
-    console.log('Successfully connected to PostgreSQL database');
-  }
-});
 
 export interface IStorage {
   // User methods
@@ -51,8 +25,6 @@ export interface IStorage {
 
 export class ReplitDBStorage implements IStorage {
   sessionStore: session.Store;
-  private pool = pool;
-  private db = db;
 
   constructor() {
     console.log('Initializing ReplitDBStorage...');
@@ -72,16 +44,13 @@ export class ReplitDBStorage implements IStorage {
   async createUser(userData: InsertUser): Promise<User> {
     try {
       console.log('Creating user:', { username: userData.username });
-
-      const result = await this.db.insert(users).values({
+      const [user] = await db.insert(users).values({
         username: userData.username,
         password: userData.password,
         email: userData.email,
         first_name: userData.first_name || null,
         last_name: userData.last_name || null
       }).returning();
-
-      const user = result[0];
       console.log('User created successfully:', { id: user.id, username: user.username });
       return user;
     } catch (error) {
@@ -93,8 +62,8 @@ export class ReplitDBStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
     try {
       console.log('Fetching user by ID:', id);
-      const result = await this.db.select().from(users).where(eq(users.id, id));
-      return result[0];
+      const [user] = await db.select().from(users).where(eq(users.id, id));
+      return user;
     } catch (error) {
       console.error('Error fetching user by ID:', error);
       return undefined;
@@ -104,8 +73,8 @@ export class ReplitDBStorage implements IStorage {
   async getUserByUsername(username: string): Promise<User | undefined> {
     try {
       console.log('Fetching user by username:', username);
-      const result = await this.db.select().from(users).where(eq(users.username, username));
-      return result[0];
+      const [user] = await db.select().from(users).where(eq(users.username, username));
+      return user;
     } catch (error) {
       console.error('Error fetching user by username:', error);
       return undefined;
@@ -116,8 +85,7 @@ export class ReplitDBStorage implements IStorage {
   async getProducts(): Promise<typeof products.$inferSelect[]> {
     try {
       console.log('Fetching all products');
-      const result = await this.db.select().from(products);
-      return result;
+      return await db.select().from(products);
     } catch (error) {
       console.error('Error fetching products:', error);
       throw error;
@@ -127,8 +95,8 @@ export class ReplitDBStorage implements IStorage {
   async getProductById(id: number): Promise<typeof products.$inferSelect | undefined> {
     try {
       console.log('Fetching product by ID:', id);
-      const result = await this.db.select().from(products).where(eq(products.id, id));
-      return result[0];
+      const [product] = await db.select().from(products).where(eq(products.id, id));
+      return product;
     } catch (error) {
       console.error('Error fetching product by ID:', error);
       return undefined;
@@ -138,8 +106,7 @@ export class ReplitDBStorage implements IStorage {
   async getProductsByCategory(category: string): Promise<typeof products.$inferSelect[]> {
     try {
       console.log('Fetching products by category:', category);
-      const result = await this.db.select().from(products).where(eq(products.category, category));
-      return result;
+      return await db.select().from(products).where(eq(products.category, category));
     } catch (error) {
       console.error('Error fetching products by category:', error);
       throw error;
