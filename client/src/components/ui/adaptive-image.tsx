@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Loader2, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -10,116 +10,99 @@ const FALLBACK_IMAGES = [
   "/placeholders/error-placeholder.svg" // Final fallback
 ];
 
-interface AdaptiveImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface AdaptiveImageProps extends React.HTMLAttributes<HTMLDivElement> {
   src: string;
   alt: string;
-  fallbackImages?: string[];
-  showLoader?: boolean;
   className?: string;
   containerClassName?: string;
-  onLoadError?: (error: string) => void;
-  priority?: boolean;
+  showLoader?: boolean;
 }
 
 export function AdaptiveImage({
   src,
   alt,
-  fallbackImages = FALLBACK_IMAGES,
-  showLoader = true,
   className,
   containerClassName,
-  onLoadError,
-  priority = false,
+  showLoader = true,
   ...props
 }: AdaptiveImageProps) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [currentSrc, setCurrentSrc] = useState(src);
-  const [isLoading, setIsLoading] = useState(true);
-  const [fallbackIndex, setFallbackIndex] = useState(-1);
-  const [hasError, setHasError] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const MAX_RETRIES = 3;
+  const [fallbackIndex, setFallbackIndex] = useState(-1); // Start with original image
+  const mounted = useRef(true);
 
   useEffect(() => {
-    setCurrentSrc(src);
-    setFallbackIndex(-1);
-    setHasError(false);
-    setIsLoading(true);
-    setRetryCount(0);
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
-    // Preload the image if priority is true
-    if (priority) {
-      const preloadLink = document.createElement('link');
-      preloadLink.rel = 'preload';
-      preloadLink.as = 'image';
-      preloadLink.href = src;
-      document.head.appendChild(preloadLink);
-      return () => {
-        document.head.removeChild(preloadLink);
-      };
+  useEffect(() => {
+    // Reset state when src changes
+    if (mounted.current) {
+      setLoading(true);
+      setError(false);
+      setCurrentSrc(src);
+      setFallbackIndex(-1);
     }
-  }, [src, priority]);
+  }, [src]);
 
-  const handleError = () => {
-    // First try to reload the original image
-    if (retryCount < MAX_RETRIES && fallbackIndex === -1) {
-      setRetryCount(prev => prev + 1);
-      // Add cache buster to force reload
-      setCurrentSrc(`${src}?retry=${Date.now()}`);
-      console.warn(`Retrying original image load (${retryCount + 1}/${MAX_RETRIES}):`, src);
-      return;
-    }
-
-    const nextIndex = fallbackIndex + 1;
-    if (nextIndex < fallbackImages.length) {
-      console.warn(`Image load failed for ${currentSrc}, trying fallback: ${fallbackImages[nextIndex]}`);
-      setCurrentSrc(fallbackImages[nextIndex]);
-      setFallbackIndex(nextIndex);
-      onLoadError?.(`Failed to load image: ${currentSrc}`);
-    } else {
-      console.error('All fallback images failed to load');
-      setHasError(true);
-      setIsLoading(false);
-      onLoadError?.('All fallback images failed to load');
+  const handleImageLoad = () => {
+    if (mounted.current) {
+      setLoading(false);
+      setError(false);
     }
   };
 
-  const handleLoad = () => {
-    setIsLoading(false);
-    setHasError(false);
+  const handleImageError = () => {
+    if (!mounted.current) return;
+
+    console.log("Image load error:", `Failed to load image: ${currentSrc}`);
+
+    // Try next fallback image
+    const nextIndex = fallbackIndex + 1;
+    if (nextIndex < FALLBACK_IMAGES.length) {
+      setFallbackIndex(nextIndex);
+      setCurrentSrc(FALLBACK_IMAGES[nextIndex]);
+    } else {
+      // If all fallbacks failed, show error state
+      setLoading(false);
+      setError(true);
+    }
   };
 
   return (
-    <div className={cn("relative overflow-hidden", containerClassName)}>
-      {isLoading && showLoader && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm">
-          <Loader2 className="h-6 w-6 animate-spin" />
+    <div 
+      className={cn(
+        "relative overflow-hidden", 
+        containerClassName
+      )}
+      {...props}
+    >
+      {loading && showLoader && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       )}
-      {hasError ? (
-        <div className="flex items-center justify-center h-full min-h-[100px] bg-muted rounded-md">
-          <div className="flex flex-col items-center gap-2 text-center p-4">
-            <ImageIcon className="h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Image not available</p>
-          </div>
+
+      {error ? (
+        <div className="w-full h-full flex items-center justify-center bg-muted">
+          <ImageIcon className="h-10 w-10 text-muted-foreground" />
         </div>
       ) : (
-        <picture>
-          <source srcSet={currentSrc} type="image/webp" />
-          <source srcSet={currentSrc} type="image/jpeg" />
-          <img
-            {...props}
-            src={currentSrc}
-            alt={alt}
-            className={cn(
-              "transition-opacity duration-300 w-full h-full object-cover",
-              isLoading ? "opacity-0" : "opacity-100",
-              className
-            )}
-            onError={handleError}
-            onLoad={handleLoad}
-            loading={priority ? "eager" : "lazy"}
-          />
-        </picture>
+        <img
+          src={currentSrc}
+          alt={alt}
+          className={cn(
+            "transition-opacity duration-300",
+            loading ? "opacity-0" : "opacity-100",
+            className
+          )}
+          onLoad={handleImageLoad}
+          onError={handleImageError}
+        />
       )}
     </div>
   );

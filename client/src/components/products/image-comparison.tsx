@@ -16,13 +16,28 @@ const ImageComponent = ({ src, alt, onLoad, onError }: {
   onLoad: () => void;
   onError: () => void;
 }) => {
+  const [imageSrc, setImageSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
+  
+  useEffect(() => {
+    setImageSrc(src);
+    setHasError(false);
+  }, [src]);
+  
+  const handleError = () => {
+    console.log("Image load error:", `Failed to load image: ${imageSrc}`);
+    setHasError(true);
+    setImageSrc("/placeholders/product-placeholder.svg");
+    onError();
+  };
+  
   return (
     <img
-      src={src}
+      src={hasError ? "/placeholders/product-placeholder.svg" : imageSrc}
       alt={alt}
       className="w-full h-full object-cover transition-opacity duration-300"
       onLoad={onLoad}
-      onError={onError}
+      onError={handleError}
     />
   );
 };
