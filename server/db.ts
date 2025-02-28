@@ -25,4 +25,14 @@ pool.query('SELECT NOW()', (err) => {
   }
 });
 
+export async function checkDatabaseHealth(): Promise<boolean> {
+  try {
+    const result = await pool.query('SELECT 1');
+    return result.rowCount === 1;
+  } catch (error) {
+    console.error('Database health check failed:', error);
+    return false;
+  }
+}
+
 export const db = drizzle(pool, { schema });
