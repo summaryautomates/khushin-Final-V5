@@ -33,6 +33,7 @@ async function startServer() {
   const REQUIRED_PORT = 3000;
   const MAX_STARTUP_RETRIES = 3;
   let startupAttempts = 0;
+  let server: any = null;
 
   while (startupAttempts < MAX_STARTUP_RETRIES) {
     try {
@@ -173,11 +174,27 @@ async function startServer() {
       const cleanup = async () => {
         console.log('Starting cleanup process...');
         try {
+          // First notify all clients of shutdown
           if (wss) {
+            const clientCount = wss.clients.size;
+            console.log(`Notifying ${clientCount} WebSocket clients of shutdown`);
+            
+            wss.clients.forEach((client) => {
+              try {
+                if (client.readyState === WebSocket.OPEN) {
+                  client.send(JSON.stringify({
+                    type: 'shutdown',
+                    message: 'Server is shutting down',
+                    timestamp: new Date().toISOString()
+                  }));
+                  client.close(1000, 'Server shutting down');
+                }
+              } catch (error) {
+                console.error('Error notifying client of shutdown:', error);
+              }
+            });
+            
             await new Promise<void>((resolve) => {
-              wss.clients.forEach((client) => {
-                client.close(1000, 'Server shutting down');
-              });
               wss.close(() => {
                 console.log('WebSocket server closed');
                 resolve();

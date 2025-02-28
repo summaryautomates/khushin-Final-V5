@@ -12,8 +12,15 @@ export async function registerRoutes(app: Express) {
       const products = await storage.getProducts();
       res.json(products);
     } catch (error) {
-      console.error('Error fetching products:', error);
-      res.status(500).json({ message: "Failed to fetch products" });
+      console.error('Error fetching products:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+      res.status(500).json({ 
+        message: "Failed to fetch products", 
+        error: process.env.NODE_ENV === 'production' ? undefined : (error instanceof Error ? error.message : 'Unknown error')
+      });
     }
   });
 

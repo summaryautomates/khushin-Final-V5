@@ -116,6 +116,20 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
         ws.close(1013, 'Maximum connections reached');
         return;
       }
+      
+      // Set a timeout for initial response
+      const connectionTimeout = setTimeout(() => {
+        try {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+              type: 'error',
+              data: { message: 'Connection timed out waiting for initial response' }
+            }));
+          }
+        } catch (timeoutError) {
+          console.error('Error sending timeout message:', timeoutError);
+        }
+      }, 10000);
 
       ws.isAlive = true;
       const session = (req as any).session as ExtendedSessionData;
@@ -162,12 +176,27 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
               parsedMessage = JSON.parse(message);
             } else if (message instanceof Buffer) {
               parsedMessage = JSON.parse(message.toString());
+            } else {
+              console.warn('Unknown message format received');
+              return;
             }
           } catch (parseError) {
             console.warn('Failed to parse WebSocket message:', {
               error: parseError instanceof Error ? parseError.message : 'Unknown error',
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
+              message: typeof message === 'string' ? message.substring(0, 100) : 'Binary data'
             });
+            
+            // Send error response to client
+            try {
+              ws.send(JSON.stringify({
+                type: 'error',
+                error: 'Invalid message format',
+                timestamp: new Date().toISOString()
+              }));
+            } catch (sendError) {
+              console.error('Error sending error response:', sendError);
+            }
             return;
           }
 

@@ -45,6 +45,9 @@ function WebSocketProvider({ children }: { children: React.ReactNode }) {
     // Maintain a log of recent errors to prevent duplicate toasts
     const recentErrors = new Set<string>();
     const ERROR_THROTTLE_MS = 5000; // Only show same error once every 5 seconds
+    const MAX_RECONNECT_ATTEMPTS = 5;
+    let reconnectAttempts = 0;
+    let reconnectTimer: NodeJS.Timeout | null = null;
 
     // Handle uncaught errors
     const handleError = (event: ErrorEvent) => {
