@@ -10,7 +10,10 @@ import { db, checkDatabaseHealth } from './db';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path'; // Import path module
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const execAsync = promisify(exec);
 
