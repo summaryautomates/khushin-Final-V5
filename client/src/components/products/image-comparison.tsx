@@ -50,7 +50,10 @@ export function ImageComparison({ images, titles }: ImageComparisonProps) {
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
   const [imageLoadingStates, setImageLoadingStates] = useState<Record<number, boolean>>({});
   const [fallbackImageIndex, setFallbackImageIndex] = useState(0);
-  const FALLBACK_IMAGES = ["/placeholders/image-placeholder.svg"];
+  const FALLBACK_IMAGES = [
+    "/placeholders/image-placeholder.svg", 
+    "/placeholders/product-placeholder.svg"
+  ];
   const transformRefs = useRef<any[]>([]);
   const isMounted = useRef(true);
 
@@ -84,11 +87,21 @@ export function ImageComparison({ images, titles }: ImageComparisonProps) {
   const getValidProductImage = (index: number): string => {
     if (errors[index] || imageErrors[index]) {
       // Ensure we have a valid fallback image
+      console.log(`Using fallback image for index ${index}`);
       return FALLBACK_IMAGES[fallbackImageIndex % FALLBACK_IMAGES.length] || '/placeholders/product-placeholder.svg';
     }
+    
     // Check if the image URL is valid before returning
     const imageUrl = images[index];
-    return imageUrl && imageUrl.trim() !== '' ? imageUrl : '/placeholders/product-placeholder.svg';
+    
+    if (!imageUrl || imageUrl.trim() === '') {
+      console.log(`Empty image URL at index ${index}, using placeholder`);
+      return '/placeholders/product-placeholder.svg';
+    }
+    
+    // Log the image URL we're trying to use
+    console.log(`Using image URL at index ${index}: ${imageUrl}`);
+    return imageUrl;
   };
 
   const handleImageError = (index: number) => {

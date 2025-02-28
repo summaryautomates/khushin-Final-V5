@@ -25,6 +25,10 @@ export function checkImageUrl(url: string): Promise<ImageCheckResult> {
       return;
     }
 
+    // Normalize the URL to ensure it's properly handled
+    const normalizedUrl = normalizeImageUrl(url);
+    console.log(`Checking image: ${url} (normalized to: ${normalizedUrl})`);
+    
     const img = new Image();
     const timestamp = new Date().toISOString();
     
@@ -42,6 +46,7 @@ export function checkImageUrl(url: string): Promise<ImageCheckResult> {
     
     img.onload = () => {
       clearTimeout(timeoutId);
+      console.log(`Successfully loaded image: ${url}`);
       resolve({
         url,
         status: 'success',
@@ -51,6 +56,7 @@ export function checkImageUrl(url: string): Promise<ImageCheckResult> {
     
     img.onerror = () => {
       clearTimeout(timeoutId);
+      console.error(`Failed to load image: ${url}`);
       resolve({
         url,
         status: 'error',
@@ -60,8 +66,26 @@ export function checkImageUrl(url: string): Promise<ImageCheckResult> {
     };
     
     // Start loading the image
-    img.src = url;
+    img.src = normalizedUrl;
   });
+}
+
+/**
+ * Normalize image URLs to handle both relative and absolute paths
+ */
+function normalizeImageUrl(url: string): string {
+  // If it's already an absolute URL (http or https), return as is
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  
+  // Handle relative URLs
+  if (!url.startsWith('/')) {
+    url = '/' + url;
+  }
+  
+  // Return the normalized URL
+  return url;
 }
 
 /**

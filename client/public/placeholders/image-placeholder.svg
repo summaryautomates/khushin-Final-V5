@@ -7,3 +7,10 @@
   <path d="M120 220L160 180L190 210L230 190L280 240" stroke="#ADB5BD" stroke-width="4"/>
   <text x="200" y="280" font-family="Arial" font-size="16" text-anchor="middle" fill="#6C757D">Image</text>
 </svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#f5f5f5"/>
+  <path d="M80,60 L120,60 L120,140 L80,140 Z" fill="#e0e0e0"/>
+  <circle cx="100" cy="85" r="15" fill="#d0d0d0"/>
+  <path d="M70,120 L130,120 L130,140 L70,140 Z" fill="#d0d0d0"/>
+  <text x="100" y="170" font-family="Arial" font-size="12" text-anchor="middle" fill="#909090">Image Placeholder</text>
+</svg>
