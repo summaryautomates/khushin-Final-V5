@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Loader2, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -9,100 +8,85 @@ const FALLBACK_IMAGES = [
   "/placeholders/error-placeholder.svg" // Final fallback
 ];
 
-interface AdaptiveImageProps extends React.HTMLAttributes<HTMLDivElement> {
+interface AdaptiveImageProps {
   src: string;
   alt: string;
   className?: string;
   containerClassName?: string;
-  showLoader?: boolean;
+  objectFit?: "cover" | "contain" | "fill" | "none" | "scale-down";
   onLoadSuccess?: () => void;
   onLoadFailure?: () => void;
   fallbackSrc?: string;
-  objectFit?: "contain" | "cover" | "fill" | "none" | "scale-down";
 }
 
 export function AdaptiveImage({
   src,
   alt,
-  className,
-  containerClassName,
-  showLoader = true,
+  className = "",
+  containerClassName = "",
+  objectFit = "cover",
   onLoadSuccess,
   onLoadFailure,
-  fallbackSrc,
-  objectFit = "cover",
-  ...props
+  fallbackSrc
 }: AdaptiveImageProps) {
   const [currentSrc, setCurrentSrc] = useState<string>(src);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [fallbackIndex, setFallbackIndex] = useState<number>(0);
-  const isMounted = useRef<boolean>(true);
+  const attemptedSrcs = useRef<Set<string>>(new Set());
 
+  // Reset state when src changes
   useEffect(() => {
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (src) {
+    if (src !== currentSrc && !attemptedSrcs.current.has(src)) {
       setCurrentSrc(src);
       setLoading(true);
       setError(false);
-      setFallbackIndex(0);
     }
-  }, [src]);
+  }, [src, currentSrc]);
 
   const handleImageLoad = () => {
-    if (!isMounted.current) return;
-    
     setLoading(false);
     setError(false);
     if (onLoadSuccess) onLoadSuccess();
-    
-    console.log("Image loaded successfully:", currentSrc);
+    console.log(`Image loaded successfully: ${currentSrc}`);
   };
 
   const handleImageError = () => {
-    if (!isMounted.current) return;
-    
-    console.error("Image load error:", `Failed to load image: ${currentSrc}`);
-    
-    // Try the custom fallback first if provided
-    if (fallbackSrc && currentSrc !== fallbackSrc) {
+    console.error(`Image load error: ${currentSrc}`);
+    attemptedSrcs.current.add(currentSrc);
+
+    // Try custom fallback first if provided
+    if (fallbackSrc && !attemptedSrcs.current.has(fallbackSrc)) {
       setCurrentSrc(fallbackSrc);
       return;
     }
-    
-    // Try the next fallback image from our array
-    const nextFallbackIndex = fallbackIndex + 1;
-    if (nextFallbackIndex < FALLBACK_IMAGES.length) {
-      setFallbackIndex(nextFallbackIndex);
-      setCurrentSrc(FALLBACK_IMAGES[nextFallbackIndex]);
-    } else {
-      setLoading(false);
-      setError(true);
-      if (onLoadFailure) onLoadFailure();
+
+    // Otherwise try our array of fallbacks
+    if (fallbackIndex < FALLBACK_IMAGES.length) {
+      const nextFallback = FALLBACK_IMAGES[fallbackIndex];
+      if (!attemptedSrcs.current.has(nextFallback)) {
+        setCurrentSrc(nextFallback);
+        setFallbackIndex(fallbackIndex + 1);
+        return;
+      }
     }
+
+    // If we've tried all fallbacks, show error state
+    setLoading(false);
+    setError(true);
+    if (onLoadFailure) onLoadFailure();
   };
 
   return (
-    <div 
-      className={cn(
-        "relative overflow-hidden", 
-        containerClassName
-      )}
-      {...props}
-    >
-      {loading && showLoader && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    <div className={cn("relative", containerClassName)}>
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted/20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       )}
 
       {error ? (
-        <div className="w-full h-full flex items-center justify-center bg-muted">
+        <div className="w-full h-full flex items-center justify-center bg-muted/10">
           <ImageIcon className="h-10 w-10 text-muted-foreground" />
         </div>
       ) : (

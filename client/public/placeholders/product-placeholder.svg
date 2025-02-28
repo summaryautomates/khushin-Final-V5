@@ -1,8 +1,7 @@
 
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
-  <rect width="512" height="512" fill="#F3F4F6"/>
-  <rect x="128" y="128" width="256" height="256" rx="16" fill="#E5E7EB"/>
-  <path d="M192 224C192 210.7 202.7 200 216 200H296C309.3 200 320 210.7 320 224V288C320 301.3 309.3 312 296 312H216C202.7 312 192 301.3 192 288V224Z" fill="#9CA3AF"/>
-  <circle cx="256" cy="176" r="16" fill="#9CA3AF"/>
-  <path d="M224 336H288" stroke="#9CA3AF" stroke-width="16" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" fill="none">
+  <rect width="400" height="400" fill="#F5F5F5"/>
+  <path d="M200 120C177.909 120 160 137.909 160 160C160 182.091 177.909 200 200 200C222.091 200 240 182.091 240 160C240 137.909 222.091 120 200 120Z" fill="#E0E0E0"/>
+  <path d="M280 240C280 217.909 242.092 200 200 200C157.908 200 120 217.909 120 240V280H280V240Z" fill="#E0E0E0"/>
+  <text x="200" y="320" font-family="Arial" font-size="18" text-anchor="middle" fill="#9E9E9E">Product Image</text>
 </svg>

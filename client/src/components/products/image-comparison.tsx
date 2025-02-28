@@ -24,14 +24,17 @@ const ImageComponent = ({ src, alt, onLoad, onError }: {
   };
   
   const handleError = () => {
-    console.log(`Image load error: Failed to load image: ${src}`);
+    console.error(`Image load error: Failed to load image: ${src}`);
     onError();
   };
   
+  // Ensure the src is a valid URL
+  const validSrc = src && src.trim() !== '' ? src : '/placeholders/product-placeholder.svg';
+  
   return (
     <AdaptiveImage
-      src={src}
-      alt={alt}
+      src={validSrc}
+      alt={alt || 'Product image'}
       className="w-full h-full object-cover"
       containerClassName="w-full h-full"
       onLoadSuccess={handleLoad}
@@ -80,9 +83,12 @@ export function ImageComparison({ images, titles }: ImageComparisonProps) {
 
   const getValidProductImage = (index: number): string => {
     if (errors[index] || imageErrors[index]) {
-      return FALLBACK_IMAGES[fallbackImageIndex % FALLBACK_IMAGES.length];
+      // Ensure we have a valid fallback image
+      return FALLBACK_IMAGES[fallbackImageIndex % FALLBACK_IMAGES.length] || '/placeholders/product-placeholder.svg';
     }
-    return images[index];
+    // Check if the image URL is valid before returning
+    const imageUrl = images[index];
+    return imageUrl && imageUrl.trim() !== '' ? imageUrl : '/placeholders/product-placeholder.svg';
   };
 
   const handleImageError = (index: number) => {
