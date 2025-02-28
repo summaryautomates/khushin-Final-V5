@@ -1,10 +1,37 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import './luxury-button.css';
+import { fallbackLighterDataUrl } from '../../../public/images/fallback-lighter.js';
 
-// Import the image directly if needed
-import lighterImagePath from '../../../public/images/khush-lighters.png';
+// Custom hook to try multiple image sources
+function useImageWithFallback(sources: string[]) {
+  const [validSrc, setValidSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    const tryImages = async () => {
+      for (const src of sources) {
+        try {
+          const img = new Image();
+          await new Promise<void>((resolve, reject) => {
+            img.onload = () => resolve();
+            img.onerror = () => reject();
+            img.src = src;
+          });
+          setValidSrc(src);
+          return;
+        } catch (e) {
+          console.error(`Failed to load image: ${src}`);
+        }
+      }
+      // If all fail, set to fallback data URL
+      setValidSrc(fallbackLighterDataUrl);
+    };
+
+    tryImages();
+  }, [sources]);
+
+  return validSrc;
+}
 
 interface LuxuryButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
@@ -16,35 +43,18 @@ export function LuxuryButton({
   className, 
   ...props 
 }: LuxuryButtonProps) {
-  const [imagePath, setImagePath] = useState<string | null>(null);
-  
-  useEffect(() => {
-    // Try to load the image
-    const img = new Image();
-    img.onload = () => {
-      setImagePath(img.src);
-    };
-    img.onerror = () => {
-      console.error("Failed to load luxury button image");
-      // Try alternate path
-      const altImg = new Image();
-      altImg.src = lighterImagePath;
-      altImg.onload = () => setImagePath(altImg.src);
-      altImg.onerror = () => {
-        console.error("Failed to load alternate image path");
-      };
-    };
-    img.src = '/images/khush-lighters.png';
-  }, []);
+  const imageSrc = useImageWithFallback([
+    '/images/khush-lighters.png',
+    'https://images.unsplash.com/photo-1576969500732-12cc9992a5f4?q=80&w=500',
+    fallbackLighterDataUrl
+  ]);
 
   return (
     <button
       className={cn('luxury-button', className)}
-      style={imagePath ? { 
-        backgroundImage: `url(${imagePath})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center'
-      } : {}}
+      style={imageSrc ? {
+        '--bg-image': `url(${imageSrc})`,
+      } as React.CSSProperties : undefined}
       {...props}
     >
       <span className="luxury-button-text">{children}</span>
