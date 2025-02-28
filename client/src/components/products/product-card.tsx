@@ -101,95 +101,38 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className="w-full max-w-sm"
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="w-full"
     >
-      <Card className="relative overflow-hidden border-none shadow-xl group bg-white/[0.02] backdrop-blur-sm hover:bg-white/[0.05] transition-all duration-700 h-full flex flex-col">
-        <CardHeader className="p-0">
+      <Card className="border-none overflow-hidden group bg-gradient-to-b from-zinc-900/40 to-zinc-900 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/10 transition-all duration-300">
+        <CardContent className="p-0">
           <motion.div
-            className="relative aspect-square overflow-hidden bg-zinc-900 rounded-t-xl w-full"
+            className="relative aspect-square overflow-hidden bg-black"
             whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
+            transition={{ duration: 0.3 }}
           >
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="absolute top-4 left-4 z-10"
-            >
-              <Badge variant="secondary" className="bg-gold/80 text-black backdrop-blur-sm flex items-center gap-1">
-                <Crown className="h-3 w-3" />
-                Premium
-              </Badge>
-            </motion.div>
-
-            <AdaptiveImage
-              src={product.images?.[0] || ""}
-              alt={product.name}
-              className="h-full w-full object-cover opacity-90 transition-opacity duration-700 group-hover:opacity-100"
-              containerClassName="h-full w-full"
-            />
-            <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <Link href={`/product/${product.id}`}>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    className="rounded-full bg-orange-400/90 hover:bg-orange-500 text-white backdrop-blur-sm"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </motion.div>
-              </Link>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className={`rounded-full bg-white/80 text-black hover:bg-white backdrop-blur-sm ${
-                    isInCompare(product.id) ? 'border-2 border-primary' : ''
-                  }`}
-                  onClick={handleCompareToggle}
-                >
-                  <Scale className={`h-4 w-4 ${isInCompare(product.id) ? 'text-primary' : ''}`} />
-                </Button>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className="rounded-full bg-white/80 text-black hover:bg-white backdrop-blur-sm"
-                  onClick={handleBuyNow}
-                  disabled={isAddingToCart}
-                >
-                  {isAddingToCart ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <ShoppingCart className="h-4 w-4" />
-                  )}
-                </Button>
-              </motion.div>
-            </div>
+            <Link href={`/product/${product.id}`}>
+              <AdaptiveImage
+                src={product.images?.[0] || ""}
+                alt={product.name}
+                className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                containerClassName="h-full w-full"
+              />
+            </Link>
           </motion.div>
-        </CardHeader>
-        <CardContent className="p-6 text-center flex-grow flex flex-col justify-between">
-          <motion.div
+
+          <motion.div className={`p-6 space-y-4 ${product.name.toLowerCase().includes('lighter') ? 'relative' : ''}`}
             initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="space-y-4"
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
           >
+            {product.name.toLowerCase().includes('lighter') && (
+              <div 
+                className="absolute inset-0 opacity-40 z-0 bg-cover bg-center" 
+                style={{ backgroundImage: 'url(/images/luxury-lighters.jpg)' }}
+              />
+            )}
             <div className="flex justify-center gap-1">
               {[1, 2, 3, 4, 5].map((_, index) => (
                 <Star key={index} className="h-4 w-4 text-yellow-500 fill-yellow-500" />
