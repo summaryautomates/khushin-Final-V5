@@ -1,10 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
-  <rect width="200" height="200" fill="#f5f5f5"/>
-  <text x="100" y="90" font-family="Arial" font-size="14" fill="#666" text-anchor="middle">Image Not Available</text>
-  <text x="100" y="110" font-family="Arial" font-size="12" fill="#999" text-anchor="middle">Please try again later</text>
-</svg>
-<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-  <circle cx="8.5" cy="8.5" r="1.5"></circle>
-  <polyline points="21 15 16 10 5 21"></polyline>
+
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" fill="#F3F4F6"/>
+  <path d="M256 128C238.3 128 224 142.3 224 160V256C224 273.7 238.3 288 256 288C273.7 288 288 273.7 288 256V160C288 142.3 273.7 128 256 128ZM256 320C238.3 320 224 334.3 224 352C224 369.7 238.3 384 256 384C273.7 384 288 369.7 288 352C288 334.3 273.7 320 256 320Z" fill="#9CA3AF"/>
+  <path d="M159.3 106.3C185.2 80.44 220.3 64 256 64C291.7 64 326.8 80.44 352.7 106.3C378.6 132.2 395 167.3 395 203C395 238.7 378.6 273.8 352.7 299.7L299.7 352.7C273.8 378.6 238.7 395 203 395C167.3 395 132.2 378.6 106.3 352.7C80.44 326.8 64 291.7 64 256C64 220.3 80.44 185.2 106.3 159.3L159.3 106.3ZM181.7 128.7L128.7 181.7C109.5 200.9 96 227.8 96 256C96 284.2 109.5 311.1 128.7 330.3C147.9 349.5 174.8 363 203 363C231.2 363 258.1 349.5 277.3 330.3L330.3 277.3C349.5 258.1 363 231.2 363 203C363 174.8 349.5 147.9 330.3 128.7C311.1 109.5 284.2 96 256 96C227.8 96 200.9 109.5 181.7 128.7Z" fill="#9CA3AF"/>
 </svg>

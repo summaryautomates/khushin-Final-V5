@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Loader2, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -5,8 +6,6 @@ import { cn } from "@/lib/utils";
 // Default fallback images that will be tried in order
 const FALLBACK_IMAGES = [
   "/placeholders/product-placeholder.svg",
-  "/placeholders/placeholder-product-2.svg",
-  "/placeholders/placeholder-product-3.svg",
   "/placeholders/error-placeholder.svg" // Final fallback
 ];
 
@@ -16,6 +15,10 @@ interface AdaptiveImageProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
   containerClassName?: string;
   showLoader?: boolean;
+  onLoadSuccess?: () => void;
+  onLoadFailure?: () => void;
+  fallbackSrc?: string;
+  objectFit?: "contain" | "cover" | "fill" | "none" | "scale-down";
 }
 
 export function AdaptiveImage({
@@ -24,52 +27,63 @@ export function AdaptiveImage({
   className,
   containerClassName,
   showLoader = true,
+  onLoadSuccess,
+  onLoadFailure,
+  fallbackSrc,
+  objectFit = "cover",
   ...props
 }: AdaptiveImageProps) {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [currentSrc, setCurrentSrc] = useState(src);
-  const [fallbackIndex, setFallbackIndex] = useState(-1); // Start with original image
-  const mounted = useRef(true);
+  const [currentSrc, setCurrentSrc] = useState<string>(src);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<boolean>(false);
+  const [fallbackIndex, setFallbackIndex] = useState<number>(0);
+  const isMounted = useRef<boolean>(true);
 
   useEffect(() => {
-    mounted.current = true;
     return () => {
-      mounted.current = false;
+      isMounted.current = false;
     };
   }, []);
 
   useEffect(() => {
-    // Reset state when src changes
-    if (mounted.current) {
+    if (src) {
+      setCurrentSrc(src);
       setLoading(true);
       setError(false);
-      setCurrentSrc(src);
-      setFallbackIndex(-1);
+      setFallbackIndex(0);
     }
   }, [src]);
 
   const handleImageLoad = () => {
-    if (mounted.current) {
-      setLoading(false);
-      setError(false);
-    }
+    if (!isMounted.current) return;
+    
+    setLoading(false);
+    setError(false);
+    if (onLoadSuccess) onLoadSuccess();
+    
+    console.log("Image loaded successfully:", currentSrc);
   };
 
   const handleImageError = () => {
-    if (!mounted.current) return;
-
-    console.log("Image load error:", `Failed to load image: ${currentSrc}`);
-
-    // Try next fallback image
-    const nextIndex = fallbackIndex + 1;
-    if (nextIndex < FALLBACK_IMAGES.length) {
-      setFallbackIndex(nextIndex);
-      setCurrentSrc(FALLBACK_IMAGES[nextIndex]);
+    if (!isMounted.current) return;
+    
+    console.error("Image load error:", `Failed to load image: ${currentSrc}`);
+    
+    // Try the custom fallback first if provided
+    if (fallbackSrc && currentSrc !== fallbackSrc) {
+      setCurrentSrc(fallbackSrc);
+      return;
+    }
+    
+    // Try the next fallback image from our array
+    const nextFallbackIndex = fallbackIndex + 1;
+    if (nextFallbackIndex < FALLBACK_IMAGES.length) {
+      setFallbackIndex(nextFallbackIndex);
+      setCurrentSrc(FALLBACK_IMAGES[nextFallbackIndex]);
     } else {
-      // If all fallbacks failed, show error state
       setLoading(false);
       setError(true);
+      if (onLoadFailure) onLoadFailure();
     }
   };
 
@@ -98,6 +112,7 @@ export function AdaptiveImage({
           className={cn(
             "transition-opacity duration-300",
             loading ? "opacity-0" : "opacity-100",
+            `object-${objectFit}`,
             className
           )}
           onLoad={handleImageLoad}

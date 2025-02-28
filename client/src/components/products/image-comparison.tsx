@@ -10,34 +10,33 @@ interface ImageComparisonProps {
 }
 
 // Separate ImageComponent for better error handling
+import { AdaptiveImage } from "../ui/adaptive-image";
+
 const ImageComponent = ({ src, alt, onLoad, onError }: {
   src: string;
   alt: string;
   onLoad: () => void;
   onError: () => void;
 }) => {
-  const [imageSrc, setImageSrc] = useState(src);
-  const [hasError, setHasError] = useState(false);
-  
-  useEffect(() => {
-    setImageSrc(src);
-    setHasError(false);
-  }, [src]);
+  const handleLoad = () => {
+    console.log(`Image loaded successfully: ${src}`);
+    onLoad();
+  };
   
   const handleError = () => {
-    console.log("Image load error:", `Failed to load image: ${imageSrc}`);
-    setHasError(true);
-    setImageSrc("/placeholders/product-placeholder.svg");
+    console.log(`Image load error: Failed to load image: ${src}`);
     onError();
   };
   
   return (
-    <img
-      src={hasError ? "/placeholders/product-placeholder.svg" : imageSrc}
+    <AdaptiveImage
+      src={src}
       alt={alt}
-      className="w-full h-full object-cover transition-opacity duration-300"
-      onLoad={onLoad}
-      onError={handleError}
+      className="w-full h-full object-cover"
+      containerClassName="w-full h-full"
+      onLoadSuccess={handleLoad}
+      onLoadFailure={handleError}
+      fallbackSrc="/placeholders/product-placeholder.svg"
     />
   );
 };
