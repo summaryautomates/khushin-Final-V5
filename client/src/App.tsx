@@ -42,22 +42,39 @@ function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Maintain a log of recent errors to prevent duplicate toasts
+    const recentErrors = new Set<string>();
+    const ERROR_THROTTLE_MS = 5000; // Only show same error once every 5 seconds
+    
     // Handle unhandled promise rejections
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       event.preventDefault(); // Prevent the default handling
       
+      const errorMessage = event.reason?.message || 'Unknown error';
+      const errorKey = `${errorMessage}-${Date.now().toString().slice(0, -3)}`;
+      
       console.error('Unhandled promise rejection:', {
         reason: event.reason,
         stack: event.reason?.stack,
-        message: event.reason?.message,
+        message: errorMessage,
         timestamp: new Date().toISOString()
       });
 
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
+      // Only show toast if we haven't shown this error recently
+      if (!recentErrors.has(errorKey)) {
+        recentErrors.add(errorKey);
+        
+        // Remove from recent errors after throttle period
+        setTimeout(() => {
+          recentErrors.delete(errorKey);
+        }, ERROR_THROTTLE_MS);
+        
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+        });
+      }
     };
 
     // Handle uncaught errors

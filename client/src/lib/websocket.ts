@@ -67,12 +67,19 @@ export function useWebSocket() {
 
       ws.onerror = (event) => {
         console.error('WebSocket error:', event);
+        
+        // Create a more controlled error that won't trigger unhandled rejection
+        const wsError = new Error('WebSocket connection error');
+        
         if (isMounted.current) {
           toast({
             title: "Connection Error",
             description: "There was an error with the WebSocket connection.",
             variant: "destructive",
           });
+          
+          // Trigger a controlled reconnect instead of letting the error propagate
+          handleReconnect(wsError);
         }
       };
 
@@ -95,14 +102,31 @@ export function useWebSocket() {
   };
 
   const handleReconnect = (error: Error) => {
-    if (reconnectAttempts.current >= maxReconnectAttempts) {
-      console.error('Maximum reconnection attempts reached:', error);
-      toast({
-        title: "Connection Failed",
-        description: "Unable to establish a connection after multiple attempts.",
-        variant: "destructive",
-      });
-      return;
+    try {
+      if (reconnectAttempts.current >= maxReconnectAttempts) {
+        console.error('Maximum reconnection attempts reached:', error);
+        toast({
+          title: "Connection Failed",
+          description: "Unable to establish a connection after multiple attempts.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Increment reconnect attempts
+      reconnectAttempts.current += 1;
+      
+      // Exponential backoff for reconnect
+      const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
+      console.log(`Attempting to reconnect in ${delay}ms (attempt ${reconnectAttempts.current}/${maxReconnectAttempts})`);
+      
+      // Schedule reconnect
+      reconnectTimeout.current = window.setTimeout(() => {
+        console.log(`Reconnecting... (attempt ${reconnectAttempts.current}/${maxReconnectAttempts})`);
+        setupWebSocketConnection();
+      }, delay);
+    } catch (reconnectError) {
+      console.error('Error during reconnection handling:', reconnectError);
     }
 
     reconnectAttempts.current++;
