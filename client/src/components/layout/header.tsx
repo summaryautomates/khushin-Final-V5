@@ -31,7 +31,7 @@ export function Header() {
           <Link href="/" className="flex items-center space-x-2">
             <div className="relative w-24 md:w-32 h-12 md:h-16 flex items-center group transition-transform duration-300 hover:scale-105">
               <img
-                src="/attached_assets/Remove background project.png"
+                src="/logo.png"
                 alt="KHUSH.IN Logo"
                 className="w-full h-full object-contain transition-all duration-300"
                 style={{
