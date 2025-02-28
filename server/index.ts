@@ -9,6 +9,8 @@ import { portManager } from './port-manager';
 import { db, checkDatabaseHealth } from './db';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import path from 'path'; // Import path module
+
 
 const execAsync = promisify(exec);
 
@@ -79,6 +81,20 @@ async function startServer() {
       }));
       console.log('Static file serving configured');
 
+      // Setup static file serving
+      app.use(express.static(path.join(__dirname, "..", "client", "public")));
+      // Extra path for direct image access
+      app.use('/images', express.static(path.join(__dirname, "..", "client", "public", "images")));
+
+      // Log request paths to debug image loading
+      app.use((req, res, next) => {
+        if (req.path.includes('.jpg') || req.path.includes('.png')) {
+          console.log(`Image requested: ${req.path}`);
+        }
+        next();
+      });
+
+
       const server = createServer(app);
 
       // Health check endpoint
@@ -119,7 +135,7 @@ async function startServer() {
       // Attempt to acquire a port, preferring the required port but accepting others
       console.log(`Attempting to acquire port ${REQUIRED_PORT} or another available port...`);
       const port = await portManager.acquirePort(REQUIRED_PORT, REQUIRED_PORT + 100);
-      
+
       console.log(`Successfully acquired port ${port}${port !== REQUIRED_PORT ? ` (preferred was ${REQUIRED_PORT})` : ''}`);
 
       // Start the server
@@ -225,7 +241,7 @@ process.on('unhandledRejection', (error) => {
     stack: error instanceof Error ? error.stack : undefined,
     timestamp: new Date().toISOString()
   });
-  
+
   // Don't exit the process in development mode to allow recovery
   if (process.env.NODE_ENV === 'production') {
     process.exit(1);

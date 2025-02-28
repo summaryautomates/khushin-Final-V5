@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Loader2, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -47,6 +46,7 @@ export function AdaptiveImage({
       setCurrentSrc(src);
       setLoading(true);
       setError(false);
+      console.log(`Attempting to load image: ${src}`); // Added logging for debugging
     }
   }, [src]);
 
@@ -61,9 +61,9 @@ export function AdaptiveImage({
 
   const handleError = () => {
     if (!mounted.current) return;
-    
+
     console.error(`Image load error: Failed to load image: ${currentSrc}`);
-    
+
     if (fallbackIndex < FALLBACK_IMAGES.length) {
       const nextFallback = fallbackSrc || FALLBACK_IMAGES[fallbackIndex];
       console.log(`Trying fallback image: ${nextFallback}`);
@@ -88,14 +88,14 @@ export function AdaptiveImage({
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       )}
-      
+
       {error && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-100 rounded-md p-2">
           <ImageIcon className="h-8 w-8 text-muted-foreground" />
           <p className="text-xs text-muted-foreground mt-2 text-center">Image not available</p>
         </div>
       )}
-      
+
       <img
         ref={imageRef}
         src={validatedSrc}

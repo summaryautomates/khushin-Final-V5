@@ -130,7 +130,11 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.name.toLowerCase().includes('lighter') && (
               <div 
                 className="absolute inset-0 opacity-40 z-0 bg-cover bg-center" 
-                style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1576969500732-12cc9992a5f4?q=80&w=500)' }}
+                style={{ backgroundImage: 'url(/images/khush-lighters.jpg)' }}
+                onError={(e) => {
+                  console.error("Image failed to load");
+                  e.currentTarget.style.backgroundImage = 'url(/images/luxury-lighters.jpg)';
+                }}
               />
             )}
             <div className="flex justify-center gap-1">
