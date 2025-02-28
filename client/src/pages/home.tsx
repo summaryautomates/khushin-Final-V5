@@ -186,11 +186,9 @@ export default function Home() {
           >
             <div style={{ display: 'contents' }}>
               <AdaptiveImage
-                src="https://i.imghippo.com/files/bOL6106VBY.jpg"
-                alt="Hero background"
+                src="/attached_assets/Hero image.png"
+                alt="Luxury KHUSH lighter"
                 className="absolute inset-0 w-full h-full object-cover"
-                containerClassName="absolute inset-0"
-                priority={true}
                 onLoadError={(error) => {
                   console.error('Hero image load error:', error);
                   toast({
@@ -218,13 +216,13 @@ export default function Home() {
                 className="text-5xl sm:text-6xl md:text-7xl font-extralight mb-8 md:mb-10 tracking-wider text-center mx-auto leading-tight"
               >
                 <span className="block">
-                  <AnimatedText 
+                  <AnimatedText
                     text="Make Your"
                     className="bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent"
                   />
                 </span>
                 <span className="block mt-2">
-                  <AnimatedText 
+                  <AnimatedText
                     text="Loved One Happy!"
                     className="bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent"
                   />
@@ -370,9 +368,9 @@ export default function Home() {
                 <ProductGrid products={[]} isLoading={true} />
               </motion.div>
             ) : (
-              <ProductGrid 
-                products={Array.isArray(products) ? products.slice(0, 4) : []} 
-                isLoading={false} 
+              <ProductGrid
+                products={Array.isArray(products) ? products.slice(0, 4) : []}
+                isLoading={false}
               />
             )}
 
