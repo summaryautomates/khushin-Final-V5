@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -8,6 +9,7 @@ export function useWebSocket() {
   const maxReconnectAttempts = 5;
   const reconnectAttempts = useRef(0);
   const connectTimeoutRef = useRef<NodeJS.Timeout>();
+  const isMounted = useRef(true);
 
   const connect = () => {
     try {
@@ -27,8 +29,12 @@ export function useWebSocket() {
       // Set connection timeout
       connectTimeoutRef.current = setTimeout(() => {
         if (ws.readyState === WebSocket.CONNECTING) {
+          console.log('WebSocket connection timeout');
           ws.close();
-          throw new Error('Connection timeout');
+          
+          if (isMounted.current) {
+            handleReconnect(new Error('Connection timeout'));
+          }
         }
       }, 5000);
 
@@ -44,12 +50,14 @@ export function useWebSocket() {
         try {
           const data = JSON.parse(event.data);
           console.log('WebSocket message received:', data);
-
+          
+          // Handle different message types here if needed
           if (data.type === 'error') {
+            console.error('Server reported an error:', data.error);
             toast({
-              title: "Error",
-              description: data.message,
-              variant: "destructive"
+              title: "Server Error",
+              description: data.error || "An error occurred",
+              variant: "destructive",
             });
           }
         } catch (error) {
@@ -57,89 +65,91 @@ export function useWebSocket() {
         }
       };
 
+      ws.onerror = (event) => {
+        console.error('WebSocket error:', event);
+        if (isMounted.current) {
+          toast({
+            title: "Connection Error",
+            description: "There was an error with the WebSocket connection.",
+            variant: "destructive",
+          });
+        }
+      };
+
       ws.onclose = (event) => {
-        console.log('WebSocket disconnected:', {
-          code: event.code,
-          reason: event.reason,
-          wasClean: event.wasClean
-        });
-
-        wsRef.current = null;
-
-        // Clear any existing timeouts
-        if (connectTimeoutRef.current) {
-          clearTimeout(connectTimeoutRef.current);
-        }
-        if (reconnectTimeoutRef.current) {
-          clearTimeout(reconnectTimeoutRef.current);
-        }
-
-        // Only attempt reconnect if it's not an intentional close
-        if (event.code !== 1000) {
-          if (!window.navigator.onLine) {
-            console.log('Network is offline, will retry when online');
-            return;
-          }
-
-          if (reconnectAttempts.current < maxReconnectAttempts) {
-            const timeout = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 10000);
-            console.log(`Attempting reconnect in ${timeout}ms (attempt ${reconnectAttempts.current + 1}/${maxReconnectAttempts})`);
-
-            reconnectTimeoutRef.current = setTimeout(() => {
-              reconnectAttempts.current += 1;
-              connect();
-            }, timeout);
-          } else {
-            console.warn('Max reconnection attempts reached');
-            toast({
-              title: "Connection Lost",
-              description: "Unable to maintain connection to server. Please refresh the page.",
-              variant: "destructive"
-            });
+        console.log('WebSocket closed:', event.code, event.reason);
+        
+        if (isMounted.current) {
+          // Only attempt to reconnect if the closure wasn't clean/intentional
+          if (event.code !== 1000 && event.code !== 1001) {
+            handleReconnect(new Error(`Connection closed (${event.code}): ${event.reason || 'No reason provided'}`));
           }
         }
       };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        if (ws.readyState === WebSocket.CONNECTING) {
-          ws.close();
-        }
-      };
-
     } catch (error) {
-      console.error('Error creating WebSocket:', error);
-      toast({
-        title: "Connection Error",
-        description: "Failed to establish WebSocket connection. Please refresh the page.",
-        variant: "destructive"
-      });
+      console.error('WebSocket setup error:', error);
+      if (isMounted.current) {
+        handleReconnect(error instanceof Error ? error : new Error('Failed to setup WebSocket'));
+      }
     }
   };
 
-  useEffect(() => {
-    connect();
+  const handleReconnect = (error: Error) => {
+    if (reconnectAttempts.current >= maxReconnectAttempts) {
+      console.error('Maximum reconnection attempts reached:', error);
+      toast({
+        title: "Connection Failed",
+        description: "Unable to establish a connection after multiple attempts.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    // Setup online/offline handlers
-    const handleOnline = () => {
-      console.log('Network is online, attempting to reconnect');
-      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-        reconnectAttempts.current = 0; // Reset attempts when coming back online
+    reconnectAttempts.current++;
+    console.log(`Reconnecting (attempt ${reconnectAttempts.current}/${maxReconnectAttempts})...`);
+    
+    // Clear any existing reconnect timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
+    
+    // Exponential backoff: 1s, 2s, 4s, 8s, 16s
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current - 1), 30000);
+    
+    reconnectTimeoutRef.current = setTimeout(() => {
+      if (isMounted.current) {
         connect();
       }
-    };
+    }, delay);
+  };
 
-    const handleOffline = () => {
-      console.log('Network is offline');
-      if (wsRef.current) {
-        wsRef.current.close(1000, 'Network offline');
-      }
-    };
+  const handleOnline = () => {
+    console.log('Device came online, attempting to reconnect...');
+    if (wsRef.current?.readyState !== WebSocket.OPEN) {
+      connect();
+    }
+  };
+
+  const handleOffline = () => {
+    console.log('Device went offline, WebSocket connections will fail');
+    toast({
+      title: "Offline",
+      description: "You appear to be offline. Some features may be unavailable.",
+      variant: "default",
+    });
+  };
+
+  useEffect(() => {
+    isMounted.current = true;
+    console.log('Initializing WebSocket connection...');
+    
+    connect();
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
     return () => {
+      isMounted.current = false;
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
 
@@ -162,6 +172,7 @@ export function useWebSocket() {
       console.warn('WebSocket not ready, message not sent:', data);
       return false;
     }
+    
     try {
       wsRef.current.send(JSON.stringify(data));
       return true;

@@ -45,7 +45,13 @@ function WebSocketProvider({ children }: { children: React.ReactNode }) {
     // Handle unhandled promise rejections
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       event.preventDefault(); // Prevent the default handling
-      console.error('Unhandled promise rejection:', event.reason);
+      
+      console.error('Unhandled promise rejection:', {
+        reason: event.reason,
+        stack: event.reason?.stack,
+        message: event.reason?.message,
+        timestamp: new Date().toISOString()
+      });
 
       toast({
         title: "Error",
@@ -54,10 +60,33 @@ function WebSocketProvider({ children }: { children: React.ReactNode }) {
       });
     };
 
+    // Handle uncaught errors
+    const handleError = (event: ErrorEvent) => {
+      event.preventDefault();
+      
+      console.error('Uncaught error:', {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        error: event.error,
+        stack: event.error?.stack,
+        timestamp: new Date().toISOString()
+      });
+      
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    };
+
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener('error', handleError);
 
     return () => {
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener('error', handleError);
     };
   }, [toast]);
 
