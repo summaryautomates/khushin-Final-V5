@@ -117,22 +117,43 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
         // Close existing connection if it exists
         const existingConnection = activeConnections.get(ws.sessionId);
         if (existingConnection) {
-          existingConnection.close(1000, 'New connection established');
+          try {
+            existingConnection.close(1000, 'New connection established');
+          } catch (err) {
+            console.warn('Error closing existing connection:', err);
+          }
         }
         activeConnections.set(ws.sessionId, ws);
       }
 
-      ws.send(JSON.stringify({
-        type: 'connected',
-        data: {
-          userId: ws.userId,
-          isAuthenticated: !!ws.userId,
-          timestamp: new Date().toISOString()
-        }
-      }));
+      try {
+        ws.send(JSON.stringify({
+          type: 'connected',
+          data: {
+            userId: ws.userId,
+            isAuthenticated: !!ws.userId,
+            timestamp: new Date().toISOString()
+          }
+        }));
+      } catch (sendError) {
+        console.error('Error sending initial message:', sendError);
+      }
 
       ws.on('pong', () => {
         ws.isAlive = true;
+      });
+
+      ws.on('message', (message) => {
+        try {
+          // Basic message handling to prevent unhandled messages
+          console.log('WebSocket message received:', {
+            userId: ws.userId,
+            sessionId: ws.sessionId,
+            timestamp: new Date().toISOString()
+          });
+        } catch (msgError) {
+          console.error('Error handling message:', msgError);
+        }
       });
 
       ws.on('error', (error) => {
@@ -152,7 +173,11 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
 
     } catch (error) {
       console.error('Connection handling error:', error);
-      ws.close(1011, 'Server error');
+      try {
+        ws.close(1011, 'Server error');
+      } catch (closeError) {
+        console.error('Error closing WebSocket after error:', closeError);
+      }
     }
   });
 

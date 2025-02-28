@@ -5,3 +5,9 @@
   <circle cx="100" cy="85" r="12" fill="#a0a0a0"/>
   <text x="100" y="180" font-family="Arial" font-size="14" text-anchor="middle" fill="#808080">Product Image</text>
 </svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" fill="#1E1E1E"/>
+  <path d="M100 70C88.954 70 80 78.954 80 90C80 101.046 88.954 110 100 110C111.046 110 120 101.046 120 90C120 78.954 111.046 70 100 70Z" fill="#333333"/>
+  <path d="M140 130H60C57.7909 130 56 131.791 56 134V146C56 148.209 57.7909 150 60 150H140C142.209 150 144 148.209 144 146V134C144 131.791 142.209 130 140 130Z" fill="#333333"/>
+  <text x="100" y="180" text-anchor="middle" fill="#666666" font-family="Arial" font-size="14">Product Image</text>
+</svg>

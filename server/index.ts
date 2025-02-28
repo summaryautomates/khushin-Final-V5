@@ -226,7 +226,11 @@ process.on('unhandledRejection', (error) => {
     stack: error instanceof Error ? error.stack : undefined,
     timestamp: new Date().toISOString()
   });
-  process.exit(1);
+  
+  // Don't exit the process in development mode to allow recovery
+  if (process.env.NODE_ENV === 'production') {
+    process.exit(1);
+  }
 });
 
 startServer().catch(error => {

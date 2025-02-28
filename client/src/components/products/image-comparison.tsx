@@ -88,7 +88,7 @@ export function ImageComparison({ images, titles }: ImageComparisonProps) {
     if (errors[index] || imageErrors[index]) {
       // Ensure we have a valid fallback image
       console.log(`Using fallback image for index ${index}`);
-      return FALLBACK_IMAGES[fallbackImageIndex % FALLBACK_IMAGES.length] || '/placeholders/product-placeholder.svg';
+      return '/placeholders/product-placeholder.svg';
     }
     
     // Check if the image URL is valid before returning
@@ -117,10 +117,15 @@ export function ImageComparison({ images, titles }: ImageComparisonProps) {
     // Log detailed error information
     console.error(`Image loading failed at index ${index}:`, {
       originalUrl: images[index],
-      fallbackUrl: getValidProductImage(index),
+      fallbackUrl: '/placeholders/product-placeholder.svg',
       errorCount: Object.values(imageErrors).filter(Boolean).length,
       timestamp: new Date().toISOString()
     });
+    
+    // Set image error state to trigger fallback
+    const newImageErrors = { ...imageErrors };
+    newImageErrors[index] = true;
+    setImageErrors(newImageErrors);
 
     setImageErrors(prev => ({ ...prev, [index]: true }));
     setImageLoadingStates(prev => ({ ...prev, [index]: false }));
