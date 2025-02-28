@@ -99,6 +99,13 @@ export function ImageComparison({ images, titles }: ImageComparisonProps) {
       return '/placeholders/product-placeholder.svg';
     }
     
+    // Handle relative URLs properly
+    if (imageUrl.startsWith('/') && !imageUrl.startsWith('/placeholders/')) {
+      const fixedUrl = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+      console.log(`Using relative image URL at index ${index}: ${fixedUrl}`);
+      return fixedUrl;
+    }
+    
     // Log the image URL we're trying to use
     console.log(`Using image URL at index ${index}: ${imageUrl}`);
     return imageUrl;

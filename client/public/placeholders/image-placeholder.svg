@@ -1,12 +1,4 @@
 
-<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" fill="none">
-  <rect width="400" height="400" fill="#F8F9FA"/>
-  <rect x="100" y="100" width="200" height="160" rx="8" fill="#E9ECEF"/>
-  <path d="M140 140L180 180M180 140L140 180" stroke="#ADB5BD" stroke-width="6" stroke-linecap="round"/>
-  <circle cx="230" cy="160" r="30" fill="#ADB5BD"/>
-  <path d="M120 220L160 180L190 210L230 190L280 240" stroke="#ADB5BD" stroke-width="4"/>
-  <text x="200" y="280" font-family="Arial" font-size="16" text-anchor="middle" fill="#6C757D">Image</text>
-</svg>
 <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
   <rect width="200" height="200" fill="#f5f5f5"/>
   <path d="M80,60 L120,60 L120,140 L80,140 Z" fill="#e0e0e0"/>

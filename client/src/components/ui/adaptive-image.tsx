@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Loader2, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -5,7 +6,7 @@ import { cn } from "@/lib/utils";
 // Default fallback images that will be tried in order
 const FALLBACK_IMAGES = [
   "/placeholders/product-placeholder.svg",
-  "/placeholders/error-placeholder.svg" // Final fallback
+  "/placeholders/image-placeholder.svg" // Final fallback
 ];
 
 interface AdaptiveImageProps {
@@ -13,7 +14,6 @@ interface AdaptiveImageProps {
   alt: string;
   className?: string;
   containerClassName?: string;
-  objectFit?: "cover" | "contain" | "fill" | "none" | "scale-down";
   onLoadSuccess?: () => void;
   onLoadFailure?: () => void;
   fallbackSrc?: string;
@@ -22,87 +22,91 @@ interface AdaptiveImageProps {
 export function AdaptiveImage({
   src,
   alt,
-  className = "",
-  containerClassName = "",
-  objectFit = "cover",
+  className,
+  containerClassName,
   onLoadSuccess,
   onLoadFailure,
-  fallbackSrc
+  fallbackSrc = "/placeholders/product-placeholder.svg"
 }: AdaptiveImageProps) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [currentSrc, setCurrentSrc] = useState<string>(src);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<boolean>(false);
-  const [fallbackIndex, setFallbackIndex] = useState<number>(0);
-  const attemptedSrcs = useRef<Set<string>>(new Set());
+  const [fallbackIndex, setFallbackIndex] = useState(0);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const mounted = useRef(true);
 
-  // Reset state when src changes
   useEffect(() => {
-    if (src !== currentSrc && !attemptedSrcs.current.has(src)) {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (src !== currentSrc && !error) {
       setCurrentSrc(src);
       setLoading(true);
       setError(false);
     }
-  }, [src, currentSrc]);
+  }, [src]);
 
-  const handleImageLoad = () => {
-    setLoading(false);
-    setError(false);
-    if (onLoadSuccess) onLoadSuccess();
-    console.log(`Image loaded successfully: ${currentSrc}`);
+  const handleLoad = () => {
+    if (mounted.current) {
+      console.log(`Image loaded successfully: ${currentSrc}`);
+      setLoading(false);
+      setError(false);
+      if (onLoadSuccess) onLoadSuccess();
+    }
   };
 
-  const handleImageError = () => {
-    console.error(`Image load error: ${currentSrc}`);
-    attemptedSrcs.current.add(currentSrc);
-
-    // Try custom fallback first if provided
-    if (fallbackSrc && !attemptedSrcs.current.has(fallbackSrc)) {
-      setCurrentSrc(fallbackSrc);
-      return;
-    }
-
-    // Otherwise try our array of fallbacks
+  const handleError = () => {
+    if (!mounted.current) return;
+    
+    console.error(`Image load error: Failed to load image: ${currentSrc}`);
+    
     if (fallbackIndex < FALLBACK_IMAGES.length) {
-      const nextFallback = FALLBACK_IMAGES[fallbackIndex];
-      if (!attemptedSrcs.current.has(nextFallback)) {
-        setCurrentSrc(nextFallback);
-        setFallbackIndex(fallbackIndex + 1);
-        return;
-      }
+      const nextFallback = fallbackSrc || FALLBACK_IMAGES[fallbackIndex];
+      console.log(`Trying fallback image: ${nextFallback}`);
+      setCurrentSrc(nextFallback);
+      setFallbackIndex(prev => prev + 1);
+    } else {
+      setError(true);
+      setLoading(false);
+      if (onLoadFailure) onLoadFailure();
     }
-
-    // If we've tried all fallbacks, show error state
-    setLoading(false);
-    setError(true);
-    if (onLoadFailure) onLoadFailure();
   };
+
+  // Check if src is empty or invalid
+  const validatedSrc = currentSrc && currentSrc.trim() !== '' 
+    ? currentSrc 
+    : (fallbackSrc || FALLBACK_IMAGES[0]);
 
   return (
     <div className={cn("relative", containerClassName)}>
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted/20">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="absolute inset-0 flex items-center justify-center bg-zinc-100 rounded-md">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       )}
-
-      {error ? (
-        <div className="w-full h-full flex items-center justify-center bg-muted/10">
-          <ImageIcon className="h-10 w-10 text-muted-foreground" />
+      
+      {error && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-100 rounded-md p-2">
+          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+          <p className="text-xs text-muted-foreground mt-2 text-center">Image not available</p>
         </div>
-      ) : (
-        <img
-          src={currentSrc}
-          alt={alt}
-          className={cn(
-            "transition-opacity duration-300",
-            loading ? "opacity-0" : "opacity-100",
-            `object-${objectFit}`,
-            className
-          )}
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-        />
       )}
+      
+      <img
+        ref={imageRef}
+        src={validatedSrc}
+        alt={alt || "Image"}
+        className={cn("transition-opacity duration-300", 
+          loading || error ? "opacity-0" : "opacity-100", 
+          className
+        )}
+        onLoad={handleLoad}
+        onError={handleError}
+      />
     </div>
   );
 }
