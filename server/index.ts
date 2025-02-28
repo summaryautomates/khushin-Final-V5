@@ -25,7 +25,7 @@ async function forceCleanupPort(port: number) {
 async function startServer() {
   const app = express();
   const isProduction = process.env.NODE_ENV === 'production';
-  const REQUIRED_PORT = 5000;
+  const REQUIRED_PORT = 3000;
   const MAX_STARTUP_RETRIES = 3;
   let startupAttempts = 0;
 
@@ -116,19 +116,18 @@ async function startServer() {
       await setupVite(app, server);
       console.log('Vite setup complete');
 
-      // Attempt to acquire and bind to the required port
-      console.log(`Attempting to acquire port ${REQUIRED_PORT}...`);
-      const port = await portManager.acquirePort(REQUIRED_PORT, REQUIRED_PORT);
-
-      if (port !== REQUIRED_PORT) {
-        throw new Error(`Failed to acquire required port ${REQUIRED_PORT}. Got port ${port} instead.`);
-      }
+      // Attempt to acquire a port, preferring the required port but accepting others
+      console.log(`Attempting to acquire port ${REQUIRED_PORT} or another available port...`);
+      const port = await portManager.acquirePort(REQUIRED_PORT, REQUIRED_PORT + 100);
+      
+      console.log(`Successfully acquired port ${port}${port !== REQUIRED_PORT ? ` (preferred was ${REQUIRED_PORT})` : ''}`);
 
       // Start the server
       await new Promise<void>((resolve, reject) => {
         const serverInstance = server.listen(port, '0.0.0.0', () => {
           console.log('Server successfully started:', {
             url: `http://0.0.0.0:${port}`,
+            publicUrl: `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`,
             environment: process.env.NODE_ENV,
             websocketEndpoint: `ws://0.0.0.0:${port}/ws`,
             timestamp: new Date().toISOString()

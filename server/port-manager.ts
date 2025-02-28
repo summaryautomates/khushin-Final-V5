@@ -58,7 +58,7 @@ export class PortManager {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  async acquirePort(startPort: number = 5000, endPort: number = 5100): Promise<number> {
+  async acquirePort(startPort: number = 3000, endPort: number = 5100): Promise<number> {
     // If we already have a port, release it first
     if (this.currentPort !== null) {
       this.releasePort(this.currentPort);
@@ -70,7 +70,34 @@ export class PortManager {
     this.cleanupAllLocks();
     await this.sleep(1000); // Wait for any cleanup to complete
 
-    for (let port = startPort; port <= endPort; port++) {
+    // Try preferred port first
+    try {
+      console.log(`Testing preferred port ${startPort}...`);
+      await this.testPort(startPort);
+      
+      // If we get here, the preferred port is available
+      const lockPath = this.getLockPath(startPort);
+      fs.writeFileSync(lockPath, process.pid.toString(), { flag: 'wx' });
+      this.lockFiles.add(lockPath);
+      this.currentPort = startPort;
+      
+      console.log(`Successfully acquired preferred port ${startPort}`);
+      return startPort;
+    } catch (err) {
+      console.log(`Preferred port ${startPort} is not available: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      // Continue to try other ports
+    }
+
+    // Try other ports in the range
+    const portsToTry = Array.from(
+      { length: endPort - startPort }, 
+      (_, i) => startPort + i + 1
+    );
+    
+    // Shuffle the ports to avoid contention
+    portsToTry.sort(() => Math.random() - 0.5);
+
+    for (const port of portsToTry) {
       console.log(`Testing port ${port}...`);
 
       try {
