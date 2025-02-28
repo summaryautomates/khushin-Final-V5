@@ -29,18 +29,16 @@ export function Header() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 md:h-20 items-center justify-between">
           <Link href="/" className="flex items-center space-x-2">
-            <div className="relative w-36 md:w-48 h-12 md:h-16 flex items-center">
+            <div className="relative w-24 md:w-32 h-12 md:h-16 flex items-center group transition-transform duration-300 hover:scale-105">
               <img
-                src="https://i.imghippo.com/files/vBvE2134ap.png"
+                src="/assets/Remove background project.png"
                 alt="KHUSH.IN Logo"
-                className="w-full h-full object-contain mix-blend-screen"
+                className="w-full h-full object-contain transition-all duration-300"
                 style={{
-                  maxHeight: "100%",
-                  width: "auto",
-                  filter: "brightness(1.2) contrast(1.1)",
-                  backgroundColor: "transparent",
+                  filter: "brightness(1.1) contrast(1.05)",
                 }}
               />
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             </div>
           </Link>
 
