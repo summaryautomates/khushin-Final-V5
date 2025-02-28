@@ -84,20 +84,30 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
   const MAX_CONNECTIONS = 1000;
   const activeConnections = new Map<string, AuthenticatedWebSocket>();
 
-  // Heartbeat interval (every 30 seconds)
+  // Heartbeat interval (every 20 seconds)
   const heartbeatInterval = setInterval(() => {
     wss.clients.forEach((ws: WebSocket) => {
       const client = ws as AuthenticatedWebSocket;
       if (!client.isAlive) {
+        console.log('Terminating inactive WebSocket connection', {
+          sessionId: client.sessionId,
+          userId: client.userId,
+          timestamp: new Date().toISOString()
+        });
         if (client.sessionId) {
           activeConnections.delete(client.sessionId);
         }
         return client.terminate();
       }
       client.isAlive = false;
-      client.ping();
+      try {
+        client.ping();
+      } catch (error) {
+        console.error('Error sending ping:', error);
+        client.terminate();
+      }
     });
-  }, 30000);
+  }, 20000);
 
   wss.on('connection', async (ws: AuthenticatedWebSocket, req) => {
     try {
@@ -145,10 +155,38 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
 
       ws.on('message', (message) => {
         try {
-          // Basic message handling to prevent unhandled messages
+          // Parse the message if it's a string
+          let parsedMessage;
+          try {
+            if (typeof message === 'string') {
+              parsedMessage = JSON.parse(message);
+            } else if (message instanceof Buffer) {
+              parsedMessage = JSON.parse(message.toString());
+            }
+          } catch (parseError) {
+            console.warn('Failed to parse WebSocket message:', {
+              error: parseError instanceof Error ? parseError.message : 'Unknown error',
+              timestamp: new Date().toISOString()
+            });
+            return;
+          }
+
+          // Handle ping message specifically
+          if (parsedMessage && parsedMessage.type === 'ping') {
+            ws.isAlive = true;
+            try {
+              ws.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
+            } catch (sendError) {
+              console.error('Error sending pong:', sendError);
+            }
+            return;
+          }
+
+          // Log other messages
           console.log('WebSocket message received:', {
             userId: ws.userId,
             sessionId: ws.sessionId,
+            type: parsedMessage?.type,
             timestamp: new Date().toISOString()
           });
         } catch (msgError) {

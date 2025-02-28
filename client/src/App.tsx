@@ -91,11 +91,30 @@ function WebSocketProvider({ children }: { children: React.ReactNode }) {
         timestamp: new Date().toISOString()
       });
       
+      // Only show one toast for multiple similar errors within 5 seconds
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
+      }, { id: 'global-error' });
+    };
+    
+    // Handle unhandled promise rejections
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      event.preventDefault();
+      
+      console.error('Unhandled rejection:', {
+        reason: event.reason,
+        stack: event.reason?.stack,
+        timestamp: new Date().toISOString()
       });
+      
+      // Only show one toast for multiple similar errors within 5 seconds
+      toast({
+        title: "Connection Error",
+        description: "A network request failed. Please check your connection.",
+        variant: "destructive",
+      }, { id: 'network-error' });
     };
 
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
