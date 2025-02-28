@@ -26,6 +26,23 @@ export const products = pgTable('products', {
   created_at: timestamp('created_at').defaultNow().notNull()
 });
 
+// Orders table definition
+export const orders = pgTable('orders', {
+  id: serial('id').primaryKey(),
+  orderRef: varchar('order_ref', { length: 255 }).notNull().unique(),
+  userId: varchar('user_id', { length: 255 }).notNull(),
+  status: varchar('status', { length: 50 }).notNull().default('pending'),
+  total: integer('total').notNull(),
+  items: jsonb('items').notNull(),
+  shipping: jsonb('shipping').notNull(),
+  paymentMethod: varchar('payment_method', { length: 50 }),
+  trackingNumber: varchar('tracking_number', { length: 255 }),
+  trackingStatus: varchar('tracking_status', { length: 50 }),
+  estimatedDelivery: timestamp('estimated_delivery'),
+  lastUpdated: timestamp('last_updated').notNull().defaultNow(),
+  createdAt: timestamp('created_at').notNull().defaultNow()
+});
+
 // Type definitions for User
 export interface User {
   id: number;
