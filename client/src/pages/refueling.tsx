@@ -269,14 +269,20 @@ const Refueling = () => {
                   </ul>
                   <div className="pt-4 mt-auto">
                     <Button
-                      variant="outline"
-                      className="w-full"
+                      variant="ghost" 
+                      className="p-0 h-auto w-full focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-transparent"
                       onClick={() => {
                         window.open('https://khushi.setmore.com/saransh', '_blank');
                       }}
                     >
-                      Book Refuel Session
-                      <ChevronRight className="w-4 h-4 ml-2" />
+                      <img 
+                        src="https://i.imghippo.com/files/PULj456MlW.png" 
+                        alt="Book Refuel Session" 
+                        className="w-auto max-h-28 mx-auto hover:opacity-90 transition-opacity"
+                        style={{ 
+                          filter: "drop-shadow(0 0 10px rgba(255, 255, 0, 0.3))"
+                        }}
+                      />
                     </Button>
                   </div>
                 </CardContent>
