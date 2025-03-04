@@ -9,7 +9,7 @@ import { portManager } from './port-manager';
 import { db, checkDatabaseHealth } from './db';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import path from 'path'; // Import path module
+import path from 'path';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -30,7 +30,7 @@ async function forceCleanupPort(port: number) {
 async function startServer() {
   const app = express();
   const isProduction = process.env.NODE_ENV === 'production';
-  const REQUIRED_PORT = 3000;
+  const REQUIRED_PORT = 5000; // Changed from 3000 to 5000 to match workflow requirements
   const MAX_STARTUP_RETRIES = 3;
   let startupAttempts = 0;
   let server: any = null;
@@ -103,7 +103,7 @@ async function startServer() {
 
       // Health check endpoint
       app.get('/api/health', (_req, res) => {
-        res.json({ 
+        res.json({
           status: 'ok',
           timestamp: Date.now(),
           websocket: 'enabled',
@@ -178,7 +178,7 @@ async function startServer() {
           if (wss) {
             const clientCount = wss.clients.size;
             console.log(`Notifying ${clientCount} WebSocket clients of shutdown`);
-            
+
             wss.clients.forEach((client) => {
               try {
                 if (client.readyState === WebSocket.OPEN) {
@@ -193,7 +193,7 @@ async function startServer() {
                 console.error('Error notifying client of shutdown:', error);
               }
             });
-            
+
             await new Promise<void>((resolve) => {
               wss.close(() => {
                 console.log('WebSocket server closed');

@@ -68,10 +68,10 @@ export function CartItem({
   };
 
   return (
-    <Card className="p-4">
-      <div className="flex items-start gap-4">
-        {/* Product Image with better error handling */}
-        <div className="w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-lg overflow-hidden relative">
+    <Card className="p-4 transition-all duration-300 hover:shadow-md">
+      <div className="flex items-start gap-6">
+        {/* Product Image */}
+        <div className="w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-lg overflow-hidden relative flex-shrink-0">
           <AdaptiveImage
             src={product.images?.[0] || ""}
             alt={product.name}
@@ -81,23 +81,23 @@ export function CartItem({
         </div>
 
         {/* Product Details */}
-        <div className="flex-1 space-y-2">
+        <div className="flex-1 min-w-0 space-y-3">
           <div>
-            <h3 className="font-medium">{product.name}</h3>
-            <p className="text-sm text-muted-foreground mt-1">{product.description}</p>
-            <p className="text-lg font-semibold mt-1">₹{(product.price / 100).toLocaleString('en-IN')}</p>
+            <h3 className="font-medium text-lg truncate">{product.name}</h3>
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{product.description}</p>
+            <p className="text-lg font-semibold mt-2">₹{(product.price / 100).toLocaleString('en-IN')}</p>
           </div>
 
           {/* Gift Toggle */}
           {onUpdateGiftStatus && (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-3">
               <Switch
                 id={`gift-toggle-${product.id}`}
                 checked={isGift}
                 onCheckedChange={handleGiftToggle}
                 disabled={isUpdating}
               />
-              <Label htmlFor={`gift-toggle-${product.id}`} className="flex items-center gap-2">
+              <Label htmlFor={`gift-toggle-${product.id}`} className="flex items-center gap-2 cursor-pointer">
                 <Gift className="h-4 w-4" />
                 Mark as Gift
               </Label>
@@ -108,7 +108,7 @@ export function CartItem({
                       {giftMessage ? "Edit Message" : "Add Message"}
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                       <DialogTitle>Gift Message</DialogTitle>
                     </DialogHeader>
@@ -117,7 +117,7 @@ export function CartItem({
                         placeholder="Enter your gift message here..."
                         value={localGiftMessage}
                         onChange={(e) => setLocalGiftMessage(e.target.value)}
-                        className="min-h-[100px]"
+                        className="min-h-[100px] resize-none"
                       />
                       <div className="flex justify-end gap-2">
                         <Button
@@ -139,11 +139,11 @@ export function CartItem({
         </div>
 
         {/* Quantity Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ml-4">
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 rounded-full"
             onClick={handleDecrement}
             disabled={isUpdating || quantity <= 1}
           >
@@ -153,11 +153,11 @@ export function CartItem({
               <Minus className="h-4 w-4" />
             )}
           </Button>
-          <span className="w-8 text-center">{quantity}</span>
+          <span className="w-8 text-center font-medium">{quantity}</span>
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 rounded-full"
             onClick={handleIncrement}
             disabled={isUpdating || quantity >= 10}
           >
@@ -173,7 +173,7 @@ export function CartItem({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+          className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors"
           onClick={handleRemove}
           disabled={isUpdating}
         >

@@ -269,16 +269,16 @@ export default function ComparePage() {
                 </div>
                 {group.attributes.map((attribute) => (
                   <div key={attribute.key} className="grid grid-cols-[200px_repeat(auto-fit,minmax(250px,1fr))]">
-                    <div className="bg-muted/30 px-4 py-4 font-medium flex items-center">
+                    <div className="bg-muted/30 px-4 py-4 font-medium flex items-center min-h-[50px]">
                       {attribute.label}
                     </div>
                     {items.map((product, index) => (
-                      <div key={`${attribute.key}-${product.id}`} className="relative">
+                      <div key={`${attribute.key}-${product.id}`} className="relative min-h-[50px]">
                         {index === 0 && attribute.key === "image" && (
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="absolute -top-2 -right-2 z-10"
+                            className="absolute -top-2 -right-2 z-10 hover:bg-primary/10"
                             onClick={() => removeItem(product.id)}
                           >
                             <X className="h-4 w-4" />

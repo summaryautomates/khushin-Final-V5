@@ -37,27 +37,43 @@ export function ShareButtons({ url, title, description, image }: ShareButtonsPro
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="rounded-full">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          className="rounded-full hover:bg-primary/10 transition-colors"
+        >
           <Share2 className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem onClick={() => handleShare('facebook')} className="cursor-pointer">
-          <Facebook className="mr-2 h-4 w-4" />
-          <span>Facebook</span>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuItem 
+          onClick={() => handleShare('facebook')} 
+          className="cursor-pointer px-4 py-2 hover:bg-primary/10"
+        >
+          <Facebook className="mr-3 h-4 w-4 text-blue-600" />
+          <span>Share on Facebook</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShare('twitter')} className="cursor-pointer">
-          <Twitter className="mr-2 h-4 w-4" />
-          <span>Twitter</span>
+        <DropdownMenuItem 
+          onClick={() => handleShare('twitter')} 
+          className="cursor-pointer px-4 py-2 hover:bg-primary/10"
+        >
+          <Twitter className="mr-3 h-4 w-4 text-sky-500" />
+          <span>Share on Twitter</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShare('whatsapp')} className="cursor-pointer">
-          <SiWhatsapp className="mr-2 h-4 w-4" />
-          <span>WhatsApp</span>
+        <DropdownMenuItem 
+          onClick={() => handleShare('whatsapp')} 
+          className="cursor-pointer px-4 py-2 hover:bg-primary/10"
+        >
+          <SiWhatsapp className="mr-3 h-4 w-4 text-green-600" />
+          <span>Share on WhatsApp</span>
         </DropdownMenuItem>
         {shareLinks.pinterest && (
-          <DropdownMenuItem onClick={() => handleShare('pinterest')} className="cursor-pointer">
-            <SiPinterest className="mr-2 h-4 w-4" />
-            <span>Pinterest</span>
+          <DropdownMenuItem 
+            onClick={() => handleShare('pinterest')} 
+            className="cursor-pointer px-4 py-2 hover:bg-primary/10"
+          >
+            <SiPinterest className="mr-3 h-4 w-4 text-red-600" />
+            <span>Save to Pinterest</span>
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>
