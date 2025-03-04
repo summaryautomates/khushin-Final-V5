@@ -34,15 +34,27 @@ const Refueling = () => {
               className="relative"
             >
               <a href="https://khushi.setmore.com/saransh" target="_blank" rel="noopener noreferrer">
-                <img 
-                  src="https://i.imghippo.com/files/cfz5924gY.png" 
-                  alt="Book Your Appointment" 
-                  className="h-44 w-auto object-contain"
+                <div 
+                  className="h-44 w-60 flex flex-col items-center justify-center bg-black border-2 border-yellow-400 rounded-full p-4 mx-auto"
                   style={{ 
-                    filter: "drop-shadow(0 0 20px rgba(255, 255, 255, 1))",
-                    maxWidth: "280px"
+                    filter: "drop-shadow(0 0 20px rgba(255, 255, 0, 0.4))",
                   }}
-                />
+                >
+                  <div className="text-yellow-400 text-sm mb-1">Since 2000</div>
+                  <div className="text-yellow-400 font-bold text-3xl mb-2">APPOINTMENT</div>
+                  <div className="text-yellow-400 font-bold text-3xl mb-3">BOOKING</div>
+                  <div className="flex justify-between w-full px-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                    </svg>
+                  </div>
+                </div>
               </a>
             </motion.div>
 
