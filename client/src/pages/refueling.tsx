@@ -84,7 +84,7 @@ const Refueling = () => {
             </motion.div>
 
             {/* Shop Button */}
-            
+
           </div>
         </div>
       </section>
@@ -287,18 +287,14 @@ const Refueling = () => {
                         window.open('https://khushi.setmore.com/saransh', '_blank');
                       }}
                     >
-                      <div 
-                        className="bg-black border-2 border-yellow-400 rounded-lg py-3 px-5 text-center hover:opacity-90 transition-opacity"
+                      <img 
+                        src="/images/appointment-booking-badge.png" 
+                        alt="Appointment Booking Since 2000" 
+                        className="w-auto max-h-36 mx-auto hover:opacity-90 transition-opacity"
                         style={{ 
                           filter: "drop-shadow(0 0 10px rgba(255, 255, 0, 0.3))"
                         }}
-                      >
-                        <div className="text-yellow-400 font-bold text-lg">APPOINTMENT</div>
-                        <div className="text-yellow-400 font-bold text-xl mb-2">BOOKING</div>
-                        <div className="flex justify-center items-center gap-4">
-                          <div className="text-yellow-400 text-sm">Since 2000</div>
-                        </div>
-                      </div>
+                      />
                     </Button>
                   </div>
                 </CardContent>
