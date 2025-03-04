@@ -35,7 +35,7 @@ const Refueling = () => {
             >
               <a href="https://khushi.setmore.com/saransh" target="_blank" rel="noopener noreferrer">
                 <img 
-                  src="/images/appointment-booking-badge.png" 
+                  src="/images/appointment-badge.png" 
                   alt="Appointment Booking Since 2000" 
                   className="w-auto max-h-52 mx-auto hover:opacity-90 transition-opacity"
                   style={{ 
@@ -132,7 +132,7 @@ const Refueling = () => {
             viewport={{ once: true, margin: "-100px" }}
             className="max-w-5xl mx-auto"
           >
-            {/* Shop Button Moved Here */}
+            {/* Shop Button */}
             <div className="flex justify-center mb-12">
               <Button 
                 variant="ghost" 
@@ -272,7 +272,7 @@ const Refueling = () => {
                       }}
                     >
                       <img 
-                        src="/images/appointment-booking-badge.png" 
+                        src="/images/appointment-badge.png" 
                         alt="Appointment Booking Since 2000" 
                         className="w-auto max-h-36 mx-auto hover:opacity-90 transition-opacity"
                         style={{ 
