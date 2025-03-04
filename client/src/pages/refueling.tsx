@@ -275,14 +275,18 @@ const Refueling = () => {
                         window.open('https://khushi.setmore.com/saransh', '_blank');
                       }}
                     >
-                      <img 
-                        src="https://i.imghippo.com/files/PULj456MlW.png" 
-                        alt="Book Refuel Session" 
-                        className="w-auto max-h-28 mx-auto hover:opacity-90 transition-opacity"
+                      <div 
+                        className="bg-black border-2 border-yellow-400 rounded-lg py-3 px-5 text-center hover:opacity-90 transition-opacity"
                         style={{ 
                           filter: "drop-shadow(0 0 10px rgba(255, 255, 0, 0.3))"
                         }}
-                      />
+                      >
+                        <div className="text-yellow-400 font-bold text-lg">APPOINTMENT</div>
+                        <div className="text-yellow-400 font-bold text-xl mb-2">BOOKING</div>
+                        <div className="flex justify-center items-center gap-4">
+                          <div className="text-yellow-400 text-sm">Since 2000</div>
+                        </div>
+                      </div>
                     </Button>
                   </div>
                 </CardContent>
