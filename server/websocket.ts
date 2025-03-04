@@ -17,15 +17,22 @@ interface ExtendedSessionData extends SessionData {
 }
 
 export function setupWebSocket(server: Server, sessionMiddleware: any) {
-  const wss = new WebSocketServer({ 
+  const wss = new WebSocketServer({
     server,
     path: '/ws',
     clientTracking: true,
     verifyClient: async (info: any, callback: any) => {
       try {
-        // Apply session middleware
+        // Create a mock response object for session middleware
+        const res: any = {
+          setHeader: () => {},
+          getHeader: () => {},
+          removeHeader: () => {}
+        };
+
+        // Apply session middleware with promise wrapper
         await new Promise<void>((resolve, reject) => {
-          sessionMiddleware(info.req, {}, (err: Error) => {
+          sessionMiddleware(info.req, res, (err: Error) => {
             if (err) {
               console.error('Session middleware error:', {
                 error: err.message,
@@ -41,17 +48,29 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
 
         const session = info.req.session as ExtendedSessionData;
 
-        // In development, allow all connections but log authentication status
+        // Debug session state
+        console.log('WebSocket authentication details:', {
+          sessionExists: !!session,
+          sessionId: session?.id,
+          hasPassport: !!session?.passport,
+          userId: session?.passport?.user,
+          cookies: info.req.headers.cookie,
+          timestamp: new Date().toISOString(),
+          headers: info.req.headers
+        });
+
+        // In development, allow connections but mark auth status
         const isProduction = process.env.NODE_ENV === 'production';
         const isAuthenticated = !!session?.passport?.user;
 
-        console.log('WebSocket authentication check:', {
-          sessionExists: !!session,
-          isAuthenticated,
-          userId: session?.passport?.user,
-          timestamp: new Date().toISOString()
-        });
+        // Always accept in development, check auth in production
+        if (isProduction && !isAuthenticated) {
+          console.warn('Production WebSocket connection rejected - not authenticated');
+          callback(false, 401, 'Unauthorized');
+          return;
+        }
 
+        // Allow connection with auth info
         callback(true, undefined, undefined, {
           isAuthenticated,
           sessionId: session?.id,
@@ -84,7 +103,7 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
   const MAX_CONNECTIONS = 1000;
   const activeConnections = new Map<string, AuthenticatedWebSocket>();
 
-  // Heartbeat interval (every 20 seconds)
+  // Heartbeat interval (every 30 seconds)
   const heartbeatInterval = setInterval(() => {
     wss.clients.forEach((ws: WebSocket) => {
       const client = ws as AuthenticatedWebSocket;
@@ -107,7 +126,7 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
         client.terminate();
       }
     });
-  }, 20000);
+  }, 30000);
 
   wss.on('connection', async (ws: AuthenticatedWebSocket, req) => {
     try {
@@ -116,26 +135,21 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
         ws.close(1013, 'Maximum connections reached');
         return;
       }
-      
-      // Set a timeout for initial response
-      const connectionTimeout = setTimeout(() => {
-        try {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({
-              type: 'error',
-              data: { message: 'Connection timed out waiting for initial response' }
-            }));
-          }
-        } catch (timeoutError) {
-          console.error('Error sending timeout message:', timeoutError);
-        }
-      }, 10000);
 
       ws.isAlive = true;
       const session = (req as any).session as ExtendedSessionData;
 
       ws.sessionId = session?.id;
       ws.userId = session?.passport?.user;
+
+      // Log connection details
+      console.log('New WebSocket connection:', {
+        sessionId: ws.sessionId,
+        userId: ws.userId,
+        isAuthenticated: !!ws.userId,
+        timestamp: new Date().toISOString(),
+        headers: req.headers
+      });
 
       if (ws.sessionId) {
         // Close existing connection if it exists
@@ -150,6 +164,7 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
         activeConnections.set(ws.sessionId, ws);
       }
 
+      // Send initial connection status
       try {
         ws.send(JSON.stringify({
           type: 'connected',
@@ -163,51 +178,43 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
         console.error('Error sending initial message:', sendError);
       }
 
+      // Handle pong messages to keep connection alive
       ws.on('pong', () => {
         ws.isAlive = true;
       });
 
-      ws.on('message', (message) => {
+      // Handle incoming messages
+      ws.on('message', (data: WebSocket.RawData) => {
         try {
-          // Parse the message if it's a string
+          const messageStr = data instanceof Buffer ? data.toString() : data.toString();
           let parsedMessage;
+
           try {
-            if (typeof message === 'string') {
-              parsedMessage = JSON.parse(message);
-            } else if (message instanceof Buffer) {
-              parsedMessage = JSON.parse(message.toString());
-            } else {
-              console.warn('Unknown message format received');
-              return;
-            }
+            parsedMessage = JSON.parse(messageStr);
           } catch (parseError) {
             console.warn('Failed to parse WebSocket message:', {
               error: parseError instanceof Error ? parseError.message : 'Unknown error',
               timestamp: new Date().toISOString(),
-              message: typeof message === 'string' ? message.substring(0, 100) : 'Binary data'
+              messagePreview: data instanceof Buffer ? 
+                data.toString('utf8', 0, 100) : 
+                String(data).substring(0, 100)
             });
-            
-            // Send error response to client
-            try {
-              ws.send(JSON.stringify({
-                type: 'error',
-                error: 'Invalid message format',
-                timestamp: new Date().toISOString()
-              }));
-            } catch (sendError) {
-              console.error('Error sending error response:', sendError);
-            }
+
+            ws.send(JSON.stringify({
+              type: 'error',
+              error: 'Invalid message format',
+              timestamp: new Date().toISOString()
+            }));
             return;
           }
 
           // Handle ping message specifically
           if (parsedMessage && parsedMessage.type === 'ping') {
             ws.isAlive = true;
-            try {
-              ws.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
-            } catch (sendError) {
-              console.error('Error sending pong:', sendError);
-            }
+            ws.send(JSON.stringify({ 
+              type: 'pong', 
+              timestamp: new Date().toISOString() 
+            }));
             return;
           }
 
@@ -218,11 +225,13 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
             type: parsedMessage?.type,
             timestamp: new Date().toISOString()
           });
+
         } catch (msgError) {
           console.error('Error handling message:', msgError);
         }
       });
 
+      // Handle errors
       ws.on('error', (error) => {
         console.error('WebSocket error:', {
           userId: ws.userId,
@@ -232,10 +241,16 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
         });
       });
 
+      // Handle connection close
       ws.on('close', () => {
         if (ws.sessionId) {
           activeConnections.delete(ws.sessionId);
         }
+        console.log('WebSocket connection closed:', {
+          userId: ws.userId,
+          sessionId: ws.sessionId,
+          timestamp: new Date().toISOString()
+        });
       });
 
     } catch (error) {
@@ -248,6 +263,7 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
     }
   });
 
+  // Cleanup on server close
   wss.on('close', () => {
     clearInterval(heartbeatInterval);
     activeConnections.clear();

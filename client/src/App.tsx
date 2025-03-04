@@ -8,9 +8,9 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Switch, Route, useLocation } from "wouter";
 import { useEffect } from "react";
-import { useWebSocket } from "@/lib/websocket";
 import { useToast } from "@/hooks/use-toast";
 import { AIAssistant } from "@/components/ai-assistant/AIAssistant";
+import { useWebSocket } from "@/lib/websocket";
 
 // Page imports
 import Home from "@/pages/home";
@@ -38,6 +38,7 @@ import Referral from "@/pages/referral";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import PremiumCollection from "@/pages/premium-collection";
 
+
 function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
@@ -45,14 +46,11 @@ function WebSocketProvider({ children }: { children: React.ReactNode }) {
     // Maintain a log of recent errors to prevent duplicate toasts
     const recentErrors = new Set<string>();
     const ERROR_THROTTLE_MS = 5000; // Only show same error once every 5 seconds
-    const MAX_RECONNECT_ATTEMPTS = 5;
-    let reconnectAttempts = 0;
-    let reconnectTimer: NodeJS.Timeout | null = null;
 
     // Handle uncaught errors
     const handleError = (event: ErrorEvent) => {
       event.preventDefault();
-      
+
       console.error('Uncaught error:', {
         message: event.message,
         filename: event.filename,
@@ -62,31 +60,47 @@ function WebSocketProvider({ children }: { children: React.ReactNode }) {
         stack: event.error?.stack,
         timestamp: new Date().toISOString()
       });
-      
-      // Only show one toast for multiple similar errors within 5 seconds
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      }, { id: 'global-error' });
+
+      const errorKey = `${event.message}-${event.filename}-${event.lineno}`;
+      if (!recentErrors.has(errorKey)) {
+        recentErrors.add(errorKey);
+        setTimeout(() => recentErrors.delete(errorKey), ERROR_THROTTLE_MS);
+
+        toast({
+          title: "Error",
+          description: event.message || "An unexpected error occurred. Please try again.",
+          variant: "destructive"
+        });
+      }
     };
-    
+
     // Handle unhandled promise rejections
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       event.preventDefault();
-      
+
       console.error('Unhandled rejection:', {
         reason: event.reason,
         stack: event.reason?.stack,
         timestamp: new Date().toISOString()
       });
-      
-      // Only show one toast for multiple similar errors within 5 seconds
-      toast({
-        title: "Connection Error",
-        description: "A network request failed. Please check your connection.",
-        variant: "destructive",
-      }, { id: 'network-error' });
+
+      // Skip WebSocket connection errors as they are handled by the WebSocket hook
+      if (event.reason?.message?.includes('WebSocket') || 
+          event.reason?.message?.includes('Failed to fetch')) {
+        return;
+      }
+
+      const rejectionKey = event.reason?.message || 'unknown-rejection';
+      if (!recentErrors.has(rejectionKey)) {
+        recentErrors.add(rejectionKey);
+        setTimeout(() => recentErrors.delete(rejectionKey), ERROR_THROTTLE_MS);
+
+        toast({
+          title: "Application Error",
+          description: event.reason?.message || "An unexpected error occurred. Please try again.",
+          variant: "destructive"
+        });
+      }
     };
 
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
@@ -98,7 +112,20 @@ function WebSocketProvider({ children }: { children: React.ReactNode }) {
     };
   }, [toast]);
 
-  useWebSocket(); // Initialize WebSocket connection
+  // Initialize WebSocket connection
+  const { isConnected } = useWebSocket();
+
+  // Show connection status to user
+  useEffect(() => {
+    if (!isConnected) {
+      toast({
+        title: "Connection Status",
+        description: "Connecting to server...",
+        duration: 2000,
+      });
+    }
+  }, [isConnected, toast]);
+
   return <>{children}</>;
 }
 
