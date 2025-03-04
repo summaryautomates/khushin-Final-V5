@@ -31,18 +31,17 @@ const Refueling = () => {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="relative"
+              className="relative cursor-pointer transform hover:scale-105 transition-transform duration-300"
+              onClick={() => window.open('https://khushi.setmore.com/saransh', '_blank')}
             >
-              <a href="https://khushi.setmore.com/saransh" target="_blank" rel="noopener noreferrer">
-                <img 
-                  src="/images/appointment-badge.png" 
-                  alt="Appointment Booking Since 2000" 
-                  className="w-auto max-h-52 mx-auto hover:opacity-90 transition-opacity"
-                  style={{ 
-                    filter: "drop-shadow(0 0 20px rgba(255, 255, 0, 0.4))"
-                  }}
-                />
-              </a>
+              <img 
+                src="/images/appointment-badge.png"
+                alt="Book Your Appointment" 
+                className="w-64 h-64 object-contain hover:opacity-90 transition-opacity"
+                style={{ 
+                  filter: "drop-shadow(0 0 20px rgba(255, 255, 0, 0.4))"
+                }}
+              />
             </motion.div>
 
             {/* Main Heading */}
@@ -264,22 +263,7 @@ const Refueling = () => {
                     </motion.li>
                   </ul>
                   <div className="pt-4 mt-auto">
-                    <Button
-                      variant="ghost" 
-                      className="p-0 h-auto w-full focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-transparent"
-                      onClick={() => {
-                        window.open('https://khushi.setmore.com/saransh', '_blank');
-                      }}
-                    >
-                      <img 
-                        src="/images/appointment-badge.png" 
-                        alt="Appointment Booking Since 2000" 
-                        className="w-auto max-h-36 mx-auto hover:opacity-90 transition-opacity"
-                        style={{ 
-                          filter: "drop-shadow(0 0 10px rgba(255, 255, 0, 0.3))"
-                        }}
-                      />
-                    </Button>
+                    {/*Removed Duplicate Appointment Button*/}
                   </div>
                 </CardContent>
               </Card>
