@@ -31,17 +31,26 @@ const Refueling = () => {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="relative cursor-pointer transform hover:scale-105 transition-transform duration-300"
-              onClick={() => window.open('https://khushi.setmore.com/saransh', '_blank')}
+              className="relative"
             >
-              <img 
-                src="/images/appointment-badge.png"
-                alt="Book Your Appointment" 
-                className="w-64 h-64 object-contain hover:opacity-90 transition-opacity"
-                style={{ 
-                  filter: "drop-shadow(0 0 20px rgba(255, 255, 0, 0.4))"
-                }}
-              />
+              <a href="https://khushi.setmore.com/saransh" target="_blank" rel="noopener noreferrer">
+                <img 
+                  src="/images/appointment-booking-badge.png" 
+                  alt="Appointment Booking Since 2000" 
+                  className="w-auto max-h-52 mx-auto hover:opacity-90 transition-opacity"
+                  style={{ 
+                    filter: "drop-shadow(0 0 20px rgba(255, 255, 0, 0.4))"
+                  }}
+                />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                    </svg>
+                  </div>
+                </div>
+              </a>
             </motion.div>
 
             {/* Main Heading */}
@@ -68,6 +77,9 @@ const Refueling = () => {
                 Each refill is carefully engineered to maintain the integrity of your luxury lighter.
               </motion.p>
             </motion.div>
+
+            {/* Shop Button */}
+
           </div>
         </div>
       </section>
@@ -131,7 +143,7 @@ const Refueling = () => {
             viewport={{ once: true, margin: "-100px" }}
             className="max-w-5xl mx-auto"
           >
-            {/* Shop Button */}
+            {/* Shop Button Moved Here */}
             <div className="flex justify-center mb-12">
               <Button 
                 variant="ghost" 
@@ -263,7 +275,22 @@ const Refueling = () => {
                     </motion.li>
                   </ul>
                   <div className="pt-4 mt-auto">
-                    {/*Removed Duplicate Appointment Button*/}
+                    <Button
+                      variant="ghost" 
+                      className="p-0 h-auto w-full focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-transparent"
+                      onClick={() => {
+                        window.open('https://khushi.setmore.com/saransh', '_blank');
+                      }}
+                    >
+                      <img 
+                        src="/images/appointment-booking-badge.png" 
+                        alt="Appointment Booking Since 2000" 
+                        className="w-auto max-h-36 mx-auto hover:opacity-90 transition-opacity"
+                        style={{ 
+                          filter: "drop-shadow(0 0 10px rgba(255, 255, 0, 0.3))"
+                        }}
+                      />
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
