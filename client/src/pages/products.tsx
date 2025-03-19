@@ -110,7 +110,7 @@ export default function Products() {
           >
             <div 
               className="absolute inset-0 bg-cover bg-center opacity-30"
-              style={{ backgroundImage: "url('/attached_assets/LL.png')" }}
+              style={{ backgroundImage: "url('/images/luxury-lighters-collection.jpg')" }}
             />
             <div className="relative z-10 max-w-3xl">
               <div className="flex items-center gap-2 mb-6">
