@@ -190,7 +190,6 @@ export default function Home() {
                 alt="Luxury KHUSH lighter"
                 className="absolute inset-0 w-full h-full object-cover opacity-85"
                 containerClassName="absolute inset-0"
-                priority={true}
                 onLoadError={(error: any) => {
                   console.error('Hero image load error:', error);
                   toast({

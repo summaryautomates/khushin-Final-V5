@@ -5,8 +5,9 @@ import {
   type InsertOrder,
   users,
   products,
+  orders
 } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import session from "express-session";
 import MemoryStore from "memorystore";
 import { db } from "./db";
@@ -128,34 +129,24 @@ export class ReplitDBStorage implements IStorage {
         total: orderData.total
       });
 
-      const [order] = await db.execute<Order>(sql`
-        INSERT INTO orders (
-          order_ref,
-          user_id,
-          status,
-          total,
-          items,
-          shipping,
-          created_at,
-          last_updated
-        ) VALUES (
-          ${orderData.orderRef},
-          ${orderData.userId},
-          ${orderData.status},
-          ${orderData.total},
-          ${JSON.stringify(orderData.items)},
-          ${JSON.stringify(orderData.shipping)},
-          NOW(),
-          NOW()
-        ) RETURNING *
-      `);
+      // Convert items to string before inserting
+      const [order] = await db.insert(orders).values({
+        orderRef: orderData.orderRef,
+        userId: orderData.userId,
+        status: orderData.status,
+        total: orderData.total,
+        items: JSON.stringify(orderData.items),
+        shipping: JSON.stringify(orderData.shipping),
+        createdAt: new Date(),
+        lastUpdated: new Date()
+      }).returning();
 
-      console.log('Order created successfully:', {
-        ref: order.orderRef,
-        userId: order.userId
-      });
-
-      return order;
+      // Parse items back to array when returning
+      return {
+        ...order,
+        items: JSON.parse(order.items as string),
+        shipping: JSON.parse(order.shipping as string)
+      };
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;
@@ -165,10 +156,15 @@ export class ReplitDBStorage implements IStorage {
   async getOrderByRef(orderRef: string): Promise<Order | undefined> {
     try {
       console.log('Fetching order by ref:', orderRef);
-      const [order] = await db.execute<Order>(sql`
-        SELECT * FROM orders WHERE order_ref = ${orderRef}
-      `);
-      return order;
+      const [order] = await db.select().from(orders).where(eq(orders.orderRef, orderRef));
+      if (!order) return undefined;
+
+      // Parse items and shipping from string to object
+      return {
+        ...order,
+        items: JSON.parse(order.items as string),
+        shipping: JSON.parse(order.shipping as string)
+      };
     } catch (error) {
       console.error('Error fetching order by ref:', error);
       return undefined;
@@ -187,13 +183,13 @@ export class ReplitDBStorage implements IStorage {
         paymentMethod
       });
 
-      await db.execute(sql`
-        UPDATE orders
-        SET status = ${status},
-            payment_method = ${paymentMethod},
-            last_updated = NOW()
-        WHERE order_ref = ${orderRef}
-      `);
+      await db.update(orders)
+        .set({
+          status,
+          paymentMethod,
+          lastUpdated: new Date()
+        })
+        .where(eq(orders.orderRef, orderRef));
 
       console.log('Order status updated successfully');
     } catch (error) {
@@ -205,12 +201,17 @@ export class ReplitDBStorage implements IStorage {
   async getOrdersByUserId(userId: string): Promise<Order[]> {
     try {
       console.log('Fetching orders for user:', userId);
-      const orders = await db.execute<Order[]>(sql`
-        SELECT * FROM orders
-        WHERE user_id = ${userId}
-        ORDER BY created_at DESC
-      `);
-      return orders;
+      const ordersList = await db.select()
+        .from(orders)
+        .where(eq(orders.userId, userId))
+        .orderBy(desc(orders.createdAt));
+
+      // Parse items and shipping for each order
+      return ordersList.map(order => ({
+        ...order,
+        items: JSON.parse(order.items as string),
+        shipping: JSON.parse(order.shipping as string)
+      }));
     } catch (error) {
       console.error('Error fetching orders for user:', error);
       throw error;
