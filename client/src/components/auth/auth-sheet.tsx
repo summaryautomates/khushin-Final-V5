@@ -50,8 +50,8 @@ export function AuthSheet({ open, onOpenChange, onSuccess, showTrigger = true }:
       email: "",
       password: "",
       confirmPassword: "",
-      firstName: "",
-      lastName: "",
+      first_name: "",
+      last_name: "",
     },
   });
 
@@ -141,18 +141,18 @@ export function AuthSheet({ open, onOpenChange, onSuccess, showTrigger = true }:
               <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
+                    <Label htmlFor="first_name">First Name</Label>
                     <Input
-                      id="firstName"
-                      {...registerForm.register("firstName")}
+                      id="first_name"
+                      {...registerForm.register("first_name")}
                       className="bg-background"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
+                    <Label htmlFor="last_name">Last Name</Label>
                     <Input
-                      id="lastName"
-                      {...registerForm.register("lastName")}
+                      id="last_name"
+                      {...registerForm.register("last_name")}
                       className="bg-background"
                     />
                   </div>
