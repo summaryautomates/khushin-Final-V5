@@ -16,7 +16,7 @@ const Refueling = () => {
             className="h-full w-full"
           >
             <img 
-              src="https://i.imghippo.com/files/I2429lk.jpg"
+              src="/RS.png"
               className="w-full h-full object-cover object-center"
               alt="Luxury refueling background"
             />
