@@ -47,40 +47,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Authentication endpoints
-  app.post("/api/register", async (req, res) => {
-    try {
-      console.log('Processing registration request:', {
-        username: req.body.username,
-        timestamp: new Date().toISOString()
-      });
-
-      const existingUser = await storage.getUserByUsername(req.body.username);
-      if (existingUser) {
-        console.log('Username already exists:', req.body.username);
-        return res.status(400).json({ message: "Username already exists" });
-      }
-
-      const user = await storage.createUser({
-        username: req.body.username,
-        password: req.body.password,
-        email: req.body.email,
-        first_name: req.body.first_name || null,
-        last_name: req.body.last_name || null
-      });
-
-      console.log('User created successfully:', {
-        id: user.id,
-        username: user.username,
-        timestamp: new Date().toISOString()
-      });
-
-      return res.status(201).json(user);
-    } catch (error) {
-      console.error('Registration error:', error);
-      return res.status(500).json({ message: "Failed to register user" });
-    }
-  });
+  // Authentication endpoints are defined in auth.ts
 
   // Health check endpoint
   app.get("/api/health", (_req, res) => {

@@ -15,8 +15,8 @@ export function RegisterForm() {
       username: "",
       password: "",
       email: "",
-      firstName: "",
-      lastName: "",
+      first_name: "",
+      last_name: "",
     },
   });
 
@@ -55,7 +55,7 @@ export function RegisterForm() {
         />
         <FormField
           control={form.control}
-          name="firstName"
+          name="first_name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>First Name</FormLabel>
@@ -68,7 +68,7 @@ export function RegisterForm() {
         />
         <FormField
           control={form.control}
-          name="lastName"
+          name="last_name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Last Name</FormLabel>
