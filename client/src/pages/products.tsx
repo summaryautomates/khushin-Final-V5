@@ -134,6 +134,39 @@ export default function Products() {
             </div>
           </motion.div>
         )}
+        
+        {category === "flask" && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-12 relative overflow-hidden rounded-2xl bg-gradient-to-r from-zinc-900 to-zinc-800 p-8 md:p-12"
+          >
+            <div 
+              className="absolute inset-0 bg-cover bg-center opacity-30"
+              style={{ backgroundImage: "url('/products/Flask 1.jpg')" }}
+            />
+            <div className="relative z-10 max-w-3xl">
+              <div className="flex items-center gap-2 mb-6">
+                <Crown className="h-8 w-8 text-gold" />
+                <h1 className="text-4xl font-light tracking-wider text-white">Premium Flask Collection</h1>
+              </div>
+              <p className="text-zinc-300 leading-relaxed mb-8">
+                Explore our premium collection of elegant flasks, perfect for carrying your favorite beverages in style.
+                Each flask is crafted with precision using high-quality materials for durability and sophistication.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <Badge variant="outline" className="bg-gold/10 text-gold border-gold/20 px-3 py-1.5">
+                  <Diamond className="w-4 h-4 mr-2" />
+                  Stainless Steel
+                </Badge>
+                <Badge variant="outline" className="bg-gold/10 text-gold border-gold/20 px-3 py-1.5">
+                  <Flame className="w-4 h-4 mr-2" />
+                  Luxury Design
+                </Badge>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         <div className="flex items-center justify-between">
           <h2 className="text-3xl font-extralight tracking-wider">
