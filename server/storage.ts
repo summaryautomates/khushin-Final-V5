@@ -243,12 +243,28 @@ export class ReplitDBStorage implements IStorage {
         .where(eq(orders.userId, userId))
         .orderBy(desc(orders.createdAt));
 
-      // Parse items and shipping for each order
-      return ordersList.map(order => ({
-        ...order,
-        items: JSON.parse(order.items as string),
-        shipping: JSON.parse(order.shipping as string)
-      }));
+      // Parse items and shipping for each order with error handling
+      return ordersList.map(order => {
+        try {
+          const parsedItems = typeof order.items === 'string' 
+            ? JSON.parse(order.items) 
+            : order.items;
+            
+          const parsedShipping = typeof order.shipping === 'string' 
+            ? JSON.parse(order.shipping) 
+            : order.shipping;
+
+          return {
+            ...order,
+            items: parsedItems,
+            shipping: parsedShipping
+          };
+        } catch (parseError) {
+          console.error('Error parsing order data:', parseError);
+          // Return the order with unparsed data rather than failing completely
+          return order as unknown as Order;
+        }
+      });
     } catch (error) {
       console.error('Error fetching orders for user:', error);
       throw error;
