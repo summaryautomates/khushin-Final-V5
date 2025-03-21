@@ -17,6 +17,8 @@ const loginSchema = z.object({
 
 const registerSchema = insertUserSchema.extend({
   confirmPassword: z.string(),
+  first_name: z.string().nullable(),
+  last_name: z.string().nullable(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -67,10 +69,15 @@ export function AuthSheet({ open, onOpenChange, onSuccess, showTrigger = true }:
 
   const onRegister = async (data: RegisterData) => {
     try {
-      await registerMutation.mutateAsync(data);
+      console.log("Submitting registration data from auth-sheet:", data);
+      const { confirmPassword, ...userDataWithoutConfirm } = data;
+      console.log("Sending to server:", userDataWithoutConfirm);
+      await registerMutation.mutateAsync(userDataWithoutConfirm);
+      console.log("Registration successful!");
       onSuccess?.();
       onOpenChange?.(false);
     } catch (error) {
+      console.error("Registration error in sheet:", error);
       // Error is handled by the mutation
     }
   };

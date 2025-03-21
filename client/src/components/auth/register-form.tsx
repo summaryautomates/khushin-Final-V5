@@ -21,7 +21,12 @@ export function RegisterForm() {
   });
 
   async function onSubmit(data: InsertUser) {
-    registerMutation.mutate(data);
+    try {
+      console.log("Submitting registration data:", data);
+      await registerMutation.mutateAsync(data);
+    } catch (error) {
+      console.error("Registration error:", error);
+    }
   }
 
   return (
