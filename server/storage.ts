@@ -129,24 +129,47 @@ export class ReplitDBStorage implements IStorage {
         total: orderData.total
       });
 
-      // Convert items to string before inserting
+      // Ensure items and shipping are properly stringified
+      let itemsString = typeof orderData.items === 'string' 
+        ? orderData.items 
+        : JSON.stringify(orderData.items);
+        
+      let shippingString = typeof orderData.shipping === 'string' 
+        ? orderData.shipping 
+        : JSON.stringify(orderData.shipping);
+
+      // Insert order into database
       const [order] = await db.insert(orders).values({
         orderRef: orderData.orderRef,
         userId: orderData.userId,
         status: orderData.status,
         total: orderData.total,
-        items: JSON.stringify(orderData.items),
-        shipping: JSON.stringify(orderData.shipping),
+        items: itemsString,
+        shipping: shippingString,
         createdAt: new Date(),
         lastUpdated: new Date()
       }).returning();
 
-      // Parse items back to array when returning
-      return {
-        ...order,
-        items: JSON.parse(order.items as string),
-        shipping: JSON.parse(order.shipping as string)
-      };
+      // Parse items and shipping back to objects when returning
+      try {
+        const parsedItems = typeof order.items === 'string' 
+          ? JSON.parse(order.items) 
+          : order.items;
+          
+        const parsedShipping = typeof order.shipping === 'string' 
+          ? JSON.parse(order.shipping) 
+          : order.shipping;
+
+        return {
+          ...order,
+          items: parsedItems,
+          shipping: parsedShipping
+        };
+      } catch (parseError) {
+        console.error('Error parsing order data:', parseError);
+        // Return the order with unparsed data rather than failing completely
+        return order as unknown as Order;
+      }
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;
@@ -159,12 +182,26 @@ export class ReplitDBStorage implements IStorage {
       const [order] = await db.select().from(orders).where(eq(orders.orderRef, orderRef));
       if (!order) return undefined;
 
-      // Parse items and shipping from string to object
-      return {
-        ...order,
-        items: JSON.parse(order.items as string),
-        shipping: JSON.parse(order.shipping as string)
-      };
+      try {
+        // Parse items and shipping from string to object
+        const parsedItems = typeof order.items === 'string' 
+          ? JSON.parse(order.items) 
+          : order.items;
+          
+        const parsedShipping = typeof order.shipping === 'string' 
+          ? JSON.parse(order.shipping) 
+          : order.shipping;
+
+        return {
+          ...order,
+          items: parsedItems,
+          shipping: parsedShipping
+        };
+      } catch (parseError) {
+        console.error('Error parsing order data:', parseError);
+        // Return the order with unparsed data rather than failing completely
+        return order as unknown as Order;
+      }
     } catch (error) {
       console.error('Error fetching order by ref:', error);
       return undefined;
