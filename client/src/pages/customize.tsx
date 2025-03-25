@@ -55,10 +55,10 @@ export default function Customize() {
 
   // Customization states
   const [customization, setCustomization] = useState<CustomizationState>({
-    text: "Custom Text",
-    font: "inter",
-    fontSize: 36,
-    color: "#9333ea", // Purple color for better visibility
+    text: "KHUSH.IN",
+    font: "playfair",
+    fontSize: 42,
+    color: "#f2b71c", // Gold color matching brand theme
     x: 50,
     y: 50,
     scale: 100,
@@ -146,16 +146,17 @@ export default function Customize() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Preview Section - Order changed to be first for mobile */}
           <div className={`${!isMobile ? 'sticky top-24' : 'order-first'}`}>
-            <Card className="mb-8 shadow-lg border-2 border-purple-200">
-              <CardHeader className="bg-gradient-to-r from-purple-50 to-white">
-                <CardTitle className="text-2xl font-bold text-purple-800">Live Preview</CardTitle>
-                <CardDescription>See your customization in real-time</CardDescription>
+            <Card className="mb-8 shadow-lg border-2 border-amber-300 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-50/30 via-transparent to-amber-100/20 pointer-events-none" />
+              <CardHeader className="bg-gradient-to-r from-amber-100 to-amber-50 border-b border-amber-200">
+                <CardTitle className="text-2xl font-bold text-amber-800">Premium Customization</CardTitle>
+                <CardDescription className="text-amber-700">Create your exclusive KHUSH.IN design</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-6">
                 <div
-                  className="aspect-square bg-white rounded-lg flex items-center justify-center relative overflow-hidden"
+                  className="aspect-square bg-white rounded-lg flex items-center justify-center relative overflow-hidden shadow-inner"
                   style={{
-                    backgroundImage: "linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)",
+                    backgroundImage: "linear-gradient(45deg, #f8f5f0 25%, transparent 25%), linear-gradient(-45deg, #f8f5f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f8f5f0 75%), linear-gradient(-45deg, transparent 75%, #f8f5f0 75%)",
                     backgroundSize: "20px 20px",
                     backgroundPosition: "0 0, 0 10px, 10px -10px, -10px 0px"
                   }}
@@ -171,8 +172,8 @@ export default function Customize() {
                     />
                   ) : (
                     <div className="text-center p-8">
-                      <ImageIcon className="w-12 h-12 mx-auto mb-4 text-purple-400" />
-                      <p className="text-purple-500 font-medium">Customize with text or upload an image</p>
+                      <ImageIcon className="w-12 h-12 mx-auto mb-4 text-amber-400" />
+                      <p className="text-amber-700 font-medium">Add your personalized text or upload an image</p>
                     </div>
                   )}
                   {customization.text && (
@@ -184,7 +185,7 @@ export default function Customize() {
                         color: customization.color,
                         transform: `translate(${customization.x}%, ${customization.y}%) scale(${customization.scale / 100}) rotate(${customization.rotation}deg)`,
                         transition: "all 0.3s ease",
-                        textShadow: "0px 0px 1px rgba(0,0,0,0.1)"
+                        textShadow: "1px 1px 2px rgba(0,0,0,0.15)"
                       }}
                     >
                       {customization.text}
@@ -198,26 +199,26 @@ export default function Customize() {
           {/* Customization Controls */}
           <div className="order-last">
             <Tabs defaultValue="text" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 p-1 bg-purple-50 rounded-lg">
-                <TabsTrigger value="text" className="flex items-center gap-2 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-800">
+              <TabsList className="grid w-full grid-cols-3 p-1 bg-amber-50 rounded-lg border border-amber-200">
+                <TabsTrigger value="text" className="flex items-center gap-2 data-[state=active]:bg-amber-100 data-[state=active]:text-amber-900 font-medium">
                   <Type className="w-4 h-4" />
                   Text
                 </TabsTrigger>
-                <TabsTrigger value="upload" className="flex items-center gap-2 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-800">
+                <TabsTrigger value="upload" className="flex items-center gap-2 data-[state=active]:bg-amber-100 data-[state=active]:text-amber-900 font-medium">
                   <ImageIcon className="w-4 h-4" />
                   Image
                 </TabsTrigger>
-                <TabsTrigger value="adjust" className="flex items-center gap-2 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-800">
+                <TabsTrigger value="adjust" className="flex items-center gap-2 data-[state=active]:bg-amber-100 data-[state=active]:text-amber-900 font-medium">
                   <Palette className="w-4 h-4" />
                   Adjust
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="text">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Text Customization</CardTitle>
-                    <CardDescription>Add and style your text</CardDescription>
+                <Card className="border-amber-200">
+                  <CardHeader className="bg-gradient-to-r from-amber-50 to-white border-b border-amber-100">
+                    <CardTitle className="text-amber-900">Text Customization</CardTitle>
+                    <CardDescription className="text-amber-700">Add and style your text</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
@@ -279,10 +280,10 @@ export default function Customize() {
               </TabsContent>
 
               <TabsContent value="upload">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Image Upload</CardTitle>
-                    <CardDescription>Upload and customize your image</CardDescription>
+                <Card className="border-amber-200">
+                  <CardHeader className="bg-gradient-to-r from-amber-50 to-white border-b border-amber-100">
+                    <CardTitle className="text-amber-900">Image Upload</CardTitle>
+                    <CardDescription className="text-amber-700">Upload and customize your image</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
@@ -302,10 +303,10 @@ export default function Customize() {
               </TabsContent>
 
               <TabsContent value="adjust">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Position & Scale</CardTitle>
-                    <CardDescription>Adjust position and size</CardDescription>
+                <Card className="border-amber-200">
+                  <CardHeader className="bg-gradient-to-r from-amber-50 to-white border-b border-amber-100">
+                    <CardTitle className="text-amber-900">Position & Scale</CardTitle>
+                    <CardDescription className="text-amber-700">Adjust position and size</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-2">
@@ -374,7 +375,7 @@ export default function Customize() {
               <div className="flex gap-4">
                 <Button
                   variant="outline"
-                  className="flex-1 border-purple-200 hover:bg-purple-50 hover:text-purple-800"
+                  className="flex-1 border-amber-300 hover:bg-amber-50 hover:text-amber-900 font-medium"
                   onClick={undoLastChange}
                   disabled={history.length === 0 || isLoading}
                 >
@@ -382,7 +383,7 @@ export default function Customize() {
                   Undo
                 </Button>
                 <Button
-                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                  className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-medium"
                   onClick={handleSave}
                   disabled={isLoading}
                 >
@@ -401,7 +402,7 @@ export default function Customize() {
               </div>
               <Button
                 variant="outline"
-                className="w-full border-purple-200 hover:bg-purple-50 hover:text-purple-800"
+                className="w-full border-amber-300 hover:bg-amber-50 hover:text-amber-900 font-medium"
                 onClick={() => setLocation("/products")}
                 disabled={isLoading}
               >
@@ -409,12 +410,13 @@ export default function Customize() {
               </Button>
               
               {/* Quick tips for users */}
-              <div className="mt-4 p-4 bg-purple-50 rounded-md text-sm text-purple-800">
-                <h4 className="font-semibold mb-2">Quick Tips:</h4>
+              <div className="mt-4 p-4 bg-amber-50 rounded-md text-sm text-amber-800 border border-amber-100">
+                <h4 className="font-semibold mb-2 text-amber-900">Premium Customization Tips:</h4>
                 <ul className="list-disc list-inside space-y-1">
                   <li>Drag sliders to adjust position and size</li>
-                  <li>Sample text is provided to get you started</li>
-                  <li>Try different fonts to see what works best</li>
+                  <li>Our gold color theme gives your design a luxurious feel</li>
+                  <li>Try the Playfair font for an elegant appearance</li>
+                  <li>Your customizations are saved with your order</li>
                 </ul>
               </div>
             </div>
