@@ -161,35 +161,39 @@ export default function Customize() {
                     backgroundPosition: "0 0, 0 10px, 10px -10px, -10px 0px"
                   }}
                 >
-                  {uploadedImage ? (
-                    <img
-                      src={uploadedImage}
-                      alt="Preview"
-                      className="max-w-full max-h-full object-contain"
-                      style={{
-                        transform: `translate(${customization.x}%, ${customization.y}%) scale(${customization.scale / 100}) rotate(${customization.rotation}deg)`
-                      }}
-                    />
-                  ) : (
+                  {(!uploadedImage && !customization.text) ? (
                     <div className="text-center p-8">
-                      <ImageIcon className="w-12 h-12 mx-auto mb-4 text-amber-400" />
-                      <p className="text-amber-700 font-medium">Add your personalized text or upload an image</p>
+                      <ImageIcon className="w-12 h-12 mx-auto mb-4 text-amber-500" />
+                      <p className="text-amber-500 font-medium">Add your personalized text or upload an image</p>
                     </div>
-                  )}
-                  {customization.text && (
-                    <div
-                      className="absolute pointer-events-none select-none"
-                      style={{
-                        fontFamily: customization.font,
-                        fontSize: `${customization.fontSize}px`,
-                        color: customization.color,
-                        transform: `translate(${customization.x}%, ${customization.y}%) scale(${customization.scale / 100}) rotate(${customization.rotation}deg)`,
-                        transition: "all 0.3s ease",
-                        textShadow: "1px 1px 2px rgba(0,0,0,0.15)"
-                      }}
-                    >
-                      {customization.text}
-                    </div>
+                  ) : (
+                    <>
+                      {uploadedImage && (
+                        <img
+                          src={uploadedImage}
+                          alt="Preview"
+                          className="max-w-full max-h-full object-contain"
+                          style={{
+                            transform: `translate(${customization.x}%, ${customization.y}%) scale(${customization.scale / 100}) rotate(${customization.rotation}deg)`
+                          }}
+                        />
+                      )}
+                      {customization.text && (
+                        <div
+                          className="absolute pointer-events-none select-none z-10"
+                          style={{
+                            fontFamily: customization.font,
+                            fontSize: `${customization.fontSize}px`,
+                            color: customization.color,
+                            transform: `translate(${customization.x}%, ${customization.y}%) scale(${customization.scale / 100}) rotate(${customization.rotation}deg)`,
+                            transition: "all 0.3s ease",
+                            textShadow: "1px 1px 2px rgba(0,0,0,0.3)"
+                          }}
+                        >
+                          {customization.text}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </CardContent>
