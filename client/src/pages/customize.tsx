@@ -55,10 +55,10 @@ export default function Customize() {
 
   // Customization states
   const [customization, setCustomization] = useState<CustomizationState>({
-    text: "",
+    text: "Custom Text",
     font: "inter",
-    fontSize: 24,
-    color: "#000000",
+    fontSize: 36,
+    color: "#9333ea", // Purple color for better visibility
     x: 50,
     y: 50,
     scale: 100,
@@ -144,11 +144,11 @@ export default function Customize() {
         <h1 className="text-3xl md:text-4xl font-bold mb-8 text-white">Customize Your Product</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Preview Section */}
-          <div className={`${!isMobile ? 'sticky top-24' : ''}`}>
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>Live Preview</CardTitle>
+          {/* Preview Section - Order changed to be first for mobile */}
+          <div className={`${!isMobile ? 'sticky top-24' : 'order-first'}`}>
+            <Card className="mb-8 shadow-lg border-2 border-purple-200">
+              <CardHeader className="bg-gradient-to-r from-purple-50 to-white">
+                <CardTitle className="text-2xl font-bold text-purple-800">Live Preview</CardTitle>
                 <CardDescription>See your customization in real-time</CardDescription>
               </CardHeader>
               <CardContent>
@@ -171,19 +171,20 @@ export default function Customize() {
                     />
                   ) : (
                     <div className="text-center p-8">
-                      <ImageIcon className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                      <p className="text-muted-foreground">Upload an image or add text to start customizing</p>
+                      <ImageIcon className="w-12 h-12 mx-auto mb-4 text-purple-400" />
+                      <p className="text-purple-500 font-medium">Customize with text or upload an image</p>
                     </div>
                   )}
                   {customization.text && (
                     <div
-                      className="absolute pointer-events-none"
+                      className="absolute pointer-events-none select-none"
                       style={{
                         fontFamily: customization.font,
                         fontSize: `${customization.fontSize}px`,
                         color: customization.color,
                         transform: `translate(${customization.x}%, ${customization.y}%) scale(${customization.scale / 100}) rotate(${customization.rotation}deg)`,
-                        transition: "all 0.3s ease"
+                        transition: "all 0.3s ease",
+                        textShadow: "0px 0px 1px rgba(0,0,0,0.1)"
                       }}
                     >
                       {customization.text}
@@ -195,18 +196,18 @@ export default function Customize() {
           </div>
 
           {/* Customization Controls */}
-          <div>
+          <div className="order-last">
             <Tabs defaultValue="text" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="text" className="flex items-center gap-2">
+              <TabsList className="grid w-full grid-cols-3 p-1 bg-purple-50 rounded-lg">
+                <TabsTrigger value="text" className="flex items-center gap-2 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-800">
                   <Type className="w-4 h-4" />
                   Text
                 </TabsTrigger>
-                <TabsTrigger value="upload" className="flex items-center gap-2">
+                <TabsTrigger value="upload" className="flex items-center gap-2 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-800">
                   <ImageIcon className="w-4 h-4" />
                   Image
                 </TabsTrigger>
-                <TabsTrigger value="adjust" className="flex items-center gap-2">
+                <TabsTrigger value="adjust" className="flex items-center gap-2 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-800">
                   <Palette className="w-4 h-4" />
                   Adjust
                 </TabsTrigger>
@@ -373,7 +374,7 @@ export default function Customize() {
               <div className="flex gap-4">
                 <Button
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 border-purple-200 hover:bg-purple-50 hover:text-purple-800"
                   onClick={undoLastChange}
                   disabled={history.length === 0 || isLoading}
                 >
@@ -381,7 +382,7 @@ export default function Customize() {
                   Undo
                 </Button>
                 <Button
-                  className="flex-1"
+                  className="flex-1 bg-purple-600 hover:bg-purple-700"
                   onClick={handleSave}
                   disabled={isLoading}
                 >
@@ -400,12 +401,22 @@ export default function Customize() {
               </div>
               <Button
                 variant="outline"
-                className="w-full"
+                className="w-full border-purple-200 hover:bg-purple-50 hover:text-purple-800"
                 onClick={() => setLocation("/products")}
                 disabled={isLoading}
               >
                 Cancel
               </Button>
+              
+              {/* Quick tips for users */}
+              <div className="mt-4 p-4 bg-purple-50 rounded-md text-sm text-purple-800">
+                <h4 className="font-semibold mb-2">Quick Tips:</h4>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Drag sliders to adjust position and size</li>
+                  <li>Sample text is provided to get you started</li>
+                  <li>Try different fonts to see what works best</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
