@@ -1,7 +1,16 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Droplet, Zap, Shield, Settings, ChevronRight, Clock, MapPin, CreditCard } from "lucide-react";
+import {
+  Droplet,
+  Zap,
+  Shield,
+  Settings,
+  ChevronRight,
+  Clock,
+  MapPin,
+  CreditCard,
+} from "lucide-react";
 
 const Refueling = () => {
   return (
@@ -15,7 +24,7 @@ const Refueling = () => {
             transition={{ duration: 2, ease: "easeOut" }}
             className="h-full w-full"
           >
-            <img 
+            <img
               src="/RS.png"
               className="w-full h-full object-cover object-center"
               alt="Luxury refueling background"
@@ -33,28 +42,54 @@ const Refueling = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="relative"
             >
-              <a href="https://khushi.setmore.com/saransh" target="_blank" rel="noopener noreferrer">
-                <img 
-                  src="/images/appointment-booking-badge.png" 
-                  alt="Appointment Booking Since 2000" 
+              <a
+                href="https://khushi.setmore.com/saransh"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="/images/appointment-booking-badge.png"
+                  alt="Appointment Booking Since 2000"
                   className="w-auto max-h-52 mx-auto hover:opacity-90 transition-opacity"
-                  style={{ 
-                    filter: "drop-shadow(0 0 20px rgba(255, 255, 0, 0.4))"
+                  style={{
+                    filter: "drop-shadow(0 0 20px rgba(255, 255, 0, 0.4))",
                   }}
                 />
                 <div className="flex gap-4 justify-center mt-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-8 w-8 text-yellow-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
                   </svg>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-8 w-8 text-yellow-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                    />
                   </svg>
                 </div>
               </a>
             </motion.div>
 
             {/* Main Heading */}
-            <motion.h1 
+            <motion.h1
               initial={{ letterSpacing: "0.2em", opacity: 0, y: -20 }}
               animate={{ letterSpacing: "0.1em", opacity: 1, y: 0 }}
               transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
@@ -73,8 +108,9 @@ const Refueling = () => {
               className="backdrop-blur-sm bg-black/30 p-6 rounded-lg border border-primary/10 max-w-3xl"
             >
               <motion.p className="text-lg md:text-xl text-white text-center leading-relaxed">
-                Experience the perfect blend of convenience and reliability with our premium refueling solutions.
-                Each refill is carefully engineered to maintain the integrity of your luxury lighter.
+                Experience the perfect blend of convenience and reliability with
+                our premium refueling solutions. Each refill is carefully
+                engineered to maintain the integrity of your luxury lighter.
               </motion.p>
             </motion.div>
           </div>
@@ -89,23 +125,27 @@ const Refueling = () => {
               {
                 icon: Droplet,
                 title: "Premium Butane",
-                description: "Ultra-refined butane fuel specially formulated for luxury lighters."
+                description:
+                  "Ultra-refined butane fuel specially formulated for luxury lighters.",
               },
               {
                 icon: Zap,
                 title: "Quick Refill",
-                description: "Efficient refilling system designed for ease and speed."
+                description:
+                  "Efficient refilling system designed for ease and speed.",
               },
               {
                 icon: Shield,
                 title: "Safety First",
-                description: "Built-in safety mechanisms for secure and controlled refilling."
+                description:
+                  "Built-in safety mechanisms for secure and controlled refilling.",
               },
               {
                 icon: Settings,
                 title: "Maintenance",
-                description: "Complete maintenance kit for optimal lighter performance."
-              }
+                description:
+                  "Complete maintenance kit for optimal lighter performance.",
+              },
             ].map((feature, index) => (
               <motion.div
                 key={feature.title}
@@ -118,10 +158,14 @@ const Refueling = () => {
                 <Card className="bg-white/[0.02] backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-all duration-300 hover:scale-[1.02] h-full flex flex-col">
                   <CardHeader>
                     <feature.icon className="w-8 h-8 mb-2 text-primary" />
-                    <CardTitle className="text-xl font-light">{feature.title}</CardTitle>
+                    <CardTitle className="text-xl font-light">
+                      {feature.title}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="flex-grow">
-                    <p className="text-muted-foreground">{feature.description}</p>
+                    <p className="text-muted-foreground">
+                      {feature.description}
+                    </p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -142,20 +186,20 @@ const Refueling = () => {
           >
             {/* Shop Button Moved Here */}
             <div className="flex justify-center mb-12">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-transparent"
                 onClick={() => {
-                  window.open("https://i.imghippo.com/files/Ojp4347XDA.png", "_blank", "noopener,noreferrer");
+                  window.open("/RII.png", "_blank", "noopener,noreferrer");
                 }}
               >
-                <img 
-                  src="https://i.imghippo.com/files/Wfm7659yCM.png" 
-                  alt="Shop Refueling Accessories" 
+                <img
+                  src="/RI.png"
+                  alt="Shop Refueling Accessories"
                   className="h-24 w-auto hover:opacity-90 transition-opacity"
-                  style={{ 
+                  style={{
                     filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.9))",
-                    maxWidth: "140px"
+                    maxWidth: "140px",
                   }}
                 />
               </Button>
@@ -177,7 +221,7 @@ const Refueling = () => {
                       "Locate the refill valve at the bottom",
                       "Press the fuel canister nozzle firmly into the valve",
                       "Hold for 5-10 seconds until full",
-                      "Wait 2 minutes before use"
+                      "Wait 2 minutes before use",
                     ].map((step, index) => (
                       <motion.li
                         key={index}
@@ -212,7 +256,7 @@ const Refueling = () => {
                       "Keep away from open flames",
                       "Use only premium butane fuel",
                       "Don't overfill",
-                      "Allow gas to stabilize before use"
+                      "Allow gas to stabilize before use",
                     ].map((precaution, index) => (
                       <motion.li
                         key={index}
@@ -273,18 +317,22 @@ const Refueling = () => {
                   </ul>
                   <div className="pt-4 mt-auto">
                     <Button
-                      variant="ghost" 
+                      variant="ghost"
                       className="p-0 h-auto w-full focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-transparent"
                       onClick={() => {
-                        window.open('https://khushi.setmore.com/saransh', '_blank');
+                        window.open(
+                          "https://khushi.setmore.com/saransh",
+                          "_blank",
+                        );
                       }}
                     >
-                      <img 
-                        src="/images/appointment-booking-badge.png" 
-                        alt="Appointment Booking Since 2000" 
+                      <img
+                        src="/images/appointment-booking-badge.png"
+                        alt="Appointment Booking Since 2000"
                         className="w-auto max-h-36 mx-auto hover:opacity-90 transition-opacity"
-                        style={{ 
-                          filter: "drop-shadow(0 0 10px rgba(255, 255, 0, 0.3))"
+                        style={{
+                          filter:
+                            "drop-shadow(0 0 10px rgba(255, 255, 0, 0.3))",
                         }}
                       />
                     </Button>
