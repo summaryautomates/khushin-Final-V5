@@ -33,8 +33,8 @@ const Refueling = () => {
           </motion.div>
         </div>
 
-        <div className="container relative z-10 px-4 py-16 max-w-7xl mx-auto">
-          <div className="flex flex-col items-center justify-center gap-8">
+        <div className="container relative z-10 px-4 py-6 max-w-7xl mx-auto">
+          <div className="flex flex-col items-center justify-center gap-5 mt-[-60px]">
             {/* Appointment Button */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -50,15 +50,15 @@ const Refueling = () => {
                 <img
                   src="/images/appointment-booking-badge.png"
                   alt="Appointment Booking Since 2000"
-                  className="w-auto max-h-52 mx-auto hover:opacity-90 transition-opacity"
+                  className="w-auto max-h-40 mx-auto hover:opacity-90 transition-opacity"
                   style={{
                     filter: "drop-shadow(0 0 20px rgba(255, 255, 0, 0.4))",
                   }}
                 />
-                <div className="flex gap-4 justify-center mt-4">
+                <div className="flex gap-4 justify-center mt-2">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-8 w-8 text-yellow-400"
+                    className="h-7 w-7 text-yellow-400"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -72,7 +72,7 @@ const Refueling = () => {
                   </svg>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-8 w-8 text-yellow-400"
+                    className="h-7 w-7 text-yellow-400"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
