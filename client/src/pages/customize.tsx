@@ -146,17 +146,17 @@ export default function Customize() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Preview Section - Order changed to be first for mobile */}
           <div className={`${!isMobile ? 'sticky top-24' : 'order-first'}`}>
-            <Card className="mb-8 shadow-lg border-2 border-amber-300 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-50/30 via-transparent to-amber-100/20 pointer-events-none" />
-              <CardHeader className="bg-gradient-to-r from-amber-100 to-amber-50 border-b border-amber-200">
-                <CardTitle className="text-2xl font-bold text-amber-800">Premium Customization</CardTitle>
-                <CardDescription className="text-amber-700">Create your exclusive KHUSH.IN design</CardDescription>
+            <Card className="mb-8 shadow-lg border-2 border-amber-500 relative overflow-hidden bg-gray-900">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-900/30 via-transparent to-amber-800/20 pointer-events-none" />
+              <CardHeader className="bg-gradient-to-r from-gray-900 to-gray-800 border-b border-amber-700/50">
+                <CardTitle className="text-2xl font-bold text-amber-400">Premium Customization</CardTitle>
+                <CardDescription className="text-amber-300">Create your exclusive KHUSH.IN design</CardDescription>
               </CardHeader>
-              <CardContent className="pt-6">
+              <CardContent className="pt-6 bg-gray-900">
                 <div
-                  className="aspect-square bg-white rounded-lg flex items-center justify-center relative overflow-hidden shadow-inner"
+                  className="aspect-square bg-gray-800 rounded-lg flex items-center justify-center relative overflow-hidden shadow-inner border border-gray-700"
                   style={{
-                    backgroundImage: "linear-gradient(45deg, #f8f5f0 25%, transparent 25%), linear-gradient(-45deg, #f8f5f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f8f5f0 75%), linear-gradient(-45deg, transparent 75%, #f8f5f0 75%)",
+                    backgroundImage: "linear-gradient(45deg, #1a1a1a 25%, transparent 25%), linear-gradient(-45deg, #1a1a1a 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1a1a1a 75%), linear-gradient(-45deg, transparent 75%, #1a1a1a 75%)",
                     backgroundSize: "20px 20px",
                     backgroundPosition: "0 0, 0 10px, 10px -10px, -10px 0px"
                   }}
@@ -199,50 +199,51 @@ export default function Customize() {
           {/* Customization Controls */}
           <div className="order-last">
             <Tabs defaultValue="text" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 p-1 bg-amber-50 rounded-lg border border-amber-200">
-                <TabsTrigger value="text" className="flex items-center gap-2 data-[state=active]:bg-amber-100 data-[state=active]:text-amber-900 font-medium">
+              <TabsList className="grid w-full grid-cols-3 p-1 bg-gray-900 rounded-lg border border-amber-600/50">
+                <TabsTrigger value="text" className="flex items-center gap-2 text-amber-400 data-[state=active]:bg-gray-800 data-[state=active]:text-amber-400 font-medium">
                   <Type className="w-4 h-4" />
                   Text
                 </TabsTrigger>
-                <TabsTrigger value="upload" className="flex items-center gap-2 data-[state=active]:bg-amber-100 data-[state=active]:text-amber-900 font-medium">
+                <TabsTrigger value="upload" className="flex items-center gap-2 text-amber-400 data-[state=active]:bg-gray-800 data-[state=active]:text-amber-400 font-medium">
                   <ImageIcon className="w-4 h-4" />
                   Image
                 </TabsTrigger>
-                <TabsTrigger value="adjust" className="flex items-center gap-2 data-[state=active]:bg-amber-100 data-[state=active]:text-amber-900 font-medium">
+                <TabsTrigger value="adjust" className="flex items-center gap-2 text-amber-400 data-[state=active]:bg-gray-800 data-[state=active]:text-amber-400 font-medium">
                   <Palette className="w-4 h-4" />
                   Adjust
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="text">
-                <Card className="border-amber-200">
-                  <CardHeader className="bg-gradient-to-r from-amber-50 to-white border-b border-amber-100">
-                    <CardTitle className="text-amber-900">Text Customization</CardTitle>
-                    <CardDescription className="text-amber-700">Add and style your text</CardDescription>
+                <Card className="border-amber-700/50 bg-gray-900">
+                  <CardHeader className="bg-gradient-to-r from-gray-900 to-gray-800 border-b border-amber-700/30">
+                    <CardTitle className="text-amber-400">Text Customization</CardTitle>
+                    <CardDescription className="text-amber-300/80">Add and style your text</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-4 text-gray-100">
                     <div className="space-y-2">
-                      <Label htmlFor="text">Text Content</Label>
+                      <Label htmlFor="text" className="text-amber-300">Text Content</Label>
                       <Input
                         id="text"
                         placeholder="Enter your text"
                         value={customization.text}
                         onChange={(e) => updateCustomization('text', e.target.value)}
+                        className="bg-gray-800 border-gray-700 text-gray-100 focus:border-amber-500"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="font">Font Family</Label>
+                      <Label htmlFor="font" className="text-amber-300">Font Family</Label>
                       <Select
                         value={customization.font}
                         onValueChange={(value) => updateCustomization('font', value)}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-gray-800 border-gray-700 text-gray-100 focus:border-amber-500">
                           <SelectValue placeholder="Select a font" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-gray-800 border-gray-700 text-gray-100">
                           {FONTS.map(font => (
-                            <SelectItem key={font.value} value={font.value}>
+                            <SelectItem key={font.value} value={font.value} className="text-gray-100 hover:bg-gray-700 focus:bg-gray-700">
                               {font.label}
                             </SelectItem>
                           ))}
@@ -251,28 +252,29 @@ export default function Customize() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="fontSize">Font Size</Label>
+                      <Label htmlFor="fontSize" className="text-amber-300">Font Size</Label>
                       <Slider
                         value={[customization.fontSize]}
                         onValueChange={([value]) => updateCustomization('fontSize', value)}
                         min={12}
                         max={72}
                         step={1}
+                        className="[&>[data-state=active]]:bg-amber-500 [&>[role=slider]]:bg-amber-400"
                       />
-                      <p className="text-sm text-muted-foreground text-right">{customization.fontSize}px</p>
+                      <p className="text-sm text-amber-300/80 text-right">{customization.fontSize}px</p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="textColor">Text Color</Label>
+                      <Label htmlFor="textColor" className="text-amber-300">Text Color</Label>
                       <div className="flex items-center gap-4">
                         <input
                           type="color"
                           id="textColor"
                           value={customization.color}
                           onChange={(e) => updateCustomization('color', e.target.value)}
-                          className="w-12 h-12 rounded cursor-pointer"
+                          className="w-12 h-12 rounded cursor-pointer border-2 border-amber-600"
                         />
-                        <span className="text-sm font-mono">{customization.color}</span>
+                        <span className="text-sm font-mono text-amber-300">{customization.color}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -280,21 +282,22 @@ export default function Customize() {
               </TabsContent>
 
               <TabsContent value="upload">
-                <Card className="border-amber-200">
-                  <CardHeader className="bg-gradient-to-r from-amber-50 to-white border-b border-amber-100">
-                    <CardTitle className="text-amber-900">Image Upload</CardTitle>
-                    <CardDescription className="text-amber-700">Upload and customize your image</CardDescription>
+                <Card className="border-amber-700/50 bg-gray-900">
+                  <CardHeader className="bg-gradient-to-r from-gray-900 to-gray-800 border-b border-amber-700/30">
+                    <CardTitle className="text-amber-400">Image Upload</CardTitle>
+                    <CardDescription className="text-amber-300/80">Upload and customize your image</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-4 text-gray-100">
                     <div className="space-y-2">
-                      <Label htmlFor="image">Upload Image</Label>
+                      <Label htmlFor="image" className="text-amber-300">Upload Image</Label>
                       <Input
                         id="image"
                         type="file"
                         accept="image/*"
                         onChange={handleImageUpload}
+                        className="bg-gray-800 border-gray-700 text-gray-100 focus:border-amber-500 file:bg-amber-600 file:text-white file:hover:bg-amber-700"
                       />
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-amber-300/80">
                         Supported formats: JPEG, PNG, GIF (max 5MB)
                       </p>
                     </div>
@@ -303,15 +306,15 @@ export default function Customize() {
               </TabsContent>
 
               <TabsContent value="adjust">
-                <Card className="border-amber-200">
-                  <CardHeader className="bg-gradient-to-r from-amber-50 to-white border-b border-amber-100">
-                    <CardTitle className="text-amber-900">Position & Scale</CardTitle>
-                    <CardDescription className="text-amber-700">Adjust position and size</CardDescription>
+                <Card className="border-amber-700/50 bg-gray-900">
+                  <CardHeader className="bg-gradient-to-r from-gray-900 to-gray-800 border-b border-amber-700/30">
+                    <CardTitle className="text-amber-400">Position & Scale</CardTitle>
+                    <CardDescription className="text-amber-300/80">Adjust position and size</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-6 text-gray-100">
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <MoveHorizontal className="w-4 h-4" />
+                      <Label className="flex items-center gap-2 text-amber-300">
+                        <MoveHorizontal className="w-4 h-4 text-amber-400" />
                         Horizontal Position
                       </Label>
                       <Slider
@@ -320,12 +323,13 @@ export default function Customize() {
                         min={0}
                         max={100}
                         step={1}
+                        className="[&>[data-state=active]]:bg-amber-500 [&>[role=slider]]:bg-amber-400"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <MoveVertical className="w-4 h-4" />
+                      <Label className="flex items-center gap-2 text-amber-300">
+                        <MoveVertical className="w-4 h-4 text-amber-400" />
                         Vertical Position
                       </Label>
                       <Slider
@@ -334,12 +338,13 @@ export default function Customize() {
                         min={0}
                         max={100}
                         step={1}
+                        className="[&>[data-state=active]]:bg-amber-500 [&>[role=slider]]:bg-amber-400"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <ZoomIn className="w-4 h-4" />
+                      <Label className="flex items-center gap-2 text-amber-300">
+                        <ZoomIn className="w-4 h-4 text-amber-400" />
                         Scale
                       </Label>
                       <Slider
@@ -348,13 +353,14 @@ export default function Customize() {
                         min={50}
                         max={200}
                         step={1}
+                        className="[&>[data-state=active]]:bg-amber-500 [&>[role=slider]]:bg-amber-400"
                       />
-                      <p className="text-sm text-muted-foreground text-right">{customization.scale}%</p>
+                      <p className="text-sm text-amber-300/80 text-right">{customization.scale}%</p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <RotateCw className="w-4 h-4" />
+                      <Label className="flex items-center gap-2 text-amber-300">
+                        <RotateCw className="w-4 h-4 text-amber-400" />
                         Rotation
                       </Label>
                       <Slider
@@ -363,8 +369,9 @@ export default function Customize() {
                         min={0}
                         max={360}
                         step={1}
+                        className="[&>[data-state=active]]:bg-amber-500 [&>[role=slider]]:bg-amber-400"
                       />
-                      <p className="text-sm text-muted-foreground text-right">{customization.rotation}°</p>
+                      <p className="text-sm text-amber-300/80 text-right">{customization.rotation}°</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -375,7 +382,7 @@ export default function Customize() {
               <div className="flex gap-4">
                 <Button
                   variant="outline"
-                  className="flex-1 border-amber-300 hover:bg-amber-50 hover:text-amber-900 font-medium"
+                  className="flex-1 border-amber-600 bg-gray-800 text-amber-400 hover:bg-gray-700 hover:text-amber-300 font-medium"
                   onClick={undoLastChange}
                   disabled={history.length === 0 || isLoading}
                 >
@@ -402,7 +409,7 @@ export default function Customize() {
               </div>
               <Button
                 variant="outline"
-                className="w-full border-amber-300 hover:bg-amber-50 hover:text-amber-900 font-medium"
+                className="w-full border-amber-600/50 bg-gray-800 text-amber-400 hover:bg-gray-700 hover:text-amber-300 font-medium"
                 onClick={() => setLocation("/products")}
                 disabled={isLoading}
               >
@@ -410,8 +417,8 @@ export default function Customize() {
               </Button>
               
               {/* Quick tips for users */}
-              <div className="mt-4 p-4 bg-amber-50 rounded-md text-sm text-amber-800 border border-amber-100">
-                <h4 className="font-semibold mb-2 text-amber-900">Premium Customization Tips:</h4>
+              <div className="mt-4 p-4 bg-gray-800 rounded-md text-sm text-amber-300 border border-amber-700/50">
+                <h4 className="font-semibold mb-2 text-amber-400">Premium Customization Tips:</h4>
                 <ul className="list-disc list-inside space-y-1">
                   <li>Drag sliders to adjust position and size</li>
                   <li>Our gold color theme gives your design a luxurious feel</li>
