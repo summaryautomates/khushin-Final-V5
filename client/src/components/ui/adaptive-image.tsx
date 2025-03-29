@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Loader2, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +15,7 @@ interface AdaptiveImageProps {
   containerClassName?: string;
   onLoadSuccess?: () => void;
   onLoadFailure?: () => void;
+  onLoadError?: (error: React.SyntheticEvent<HTMLImageElement, Event>) => void;
   fallbackSrc?: string;
 }
 
@@ -25,6 +26,7 @@ export function AdaptiveImage({
   containerClassName,
   onLoadSuccess,
   onLoadFailure,
+  onLoadError,
   fallbackSrc = "/placeholders/product-placeholder.svg"
 }: AdaptiveImageProps) {
   const [loading, setLoading] = useState(true);
@@ -59,10 +61,15 @@ export function AdaptiveImage({
     }
   };
 
-  const handleError = () => {
+  const handleError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
     if (!mounted.current) return;
 
     console.error(`Image load error: Failed to load image: ${currentSrc}`);
+    
+    // Call onLoadError if provided
+    if (onLoadError) {
+      onLoadError(event);
+    }
 
     if (fallbackIndex < FALLBACK_IMAGES.length) {
       const nextFallback = fallbackSrc || FALLBACK_IMAGES[fallbackIndex];

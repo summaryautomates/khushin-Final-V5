@@ -161,8 +161,10 @@ export default function ProductPage() {
                     <AdaptiveImage
                       src={currentImage}
                       alt={product.name}
-                      className="h-full w-full object-contain p-4"
-                      onLoadError={(error) => console.error('Image load error:', error)}
+                      className="h-full w-full object-contain"
+                      containerClassName="h-full w-full"
+                      onLoadFailure={() => console.error('Failed to load product image')}
+                      onLoadError={(error) => console.error('Image load error occurred')}
                     />
                   )}
 
@@ -195,7 +197,8 @@ export default function ProductPage() {
                         <AdaptiveImage
                           src={image}
                           alt={`${product.name} view ${i + 1}`}
-                          className="h-full w-full object-contain p-2"
+                          className="h-full w-full object-contain"
+                          containerClassName="h-full w-full"
                         />
                       </motion.div>
                     ))}
