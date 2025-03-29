@@ -133,9 +133,9 @@ export default function Customize() {
         position: "relative"
       }}
     >
-      {/* Add a semi-transparent overlay that doesn't cover the whole background */}
+      {/* Very light overlay just to improve text readability */}
       <div 
-        className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/40"
+        className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/20"
         style={{ zIndex: 0 }}
       />
 
@@ -146,7 +146,7 @@ export default function Customize() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Preview Section - Order changed to be first for mobile */}
           <div className={`${!isMobile ? 'sticky top-24' : 'order-first'}`}>
-            <Card className="mb-8 shadow-lg border-2 border-amber-500 relative overflow-hidden bg-gray-900">
+            <Card className="mb-8 shadow-lg border-2 border-amber-500 relative overflow-hidden bg-gray-900/80">
               <div className="absolute inset-0 bg-gradient-to-br from-amber-900/30 via-transparent to-amber-800/20 pointer-events-none" />
               <CardHeader className="bg-gradient-to-r from-gray-900 to-gray-800 border-b border-amber-700/50">
                 <CardTitle className="text-2xl font-bold text-amber-400">Premium Customization</CardTitle>
@@ -203,7 +203,7 @@ export default function Customize() {
           {/* Customization Controls */}
           <div className="order-last">
             <Tabs defaultValue="text" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 p-1 bg-gray-900 rounded-lg border border-amber-600/50">
+              <TabsList className="grid w-full grid-cols-3 p-1 bg-gray-900/80 rounded-lg border border-amber-600/50">
                 <TabsTrigger value="text" className="flex items-center gap-2 text-amber-400 data-[state=active]:bg-gray-800 data-[state=active]:text-amber-400 font-medium">
                   <Type className="w-4 h-4" />
                   Text
@@ -219,7 +219,7 @@ export default function Customize() {
               </TabsList>
 
               <TabsContent value="text">
-                <Card className="border-amber-700/50 bg-gray-900">
+                <Card className="border-amber-700/50 bg-gray-900/80">
                   <CardHeader className="bg-gradient-to-r from-gray-900 to-gray-800 border-b border-amber-700/30">
                     <CardTitle className="text-amber-400">Text Customization</CardTitle>
                     <CardDescription className="text-amber-300/80">Add and style your text</CardDescription>
@@ -286,7 +286,7 @@ export default function Customize() {
               </TabsContent>
 
               <TabsContent value="upload">
-                <Card className="border-amber-700/50 bg-gray-900">
+                <Card className="border-amber-700/50 bg-gray-900/80">
                   <CardHeader className="bg-gradient-to-r from-gray-900 to-gray-800 border-b border-amber-700/30">
                     <CardTitle className="text-amber-400">Image Upload</CardTitle>
                     <CardDescription className="text-amber-300/80">Upload and customize your image</CardDescription>
@@ -310,7 +310,7 @@ export default function Customize() {
               </TabsContent>
 
               <TabsContent value="adjust">
-                <Card className="border-amber-700/50 bg-gray-900">
+                <Card className="border-amber-700/50 bg-gray-900/80">
                   <CardHeader className="bg-gradient-to-r from-gray-900 to-gray-800 border-b border-amber-700/30">
                     <CardTitle className="text-amber-400">Position & Scale</CardTitle>
                     <CardDescription className="text-amber-300/80">Adjust position and size</CardDescription>
@@ -386,7 +386,7 @@ export default function Customize() {
               <div className="flex gap-4">
                 <Button
                   variant="outline"
-                  className="flex-1 border-amber-600 bg-gray-800 text-amber-400 hover:bg-gray-700 hover:text-amber-300 font-medium"
+                  className="flex-1 border-amber-600 bg-gray-800/70 text-amber-400 hover:bg-gray-700 hover:text-amber-300 font-medium"
                   onClick={undoLastChange}
                   disabled={history.length === 0 || isLoading}
                 >
@@ -413,7 +413,7 @@ export default function Customize() {
               </div>
               <Button
                 variant="outline"
-                className="w-full border-amber-600/50 bg-gray-800 text-amber-400 hover:bg-gray-700 hover:text-amber-300 font-medium"
+                className="w-full border-amber-600/50 bg-gray-800/70 text-amber-400 hover:bg-gray-700 hover:text-amber-300 font-medium"
                 onClick={() => setLocation("/products")}
                 disabled={isLoading}
               >
@@ -421,7 +421,7 @@ export default function Customize() {
               </Button>
               
               {/* Quick tips for users */}
-              <div className="mt-4 p-4 bg-gray-800 rounded-md text-sm text-amber-300 border border-amber-700/50">
+              <div className="mt-4 p-4 bg-gray-800/80 rounded-md text-sm text-amber-300 border border-amber-700/50">
                 <h4 className="font-semibold mb-2 text-amber-400">Premium Customization Tips:</h4>
                 <ul className="list-disc list-inside space-y-1">
                   <li>Drag sliders to adjust position and size</li>
