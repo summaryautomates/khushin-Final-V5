@@ -133,15 +133,15 @@ export default function Customize() {
         position: "relative"
       }}
     >
-      {/* Add a semi-transparent overlay */}
+      {/* Add a semi-transparent overlay that doesn't cover the whole background */}
       <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/40"
         style={{ zIndex: 0 }}
       />
 
       {/* Main content with higher z-index */}
       <div className="container mx-auto px-4 relative py-8" style={{ zIndex: 1 }}>
-        <h1 className="text-3xl md:text-4xl font-bold mb-8 text-white">Customize Your Product</h1>
+        <h1 className="text-3xl md:text-4xl font-bold mb-8 text-white drop-shadow-lg text-shadow">Customize Your Product</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Preview Section - Order changed to be first for mobile */}
