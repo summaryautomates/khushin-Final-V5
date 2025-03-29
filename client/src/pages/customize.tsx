@@ -125,7 +125,7 @@ export default function Customize() {
     <div
       className="flex flex-col"
       style={{
-        backgroundImage: "url('https://i.imghippo.com/files/I2429lk.jpg')",
+        backgroundImage: "url('/output (1).jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
