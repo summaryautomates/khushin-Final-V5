@@ -187,7 +187,12 @@ export default function Customize() {
                             color: customization.color,
                             transform: `translate(${customization.x}%, ${customization.y}%) scale(${customization.scale / 100}) rotate(${customization.rotation}deg)`,
                             transition: "all 0.3s ease",
-                            textShadow: "1px 1px 2px rgba(0,0,0,0.3)"
+                            textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+                            fontWeight: "bold",
+                            letterSpacing: "0.5px",
+                            padding: "4px",
+                            backgroundColor: "rgba(0,0,0,0.3)",
+                            borderRadius: "4px"
                           }}
                         >
                           {customization.text}
@@ -226,28 +231,33 @@ export default function Customize() {
                   </CardHeader>
                   <CardContent className="space-y-4 text-gray-100">
                     <div className="space-y-2">
-                      <Label htmlFor="text" className="text-amber-300">Text Content</Label>
+                      <Label htmlFor="text" className="text-amber-300 font-semibold text-base">Text Content</Label>
                       <Input
                         id="text"
                         placeholder="Enter your text"
                         value={customization.text}
                         onChange={(e) => updateCustomization('text', e.target.value)}
-                        className="bg-gray-800 border-gray-700 text-gray-100 focus:border-amber-500"
+                        className="bg-gray-800 border-amber-600 text-gray-100 focus:border-amber-500 placeholder:text-gray-400 font-medium"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="font" className="text-amber-300">Font Family</Label>
+                      <Label htmlFor="font" className="text-amber-300 font-semibold text-base">Font Family</Label>
                       <Select
                         value={customization.font}
                         onValueChange={(value) => updateCustomization('font', value)}
                       >
-                        <SelectTrigger className="bg-gray-800 border-gray-700 text-gray-100 focus:border-amber-500">
+                        <SelectTrigger className="bg-gray-800 border-amber-600 text-gray-100 focus:border-amber-500 font-medium">
                           <SelectValue placeholder="Select a font" />
                         </SelectTrigger>
-                        <SelectContent className="bg-gray-800 border-gray-700 text-gray-100">
+                        <SelectContent className="bg-gray-800 border-amber-600 text-gray-100">
                           {FONTS.map(font => (
-                            <SelectItem key={font.value} value={font.value} className="text-gray-100 hover:bg-gray-700 focus:bg-gray-700">
+                            <SelectItem 
+                              key={font.value} 
+                              value={font.value} 
+                              className="text-gray-100 hover:bg-gray-700 focus:bg-gray-700 font-medium"
+                              style={{ fontFamily: font.value }}
+                            >
                               {font.label}
                             </SelectItem>
                           ))}
@@ -256,7 +266,7 @@ export default function Customize() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="fontSize" className="text-amber-300">Font Size</Label>
+                      <Label htmlFor="fontSize" className="text-amber-300 font-semibold text-base">Font Size</Label>
                       <Slider
                         value={[customization.fontSize]}
                         onValueChange={([value]) => updateCustomization('fontSize', value)}
@@ -265,11 +275,11 @@ export default function Customize() {
                         step={1}
                         className="[&>[data-state=active]]:bg-amber-500 [&>[role=slider]]:bg-amber-400"
                       />
-                      <p className="text-sm text-amber-300/80 text-right">{customization.fontSize}px</p>
+                      <p className="text-sm text-amber-300/80 text-right font-medium">{customization.fontSize}px</p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="textColor" className="text-amber-300">Text Color</Label>
+                      <Label htmlFor="textColor" className="text-amber-300 font-semibold text-base">Text Color</Label>
                       <div className="flex items-center gap-4">
                         <input
                           type="color"
@@ -278,7 +288,7 @@ export default function Customize() {
                           onChange={(e) => updateCustomization('color', e.target.value)}
                           className="w-12 h-12 rounded cursor-pointer border-2 border-amber-600"
                         />
-                        <span className="text-sm font-mono text-amber-300">{customization.color}</span>
+                        <span className="text-sm font-mono text-amber-300 font-medium">{customization.color}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -293,15 +303,15 @@ export default function Customize() {
                   </CardHeader>
                   <CardContent className="space-y-4 text-gray-100">
                     <div className="space-y-2">
-                      <Label htmlFor="image" className="text-amber-300">Upload Image</Label>
+                      <Label htmlFor="image" className="text-amber-300 font-semibold text-base">Upload Image</Label>
                       <Input
                         id="image"
                         type="file"
                         accept="image/*"
                         onChange={handleImageUpload}
-                        className="bg-gray-800 border-gray-700 text-gray-100 focus:border-amber-500 file:bg-amber-600 file:text-white file:hover:bg-amber-700"
+                        className="bg-gray-800 border-amber-600 text-gray-100 focus:border-amber-500 file:bg-amber-600 file:text-white file:hover:bg-amber-700 file:font-medium"
                       />
-                      <p className="text-sm text-amber-300/80">
+                      <p className="text-sm text-amber-300/80 font-medium">
                         Supported formats: JPEG, PNG, GIF (max 5MB)
                       </p>
                     </div>
@@ -317,7 +327,7 @@ export default function Customize() {
                   </CardHeader>
                   <CardContent className="space-y-6 text-gray-100">
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2 text-amber-300">
+                      <Label className="flex items-center gap-2 text-amber-300 font-semibold text-base">
                         <MoveHorizontal className="w-4 h-4 text-amber-400" />
                         Horizontal Position
                       </Label>
@@ -329,10 +339,11 @@ export default function Customize() {
                         step={1}
                         className="[&>[data-state=active]]:bg-amber-500 [&>[role=slider]]:bg-amber-400"
                       />
+                      <p className="text-sm text-amber-300/80 text-right font-medium">{customization.x}%</p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2 text-amber-300">
+                      <Label className="flex items-center gap-2 text-amber-300 font-semibold text-base">
                         <MoveVertical className="w-4 h-4 text-amber-400" />
                         Vertical Position
                       </Label>
@@ -344,10 +355,11 @@ export default function Customize() {
                         step={1}
                         className="[&>[data-state=active]]:bg-amber-500 [&>[role=slider]]:bg-amber-400"
                       />
+                      <p className="text-sm text-amber-300/80 text-right font-medium">{customization.y}%</p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2 text-amber-300">
+                      <Label className="flex items-center gap-2 text-amber-300 font-semibold text-base">
                         <ZoomIn className="w-4 h-4 text-amber-400" />
                         Scale
                       </Label>
@@ -359,11 +371,11 @@ export default function Customize() {
                         step={1}
                         className="[&>[data-state=active]]:bg-amber-500 [&>[role=slider]]:bg-amber-400"
                       />
-                      <p className="text-sm text-amber-300/80 text-right">{customization.scale}%</p>
+                      <p className="text-sm text-amber-300/80 text-right font-medium">{customization.scale}%</p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2 text-amber-300">
+                      <Label className="flex items-center gap-2 text-amber-300 font-semibold text-base">
                         <RotateCw className="w-4 h-4 text-amber-400" />
                         Rotation
                       </Label>
@@ -375,7 +387,7 @@ export default function Customize() {
                         step={1}
                         className="[&>[data-state=active]]:bg-amber-500 [&>[role=slider]]:bg-amber-400"
                       />
-                      <p className="text-sm text-amber-300/80 text-right">{customization.rotation}°</p>
+                      <p className="text-sm text-amber-300/80 text-right font-medium">{customization.rotation}°</p>
                     </div>
                   </CardContent>
                 </Card>
