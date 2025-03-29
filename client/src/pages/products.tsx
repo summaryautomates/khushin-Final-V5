@@ -1,19 +1,10 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ProductGrid } from "@/components/products/product-grid";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
+import { SearchSidebar, SearchFilters } from "@/components/products/search-sidebar";
 import {
-  Filter,
   Crown,
   Search,
   X,
@@ -202,78 +193,24 @@ export default function Products() {
         <div className="grid gap-6 md:grid-cols-[300px,1fr]">
           {/* Filters Sidebar */}
           <div className="space-y-6">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="p-6 bg-white/[0.02] backdrop-blur-sm rounded-lg space-y-6 border border-white/10"
             >
-              <div className="space-y-2">
-                <h3 className="font-medium">Search</h3>
-                <div className="flex gap-2">
-                  <Input
-                    type="search"
-                    placeholder="Search products..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="flex-grow"
-                  />
-                  <Button variant="secondary" size="icon">
-                    <Search className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="font-medium">Category</h3>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="font-medium">Sort By</h3>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sort by..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                    <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                    <SelectItem value="price-asc">Price (Low to High)</SelectItem>
-                    <SelectItem value="price-desc">Price (High to Low)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="font-medium">Price Range</h3>
-                <Slider
-                  min={0}
-                  max={maxPrice}
-                  step={100}
-                  value={[priceRange[0], priceRange[1]]}
-                  onValueChange={(value) => setPriceRange(value as [number, number])}
-                  className="mt-2"
-                />
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>₹{priceRange[0].toLocaleString()}</span>
-                  <span>₹{priceRange[1].toLocaleString()}</span>
-                </div>
-              </div>
-
-              <Button
-                className="w-full gap-2"
-                variant="outline"
-                onClick={() => {
+              <SearchSidebar
+                onFiltersChange={(filters) => {
+                  setSearchTerm(filters.searchTerm);
+                  setCategory(filters.category);
+                  setPriceRange(filters.priceRange);
+                  setSortBy(filters.sortBy);
+                }}
+                initialFilters={{
+                  searchTerm,
+                  category,
+                  priceRange,
+                  sortBy,
+                }}
+                onSaveSearch={() => {
                   const newSearch: SearchHistory = {
                     term: searchTerm,
                     category,
@@ -282,9 +219,7 @@ export default function Products() {
                   };
                   setSavedSearches(prev => [...prev, newSearch]);
                 }}
-              >
-                <Save className="w-4 h-4" /> Save Search
-              </Button>
+              />
             </motion.div>
 
             {/* Search History Panel */}
@@ -292,27 +227,27 @@ export default function Products() {
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-6 bg-white/[0.02] backdrop-blur-sm rounded-lg space-y-4 border border-white/10"
+                className="p-6 bg-black rounded-lg space-y-4 border border-white/10"
               >
-                <h3 className="font-medium">Recent Searches</h3>
+                <h3 className="text-white font-medium text-lg">Recent Searches</h3>
                 <div className="space-y-2">
                   {searchHistory.map((search, index) => (
                     <div
                       key={index}
-                      className="p-2 hover:bg-white/[0.02] rounded-lg cursor-pointer"
+                      className="p-2 hover:bg-zinc-800 rounded-lg cursor-pointer"
                       onClick={() => applySearch(search)}
                     >
                       <div className="flex items-center gap-2">
-                        <Search className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm">{search.term || "All Products"}</span>
+                        <Search className="w-4 h-4 text-white/70" />
+                        <span className="text-sm text-white">{search.term || "All Products"}</span>
                       </div>
                       <div className="mt-1 flex gap-2">
                         {search.category !== "all" && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs text-white border-white/10">
                             {search.category}
                           </Badge>
                         )}
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs text-white border-white/10">
                           ₹{search.priceRange[0].toLocaleString()} - ₹{search.priceRange[1].toLocaleString()}
                         </Badge>
                       </div>
@@ -320,25 +255,25 @@ export default function Products() {
                   ))}
                 </div>
 
-                <h3 className="font-medium pt-4">Saved Searches</h3>
+                <h3 className="text-white font-medium text-lg pt-4">Saved Searches</h3>
                 <div className="space-y-2">
                   {savedSearches.map((search, index) => (
                     <div
                       key={index}
-                      className="p-2 hover:bg-white/[0.02] rounded-lg cursor-pointer"
+                      className="p-2 hover:bg-zinc-800 rounded-lg cursor-pointer"
                       onClick={() => applySearch(search)}
                     >
                       <div className="flex items-center gap-2">
-                        <Save className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm">{search.term || "All Products"}</span>
+                        <Save className="w-4 h-4 text-white/70" />
+                        <span className="text-sm text-white">{search.term || "All Products"}</span>
                       </div>
                       <div className="mt-1 flex gap-2">
                         {search.category !== "all" && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs text-white border-white/10">
                             {search.category}
                           </Badge>
                         )}
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs text-white border-white/10">
                           ₹{search.priceRange[0].toLocaleString()} - ₹{search.priceRange[1].toLocaleString()}
                         </Badge>
                       </div>
