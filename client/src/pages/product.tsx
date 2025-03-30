@@ -239,34 +239,16 @@ export default function ProductPage() {
                       </motion.div>
                     </motion.div>
 
+                    {/* We're keeping the functionality to switch images but hiding the visual thumbnails */}
                     {images.length > 1 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="grid grid-cols-5 gap-3 mt-4"
-                      >
+                      <div className="hidden">
                         {images.map((image, i) => (
-                          <motion.div
+                          <div
                             key={i}
-                            whileHover={{ scale: 1.05 }}
-                            className={cn(
-                              "aspect-square overflow-hidden rounded-lg border cursor-pointer transition-all duration-300 relative",
-                              selectedImage === i 
-                                ? "ring-2 ring-primary/80 shadow-lg bg-white" 
-                                : "bg-zinc-50 hover:ring-1 hover:ring-primary/40"
-                            )}
                             onClick={() => setSelectedImage(i)}
-                          >
-                            <AdaptiveImage
-                              src={image}
-                              alt={`${product.name} view ${i + 1}`}
-                              className="h-full w-full object-contain"
-                              containerClassName="h-full w-full"
-                            />
-                          </motion.div>
+                          />
                         ))}
-                      </motion.div>
+                      </div>
                     )}
                   </>
                 )}
