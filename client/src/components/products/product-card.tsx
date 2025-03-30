@@ -115,7 +115,8 @@ export function ProductCard({ product }: ProductCardProps) {
             {isFlaskCollection ? (
               <ProductImageGallery 
                 images={product.images} 
-                alt={product.name} 
+                alt={product.name}
+                showThumbnails={false}
               />
             ) : (
               <motion.div

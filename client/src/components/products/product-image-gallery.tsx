@@ -17,9 +17,10 @@ interface ProductImageGalleryProps {
   images: string[];
   alt: string;
   className?: string;
+  showThumbnails?: boolean;
 }
 
-export function ProductImageGallery({ images, alt, className }: ProductImageGalleryProps) {
+export function ProductImageGallery({ images, alt, className, showThumbnails = true }: ProductImageGalleryProps) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -182,35 +183,46 @@ export function ProductImageGallery({ images, alt, className }: ProductImageGall
           </div>
         </div>
 
-        {/* Improved Thumbnail strip */}
-        <div className="flex justify-center">
-          <div className="flex gap-2 overflow-x-auto hide-scrollbar max-w-full px-2 pb-1">
-            {images.map((image, index) => (
-              <motion.div
-                key={index}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-                className={cn(
-                  "flex-shrink-0 w-16 h-16 cursor-pointer rounded-md overflow-hidden transition-all duration-300 relative",
-                  selectedImage === index 
-                    ? "ring-2 ring-primary shadow-md" 
-                    : "ring-1 ring-gray-200 hover:ring-primary/50"
-                )}
-                onClick={() => handleThumbnailClick(index)}
-              >
-                <AdaptiveImage
-                  src={image}
-                  alt={`Thumbnail ${index + 1}`}
-                  className="w-full h-full object-cover"
-                  containerClassName="h-full w-full"
-                />
-                {selectedImage === index && (
-                  <div className="absolute inset-0 bg-primary/10" />
-                )}
-              </motion.div>
+        {/* Improved Thumbnail strip - conditionally rendered */}
+        {showThumbnails && (
+          <div className="flex justify-center">
+            <div className="flex gap-2 overflow-x-auto hide-scrollbar max-w-full px-2 pb-1">
+              {images.map((image, index) => (
+                <motion.div
+                  key={index}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={cn(
+                    "flex-shrink-0 w-16 h-16 cursor-pointer rounded-md overflow-hidden transition-all duration-300 relative",
+                    selectedImage === index 
+                      ? "ring-2 ring-primary shadow-md" 
+                      : "ring-1 ring-gray-200 hover:ring-primary/50"
+                  )}
+                  onClick={() => handleThumbnailClick(index)}
+                >
+                  <AdaptiveImage
+                    src={image}
+                    alt={`Thumbnail ${index + 1}`}
+                    className="w-full h-full object-cover"
+                    containerClassName="h-full w-full"
+                  />
+                  {selectedImage === index && (
+                    <div className="absolute inset-0 bg-primary/10" />
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Hidden thumbnails container for navigation when thumbnails are not visible */}
+        {!showThumbnails && images.length > 1 && (
+          <div className="hidden">
+            {images.map((_, index) => (
+              <div key={index} onClick={() => handleThumbnailClick(index)} />
             ))}
           </div>
-        </div>
+        )}
       </div>
 
       {/* Fullscreen view */}
