@@ -7,7 +7,7 @@ import { ProductGrid } from "@/components/products/product-grid";
 import { ExperienceBoxes } from "@/components/ExperienceBoxes";
 import type { Product } from "@shared/schema";
 import { Input } from "@/components/ui/input";
-import { Star, Clock, Calendar, Mic, Camera, Loader2 } from "lucide-react";
+import { Star, Clock, Calendar, Mic, Camera, Loader2, Search } from "lucide-react";
 import { useState, useRef, useEffect, useMemo, lazy, Suspense } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AdaptiveImage } from "@/components/ui/adaptive-image";
@@ -247,45 +247,61 @@ export default function Home() {
               >
                 <div className="flex flex-col items-center gap-6">
                   <div className="flex flex-col gap-3 w-full max-w-lg">
-                    <div className="flex gap-2">
-                      <Input
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search our luxury collection..."
-                        className="border-primary/20 rounded-full flex-grow"
-                      />
-                      <Button
-                        variant="secondary"
-                        className={`rounded-full min-w-[44px] ${isListening ? "bg-red-500 hover:bg-red-600" : ""}`}
-                        onClick={handleVoiceSearch}
-                        disabled={isListening}
-                      >
-                        {isListening ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Mic className="w-4 h-4" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        className="rounded-full min-w-[44px]"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isProcessingImage}
-                      >
-                        {isProcessingImage ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Camera className="w-4 h-4" />
-                        )}
-                      </Button>
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept="image/*"
-                        onChange={handleImageSearch}
-                      />
-                    </div>
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      if (searchQuery.trim()) {
+                        setLocation(`/products?search=${encodeURIComponent(searchQuery)}`);
+                      }
+                    }}>
+                      <div className="flex gap-2">
+                        <Input
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Search our luxury collection..."
+                          className="border-primary/20 rounded-full flex-grow"
+                        />
+                        <Button
+                          type="submit"
+                          variant="default"
+                          className="rounded-full min-w-[44px]"
+                        >
+                          <Search className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          className={`rounded-full min-w-[44px] ${isListening ? "bg-red-500 hover:bg-red-600" : ""}`}
+                          onClick={handleVoiceSearch}
+                          disabled={isListening}
+                        >
+                          {isListening ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Mic className="w-4 h-4" />
+                          )}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          className="rounded-full min-w-[44px]"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isProcessingImage}
+                        >
+                          {isProcessingImage ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Camera className="w-4 h-4" />
+                          )}
+                        </Button>
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleImageSearch}
+                        />
+                      </div>
+                    </form>
                     {suggestions.length > 0 && (
                       <div className="bg-background/90 backdrop-blur-sm border border-primary/20 rounded-lg p-2 space-y-1">
                         <p className="text-sm text-muted-foreground px-2">
@@ -296,7 +312,10 @@ export default function Home() {
                             key={index}
                             variant="ghost"
                             className="w-full justify-start text-left"
-                            onClick={() => setSearchQuery(suggestion)}
+                            onClick={() => {
+                              setSearchQuery(suggestion);
+                              setLocation(`/products?search=${encodeURIComponent(suggestion)}`);
+                            }}
                           >
                             {suggestion}
                           </Button>

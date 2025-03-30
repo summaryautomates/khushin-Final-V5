@@ -32,13 +32,28 @@ export default function Products() {
   const [savedSearches, setSavedSearches] = useState<SearchHistory[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
-  // Parse category from URL if present
+  // Parse category and search query from URL if present
   useEffect(() => {
+    // Parse category from URL path
     const urlCategory = location.match(/\/products\/category\/(.+)/)?.[1];
     if (urlCategory) {
       setCategory(urlCategory);
     } else {
       setCategory("all");
+    }
+    
+    // Parse search query from URL parameter
+    const searchParam = new URLSearchParams(window.location.search).get('search');
+    if (searchParam) {
+      setSearchTerm(decodeURIComponent(searchParam));
+      
+      // Add to search history
+      const newSearch: SearchHistory = {
+        term: decodeURIComponent(searchParam),
+        category: urlCategory || "all",
+        timestamp: new Date()
+      };
+      setSearchHistory(prev => [newSearch, ...prev.slice(0, 4)]);
     }
   }, [location]);
 
