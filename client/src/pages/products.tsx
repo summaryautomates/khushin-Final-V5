@@ -58,6 +58,13 @@ export default function Products() {
                          product.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = category === "all" || product.category === category;
       const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+      
+      // Skip luxury collection products in the general collection page
+      // They will be shown only in the premium-collection page
+      if (location === "/products" && product.collection === "luxury") {
+        return false;
+      }
+      
       return matchesSearch && matchesCategory && matchesPrice;
     })
     .sort((a, b) => {

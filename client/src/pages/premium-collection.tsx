@@ -12,9 +12,9 @@ export default function PremiumCollection() {
     queryKey: ["/api/products"],
   });
 
-  // Filter for premium/luxury products
+  // Filter for premium/luxury products using the collection field
   const premiumProducts = products?.filter(product => 
-    product.category === "luxury" || product.price > 200000 // Products over ₹2000
+    product.collection === "luxury" // Only show products marked as luxury collection
   ) || [];
 
   return (

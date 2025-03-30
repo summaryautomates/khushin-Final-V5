@@ -20,6 +20,7 @@ export const products = pgTable('products', {
   description: text('description').notNull(),
   price: integer('price').notNull(),
   category: text('category').notNull(),
+  collection: text('collection').notNull().default('standard'),
   images: text('images').array().notNull(),
   customizable: boolean('customizable').notNull().default(false),
   features: jsonb('features').notNull(),
@@ -61,6 +62,7 @@ export interface Product {
   description: string;
   price: number;
   category: string;
+  collection: string;
   images: string[];
   customizable: boolean;
   features: Record<string, any>;
@@ -209,6 +211,7 @@ export const insertProductSchema = z.object({
   description: z.string(),
   price: z.number(),
   category: z.string(),
+  collection: z.string().default('standard'),
   images: z.array(z.string()),
   customizable: z.boolean(),
   features: z.record(z.any())

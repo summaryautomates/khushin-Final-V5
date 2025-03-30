@@ -167,7 +167,7 @@ export default function ProductPage() {
                       transition={{ duration: 0.5 }}
                       className="aspect-square overflow-hidden rounded-xl border bg-zinc-100 relative shadow-2xl"
                     >
-                      {product.category === "lighters" ? (
+                      {(product.collection === "lighter" || product.collection === "luxury") ? (
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="w-full h-full">
                             <Suspense fallback={
@@ -201,7 +201,10 @@ export default function ProductPage() {
                       >
                         <Badge variant="secondary" className="bg-gold text-black px-3 py-1 flex items-center gap-2">
                           <Crown className="h-4 w-4" />
-                          Premium Collection
+                          {product.collection === 'luxury' ? 'Luxury Collection' : 
+                           product.collection === 'lighter' ? 'Premium Lighter Collection' :
+                           product.collection === 'flask' ? 'Premium Flask Collection' : 
+                           'Standard Collection'}
                         </Badge>
                       </motion.div>
                     </motion.div>
@@ -240,7 +243,15 @@ export default function ProductPage() {
                 className="space-y-8"
               >
                 <div className="space-y-4">
-                  <Badge variant="outline" className="text-primary">Luxury Collection</Badge>
+                  {product.collection === 'luxury' ? (
+                    <Badge variant="outline" className="text-primary">Luxury Collection</Badge>
+                  ) : product.collection === 'lighter' ? (
+                    <Badge variant="outline" className="text-primary">Premium Lighter Collection</Badge>
+                  ) : product.collection === 'flask' ? (
+                    <Badge variant="outline" className="text-primary">Premium Flask Collection</Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-primary">Standard Collection</Badge>
+                  )}
                   <h1 className="text-4xl font-light tracking-wider">{product.name}</h1>
                   <div className="flex items-center gap-2">
                     <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
@@ -355,6 +366,7 @@ export default function ProductPage() {
               <SimilarProducts
                 currentProductId={product.id}
                 category={product.category}
+                collection={product.collection}
               />
             </div>
           </div>
