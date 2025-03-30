@@ -16,15 +16,6 @@ export type ChartConfig = {
   )
 }
 
-// Gold theme colors for charts
-export const goldChartColors = {
-  primary: "#f1c40f",
-  secondary: "#f5d76e",
-  tertiary: "#e6b80d",
-  quaternary: "#f39c12",
-  quinary: "#fce794",
-}
-
 type ChartContextProps = {
   config: ChartConfig
 }
