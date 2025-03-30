@@ -258,25 +258,25 @@ export default function ProductPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="space-y-4 md:hidden mt-6 bg-white rounded-xl p-5 border shadow-sm"
+                  className="space-y-4 md:hidden mt-6"
                 >
-                  <h3 className="text-lg font-medium text-gray-900">Specifications</h3>
+                  <h3 className="text-lg font-medium tracking-wide">Specifications</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="space-y-1 p-2 bg-gray-50 rounded-lg">
-                      <p className="text-gray-600 font-medium">Material</p>
-                      <p className="font-medium text-gray-900">Premium Quality</p>
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground">Material</p>
+                      <p className="font-medium">Premium Quality</p>
                     </div>
-                    <div className="space-y-1 p-2 bg-gray-50 rounded-lg">
-                      <p className="text-gray-600 font-medium">Dimensions</p>
-                      <p className="font-medium text-gray-900">12 × 4 × 2 cm</p>
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground">Dimensions</p>
+                      <p className="font-medium">12 × 4 × 2 cm</p>
                     </div>
-                    <div className="space-y-1 p-2 bg-gray-50 rounded-lg">
-                      <p className="text-gray-600 font-medium">Weight</p>
-                      <p className="font-medium text-gray-900">180g</p>
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground">Weight</p>
+                      <p className="font-medium">180g</p>
                     </div>
-                    <div className="space-y-1 p-2 bg-gray-50 rounded-lg">
-                      <p className="text-gray-600 font-medium">Made in</p>
-                      <p className="font-medium text-gray-900">India</p>
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground">Made in</p>
+                      <p className="font-medium">India</p>
                     </div>
                   </div>
                 </motion.div>
@@ -339,43 +339,43 @@ export default function ProductPage() {
                 </div>
 
                 {/* Description */}
-                <div className="space-y-4 p-5 bg-white rounded-xl border shadow-sm">
-                  <h3 className="text-xl font-medium text-gray-900">Description</h3>
-                  <p className="text-gray-800 leading-relaxed">
+                <div className="space-y-4">
+                  <h3 className="text-xl font-medium">Description</h3>
+                  <p className="text-muted-foreground leading-relaxed">
                     {product.description}
                   </p>
                   
                   {/* Key features */}
-                  <div className="grid grid-cols-2 gap-4 pt-3 mt-2 border-t">
-                    <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div className="flex items-center gap-2">
                       <Check className="h-5 w-5 text-emerald-600" />
-                      <span className="text-sm font-medium text-gray-800">Hand-crafted</span>
+                      <span className="text-sm">Hand-crafted</span>
                     </div>
-                    <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
+                    <div className="flex items-center gap-2">
                       <Check className="h-5 w-5 text-emerald-600" />
-                      <span className="text-sm font-medium text-gray-800">Durable design</span>
+                      <span className="text-sm">Durable design</span>
                     </div>
-                    <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
+                    <div className="flex items-center gap-2">
                       <Check className="h-5 w-5 text-emerald-600" />
-                      <span className="text-sm font-medium text-gray-800">Exclusive materials</span>
+                      <span className="text-sm">Exclusive materials</span>
                     </div>
-                    <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
+                    <div className="flex items-center gap-2">
                       <Check className="h-5 w-5 text-emerald-600" />
-                      <span className="text-sm font-medium text-gray-800">Lifetime warranty</span>
+                      <span className="text-sm">Lifetime warranty</span>
                     </div>
                   </div>
                 </div>
                 
                 {/* Delivery information */}
-                <div className="bg-white rounded-xl p-4 space-y-3 border shadow-sm">
+                <div className="bg-zinc-50 rounded-xl p-4 space-y-3">
                   <div className="flex items-center gap-2">
                     <Truck className="h-5 w-5 text-primary" />
-                    <span className="font-medium text-gray-900">Delivery Information</span>
+                    <span className="font-medium">Delivery Information</span>
                   </div>
                   <div className="flex items-center gap-2 ml-7 text-sm">
                     <div className="flex flex-col">
-                      <p className="text-gray-700">Express delivery available</p>
-                      <p className="font-medium text-gray-900">Get it by <span className="text-primary font-semibold">Tomorrow</span></p>
+                      <p className="text-muted-foreground">Express delivery available</p>
+                      <p className="font-medium">Get it by <span className="text-primary">Tomorrow</span></p>
                     </div>
                   </div>
                 </div>
@@ -431,53 +431,53 @@ export default function ProductPage() {
                 </div>
 
                 {/* Product features */}
-                <div className="space-y-6 rounded-xl border p-6 bg-white shadow-sm">
-                  <h3 className="text-xl font-medium mb-4 text-black">Product Features</h3>
-                  <div className="flex items-start space-x-4 mb-4">
-                    <Package className="h-5 w-5 text-primary mt-1" />
+                <div className="space-y-6 rounded-xl border p-6 bg-zinc-50">
+                  <h3 className="text-lg font-medium mb-4">Product Features</h3>
+                  <div className="flex items-center space-x-4">
+                    <Package className="h-5 w-5 text-primary" />
                     <div>
-                      <h4 className="font-medium text-gray-900">Luxury Packaging</h4>
-                      <p className="text-sm text-gray-700">Premium gift box included</p>
+                      <h4 className="font-medium">Luxury Packaging</h4>
+                      <p className="text-sm text-muted-foreground">Premium gift box included</p>
                     </div>
                   </div>
-                  <div className="flex items-start space-x-4 mb-4">
-                    <Shield className="h-5 w-5 text-primary mt-1" />
+                  <div className="flex items-center space-x-4">
+                    <Shield className="h-5 w-5 text-primary" />
                     <div>
-                      <h4 className="font-medium text-gray-900">Authenticity Guaranteed</h4>
-                      <p className="text-sm text-gray-700">100% genuine products</p>
+                      <h4 className="font-medium">Authenticity Guaranteed</h4>
+                      <p className="text-sm text-muted-foreground">100% genuine products</p>
                     </div>
                   </div>
-                  <div className="flex items-start space-x-4 mb-4">
-                    <Calendar className="h-5 w-5 text-primary mt-1" />
+                  <div className="flex items-center space-x-4">
+                    <Calendar className="h-5 w-5 text-primary" />
                     <div>
-                      <h4 className="font-medium text-gray-900">Fast Delivery</h4>
-                      <p className="text-sm text-gray-700">Ships within 24 hours</p>
+                      <h4 className="font-medium">Fast Delivery</h4>
+                      <p className="text-sm text-muted-foreground">Ships within 24 hours</p>
                     </div>
                   </div>
-                  <div className="flex items-start space-x-4">
-                    <RefreshCcw className="h-5 w-5 text-primary mt-1" />
+                  <div className="flex items-center space-x-4">
+                    <RefreshCcw className="h-5 w-5 text-primary" />
                     <div>
-                      <h4 className="font-medium text-gray-900">Easy Returns</h4>
-                      <p className="text-sm text-gray-700">30-day hassle-free returns</p>
+                      <h4 className="font-medium">Easy Returns</h4>
+                      <p className="text-sm text-muted-foreground">30-day hassle-free returns</p>
                     </div>
                   </div>
                 </div>
                 
                 {/* Gift options */}
-                <div className="space-y-3 p-4 bg-white rounded-xl border shadow-sm">
+                <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Gift className="h-5 w-5 text-primary" />
-                    <span className="font-medium text-gray-900">Gift Options Available</span>
+                    <span className="font-medium">Gift Options Available</span>
                   </div>
-                  <p className="text-sm text-gray-700 ml-7">
+                  <p className="text-sm text-muted-foreground ml-7">
                     Add a personalized message or choose luxury gift wrapping during checkout.
                   </p>
                 </div>
 
                 {/* Share buttons */}
-                <div className="flex items-center justify-between p-4 border bg-white rounded-xl shadow-sm">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm text-gray-700 font-medium">Share this product:</p>
+                    <p className="text-sm text-muted-foreground">Share this product:</p>
                     <ShareButtons
                       url={window.location.href}
                       title={product.name}
@@ -489,7 +489,7 @@ export default function ProductPage() {
                   {/* Need help section */}
                   <div className="flex items-center gap-2">
                     <Info className="h-4 w-4 text-primary" />
-                    <a href="#" className="text-sm text-primary hover:underline font-medium">Need help?</a>
+                    <a href="#" className="text-sm text-primary hover:underline">Need help?</a>
                   </div>
                 </div>
               </motion.div>
@@ -500,25 +500,25 @@ export default function ProductPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="hidden md:block mt-16 bg-white rounded-xl p-8 border shadow-sm"
+              className="hidden md:block mt-16 bg-zinc-50 rounded-xl p-8"
             >
-              <h2 className="text-2xl font-medium text-black mb-6">Product Specifications</h2>
+              <h2 className="text-2xl font-light tracking-wide mb-6">Product Specifications</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <div className="space-y-2 bg-white p-4 rounded-lg border">
-                  <h3 className="text-lg font-medium text-gray-900">Material</h3>
-                  <p className="text-gray-700">Premium quality materials sourced from the finest suppliers.</p>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium">Material</h3>
+                  <p className="text-muted-foreground">Premium quality materials sourced from the finest suppliers.</p>
                 </div>
-                <div className="space-y-2 bg-white p-4 rounded-lg border">
-                  <h3 className="text-lg font-medium text-gray-900">Dimensions</h3>
-                  <p className="text-gray-700">12 × 4 × 2 cm (L × W × H)</p>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium">Dimensions</h3>
+                  <p className="text-muted-foreground">12 × 4 × 2 cm (L × W × H)</p>
                 </div>
-                <div className="space-y-2 bg-white p-4 rounded-lg border">
-                  <h3 className="text-lg font-medium text-gray-900">Weight</h3>
-                  <p className="text-gray-700">180g - lightweight and easy to carry</p>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium">Weight</h3>
+                  <p className="text-muted-foreground">180g - lightweight and easy to carry</p>
                 </div>
-                <div className="space-y-2 bg-white p-4 rounded-lg border">
-                  <h3 className="text-lg font-medium text-gray-900">Made in</h3>
-                  <p className="text-gray-700">Proudly crafted in India by skilled artisans</p>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium">Made in</h3>
+                  <p className="text-muted-foreground">Proudly crafted in India by skilled artisans</p>
                 </div>
               </div>
             </motion.div>
