@@ -162,7 +162,7 @@ export default function ProductPage() {
                   transition={{ delay: 0.1 }}
                   className="relative z-10 mb-2"
                 >
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-primary/80 to-primary text-white text-sm font-medium product-badge">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-primary/80 to-primary text-white text-sm font-medium">
                     <Sparkles className="h-3.5 w-3.5" />
                     Featured Product
                   </div>
@@ -308,7 +308,7 @@ export default function ProductPage() {
                     </Badge>
                   </div>
                   
-                  <h1 className="text-3xl sm:text-4xl font-light tracking-wide product-title">{product.name}</h1>
+                  <h1 className="text-3xl sm:text-4xl font-light tracking-wide">{product.name}</h1>
                   
                   {/* Reviews section */}
                   <div className="flex items-center gap-2">
@@ -326,7 +326,7 @@ export default function ProductPage() {
                   
                   {/* Price with original price crossed out for effect */}
                   <div className="flex items-center gap-3">
-                    <p className="text-3xl font-medium tracking-wide text-primary product-price">
+                    <p className="text-3xl font-medium tracking-wide text-primary">
                       {formatPrice(product.price)}
                     </p>
                     <p className="text-lg text-muted-foreground line-through">
@@ -341,7 +341,7 @@ export default function ProductPage() {
                 {/* Description */}
                 <div className="space-y-4">
                   <h3 className="text-xl font-medium">Description</h3>
-                  <p className="text-muted-foreground leading-relaxed product-description">
+                  <p className="text-muted-foreground leading-relaxed">
                     {product.description}
                   </p>
                   
@@ -369,7 +369,7 @@ export default function ProductPage() {
                 {/* Delivery information */}
                 <div className="bg-zinc-50 rounded-xl p-4 space-y-3">
                   <div className="flex items-center gap-2">
-                    <Truck className="h-5 w-5 text-primary product-feature-icon" />
+                    <Truck className="h-5 w-5 text-primary" />
                     <span className="font-medium">Delivery Information</span>
                   </div>
                   <div className="flex items-center gap-2 ml-7 text-sm">
@@ -434,28 +434,28 @@ export default function ProductPage() {
                 <div className="space-y-6 rounded-xl border p-6 bg-zinc-50">
                   <h3 className="text-lg font-medium mb-4">Product Features</h3>
                   <div className="flex items-center space-x-4">
-                    <Package className="h-5 w-5 text-primary product-feature-icon" />
+                    <Package className="h-5 w-5 text-primary" />
                     <div>
                       <h4 className="font-medium">Luxury Packaging</h4>
                       <p className="text-sm text-muted-foreground">Premium gift box included</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
-                    <Shield className="h-5 w-5 text-primary product-feature-icon" />
+                    <Shield className="h-5 w-5 text-primary" />
                     <div>
                       <h4 className="font-medium">Authenticity Guaranteed</h4>
                       <p className="text-sm text-muted-foreground">100% genuine products</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
-                    <Calendar className="h-5 w-5 text-primary product-feature-icon" />
+                    <Calendar className="h-5 w-5 text-primary" />
                     <div>
                       <h4 className="font-medium">Fast Delivery</h4>
                       <p className="text-sm text-muted-foreground">Ships within 24 hours</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
-                    <RefreshCcw className="h-5 w-5 text-primary product-feature-icon" />
+                    <RefreshCcw className="h-5 w-5 text-primary" />
                     <div>
                       <h4 className="font-medium">Easy Returns</h4>
                       <p className="text-sm text-muted-foreground">30-day hassle-free returns</p>
@@ -466,7 +466,7 @@ export default function ProductPage() {
                 {/* Gift options */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <Gift className="h-5 w-5 text-primary product-feature-icon" />
+                    <Gift className="h-5 w-5 text-primary" />
                     <span className="font-medium">Gift Options Available</span>
                   </div>
                   <p className="text-sm text-muted-foreground ml-7">
@@ -488,7 +488,7 @@ export default function ProductPage() {
                   
                   {/* Need help section */}
                   <div className="flex items-center gap-2">
-                    <Info className="h-4 w-4 text-primary product-feature-icon" />
+                    <Info className="h-4 w-4 text-primary" />
                     <a href="#" className="text-sm text-primary hover:underline">Need help?</a>
                   </div>
                 </div>
