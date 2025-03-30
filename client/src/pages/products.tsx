@@ -62,6 +62,11 @@ export default function Products() {
         return false;
       }
       
+      // For lighters category, exclude flask products
+      if (category === "lighters" && product.category === "flask") {
+        return false;
+      }
+      
       return matchesSearch && matchesCategory;
     })
     .sort((a, b) => {

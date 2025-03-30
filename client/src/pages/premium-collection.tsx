@@ -15,6 +15,7 @@ export default function PremiumCollection() {
   // Filter for premium/luxury products using the collection field
   const premiumProducts = products?.filter(product => 
     product.collection === "luxury" // Only show products marked as luxury collection
+    && product.category !== "flask" // Exclude flask products as requested
   ) || [];
 
   return (
