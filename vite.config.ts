@@ -7,7 +7,6 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
 export default defineConfig({
   plugins: [
     react(),
@@ -26,7 +25,6 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "client", "src"),
       "@shared": path.resolve(__dirname, "shared"),
-      "@assets": path.resolve(__dirname, "attached_assets"),
     },
   },
   root: path.resolve(__dirname, "client"),

@@ -1,70 +1,278 @@
-import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import express, { type Express } from "express";
+import { createServer } from "http";
+import { registerRoutes } from './routes';
+import { setupVite } from './vite';
+import { setupAuth } from './auth';
+import { setupWebSocket } from './websocket';
+import cors from 'cors';
+import { portManager } from './port-manager';
+import { db, checkDatabaseHealth } from './db';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import path from 'path';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+const execAsync = promisify(exec);
 
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
+async function forceCleanupPort(port: number) {
+  try {
+    console.log(`Attempting to force cleanup port ${port}...`);
+    await execAsync(`fuser -k ${port}/tcp`);
+    console.log(`Force cleanup of port ${port} completed`);
+  } catch (error) {
+    console.log(`No process found using port ${port}`);
+  }
+}
 
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+async function startServer() {
+  const app = express();
+  const isProduction = process.env.NODE_ENV === 'production';
+  const REQUIRED_PORT = 5000; // Changed from 3000 to 5000 to match workflow requirements
+  const MAX_STARTUP_RETRIES = 3;
+  let startupAttempts = 0;
+  let server: any = null;
+
+  while (startupAttempts < MAX_STARTUP_RETRIES) {
+    try {
+      console.log(`Starting server initialization (attempt ${startupAttempts + 1}/${MAX_STARTUP_RETRIES})...`, {
+        environment: process.env.NODE_ENV,
+        timestamp: new Date().toISOString(),
+        requiredPort: REQUIRED_PORT
+      });
+
+      // Force cleanup of the required port
+      await forceCleanupPort(REQUIRED_PORT);
+      await portManager.releaseAll();
+      console.log('Complete port cleanup finished');
+
+      // Wait a moment for ports to fully release
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Verify database connection
+      console.log('Checking database health...');
+      const isHealthy = await checkDatabaseHealth();
+      if (!isHealthy) {
+        throw new Error('Database health check failed');
+      }
+      console.log('Database health check passed');
+
+      // Setup CORS with credentials support
+      app.use(cors({
+        origin: true,
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With', 'Accept'],
+        exposedHeaders: ['Set-Cookie'],
+        maxAge: 86400
+      }));
+      console.log('CORS configuration applied');
+
+      // Configure express middleware
+      app.use(express.json());
+      app.use(express.urlencoded({ extended: true }));
+      app.set("trust proxy", 1);
+
+      app.use('/placeholders', express.static('client/public/placeholders', {
+        maxAge: '1d',
+        immutable: true,
+        etag: true,
+        lastModified: true,
+        fallthrough: false,
+        redirect: false
+      }));
+      console.log('Static file serving configured');
+
+      // Setup static file serving
+      app.use(express.static(path.join(__dirname, "..", "client", "public")));
+      // Extra path for direct image access
+      app.use('/images', express.static(path.join(__dirname, "..", "client", "public", "images")));
+
+      // Log request paths to debug image loading
+      app.use((req, res, next) => {
+        if (req.path.includes('.jpg') || req.path.includes('.png')) {
+          console.log(`Image requested: ${req.path}`);
+        }
+        next();
+      });
+
+
+      const server = createServer(app);
+
+      // Health check endpoint
+      app.get('/api/health', (_req, res) => {
+        res.json({
+          status: 'ok',
+          timestamp: Date.now(),
+          websocket: 'enabled',
+          environment: process.env.NODE_ENV,
+          port: REQUIRED_PORT,
+          startupAttempt: startupAttempts + 1
+        });
+      });
+
+      // Set up auth with session support
+      console.log('Setting up authentication...');
+      if (!process.env.SESSION_SECRET) {
+        throw new Error('SESSION_SECRET environment variable is required');
+      }
+      const sessionMiddleware = await setupAuth(app);
+      console.log('Authentication setup complete');
+
+      // Setup WebSocket with session support
+      console.log('Setting up WebSocket...');
+      const wss = await setupWebSocket(server, sessionMiddleware);
+      console.log('WebSocket setup complete');
+
+      // Register routes
+      console.log('Registering routes...');
+      await registerRoutes(app);
+      console.log('Routes registered successfully');
+
+      // Setup Vite
+      console.log('Setting up Vite...');
+      await setupVite(app, server);
+      console.log('Vite setup complete');
+
+      // Attempt to acquire a port, preferring the required port but accepting others
+      console.log(`Attempting to acquire port ${REQUIRED_PORT} or another available port...`);
+      const port = await portManager.acquirePort(REQUIRED_PORT, REQUIRED_PORT + 100);
+
+      console.log(`Successfully acquired port ${port}${port !== REQUIRED_PORT ? ` (preferred was ${REQUIRED_PORT})` : ''}`);
+
+      // Start the server
+      await new Promise<void>((resolve, reject) => {
+        const serverInstance = server.listen(port, '0.0.0.0', () => {
+          console.log('Server successfully started:', {
+            url: `http://0.0.0.0:${port}`,
+            publicUrl: `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`,
+            environment: process.env.NODE_ENV,
+            websocketEndpoint: `ws://0.0.0.0:${port}/ws`,
+            timestamp: new Date().toISOString()
+          });
+          resolve();
+        });
+
+        serverInstance.on('error', async (error: NodeJS.ErrnoException) => {
+          if (error.code === 'EADDRINUSE') {
+            console.error(`Port ${port} is still in use, attempting force cleanup...`);
+            try {
+              await forceCleanupPort(port);
+              reject(new Error(`Port ${port} was in use and has been force-cleaned`));
+            } catch (cleanupError) {
+              reject(new Error(`Failed to clean up port ${port}: ${cleanupError}`));
+            }
+          } else {
+            reject(new Error(`Failed to start server: ${error.message}`));
+          }
+        });
+      });
+
+      // Setup cleanup handlers
+      const cleanup = async () => {
+        console.log('Starting cleanup process...');
+        try {
+          // First notify all clients of shutdown
+          if (wss) {
+            const clientCount = wss.clients.size;
+            console.log(`Notifying ${clientCount} WebSocket clients of shutdown`);
+
+            wss.clients.forEach((client) => {
+              try {
+                if (client.readyState === WebSocket.OPEN) {
+                  client.send(JSON.stringify({
+                    type: 'shutdown',
+                    message: 'Server is shutting down',
+                    timestamp: new Date().toISOString()
+                  }));
+                  client.close(1000, 'Server shutting down');
+                }
+              } catch (error) {
+                console.error('Error notifying client of shutdown:', error);
+              }
+            });
+
+            await new Promise<void>((resolve) => {
+              wss.close(() => {
+                console.log('WebSocket server closed');
+                resolve();
+              });
+            });
+          }
+
+          await new Promise<void>((resolve) => {
+            server.close(() => {
+              console.log('HTTP server closed');
+              resolve();
+            });
+          });
+
+          await forceCleanupPort(REQUIRED_PORT);
+          await portManager.releaseAll();
+          console.log('All ports released');
+        } catch (error) {
+          console.error('Cleanup error:', {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined,
+            timestamp: new Date().toISOString()
+          });
+        }
+        process.exit(0);
+      };
+
+      process.on('SIGTERM', cleanup);
+      process.on('SIGINT', cleanup);
+
+      return;
+
+    } catch (error) {
+      startupAttempts++;
+      console.error(`Server startup attempt ${startupAttempts} failed:`, {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+
+      try {
+        await forceCleanupPort(REQUIRED_PORT);
+        await portManager.releaseAll();
+        console.log('Ports released after failed attempt');
+      } catch (cleanupError) {
+        console.error('Failed to cleanup ports:', cleanupError);
       }
 
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
+      if (startupAttempts < MAX_STARTUP_RETRIES) {
+        const delay = startupAttempts * 2000;
+        console.log(`Waiting ${delay}ms before next attempt...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        console.error('Server startup failed after maximum retry attempts');
+        process.exit(1);
       }
-
-      log(logLine);
     }
+  }
+}
+
+process.on('unhandledRejection', (error) => {
+  console.error('Unhandled rejection:', {
+    error: error instanceof Error ? error.message : 'Unknown error',
+    stack: error instanceof Error ? error.stack : undefined,
+    timestamp: new Date().toISOString()
   });
 
-  next();
+  // Don't exit the process in development mode to allow recovery
+  if (process.env.NODE_ENV === 'production') {
+    process.exit(1);
+  }
 });
 
-(async () => {
-  const server = await registerRoutes(app);
-
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
+startServer().catch(error => {
+  console.error('Unhandled error during server startup:', {
+    error: error instanceof Error ? error.message : 'Unknown error',
+    stack: error instanceof Error ? error.stack : undefined,
+    timestamp: new Date().toISOString()
   });
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
-
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
-})();
+  process.exit(1);
+});
