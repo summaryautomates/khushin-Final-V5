@@ -31,14 +31,6 @@ export function SearchSidebar({
   initialFilters,
   onSaveSearch,
 }: SearchSidebarProps) {
-  // Initialize state with initial filters or defaults
-  const [searchTerm, setSearchTerm] = useState(initialFilters?.searchTerm || '');
-  const [category, setCategory] = useState(initialFilters?.category || 'all');
-  const [priceRange, setPriceRange] = useState<[number, number]>(
-    initialFilters?.priceRange || [0, 1000000]
-  );
-  const [sortBy, setSortBy] = useState(initialFilters?.sortBy || 'name-asc');
-
   // Get products for category list and max price
   const { data } = useQuery<Product[]>({
     queryKey: ['/api/products'],
@@ -47,15 +39,33 @@ export function SearchSidebar({
   // Ensure we have an array to work with
   const allProducts = Array.isArray(data) ? data : [];
 
-  // Get unique categories from all products
-  const categories = ['all', ...Array.from(new Set(allProducts.map(p => p.category)))
-    .filter(cat => cat !== 'refueling')
-    .sort()];
-
   // Calculate max price for slider
   const maxPrice = allProducts.length > 0 
     ? Math.max(...allProducts.map(p => p.price)) 
     : 1000000;
+    
+  // Calculate appropriate step size based on price range
+  const calculateStepSize = () => {
+    if (maxPrice <= 1000) return 100;
+    if (maxPrice <= 10000) return 500;
+    if (maxPrice <= 100000) return 1000;
+    return 5000;
+  };
+  
+  const stepSize = calculateStepSize();
+
+  // Initialize state with initial filters or defaults
+  const [searchTerm, setSearchTerm] = useState(initialFilters?.searchTerm || '');
+  const [category, setCategory] = useState(initialFilters?.category || 'all');
+  const [priceRange, setPriceRange] = useState<[number, number]>(
+    initialFilters?.priceRange || [0, maxPrice]
+  );
+  const [sortBy, setSortBy] = useState(initialFilters?.sortBy || 'name-asc');
+
+  // Get unique categories from all products
+  const categories = ['all', ...Array.from(new Set(allProducts.map(p => p.category)))
+    .filter(cat => cat !== 'refueling')
+    .sort()];
 
   // Update parent component when filters change
   useEffect(() => {
@@ -136,7 +146,7 @@ export function SearchSidebar({
         <Slider
           min={0}
           max={maxPrice}
-          step={1000}
+          step={stepSize}
           value={[priceRange[0], priceRange[1]]}
           onValueChange={(value) => setPriceRange(value as [number, number])}
           className="mt-2 [&>.absolute]:bg-amber-500"

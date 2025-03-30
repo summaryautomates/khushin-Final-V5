@@ -27,12 +27,13 @@ interface SearchHistory {
 export default function Products() {
   const [location] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 0]);
   const [category, setCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("name-asc");
   const [searchHistory, setSearchHistory] = useState<SearchHistory[]>([]);
   const [savedSearches, setSavedSearches] = useState<SearchHistory[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Parse category from URL if present
   useEffect(() => {
@@ -57,7 +58,12 @@ export default function Products() {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = category === "all" || product.category === category;
-      const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+      
+      // Skip price filter if not yet initialized
+      let matchesPrice = true;
+      if (isInitialized && priceRange[1] > 0) {
+        matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+      }
       
       // Skip luxury collection products in the general collection page
       // They will be shown only in the premium-collection page
@@ -96,6 +102,14 @@ export default function Products() {
   const maxPrice = allProducts.length > 0 
     ? Math.max(...allProducts.map(p => p.price)) 
     : 1000000;
+    
+  // Initialize price range when products are loaded
+  useEffect(() => {
+    if (allProducts.length > 0 && !isInitialized) {
+      setPriceRange([0, maxPrice]);
+      setIsInitialized(true);
+    }
+  }, [allProducts, maxPrice, isInitialized]);
 
   return (
     <div className="container py-12">
