@@ -174,7 +174,7 @@ export default function ProductPage() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5 }}
-                    className="rounded-xl border bg-zinc-100 relative shadow-xl overflow-hidden"
+                    className="rounded-xl border bg-zinc-900 relative shadow-xl overflow-hidden"
                   >
                     <ProductImageGallery 
                       images={images} 
@@ -197,7 +197,7 @@ export default function ProductPage() {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.5 }}
-                      className="aspect-square overflow-hidden rounded-xl border bg-gradient-to-b from-white to-zinc-100 relative shadow-xl"
+                      className="aspect-square overflow-hidden rounded-xl border bg-gradient-to-b from-zinc-900 to-zinc-800 relative shadow-xl"
                     >
                       {(product.collection === "lighter" || product.collection === "luxury") ? (
                         <div className="absolute inset-0 flex items-center justify-center">
@@ -367,7 +367,7 @@ export default function ProductPage() {
                 </div>
                 
                 {/* Delivery information */}
-                <div className="bg-zinc-50 rounded-xl p-4 space-y-3">
+                <div className="bg-zinc-900 rounded-xl p-4 space-y-3">
                   <div className="flex items-center gap-2">
                     <Truck className="h-5 w-5 text-primary" />
                     <span className="font-medium">Delivery Information</span>
@@ -431,7 +431,7 @@ export default function ProductPage() {
                 </div>
 
                 {/* Product features */}
-                <div className="space-y-6 rounded-xl border p-6 bg-zinc-50">
+                <div className="space-y-6 rounded-xl border p-6 bg-zinc-900">
                   <h3 className="text-lg font-medium mb-4">Product Features</h3>
                   <div className="flex items-center space-x-4">
                     <Package className="h-5 w-5 text-primary" />
@@ -500,7 +500,7 @@ export default function ProductPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="hidden md:block mt-16 bg-zinc-50 rounded-xl p-8"
+              className="hidden md:block mt-16 bg-zinc-900 rounded-xl p-8"
             >
               <h2 className="text-2xl font-light tracking-wide mb-6">Product Specifications</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
