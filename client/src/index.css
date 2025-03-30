@@ -56,3 +56,27 @@ main {
 .text-shadow {
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
+
+/* Hide scrollbar but keep functionality */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari and Opera */
+}
+
+/* Gold color for premium badges */
+.bg-gold {
+  background: linear-gradient(135deg, #f4e08c 0%, #daa520 50%, #b8860b 100%);
+}
+
+/* Product image hover effects */
+.hover-scale-image {
+  transition: transform 0.6s ease-in-out;
+}
+
+.hover-scale-image:hover {
+  transform: scale(1.05);
+}

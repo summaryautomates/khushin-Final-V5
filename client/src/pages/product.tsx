@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/products";
 import {
   Truck, Shield, RefreshCcw, Loader2, Award, Crown,
-  Star, ThumbsUp, Package, Medal
+  Star, ThumbsUp, Package, Medal, Heart, Calendar, Gift, 
+  Check, Info, Sparkles, ArrowLeft
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@shared/schema";
@@ -14,11 +15,13 @@ import { ShareButtons } from "@/components/products/share-buttons";
 import { ModelViewer } from "@/components/model-viewer/model-viewer";
 import { SimilarProducts } from "@/components/products/similar-products";
 import { AuthSheet } from "@/components/auth/auth-sheet";
-import { useState, Suspense } from "react";
-import { motion } from "framer-motion";
+import { useState, Suspense, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { AdaptiveImage } from "@/components/ui/adaptive-image";
 import { ProductImageGallery } from "@/components/products/product-image-gallery";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:id");
@@ -133,16 +136,45 @@ export default function ProductPage() {
         </div>
       ) : (
         <>
-          <div className="container py-12">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="container py-6"
+          >
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="mb-4 flex items-center hover:bg-secondary/20"
+              onClick={() => window.history.back()}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+          </motion.div>
+          
+          <div className="container py-8">
             <div className="grid gap-12 md:grid-cols-2">
-              <div className="space-y-4">
-                {/* Check if it's the Flask Collection */}
+              <div className="space-y-6">
+                {/* Featured product badge */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className="relative z-10 mb-2"
+                >
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-primary/80 to-primary text-white text-sm font-medium">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Featured Product
+                  </div>
+                </motion.div>
+                
+                {/* Product image display */}
                 {product.category === "flask" && product.customizable && images.length > 1 ? (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5 }}
-                    className="rounded-xl border bg-zinc-100 relative shadow-2xl overflow-hidden"
+                    className="rounded-xl border bg-zinc-100 relative shadow-xl overflow-hidden"
                   >
                     <ProductImageGallery 
                       images={images} 
@@ -153,7 +185,7 @@ export default function ProductPage() {
                       animate={{ opacity: 1, x: 0 }}
                       className="absolute top-4 left-4 z-10"
                     >
-                      <Badge variant="secondary" className="bg-gold text-black px-3 py-1 flex items-center gap-2">
+                      <Badge variant="secondary" className="bg-gold text-black px-3 py-1 flex items-center gap-2 shadow-md">
                         <Crown className="h-4 w-4" />
                         Premium Flask Collection
                       </Badge>
@@ -165,7 +197,7 @@ export default function ProductPage() {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.5 }}
-                      className="aspect-square overflow-hidden rounded-xl border bg-zinc-100 relative shadow-2xl"
+                      className="aspect-square overflow-hidden rounded-xl border bg-gradient-to-b from-white to-zinc-100 relative shadow-xl"
                     >
                       {(product.collection === "lighter" || product.collection === "luxury") ? (
                         <div className="absolute inset-0 flex items-center justify-center">
@@ -187,10 +219,8 @@ export default function ProductPage() {
                         <AdaptiveImage
                           src={currentImage}
                           alt={product.name}
-                          className="h-full w-full object-contain"
+                          className="h-full w-full object-contain transition-all duration-500 transform hover:scale-105"
                           containerClassName="h-full w-full"
-                          onLoadFailure={() => console.error('Failed to load product image')}
-                          onLoadError={(error) => console.error('Image load error occurred')}
                         />
                       )}
 
@@ -199,7 +229,7 @@ export default function ProductPage() {
                         animate={{ opacity: 1, x: 0 }}
                         className="absolute top-4 left-4"
                       >
-                        <Badge variant="secondary" className="bg-gold text-black px-3 py-1 flex items-center gap-2">
+                        <Badge variant="secondary" className="bg-gold text-black px-3 py-1 flex items-center gap-2 shadow-md">
                           <Crown className="h-4 w-4" />
                           {product.collection === 'luxury' ? 'Luxury Collection' : 
                            product.collection === 'lighter' ? 'Premium Lighter Collection' :
@@ -213,14 +243,19 @@ export default function ProductPage() {
                       <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="grid grid-cols-4 gap-4 mt-4"
+                        transition={{ delay: 0.2 }}
+                        className="grid grid-cols-5 gap-3 mt-4"
                       >
                         {images.map((image, i) => (
                           <motion.div
                             key={i}
                             whileHover={{ scale: 1.05 }}
-                            className={`aspect-square overflow-hidden rounded-lg border bg-zinc-100 cursor-pointer transition-all relative
-                              ${selectedImage === i ? 'ring-2 ring-gold shadow-lg' : ''}`}
+                            className={cn(
+                              "aspect-square overflow-hidden rounded-lg border cursor-pointer transition-all duration-300 relative",
+                              selectedImage === i 
+                                ? "ring-2 ring-primary/80 shadow-lg bg-white" 
+                                : "bg-zinc-50 hover:ring-1 hover:ring-primary/40"
+                            )}
                             onClick={() => setSelectedImage(i)}
                           >
                             <AdaptiveImage
@@ -235,6 +270,34 @@ export default function ProductPage() {
                     )}
                   </>
                 )}
+                
+                {/* Product specifications - only shown on mobile */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="space-y-4 md:hidden mt-6"
+                >
+                  <h3 className="text-lg font-medium tracking-wide">Specifications</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground">Material</p>
+                      <p className="font-medium">Premium Quality</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground">Dimensions</p>
+                      <p className="font-medium">12 × 4 × 2 cm</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground">Weight</p>
+                      <p className="font-medium">180g</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground">Made in</p>
+                      <p className="font-medium">India</p>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
 
               <motion.div
@@ -242,71 +305,134 @@ export default function ProductPage() {
                 animate={{ opacity: 1, x: 0 }}
                 className="space-y-8"
               >
+                {/* Collection badge and product name */}
                 <div className="space-y-4">
-                  {product.collection === 'luxury' ? (
-                    <Badge variant="outline" className="text-primary">Luxury Collection</Badge>
-                  ) : product.collection === 'lighter' ? (
-                    <Badge variant="outline" className="text-primary">Premium Lighter Collection</Badge>
-                  ) : product.collection === 'flask' ? (
-                    <Badge variant="outline" className="text-primary">Premium Flask Collection</Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-primary">Standard Collection</Badge>
-                  )}
-                  <h1 className="text-4xl font-light tracking-wider">{product.name}</h1>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <Badge 
+                      variant="outline" 
+                      className="text-primary border-primary/30 bg-primary/5 px-3 py-1"
+                    >
+                      {product.collection === 'luxury' ? 'Luxury Collection' : 
+                       product.collection === 'lighter' ? 'Premium Lighter' :
+                       product.collection === 'flask' ? 'Premium Flask' : 
+                       'Standard Collection'}
+                    </Badge>
+                    
+                    <Badge 
+                      variant="outline" 
+                      className="text-emerald-600 border-emerald-600/30 bg-emerald-50/50 px-3 py-1"
+                    >
+                      In Stock
+                    </Badge>
+                  </div>
+                  
+                  <h1 className="text-3xl sm:text-4xl font-light tracking-wide">{product.name}</h1>
+                  
+                  {/* Reviews section */}
                   <div className="flex items-center gap-2">
-                    <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                    <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                    <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                    <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                    <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                    <div className="flex">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star 
+                          key={star} 
+                          className="h-4 w-4 text-yellow-500 fill-yellow-500" 
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm font-medium">4.9</span>
                     <span className="text-sm text-muted-foreground">(125 reviews)</span>
                   </div>
-                  <p className="text-3xl font-light tracking-widest text-primary">
-                    {formatPrice(product.price)}
-                  </p>
+                  
+                  {/* Price with original price crossed out for effect */}
+                  <div className="flex items-center gap-3">
+                    <p className="text-3xl font-medium tracking-wide text-primary">
+                      {formatPrice(product.price)}
+                    </p>
+                    <p className="text-lg text-muted-foreground line-through">
+                      {formatPrice(Math.floor(product.price * 1.2))}
+                    </p>
+                    <Badge variant="secondary" className="bg-emerald-600 text-white ml-2">
+                      20% OFF
+                    </Badge>
+                  </div>
                 </div>
 
-                <div className="prose max-w-none space-y-4">
-                  <h3 className="text-xl font-light tracking-wide">Description</h3>
-                  <p className="text-muted-foreground leading-relaxed">{product.description}</p>
-
-                  <div className="flex gap-4 py-4">
+                {/* Description */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-medium">Description</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {product.description}
+                  </p>
+                  
+                  {/* Key features */}
+                  <div className="grid grid-cols-2 gap-4 pt-2">
                     <div className="flex items-center gap-2">
-                      <Medal className="h-5 w-5 text-primary" />
-                      <span className="text-sm">Certified Authentic</span>
+                      <Check className="h-5 w-5 text-emerald-600" />
+                      <span className="text-sm">Hand-crafted</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Award className="h-5 w-5 text-primary" />
-                      <span className="text-sm">Premium Quality</span>
+                      <Check className="h-5 w-5 text-emerald-600" />
+                      <span className="text-sm">Durable design</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <ThumbsUp className="h-5 w-5 text-primary" />
-                      <span className="text-sm">Satisfaction Guaranteed</span>
+                      <Check className="h-5 w-5 text-emerald-600" />
+                      <span className="text-sm">Exclusive materials</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-5 w-5 text-emerald-600" />
+                      <span className="text-sm">Lifetime warranty</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Delivery information */}
+                <div className="bg-zinc-50 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Truck className="h-5 w-5 text-primary" />
+                    <span className="font-medium">Delivery Information</span>
+                  </div>
+                  <div className="flex items-center gap-2 ml-7 text-sm">
+                    <div className="flex flex-col">
+                      <p className="text-muted-foreground">Express delivery available</p>
+                      <p className="font-medium">Get it by <span className="text-primary">Tomorrow</span></p>
                     </div>
                   </div>
                 </div>
 
+                {/* Product actions */}
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="lg"
+                            variant="outline"
+                            className="w-full tracking-wider border-2 transition-all duration-300 hover:bg-primary/5"
+                            onClick={handleAddToCart}
+                            disabled={isCheckingOut || isAddingToCart}
+                          >
+                            {isAddingToCart ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Adding...
+                              </>
+                            ) : (
+                              <>
+                                <Heart className="h-4 w-4 mr-2" />
+                                Add to Cart
+                              </>
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Add to your shopping cart</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
                     <Button
                       size="lg"
-                      variant="outline"
-                      className="w-full tracking-wider"
-                      onClick={handleAddToCart}
-                      disabled={isCheckingOut || isAddingToCart}
-                    >
-                      {isAddingToCart ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Adding...
-                        </>
-                      ) : (
-                        "Add to Cart"
-                      )}
-                    </Button>
-                    <Button
-                      size="lg"
-                      className="w-full tracking-wider"
+                      className="w-full tracking-wider shadow-lg"
                       onClick={handleBuyNow}
                       disabled={isCheckingOut}
                     >
@@ -322,54 +448,115 @@ export default function ProductPage() {
                   </div>
                 </div>
 
-                <div className="space-y-6 rounded-xl border p-6 bg-black/5 backdrop-blur-sm">
+                {/* Product features */}
+                <div className="space-y-6 rounded-xl border p-6 bg-zinc-50">
+                  <h3 className="text-lg font-medium mb-4">Product Features</h3>
                   <div className="flex items-center space-x-4">
                     <Package className="h-5 w-5 text-primary" />
                     <div>
-                      <h4 className="font-light tracking-wide">Luxury Packaging</h4>
+                      <h4 className="font-medium">Luxury Packaging</h4>
                       <p className="text-sm text-muted-foreground">Premium gift box included</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <Truck className="h-5 w-5 text-primary" />
-                    <div>
-                      <h4 className="font-light tracking-wide">Express Delivery</h4>
-                      <p className="text-sm text-muted-foreground">Free shipping on orders over ₹5000</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
                     <Shield className="h-5 w-5 text-primary" />
                     <div>
-                      <h4 className="font-light tracking-wide">Authenticity Guaranteed</h4>
+                      <h4 className="font-medium">Authenticity Guaranteed</h4>
                       <p className="text-sm text-muted-foreground">100% genuine products</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <Calendar className="h-5 w-5 text-primary" />
+                    <div>
+                      <h4 className="font-medium">Fast Delivery</h4>
+                      <p className="text-sm text-muted-foreground">Ships within 24 hours</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
                     <RefreshCcw className="h-5 w-5 text-primary" />
                     <div>
-                      <h4 className="font-light tracking-wide">Easy Returns</h4>
+                      <h4 className="font-medium">Easy Returns</h4>
                       <p className="text-sm text-muted-foreground">30-day hassle-free returns</p>
                     </div>
                   </div>
                 </div>
+                
+                {/* Gift options */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Gift className="h-5 w-5 text-primary" />
+                    <span className="font-medium">Gift Options Available</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground ml-7">
+                    Add a personalized message or choose luxury gift wrapping during checkout.
+                  </p>
+                </div>
 
-                <ShareButtons
-                  url={window.location.href}
-                  title={product.name}
-                  description={product.description}
-                  image={currentImage}
-                />
+                {/* Share buttons */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground">Share this product:</p>
+                    <ShareButtons
+                      url={window.location.href}
+                      title={product.name}
+                      description={product.description}
+                      image={currentImage}
+                    />
+                  </div>
+                  
+                  {/* Need help section */}
+                  <div className="flex items-center gap-2">
+                    <Info className="h-4 w-4 text-primary" />
+                    <a href="#" className="text-sm text-primary hover:underline">Need help?</a>
+                  </div>
+                </div>
               </motion.div>
             </div>
 
-            <div className="mt-16">
+            {/* Product specifications - desktop view */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="hidden md:block mt-16 bg-zinc-50 rounded-xl p-8"
+            >
+              <h2 className="text-2xl font-light tracking-wide mb-6">Product Specifications</h2>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium">Material</h3>
+                  <p className="text-muted-foreground">Premium quality materials sourced from the finest suppliers.</p>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium">Dimensions</h3>
+                  <p className="text-muted-foreground">12 × 4 × 2 cm (L × W × H)</p>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium">Weight</h3>
+                  <p className="text-muted-foreground">180g - lightweight and easy to carry</p>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium">Made in</h3>
+                  <p className="text-muted-foreground">Proudly crafted in India by skilled artisans</p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Similar products section */}
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mt-16"
+            >
               <SimilarProducts
                 currentProductId={product.id}
                 category={product.category}
                 collection={product.collection}
               />
-            </div>
+            </motion.div>
           </div>
+          
+          {/* Authentication sheet */}
           <AuthSheet
             open={isAuthSheetOpen}
             onOpenChange={setIsAuthSheetOpen}
