@@ -20,20 +20,17 @@ import { motion } from "framer-motion";
 interface SearchHistory {
   term: string;
   category: string;
-  priceRange: [number, number];
   timestamp: Date;
 }
 
 export default function Products() {
   const [location] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 0]);
   const [category, setCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("name-asc");
   const [searchHistory, setSearchHistory] = useState<SearchHistory[]>([]);
   const [savedSearches, setSavedSearches] = useState<SearchHistory[]>([]);
   const [showHistory, setShowHistory] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   // Parse category from URL if present
   useEffect(() => {
@@ -59,19 +56,13 @@ export default function Products() {
                          product.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = category === "all" || product.category === category;
       
-      // Skip price filter if not yet initialized
-      let matchesPrice = true;
-      if (isInitialized && priceRange[1] > 0) {
-        matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
-      }
-      
       // Skip luxury collection products in the general collection page
       // They will be shown only in the premium-collection page
       if (location === "/products" && product.collection === "luxury") {
         return false;
       }
       
-      return matchesSearch && matchesCategory && matchesPrice;
+      return matchesSearch && matchesCategory;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -94,22 +85,8 @@ export default function Products() {
   const applySearch = (search: SearchHistory) => {
     setSearchTerm(search.term);
     setCategory(search.category);
-    setPriceRange(search.priceRange);
     setShowHistory(false);
   };
-
-  // Calculate max price for slider
-  const maxPrice = allProducts.length > 0 
-    ? Math.max(...allProducts.map(p => p.price)) 
-    : 1000000;
-    
-  // Initialize price range when products are loaded
-  useEffect(() => {
-    if (allProducts.length > 0 && !isInitialized) {
-      setPriceRange([0, maxPrice]);
-      setIsInitialized(true);
-    }
-  }, [allProducts, maxPrice, isInitialized]);
 
   return (
     <div className="container py-12">
@@ -200,7 +177,6 @@ export default function Products() {
               variant="ghost"
               onClick={() => {
                 setSearchTerm("");
-                setPriceRange([0, maxPrice]);
                 setCategory("all");
                 setSortBy("name-asc");
               }}
@@ -222,20 +198,17 @@ export default function Products() {
                 onFiltersChange={(filters) => {
                   setSearchTerm(filters.searchTerm);
                   setCategory(filters.category);
-                  setPriceRange(filters.priceRange);
                   setSortBy(filters.sortBy);
                 }}
                 initialFilters={{
                   searchTerm,
                   category,
-                  priceRange,
                   sortBy,
                 }}
                 onSaveSearch={() => {
                   const newSearch: SearchHistory = {
                     term: searchTerm,
                     category,
-                    priceRange,
                     timestamp: new Date()
                   };
                   setSavedSearches(prev => [...prev, newSearch]);
@@ -268,9 +241,6 @@ export default function Products() {
                             {search.category}
                           </Badge>
                         )}
-                        <Badge variant="outline" className="text-xs text-white border-white/10">
-                          ₹{search.priceRange[0].toLocaleString()} - ₹{search.priceRange[1].toLocaleString()}
-                        </Badge>
                       </div>
                     </div>
                   ))}
@@ -294,9 +264,6 @@ export default function Products() {
                             {search.category}
                           </Badge>
                         )}
-                        <Badge variant="outline" className="text-xs text-white border-white/10">
-                          ₹{search.priceRange[0].toLocaleString()} - ₹{search.priceRange[1].toLocaleString()}
-                        </Badge>
                       </div>
                     </div>
                   ))}

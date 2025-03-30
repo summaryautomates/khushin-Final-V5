@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
 import {
   Select,
   SelectContent,
@@ -16,7 +15,6 @@ import type { Product } from '@shared/schema';
 export interface SearchFilters {
   searchTerm: string;
   category: string;
-  priceRange: [number, number];
   sortBy: string;
 }
 
@@ -31,7 +29,7 @@ export function SearchSidebar({
   initialFilters,
   onSaveSearch,
 }: SearchSidebarProps) {
-  // Get products for category list and max price
+  // Get products for category list
   const { data } = useQuery<Product[]>({
     queryKey: ['/api/products'],
   });
@@ -39,27 +37,9 @@ export function SearchSidebar({
   // Ensure we have an array to work with
   const allProducts = Array.isArray(data) ? data : [];
 
-  // Calculate max price for slider
-  const maxPrice = allProducts.length > 0 
-    ? Math.max(...allProducts.map(p => p.price)) 
-    : 1000000;
-    
-  // Calculate appropriate step size based on price range
-  const calculateStepSize = () => {
-    if (maxPrice <= 1000) return 100;
-    if (maxPrice <= 10000) return 500;
-    if (maxPrice <= 100000) return 1000;
-    return 5000;
-  };
-  
-  const stepSize = calculateStepSize();
-
   // Initialize state with initial filters or defaults
   const [searchTerm, setSearchTerm] = useState(initialFilters?.searchTerm || '');
   const [category, setCategory] = useState(initialFilters?.category || 'all');
-  const [priceRange, setPriceRange] = useState<[number, number]>(
-    initialFilters?.priceRange || [0, maxPrice]
-  );
   const [sortBy, setSortBy] = useState(initialFilters?.sortBy || 'name-asc');
 
   // Get unique categories from all products
@@ -72,10 +52,9 @@ export function SearchSidebar({
     onFiltersChange({
       searchTerm,
       category,
-      priceRange,
       sortBy,
     });
-  }, [searchTerm, category, priceRange, sortBy, onFiltersChange]);
+  }, [searchTerm, category, sortBy, onFiltersChange]);
 
   // Handle search input submit
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -83,7 +62,6 @@ export function SearchSidebar({
     onFiltersChange({
       searchTerm,
       category,
-      priceRange,
       sortBy,
     });
   };
@@ -138,23 +116,6 @@ export function SearchSidebar({
             <SelectItem value="price-desc" className="hover:bg-zinc-800">Price (High to Low)</SelectItem>
           </SelectContent>
         </Select>
-      </div>
-
-      {/* Price Range */}
-      <div className="space-y-4">
-        <h3 className="text-white font-medium text-lg">Price Range</h3>
-        <Slider
-          min={0}
-          max={maxPrice}
-          step={stepSize}
-          value={[priceRange[0], priceRange[1]]}
-          onValueChange={(value) => setPriceRange(value as [number, number])}
-          className="mt-2 [&>.absolute]:bg-amber-500"
-        />
-        <div className="flex items-center justify-between text-sm text-white/70">
-          <span>₹{priceRange[0].toLocaleString()}</span>
-          <span>₹{priceRange[1].toLocaleString()}</span>
-        </div>
       </div>
 
       {/* Save Search Button */}
