@@ -18,6 +18,7 @@ import { useState, Suspense } from "react";
 import { motion } from "framer-motion";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { AdaptiveImage } from "@/components/ui/adaptive-image";
+import { ProductImageGallery } from "@/components/products/product-image-gallery";
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:id");
@@ -135,74 +136,101 @@ export default function ProductPage() {
           <div className="container py-12">
             <div className="grid gap-12 md:grid-cols-2">
               <div className="space-y-4">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5 }}
-                  className="aspect-square overflow-hidden rounded-xl border bg-zinc-100 relative shadow-2xl"
-                >
-                  {product.category === "lighters" ? (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-full h-full">
-                        <Suspense fallback={
-                          <div className="absolute inset-0 flex items-center justify-center bg-background/50">
-                            <Loader2 className="h-8 w-8 animate-spin" />
-                          </div>
-                        }>
-                          <ModelViewer
-                            modelUrl="/attached_assets/zippo_lighter.glb"
-                            fallbackUrl={currentImage}
-                            onError={() => console.error("Failed to load 3D model")}
-                          />
-                        </Suspense>
-                      </div>
-                    </div>
-                  ) : (
-                    <AdaptiveImage
-                      src={currentImage}
+                {/* Check if it's the Flask Collection */}
+                {product.category === "flask" && product.customizable && images.length > 1 ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="rounded-xl border bg-zinc-100 relative shadow-2xl overflow-hidden"
+                  >
+                    <ProductImageGallery 
+                      images={images} 
                       alt={product.name}
-                      className="h-full w-full object-contain"
-                      containerClassName="h-full w-full"
-                      onLoadFailure={() => console.error('Failed to load product image')}
-                      onLoadError={(error) => console.error('Image load error occurred')}
                     />
-                  )}
-
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="absolute top-4 left-4"
-                  >
-                    <Badge variant="secondary" className="bg-gold text-black px-3 py-1 flex items-center gap-2">
-                      <Crown className="h-4 w-4" />
-                      Premium Collection
-                    </Badge>
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="absolute top-4 left-4 z-10"
+                    >
+                      <Badge variant="secondary" className="bg-gold text-black px-3 py-1 flex items-center gap-2">
+                        <Crown className="h-4 w-4" />
+                        Premium Flask Collection
+                      </Badge>
+                    </motion.div>
                   </motion.div>
-                </motion.div>
-
-                {images.length > 1 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="grid grid-cols-4 gap-4 mt-4"
-                  >
-                    {images.map((image, i) => (
-                      <motion.div
-                        key={i}
-                        whileHover={{ scale: 1.05 }}
-                        className={`aspect-square overflow-hidden rounded-lg border bg-zinc-100 cursor-pointer transition-all relative
-                          ${selectedImage === i ? 'ring-2 ring-gold shadow-lg' : ''}`}
-                        onClick={() => setSelectedImage(i)}
-                      >
+                ) : (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5 }}
+                      className="aspect-square overflow-hidden rounded-xl border bg-zinc-100 relative shadow-2xl"
+                    >
+                      {product.category === "lighters" ? (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-full h-full">
+                            <Suspense fallback={
+                              <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                                <Loader2 className="h-8 w-8 animate-spin" />
+                              </div>
+                            }>
+                              <ModelViewer
+                                modelUrl="/attached_assets/zippo_lighter.glb"
+                                fallbackUrl={currentImage}
+                                onError={() => console.error("Failed to load 3D model")}
+                              />
+                            </Suspense>
+                          </div>
+                        </div>
+                      ) : (
                         <AdaptiveImage
-                          src={image}
-                          alt={`${product.name} view ${i + 1}`}
+                          src={currentImage}
+                          alt={product.name}
                           className="h-full w-full object-contain"
                           containerClassName="h-full w-full"
+                          onLoadFailure={() => console.error('Failed to load product image')}
+                          onLoadError={(error) => console.error('Image load error occurred')}
                         />
+                      )}
+
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="absolute top-4 left-4"
+                      >
+                        <Badge variant="secondary" className="bg-gold text-black px-3 py-1 flex items-center gap-2">
+                          <Crown className="h-4 w-4" />
+                          Premium Collection
+                        </Badge>
                       </motion.div>
-                    ))}
-                  </motion.div>
+                    </motion.div>
+
+                    {images.length > 1 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="grid grid-cols-4 gap-4 mt-4"
+                      >
+                        {images.map((image, i) => (
+                          <motion.div
+                            key={i}
+                            whileHover={{ scale: 1.05 }}
+                            className={`aspect-square overflow-hidden rounded-lg border bg-zinc-100 cursor-pointer transition-all relative
+                              ${selectedImage === i ? 'ring-2 ring-gold shadow-lg' : ''}`}
+                            onClick={() => setSelectedImage(i)}
+                          >
+                            <AdaptiveImage
+                              src={image}
+                              alt={`${product.name} view ${i + 1}`}
+                              className="h-full w-full object-contain"
+                              containerClassName="h-full w-full"
+                            />
+                          </motion.div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </>
                 )}
               </div>
 

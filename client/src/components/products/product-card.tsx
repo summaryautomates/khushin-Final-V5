@@ -15,6 +15,7 @@ import { useCompare } from "@/hooks/use-compare";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { AdaptiveImage } from "@/components/ui/adaptive-image";
+import { ProductImageGallery } from "./product-image-gallery";
 
 const FALLBACK_IMAGES = [
   "/product-placeholder.svg",
@@ -98,6 +99,9 @@ export function ProductCard({ product }: ProductCardProps) {
     }
   };
 
+  // Check if this is the flask collection product (merged product with multiple images)
+  const isFlaskCollection = product.category === 'flask' && product.images && product.images.length > 1;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -107,20 +111,27 @@ export function ProductCard({ product }: ProductCardProps) {
     >
       <Card className="border-none overflow-hidden group bg-gradient-to-b from-zinc-900/40 to-zinc-900 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/10 transition-all duration-300">
         <CardContent className="p-0">
-          <motion.div
-            className="relative aspect-square overflow-hidden bg-black"
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Link href={`/product/${product.id}`}>
-              <AdaptiveImage
-                src={product.images?.[0] || ""}
-                alt={product.name}
-                className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                containerClassName="h-full w-full"
+          <Link href={`/product/${product.id}`}>
+            {isFlaskCollection ? (
+              <ProductImageGallery 
+                images={product.images} 
+                alt={product.name} 
               />
-            </Link>
-          </motion.div>
+            ) : (
+              <motion.div
+                className="relative aspect-square overflow-hidden bg-black"
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.3 }}
+              >
+                <AdaptiveImage
+                  src={product.images?.[0] || ""}
+                  alt={product.name}
+                  className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                  containerClassName="h-full w-full"
+                />
+              </motion.div>
+            )}
+          </Link>
 
           <motion.div className={`p-6 space-y-4 ${product.name.toLowerCase().includes('lighter') ? 'relative' : ''}`}
             initial={{ opacity: 0, y: 10 }}
