@@ -17,11 +17,11 @@ const shippingSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
   email: z.string().email("Please enter a valid email address"),
   address: z.string()
-    .min(1, "Address is required")
+    .min(5, "Complete address is required")
     .max(200, "Address is too long"),
   apartment: z.string().optional(),
-  city: z.string().min(1, "City is required"),
-  state: z.string().min(1, "State is required"),
+  city: z.string().min(2, "City is required"),
+  state: z.string().min(2, "State is required"),
   pincode: z.string()
     .min(1, "PIN code is required")
     .max(6, "PIN code must be 6 digits")
@@ -120,7 +120,7 @@ export function ShippingForm({ onSubmit, isLoading }: ShippingFormProps) {
                   <FormLabel className="text-zinc-200">Street Address</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="Street address" 
+                      placeholder="Complete street address (min. 5 characters)" 
                       className="h-11 px-4 py-2 bg-white/[0.05] border-zinc-700 focus-visible:ring-1 focus-visible:ring-primary"
                       {...field} 
                     />
