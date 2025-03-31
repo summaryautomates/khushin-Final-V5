@@ -28,7 +28,7 @@ export function ModelViewer({ modelUrl, fallbackUrl, onError }: ModelViewerProps
 
     // Basic scene setup
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x111111);
+    scene.background = new THREE.Color(0x000000); // Changed to pure black
 
     const camera = new THREE.PerspectiveCamera(
       75,
@@ -140,7 +140,7 @@ export function ModelViewer({ modelUrl, fallbackUrl, onError }: ModelViewerProps
 
   if (showFallback && fallbackUrl) {
     return (
-      <div className="relative h-[400px] w-full rounded-lg overflow-hidden bg-zinc-900">
+      <div className="relative h-[400px] w-full rounded-lg overflow-hidden bg-black">
         <img
           src={fallbackUrl}
           alt="Product"
@@ -151,7 +151,7 @@ export function ModelViewer({ modelUrl, fallbackUrl, onError }: ModelViewerProps
   }
 
   return (
-    <div className="relative h-[400px] w-full rounded-lg overflow-hidden bg-zinc-900">
+    <div className="relative h-[400px] w-full rounded-lg overflow-hidden bg-black">
       <div ref={containerRef} className="w-full h-full" />
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">

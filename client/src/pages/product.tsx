@@ -216,7 +216,7 @@ export default function ProductPage() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5 }}
-                    className="rounded-xl border bg-zinc-900 relative shadow-xl overflow-hidden"
+                    className="rounded-xl border bg-black relative shadow-xl overflow-hidden"
                   >
                     <ProductImageGallery 
                       images={images} 
@@ -239,7 +239,7 @@ export default function ProductPage() {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.5 }}
-                      className="aspect-square overflow-hidden rounded-xl border bg-gradient-to-b from-zinc-900 to-zinc-800 relative shadow-xl"
+                      className="aspect-square overflow-hidden rounded-xl border bg-black relative shadow-xl"
                     >
                       {(product.collection === "lighter" || product.collection === "luxury") ? (
                         <div className="absolute inset-0 flex items-center justify-center">
