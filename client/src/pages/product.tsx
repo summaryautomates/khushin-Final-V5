@@ -1,16 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { useRoute, useLocation } from "wouter";
+import { useRoute, useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/products";
 import {
   Truck, Shield, RefreshCcw, Loader2, Award, Crown,
   Star, ThumbsUp, Package, Medal, Heart, Calendar, Gift, 
-  Check, Info, Sparkles, ArrowLeft
+  Check, Info, Sparkles, ArrowLeft, BarChart2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@shared/schema";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
+import { useCompare } from "@/hooks/use-compare";
 import { ShareButtons } from "@/components/products/share-buttons";
 import { ModelViewer } from "@/components/model-viewer/model-viewer";
 import { SimilarProducts } from "@/components/products/similar-products";
@@ -28,12 +29,18 @@ export default function ProductPage() {
   const id = params?.id ? parseInt(params.id, 10) : undefined;
   const { addItem } = useCart();
   const { toast } = useToast();
+  const { 
+    addItem: addToCompare, 
+    removeItem: removeFromCompare, 
+    isInCompare
+  } = useCompare();
   const [selectedImage, setSelectedImage] = useState<number>(0);
   const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<"add-to-cart" | "buy-now" | null>(null);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [, setLocation] = useLocation();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isAddingToCompare, setIsAddingToCompare] = useState(false);
 
 
   const { data: product, isLoading, error } = useQuery<Product>({
@@ -101,6 +108,41 @@ export default function ProductPage() {
       await handleBuyNow();
     }
     setPendingAction(null);
+  };
+
+  const handleCompareToggle = () => {
+    if (!product) return;
+    
+    setIsAddingToCompare(true);
+    try {
+      if (isInCompare(product.id)) {
+        removeFromCompare(product.id);
+        toast({
+          description: `${product.name} removed from comparison`,
+        });
+      } else {
+        addToCompare(product);
+        toast({
+          description: `${product.name} added to comparison`,
+          action: (
+            <Link href="/compare">
+              <Button variant="link" className="gap-2">
+                Compare Now
+              </Button>
+            </Link>
+          ),
+        });
+      }
+    } catch (error) {
+      console.error('Compare error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Maximum 4 products can be compared",
+      });
+    } finally {
+      setIsAddingToCompare(false);
+    }
   };
 
   if (isLoading) {
@@ -428,6 +470,44 @@ export default function ProductPage() {
                       )}
                     </Button>
                   </div>
+                  
+                  {/* Compare button */}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={isInCompare(product.id) ? "default" : "secondary"}
+                          size="default"
+                          className={cn(
+                            "w-full tracking-wider transition-all duration-300",
+                            isInCompare(product.id) ? "bg-zinc-900 hover:bg-zinc-800" : "bg-zinc-900 hover:bg-zinc-800"
+                          )}
+                          onClick={handleCompareToggle}
+                          disabled={isAddingToCompare}
+                        >
+                          {isAddingToCompare ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Processing...
+                            </>
+                          ) : isInCompare(product.id) ? (
+                            <>
+                              <BarChart2 className="h-4 w-4 mr-2" />
+                              Remove from Compare
+                            </>
+                          ) : (
+                            <>
+                              <BarChart2 className="h-4 w-4 mr-2" />
+                              Add to Compare
+                            </>
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{isInCompare(product.id) ? "Remove from comparison" : "Add to comparison list"}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
 
                 {/* Product features */}
