@@ -83,10 +83,18 @@ export function AdaptiveImage({
     }
   };
 
-  // Check if src is empty or invalid
-  const validatedSrc = currentSrc && currentSrc.trim() !== '' 
+  // Check if src is empty or invalid and sanitize it
+  let validatedSrc = currentSrc && currentSrc.trim() !== '' 
     ? currentSrc 
     : (fallbackSrc || FALLBACK_IMAGES[0]);
+    
+  // Ensure image path is properly formatted (no extra quotes)
+  validatedSrc = validatedSrc.replace(/^"+|"+$/g, '');
+  
+  // Make sure paths that start with / are properly handled
+  if (validatedSrc && !validatedSrc.match(/^(https?:\/\/|\/)/)) {
+    validatedSrc = '/' + validatedSrc;
+  }
 
   return (
     <div className={cn("relative", containerClassName)}>
