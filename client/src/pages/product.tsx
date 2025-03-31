@@ -300,7 +300,7 @@ export default function ProductPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="space-y-4 md:hidden mt-6"
+                  className="space-y-4 md:hidden mt-6 rounded-xl border p-6 bg-black"
                 >
                   <h3 className="text-lg font-medium tracking-wide">Specifications</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
@@ -381,7 +381,7 @@ export default function ProductPage() {
                 </div>
 
                 {/* Description */}
-                <div className="space-y-4">
+                <div className="space-y-4 rounded-xl border p-6 bg-black">
                   <h3 className="text-xl font-medium">Description</h3>
                   <p className="text-muted-foreground leading-relaxed">
                     {product.description}
@@ -409,7 +409,7 @@ export default function ProductPage() {
                 </div>
                 
                 {/* Delivery information */}
-                <div className="bg-zinc-900 rounded-xl p-4 space-y-3">
+                <div className="bg-black rounded-xl p-4 space-y-3 border">
                   <div className="flex items-center gap-2">
                     <Truck className="h-5 w-5 text-primary" />
                     <span className="font-medium">Delivery Information</span>
@@ -480,7 +480,7 @@ export default function ProductPage() {
                           size="default"
                           className={cn(
                             "w-full tracking-wider transition-all duration-300",
-                            isInCompare(product.id) ? "bg-zinc-900 hover:bg-zinc-800" : "bg-zinc-900 hover:bg-zinc-800"
+                            isInCompare(product.id) ? "bg-black hover:bg-black/90" : "bg-black hover:bg-black/90"
                           )}
                           onClick={handleCompareToggle}
                           disabled={isAddingToCompare}
@@ -511,7 +511,7 @@ export default function ProductPage() {
                 </div>
 
                 {/* Product features */}
-                <div className="space-y-6 rounded-xl border p-6 bg-zinc-900">
+                <div className="space-y-6 rounded-xl border p-6 bg-black">
                   <h3 className="text-lg font-medium mb-4">Product Features</h3>
                   <div className="flex items-center space-x-4">
                     <Package className="h-5 w-5 text-primary" />
@@ -544,7 +544,7 @@ export default function ProductPage() {
                 </div>
                 
                 {/* Gift options */}
-                <div className="space-y-3">
+                <div className="space-y-3 rounded-xl border p-4 bg-black">
                   <div className="flex items-center gap-2">
                     <Gift className="h-5 w-5 text-primary" />
                     <span className="font-medium">Gift Options Available</span>
@@ -580,7 +580,7 @@ export default function ProductPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="hidden md:block mt-16 bg-zinc-900 rounded-xl p-8"
+              className="hidden md:block mt-16 bg-black rounded-xl border p-8"
             >
               <h2 className="text-2xl font-light tracking-wide mb-6">Product Specifications</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
