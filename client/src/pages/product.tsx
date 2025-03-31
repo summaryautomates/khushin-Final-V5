@@ -5,7 +5,7 @@ import { formatPrice } from "@/lib/products";
 import {
   Truck, Shield, RefreshCcw, Loader2, Award, Crown,
   Star, ThumbsUp, Package, Medal, Heart, Calendar, Gift, 
-  Check, Info, Sparkles, ArrowLeft, BarChart2
+  Check, Info, Sparkles, ArrowLeft, BarChart2, Diamond
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@shared/schema";
@@ -195,6 +195,44 @@ export default function ProductPage() {
           </motion.div>
           
           <div className="container py-8">
+            {/* Luxury Lighter Header */}
+            {product.collection === "luxury" || product.collection === "lighter" ? (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-12 relative overflow-hidden rounded-2xl bg-gradient-to-r from-zinc-900 to-zinc-800 p-8 md:p-12"
+              >
+                <div 
+                  className="absolute inset-0 bg-cover bg-center opacity-30"
+                  style={{ backgroundImage: "url('/LL.png')" }}
+                />
+                <div className="relative z-10 max-w-3xl">
+                  <div className="flex items-center gap-2 mb-6">
+                    <Crown className="h-8 w-8 text-gold" />
+                    <h1 className="text-4xl font-light tracking-wider text-white">Luxury Lighters Collection</h1>
+                  </div>
+                  <p className="text-zinc-300 leading-relaxed mb-8">
+                    Discover our exquisite collection of premium lighters, each piece a testament to unparalleled craftsmanship
+                    and timeless elegance. From limited editions to bespoke designs, find your perfect companion of sophistication.
+                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    <Badge variant="outline" className="bg-gold/10 text-gold border-gold/20 px-3 py-1.5">
+                      <Diamond className="w-4 h-4 mr-2" />
+                      Premium Materials
+                    </Badge>
+                    <Badge variant="outline" className="bg-gold/10 text-gold border-gold/20 px-3 py-1.5">
+                      <Award className="w-4 h-4 mr-2" />
+                      Lifetime Warranty
+                    </Badge>
+                    <Badge variant="outline" className="bg-gold/10 text-gold border-gold/20 px-3 py-1.5">
+                      <RefreshCcw className="w-4 h-4 mr-2" />
+                      Refillable
+                    </Badge>
+                  </div>
+                </div>
+              </motion.div>
+            ) : null}
+            
             <div className="grid gap-12 md:grid-cols-2">
               <div className="space-y-6">
                 {/* Featured product badge */}
@@ -334,7 +372,7 @@ export default function ProductPage() {
                   <div className="flex flex-wrap gap-2 items-center">
                     <Badge 
                       variant="outline" 
-                      className="text-primary border-primary/30 bg-primary/5 px-3 py-1"
+                      className="text-primary border-primary/30 bg-black/70 px-3 py-1"
                     >
                       {product.collection === 'luxury' ? 'Luxury Collection' : 
                        product.collection === 'lighter' ? 'Premium Lighter' :
@@ -344,7 +382,7 @@ export default function ProductPage() {
                     
                     <Badge 
                       variant="outline" 
-                      className="text-emerald-600 border-emerald-600/30 bg-emerald-50/50 px-3 py-1"
+                      className="text-emerald-600 border-emerald-600/30 bg-black/70 px-3 py-1"
                     >
                       In Stock
                     </Badge>

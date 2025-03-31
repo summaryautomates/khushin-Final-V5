@@ -72,6 +72,10 @@ main {
   background: linear-gradient(135deg, #f4e08c 0%, #daa520 50%, #b8860b 100%);
 }
 
+.text-gold {
+  color: #daa520;
+}
+
 /* Product image hover effects */
 .hover-scale-image {
   transition: transform 0.6s ease-in-out;
