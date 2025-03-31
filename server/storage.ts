@@ -3,11 +3,14 @@ import {
   type InsertUser,
   type Order,
   type InsertOrder,
+  type CartItem,
+  type InsertCartItem,
   users,
   products,
-  orders
+  orders,
+  cartItems
 } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import session from "express-session";
 import MemoryStore from "memorystore";
 import { db } from "./db";
@@ -30,6 +33,13 @@ export interface IStorage {
   getOrderByRef(orderRef: string): Promise<Order | undefined>;
   updateOrderStatus(orderRef: string, status: 'completed' | 'failed', paymentMethod: 'upi' | 'cod'): Promise<void>;
   getOrdersByUserId(userId: string): Promise<Order[]>;
+  // Cart methods
+  getCartItems(userId: string): Promise<{ product: typeof products.$inferSelect, quantity: number, isGift: boolean, giftMessage?: string }[]>;
+  addToCart(userId: string, productId: number, quantity: number, isGift?: boolean, giftMessage?: string): Promise<void>;
+  removeFromCart(userId: string, productId: number): Promise<void>;
+  updateCartItemQuantity(userId: string, productId: number, quantity: number): Promise<void>;
+  updateCartItemGiftStatus(userId: string, productId: number, isGift: boolean, giftMessage?: string): Promise<void>;
+  clearCart(userId: string): Promise<void>;
 }
 
 export class ReplitDBStorage implements IStorage {
@@ -140,14 +150,14 @@ export class ReplitDBStorage implements IStorage {
 
       // Insert order into database
       const [order] = await db.insert(orders).values({
-        orderRef: orderData.orderRef,
-        userId: orderData.userId,
+        order_ref: orderData.orderRef,
+        user_id: orderData.userId,
         status: orderData.status,
         total: orderData.total,
         items: itemsString,
         shipping: shippingString,
-        createdAt: new Date(),
-        lastUpdated: new Date()
+        created_at: new Date(),
+        last_updated: new Date()
       }).returning();
 
       // Parse items and shipping back to objects when returning
@@ -257,16 +267,171 @@ export class ReplitDBStorage implements IStorage {
           return {
             ...order,
             items: parsedItems,
-            shipping: parsedShipping
+            shipping: parsedShipping,
+            estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
           };
         } catch (parseError) {
           console.error('Error parsing order data:', parseError);
           // Return the order with unparsed data rather than failing completely
-          return order as unknown as Order;
+          return {
+            ...order,
+            estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
+          } as unknown as Order;
         }
       });
     } catch (error) {
       console.error('Error fetching orders for user:', error);
+      throw error;
+    }
+  }
+
+  // Cart methods implementation
+  async getCartItems(userId: string): Promise<{ product: typeof products.$inferSelect, quantity: number, isGift: boolean, giftMessage?: string }[]> {
+    try {
+      console.log('Fetching cart items for user:', userId);
+      
+      // Join cart_items with products to get product details
+      const items = await db.select({
+        cart: cartItems,
+        product: products
+      })
+      .from(cartItems)
+      .innerJoin(products, eq(cartItems.productId, products.id))
+      .where(eq(cartItems.userId, userId));
+      
+      // Transform the result to match the expected return type
+      return items.map(item => ({
+        product: item.product,
+        quantity: item.cart.quantity,
+        isGift: item.cart.isGift,
+        giftMessage: item.cart.giftMessage || undefined
+      }));
+    } catch (error) {
+      console.error('Error fetching cart items:', error);
+      throw error;
+    }
+  }
+
+  async addToCart(userId: string, productId: number, quantity: number, isGift: boolean = false, giftMessage?: string): Promise<void> {
+    try {
+      console.log('Adding item to cart:', { userId, productId, quantity, isGift });
+      
+      // Check if the item already exists in the cart
+      const [existingItem] = await db.select()
+        .from(cartItems)
+        .where(and(
+          eq(cartItems.userId, userId),
+          eq(cartItems.productId, productId)
+        ));
+      
+      if (existingItem) {
+        // Update the quantity if the item already exists
+        await db.update(cartItems)
+          .set({
+            quantity: existingItem.quantity + quantity,
+            isGift,
+            giftMessage: giftMessage || null,
+            updatedAt: new Date()
+          })
+          .where(eq(cartItems.id, existingItem.id));
+        
+        console.log('Updated cart item quantity');
+      } else {
+        // Insert a new cart item
+        await db.insert(cartItems).values({
+          userId,
+          productId,
+          quantity,
+          isGift,
+          giftMessage: giftMessage || null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+        
+        console.log('Added new item to cart');
+      }
+    } catch (error) {
+      console.error('Error adding item to cart:', error);
+      throw error;
+    }
+  }
+
+  async removeFromCart(userId: string, productId: number): Promise<void> {
+    try {
+      console.log('Removing item from cart:', { userId, productId });
+      
+      await db.delete(cartItems)
+        .where(and(
+          eq(cartItems.userId, userId),
+          eq(cartItems.productId, productId)
+        ));
+      
+      console.log('Item removed from cart');
+    } catch (error) {
+      console.error('Error removing item from cart:', error);
+      throw error;
+    }
+  }
+
+  async updateCartItemQuantity(userId: string, productId: number, quantity: number): Promise<void> {
+    try {
+      console.log('Updating cart item quantity:', { userId, productId, quantity });
+      
+      if (quantity <= 0) {
+        // If quantity is 0 or negative, remove the item from the cart
+        await this.removeFromCart(userId, productId);
+        return;
+      }
+      
+      await db.update(cartItems)
+        .set({
+          quantity,
+          updatedAt: new Date()
+        })
+        .where(and(
+          eq(cartItems.userId, userId),
+          eq(cartItems.productId, productId)
+        ));
+      
+      console.log('Cart item quantity updated');
+    } catch (error) {
+      console.error('Error updating cart item quantity:', error);
+      throw error;
+    }
+  }
+
+  async updateCartItemGiftStatus(userId: string, productId: number, isGift: boolean, giftMessage?: string): Promise<void> {
+    try {
+      console.log('Updating cart item gift status:', { userId, productId, isGift, giftMessage });
+      
+      await db.update(cartItems)
+        .set({
+          isGift,
+          giftMessage: giftMessage || null,
+          updatedAt: new Date()
+        })
+        .where(and(
+          eq(cartItems.userId, userId),
+          eq(cartItems.productId, productId)
+        ));
+      
+      console.log('Cart item gift status updated');
+    } catch (error) {
+      console.error('Error updating cart item gift status:', error);
+      throw error;
+    }
+  }
+
+  async clearCart(userId: string): Promise<void> {
+    try {
+      console.log('Clearing cart for user:', userId);
+      
+      await db.delete(cartItems)
+        .where(eq(cartItems.userId, userId));
+      
+      console.log('Cart cleared');
+    } catch (error) {
+      console.error('Error clearing cart:', error);
       throw error;
     }
   }

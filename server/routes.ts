@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { storage } from "./storage";
-import { insertOrderSchema } from "@shared/schema";
+import { insertOrderSchema, insertCartItemSchema } from "@shared/schema";
 import { z } from "zod";
 import { sql } from "drizzle-orm";
 import { randomBytes } from "crypto";
@@ -219,6 +219,132 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error('Error fetching orders:', error);
       res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+  
+  // Cart endpoints
+  app.get("/api/cart", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const cartItems = await storage.getCartItems(req.user.id.toString());
+      res.json(cartItems);
+    } catch (error) {
+      console.error('Error fetching cart items:', error);
+      res.status(500).json({ message: "Failed to fetch cart items" });
+    }
+  });
+  
+  app.post("/api/cart", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const schema = z.object({
+        productId: z.number(),
+        quantity: z.number().min(1).max(10),
+        isGift: z.boolean().optional(),
+        giftMessage: z.string().optional()
+      });
+      
+      const validationResult = schema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({
+          message: "Invalid cart item data",
+          errors: validationResult.error.errors
+        });
+      }
+      
+      const { productId, quantity, isGift, giftMessage } = validationResult.data;
+      
+      await storage.addToCart(
+        req.user.id.toString(),
+        productId,
+        quantity,
+        isGift,
+        giftMessage
+      );
+      
+      res.status(200).json({ message: "Item added to cart" });
+    } catch (error) {
+      console.error('Error adding item to cart:', error);
+      res.status(500).json({ message: "Failed to add item to cart" });
+    }
+  });
+  
+  app.delete("/api/cart/:productId", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const productId = parseInt(req.params.productId);
+      if (isNaN(productId)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+      
+      await storage.removeFromCart(req.user.id.toString(), productId);
+      res.status(200).json({ message: "Item removed from cart" });
+    } catch (error) {
+      console.error('Error removing item from cart:', error);
+      res.status(500).json({ message: "Failed to remove item from cart" });
+    }
+  });
+  
+  app.delete("/api/cart", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      await storage.clearCart(req.user.id.toString());
+      res.status(200).json({ message: "Cart cleared" });
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      res.status(500).json({ message: "Failed to clear cart" });
+    }
+  });
+  
+  app.patch("/api/cart/:productId/gift", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const productId = parseInt(req.params.productId);
+      if (isNaN(productId)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+      
+      const schema = z.object({
+        isGift: z.boolean(),
+        giftMessage: z.string().optional()
+      });
+      
+      const validationResult = schema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({
+          message: "Invalid gift data",
+          errors: validationResult.error.errors
+        });
+      }
+      
+      const { isGift, giftMessage } = validationResult.data;
+      
+      await storage.updateCartItemGiftStatus(
+        req.user.id.toString(),
+        productId,
+        isGift,
+        giftMessage
+      );
+      
+      res.status(200).json({ message: "Gift status updated" });
+    } catch (error) {
+      console.error('Error updating gift status:', error);
+      res.status(500).json({ message: "Failed to update gift status" });
     }
   });
 

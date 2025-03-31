@@ -44,6 +44,20 @@ export const orders = pgTable('orders', {
   createdAt: timestamp('created_at').notNull().defaultNow()
 });
 
+// Cart items table definition
+export const cartItems = pgTable('cart_items', {
+  id: serial('id').primaryKey(),
+  userId: varchar('user_id', { length: 255 }).notNull(),
+  productId: integer('product_id').notNull(),
+  quantity: integer('quantity').notNull().default(1),
+  isGift: boolean('is_gift').notNull().default(false),
+  giftMessage: text('gift_message'),
+  giftWrapType: varchar('gift_wrap_type', { length: 50 }),
+  giftWrapCost: integer('gift_wrap_cost'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow()
+});
+
 // Type definitions for User
 export interface User {
   id: number;
