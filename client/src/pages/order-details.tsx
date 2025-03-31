@@ -64,7 +64,7 @@ export default function OrderDetails() {
               </div>
 
               {/* Delivery Status */}
-              <div className="border rounded-lg p-4 bg-muted/50">
+              <div className="border rounded-lg p-4 bg-black">
                 <div className="flex items-center gap-2 mb-2">
                   <Truck className="h-5 w-5" />
                   <h3 className="font-medium">Delivery Status</h3>

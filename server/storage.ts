@@ -133,11 +133,18 @@ export class ReplitDBStorage implements IStorage {
 
   async createOrder(orderData: InsertOrder): Promise<Order> {
     try {
+      // Log the full order data to debug
       console.log('Creating order:', {
         userId: orderData.userId,
         itemCount: orderData.items.length,
-        total: orderData.total
+        total: orderData.total,
+        orderRef: orderData.orderRef // Added orderRef to logging
       });
+
+      // Ensure orderRef is not null or undefined
+      if (!orderData.orderRef) {
+        throw new Error('Order reference is required');
+      }
 
       // Ensure items and shipping are properly stringified
       let itemsString = typeof orderData.items === 'string' 
@@ -149,15 +156,16 @@ export class ReplitDBStorage implements IStorage {
         : JSON.stringify(orderData.shipping);
 
       // Insert order into database
+      // Use the correct field names that match the schema
       const [order] = await db.insert(orders).values({
-        order_ref: orderData.orderRef,
-        user_id: orderData.userId,
+        orderRef: orderData.orderRef,
+        userId: orderData.userId,
         status: orderData.status,
-        total: orderData.total,
+        total: orderData.total || 0,   // Ensure total has a default value
         items: itemsString,
         shipping: shippingString,
-        created_at: new Date(),
-        last_updated: new Date()
+        createdAt: new Date(),
+        lastUpdated: new Date()
       }).returning();
 
       // Parse items and shipping back to objects when returning
@@ -173,12 +181,16 @@ export class ReplitDBStorage implements IStorage {
         return {
           ...order,
           items: parsedItems,
-          shipping: parsedShipping
+          shipping: parsedShipping,
+          estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
         };
       } catch (parseError) {
         console.error('Error parsing order data:', parseError);
         // Return the order with unparsed data rather than failing completely
-        return order as unknown as Order;
+        return {
+          ...order,
+          estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
+        } as unknown as Order;
       }
     } catch (error) {
       console.error('Error creating order:', error);
@@ -205,12 +217,16 @@ export class ReplitDBStorage implements IStorage {
         return {
           ...order,
           items: parsedItems,
-          shipping: parsedShipping
+          shipping: parsedShipping,
+          estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
         };
       } catch (parseError) {
         console.error('Error parsing order data:', parseError);
         // Return the order with unparsed data rather than failing completely
-        return order as unknown as Order;
+        return {
+          ...order,
+          estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
+        } as unknown as Order;
       }
     } catch (error) {
       console.error('Error fetching order by ref:', error);

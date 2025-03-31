@@ -89,8 +89,8 @@ export async function registerRoutes(app: Express) {
 
       // Create the order in the database
       const orderData = {
-        ...validationResult.data,
-        orderRef,
+        ...validationResult.data, 
+        orderRef, // Ensure orderRef is explicitly set
         status: 'pending' as const
       };
 
@@ -98,7 +98,8 @@ export async function registerRoutes(app: Express) {
         ref: orderRef,
         userId: req.user?.id,
         itemCount: orderData.items.length,
-        total: orderData.total
+        total: orderData.total,
+        hasOrderRef: !!orderData.orderRef // Log whether orderRef is set
       });
 
       const order = await storage.createOrder(orderData);

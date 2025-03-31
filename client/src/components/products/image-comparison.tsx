@@ -151,7 +151,7 @@ export function ImageComparison({ images, titles }: ImageComparisonProps) {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {images.map((image, index) => (
         <ErrorBoundary key={index} fallback={
-          <div className="aspect-square bg-zinc-100 rounded-lg flex items-center justify-center">
+          <div className="aspect-square bg-black rounded-lg flex items-center justify-center">
             <AlertCircle className="h-12 w-12 text-destructive" />
           </div>
         }>
@@ -159,10 +159,10 @@ export function ImageComparison({ images, titles }: ImageComparisonProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.2 }}
-            className="relative aspect-square bg-zinc-100 rounded-lg overflow-hidden"
+            className="relative aspect-square bg-black rounded-lg overflow-hidden"
           >
             {imageLoadingStates[index] && (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
             )}

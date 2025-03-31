@@ -175,7 +175,7 @@ export default function CheckoutPayment() {
 
   return (
     <div className="container py-8 md:py-20 min-h-screen px-4">
-      <Card className="max-w-lg mx-auto">
+      <Card className="max-w-lg mx-auto bg-black">
         <CardHeader>
           <CardTitle className="text-xl md:text-2xl">Complete Your Payment</CardTitle>
         </CardHeader>
@@ -208,7 +208,7 @@ export default function CheckoutPayment() {
                     Pay securely using your credit or debit card
                   </p>
                 </div>
-                <div className="bg-muted p-3 md:p-4 rounded-lg">
+                <div className="bg-black p-3 md:p-4 rounded-lg border">
                   <p className="font-semibold text-sm md:text-base">Amount to be paid: ₹{paymentDetails?.amount}</p>
                 </div>
                 <Button
@@ -228,7 +228,7 @@ export default function CheckoutPayment() {
                     <img src={qrCodeUrl} alt="Payment QR Code" className="w-48 h-48 md:w-64 md:h-64" />
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center w-48 h-48 md:w-64 md:h-64 bg-muted rounded-lg">
+                  <div className="flex items-center justify-center w-48 h-48 md:w-64 md:h-64 bg-black rounded-lg border">
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
                 )}
@@ -244,7 +244,7 @@ export default function CheckoutPayment() {
                     Pay in cash when your order arrives
                   </p>
                 </div>
-                <div className="bg-muted p-3 md:p-4 rounded-lg">
+                <div className="bg-black p-3 md:p-4 rounded-lg border">
                   <p className="font-semibold text-sm md:text-base">Amount to be paid: ₹{paymentDetails?.amount}</p>
                 </div>
               </div>

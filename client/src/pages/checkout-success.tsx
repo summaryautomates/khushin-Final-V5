@@ -16,7 +16,7 @@ export default function CheckoutSuccess() {
 
   return (
     <div className="container py-20 min-h-screen">
-      <Card className="max-w-lg mx-auto">
+      <Card className="max-w-lg mx-auto bg-black">
         <CardHeader>
           <div className="flex items-center space-x-4">
             <CheckCircle2 className="h-8 w-8 text-green-500" />

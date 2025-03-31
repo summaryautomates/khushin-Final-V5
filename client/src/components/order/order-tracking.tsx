@@ -11,7 +11,7 @@ export function OrderTracking({ orderRef }: OrderTrackingProps) {
   const { status, isConnected } = useOrderTracking(orderRef);
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto bg-black">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           Order Tracking

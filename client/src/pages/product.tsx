@@ -286,7 +286,7 @@ export default function ProductPage() {
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="w-full h-full">
                             <Suspense fallback={
-                              <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                                 <Loader2 className="h-8 w-8 animate-spin" />
                               </div>
                             }>

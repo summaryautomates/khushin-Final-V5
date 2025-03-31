@@ -87,7 +87,7 @@ export function ProductImageGallery({ images, alt, className, showThumbnails = t
   if (images.length === 1) {
     return (
       <motion.div
-        className={cn("relative aspect-square overflow-hidden bg-gradient-to-b from-white to-zinc-50 rounded-lg shadow-md", className)}
+        className={cn("relative aspect-square overflow-hidden bg-black rounded-lg shadow-md", className)}
         whileHover={{ scale: 1.02 }}
         transition={{ duration: 0.3 }}
       >
@@ -112,7 +112,7 @@ export function ProductImageGallery({ images, alt, className, showThumbnails = t
                 <CarouselItem key={index} className="flex justify-center">
                   <motion.div
                     className={cn(
-                      "aspect-square overflow-hidden bg-gradient-to-b from-white to-zinc-50 rounded-lg shadow-md relative",
+                      "aspect-square overflow-hidden bg-black rounded-lg shadow-md relative",
                       isZoomed && currentIndex === index ? "cursor-zoom-out" : "cursor-zoom-in"
                     )}
                     whileHover={{ scale: isZoomed ? 1 : 1.02 }}
@@ -138,11 +138,11 @@ export function ProductImageGallery({ images, alt, className, showThumbnails = t
               ))}
             </CarouselContent>
             <CarouselPrevious 
-              className="left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white border-none shadow-md"
+              className="left-2 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-black border-none shadow-md text-white"
               onClick={() => handleResetZoom()}
             />
             <CarouselNext 
-              className="right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white border-none shadow-md"
+              className="right-2 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-black border-none shadow-md text-white"
               onClick={() => handleResetZoom()}
             />
           </Carousel>
@@ -152,7 +152,7 @@ export function ProductImageGallery({ images, alt, className, showThumbnails = t
             <Button 
               size="icon" 
               variant="secondary" 
-              className="h-8 w-8 bg-white/70 hover:bg-white border-none shadow-sm"
+              className="h-8 w-8 bg-black/70 hover:bg-black border-none shadow-sm text-white"
               onClick={handleZoomIn}
               disabled={zoomLevel >= 2.5}
             >
@@ -161,7 +161,7 @@ export function ProductImageGallery({ images, alt, className, showThumbnails = t
             <Button 
               size="icon" 
               variant="secondary" 
-              className="h-8 w-8 bg-white/70 hover:bg-white border-none shadow-sm"
+              className="h-8 w-8 bg-black/70 hover:bg-black border-none shadow-sm text-white"
               onClick={handleZoomOut}
               disabled={zoomLevel <= 1}
             >
@@ -170,7 +170,7 @@ export function ProductImageGallery({ images, alt, className, showThumbnails = t
             <Button 
               size="icon" 
               variant="secondary" 
-              className="h-8 w-8 bg-white/70 hover:bg-white border-none shadow-sm"
+              className="h-8 w-8 bg-black/70 hover:bg-black border-none shadow-sm text-white"
               onClick={toggleFullscreen}
             >
               <Maximize className="h-4 w-4" />
