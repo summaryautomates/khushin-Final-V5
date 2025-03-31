@@ -111,8 +111,8 @@ export function ProductCard({ product }: ProductCardProps) {
     }
   };
 
-  // Check if this is the flask collection product (merged product with multiple images)
-  const isFlaskCollection = product.category === 'flask' && product.images && product.images.length > 1;
+  // Check if this product has multiple images to display a gallery
+  const hasMultipleImages = product.images && product.images.length > 1;
 
   return (
     <motion.div
@@ -121,17 +121,17 @@ export function ProductCard({ product }: ProductCardProps) {
       transition={{ duration: 0.4 }}
       className="w-full"
     >
-      <Card className="border-none overflow-hidden group bg-gradient-to-b from-zinc-900/40 to-zinc-900 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/10 transition-all duration-300">
+      <Card className="border-none overflow-hidden group bg-black hover:shadow-lg hover:shadow-primary/10 transition-all duration-300">
         <CardContent className="p-0">
           <Link href={`/product/${product.id}`}>
-            {isFlaskCollection ? (
+            {hasMultipleImages ? (
               <div className="relative">
                 <ProductImageGallery 
                   images={product.images} 
                   alt={product.name}
                   showThumbnails={false}
                 />
-                {/* Compare button overlay for flask collection */}
+                {/* Compare button overlay for product gallery */}
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>

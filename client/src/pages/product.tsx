@@ -249,7 +249,7 @@ export default function ProductPage() {
                 </motion.div>
                 
                 {/* Product image display */}
-                {product.category === "flask" && product.customizable && images.length > 1 ? (
+                {images.length > 1 ? (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -267,7 +267,10 @@ export default function ProductPage() {
                     >
                       <Badge variant="secondary" className="bg-gold text-black px-3 py-1 flex items-center gap-2 shadow-md">
                         <Crown className="h-4 w-4" />
-                        Premium Flask Collection
+                        {product.collection === 'luxury' ? 'Luxury Collection' : 
+                         product.collection === 'lighter' ? 'Premium Lighter Collection' :
+                         product.collection === 'flask' ? 'Premium Flask Collection' : 
+                         'Standard Collection'}
                       </Badge>
                     </motion.div>
                   </motion.div>
