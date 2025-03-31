@@ -9,13 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/products";
 import type { Product } from "@shared/schema";
-import { Eye, ShoppingCart, Loader2, Scale, Crown, Star } from "lucide-react";
+import { Eye, ShoppingCart, Loader2, Scale, Crown, Star, BarChart2 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useCompare } from "@/hooks/use-compare";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { AdaptiveImage } from "@/components/ui/adaptive-image";
 import { ProductImageGallery } from "./product-image-gallery";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 const FALLBACK_IMAGES = [
   "/product-placeholder.svg",
@@ -32,6 +34,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const { addItem: addToCompare, removeItem: removeFromCompare, isInCompare } = useCompare();
   const { toast } = useToast();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isAddingToCompare, setIsAddingToCompare] = useState(false);
   const [, setLocation] = useLocation();
 
   const handleAddToCart = async () => {
@@ -70,7 +73,14 @@ export function ProductCard({ product }: ProductCardProps) {
     }
   };
 
-  const handleCompareToggle = () => {
+  const handleCompareToggle = (e?: React.MouseEvent) => {
+    // Prevent link navigation when clicking on the compare button within the image
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    
+    setIsAddingToCompare(true);
     try {
       if (isInCompare(product.id)) {
         removeFromCompare(product.id);
@@ -96,6 +106,8 @@ export function ProductCard({ product }: ProductCardProps) {
         title: "Could not add to comparison",
         description: error instanceof Error ? error.message : "Maximum 4 products can be compared",
       });
+    } finally {
+      setIsAddingToCompare(false);
     }
   };
 
@@ -113,11 +125,39 @@ export function ProductCard({ product }: ProductCardProps) {
         <CardContent className="p-0">
           <Link href={`/product/${product.id}`}>
             {isFlaskCollection ? (
-              <ProductImageGallery 
-                images={product.images} 
-                alt={product.name}
-                showThumbnails={false}
-              />
+              <div className="relative">
+                <ProductImageGallery 
+                  images={product.images} 
+                  alt={product.name}
+                  showThumbnails={false}
+                />
+                {/* Compare button overlay for flask collection */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant={isInCompare(product.id) ? "default" : "secondary"}
+                        className={cn(
+                          "absolute top-2 left-2 z-10 w-8 h-8 rounded-full shadow-md",
+                          isInCompare(product.id) ? "bg-primary text-primary-foreground" : "bg-zinc-900 hover:bg-zinc-800"
+                        )}
+                        onClick={handleCompareToggle}
+                        disabled={isAddingToCompare}
+                      >
+                        {isAddingToCompare ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <BarChart2 className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <p>{isInCompare(product.id) ? "Remove from comparison" : "Add to comparison"}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             ) : (
               <motion.div
                 className="relative aspect-square overflow-hidden bg-black"
@@ -130,6 +170,32 @@ export function ProductCard({ product }: ProductCardProps) {
                   className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                   containerClassName="h-full w-full"
                 />
+                {/* Compare button overlay for regular product */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant={isInCompare(product.id) ? "default" : "secondary"}
+                        className={cn(
+                          "absolute top-2 left-2 z-10 w-8 h-8 rounded-full shadow-md",
+                          isInCompare(product.id) ? "bg-primary text-primary-foreground" : "bg-zinc-900 hover:bg-zinc-800"
+                        )}
+                        onClick={handleCompareToggle}
+                        disabled={isAddingToCompare}
+                      >
+                        {isAddingToCompare ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <BarChart2 className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <p>{isInCompare(product.id) ? "Remove from comparison" : "Add to comparison"}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </motion.div>
             )}
           </Link>
