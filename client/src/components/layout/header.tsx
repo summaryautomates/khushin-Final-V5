@@ -7,21 +7,34 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { ShoppingCart, ClockIcon, UserCircle2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ShoppingCart, ClockIcon, UserCircle2, Menu } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { AuthSheet } from "@/components/auth/auth-sheet";
+import { useState } from "react";
 
 export function Header() {
   const cart = useCart();
   const { user, logoutMutation } = useAuth();
   const [, setLocation] = useLocation();
   const cartItemCount = cart.items?.length || 0;
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logoutMutation.mutate();
     setLocation("/");
+  };
+  
+  const handleNavigate = (path: string) => {
+    setIsMenuOpen(false);
+    setLocation(path);
   };
 
   return (
@@ -103,13 +116,77 @@ export function Header() {
           </NavigationMenu>
 
           <div className="flex items-center space-x-3">
+            {/* Mobile Navigation Menu */}
+            <div className="md:hidden">
+              <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative group hover:bg-white/10 transition-all duration-300 mr-1"
+                  >
+                    <Menu className="h-5 w-5 text-white group-hover:scale-110 transition-transform duration-300" />
+                    <span className="sr-only">Menu</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  className="min-w-[250px] backdrop-blur-lg bg-black/90 border border-white/10 p-3"
+                  align="end"
+                  sideOffset={24}
+                >
+                  <DropdownMenuItem 
+                    className="text-white tracking-widest text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
+                    onClick={() => handleNavigate("/products")}
+                  >
+                    COLLECTIONS
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="text-white tracking-widest text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
+                    onClick={() => handleNavigate("/products/category/lighters")}
+                  >
+                    LUXURY LIGHTERS
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="text-white tracking-widest text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
+                    onClick={() => handleNavigate("/refueling")}
+                  >
+                    REFUELING SOLUTIONS
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="text-white tracking-widest text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
+                    onClick={() => handleNavigate("/customize")}
+                  >
+                    CUSTOMIZE
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="text-white tracking-widest text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
+                    onClick={() => handleNavigate("/contact")}
+                  >
+                    CONTACT
+                  </DropdownMenuItem>
+                  
+                  {/* Add orders link for authenticated users in mobile view */}
+                  {user && (
+                    <DropdownMenuItem 
+                      className="text-white tracking-widest text-sm py-3 mt-3 border-t border-white/10 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary flex gap-2 items-center"
+                      onClick={() => handleNavigate("/orders")}
+                    >
+                      <ClockIcon className="h-4 w-4" />
+                      MY ORDERS
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
             {user ? (
               <>
                 <Link href="/orders">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="relative group hover:bg-white/10 transition-all duration-300 border border-white/20 gap-2 backdrop-blur-sm"
+                    className="relative group hover:bg-white/10 transition-all duration-300 border border-white/20 gap-2 backdrop-blur-sm hidden sm:flex"
                   >
                     <ClockIcon className="h-4 w-4 text-white/90 group-hover:text-primary group-hover:scale-110 transition-all duration-300" />
                     <span className="text-white/90 font-light tracking-wide group-hover:text-primary transition-colors">
@@ -146,7 +223,9 @@ export function Header() {
                 </Link>
               </>
             ) : (
-              <AuthSheet />
+              <>
+                <AuthSheet />
+              </>
             )}
           </div>
         </div>
