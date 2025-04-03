@@ -46,14 +46,18 @@ export function ProductImageGallery({ images, alt, className, showThumbnails = t
   if (images.length === 1) {
     return (
       <motion.div
-        className={cn("relative aspect-square overflow-hidden bg-black rounded-lg", className)}
-        whileHover={{ scale: 1.02 }}
-        transition={{ duration: 0.3 }}
+        className={cn("relative aspect-square overflow-hidden bg-black rounded-lg group", className)}
+        whileHover={{ scale: 1.03 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
       >
+        <motion.div
+          className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 z-10 transition-opacity duration-300"
+          whileHover={{ opacity: 0.4 }}
+        />
         <AdaptiveImage
           src={images[0] || ""}
           alt={alt}
-          className="w-full h-full object-contain object-center transition-transform duration-500 hover:scale-105"
+          className="w-full h-full object-contain object-center transition-all duration-500 group-hover:scale-110"
           containerClassName="h-full w-full bg-zinc-900"
         />
       </motion.div>
@@ -70,14 +74,18 @@ export function ProductImageGallery({ images, alt, className, showThumbnails = t
               {images.map((image, index) => (
                 <CarouselItem key={index} className="flex justify-center">
                   <motion.div
-                    className="aspect-square overflow-hidden bg-black rounded-lg relative"
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ duration: 0.3 }}
+                    className="aspect-square overflow-hidden bg-black rounded-lg relative group"
+                    whileHover={{ scale: 1.03 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
                   >
+                    <motion.div
+                      className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 z-10 transition-opacity duration-300"
+                      whileHover={{ opacity: 0.4 }}
+                    />
                     <AdaptiveImage
                       src={image}
                       alt={`${alt} - Image ${index + 1}`}
-                      className="w-full h-full object-contain object-center transition-duration-300"
+                      className="w-full h-full object-contain object-center transition-all duration-500 group-hover:scale-110"
                       containerClassName="h-full w-full bg-zinc-900"
                     />
                   </motion.div>
@@ -105,25 +113,31 @@ export function ProductImageGallery({ images, alt, className, showThumbnails = t
               {images.map((image, index) => (
                 <motion.div
                   key={index}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: 1.08 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
                   className={cn(
-                    "flex-shrink-0 w-16 h-16 cursor-pointer rounded-md overflow-hidden transition-all duration-300 relative",
+                    "flex-shrink-0 w-16 h-16 cursor-pointer rounded-md overflow-hidden transition-all duration-300 relative group",
                     selectedImage === index 
                       ? "ring-2 ring-primary shadow-md" 
-                      : "ring-1 ring-gray-200 hover:ring-primary/50"
+                      : "ring-1 ring-gray-200 hover:ring-primary/70"
                   )}
                   onClick={() => handleThumbnailClick(index)}
                 >
+                  <motion.div 
+                    className={cn(
+                      "absolute inset-0 z-10 transition-opacity duration-300",
+                      selectedImage === index 
+                        ? "bg-primary/20" 
+                        : "bg-black/30 opacity-0 group-hover:opacity-100"
+                    )}
+                  />
                   <AdaptiveImage
                     src={image}
                     alt={`Thumbnail ${index + 1}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
                     containerClassName="h-full w-full"
                   />
-                  {selectedImage === index && (
-                    <div className="absolute inset-0 bg-primary/10" />
-                  )}
                 </motion.div>
               ))}
             </div>
