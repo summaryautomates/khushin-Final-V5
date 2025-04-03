@@ -130,11 +130,11 @@ export function ProductCard({ product }: ProductCardProps) {
                   images={product.images} 
                   alt={product.name}
                   showThumbnails={false}
-                  className="h-[300px] md:h-[350px]"  /* Making the image taller */
+                  className="aspect-square w-full max-h-[280px]" 
                 />
               ) : (
                 <motion.div
-                  className="relative aspect-square overflow-hidden bg-black h-[300px] md:h-[350px]"  /* Making the image taller */
+                  className="relative aspect-square overflow-hidden bg-black w-full max-h-[280px]"
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.3 }}
                 >

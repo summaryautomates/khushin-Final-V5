@@ -54,7 +54,7 @@ export function ProductImageGallery({ images, alt, className, showThumbnails = t
           src={images[0] || ""}
           alt={alt}
           className="w-full h-full object-contain object-center transition-transform duration-500 hover:scale-105"
-          containerClassName="h-full w-full"
+          containerClassName="h-full w-full bg-zinc-900"
         />
       </motion.div>
     );
@@ -78,22 +78,22 @@ export function ProductImageGallery({ images, alt, className, showThumbnails = t
                       src={image}
                       alt={`${alt} - Image ${index + 1}`}
                       className="w-full h-full object-contain object-center transition-duration-300"
-                      containerClassName="h-full w-full"
+                      containerClassName="h-full w-full bg-zinc-900"
                     />
                   </motion.div>
                 </CarouselItem>
               ))}
             </CarouselContent>
             <CarouselPrevious 
-              className="left-2 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-black border-none shadow-md text-white"
+              className="left-2 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-black border-none shadow-md text-white w-8 h-8 opacity-80 hover:opacity-100"
             />
             <CarouselNext 
-              className="right-2 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-black border-none shadow-md text-white"
+              className="right-2 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-black border-none shadow-md text-white w-8 h-8 opacity-80 hover:opacity-100"
             />
           </Carousel>
 
-          {/* Simple image counter */}
-          <div className="absolute bottom-3 left-3 bg-black/60 text-white px-2 py-1 rounded-full text-xs font-medium">
+          {/* Improved image counter */}
+          <div className="absolute bottom-3 right-3 bg-black/80 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-md z-10">
             {currentIndex + 1} / {images.length}
           </div>
         </div>
