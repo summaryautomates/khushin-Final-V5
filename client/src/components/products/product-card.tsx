@@ -124,80 +124,56 @@ export function ProductCard({ product }: ProductCardProps) {
       <Card className="border-none overflow-hidden group bg-black hover:shadow-lg hover:shadow-primary/10 transition-all duration-300">
         <CardContent className="p-0">
           <Link href={`/product/${product.id}`}>
-            {hasMultipleImages ? (
-              <div className="relative">
+            <div className="relative">
+              {hasMultipleImages ? (
                 <ProductImageGallery 
                   images={product.images} 
                   alt={product.name}
                   showThumbnails={false}
+                  className="h-[300px] md:h-[350px]"  /* Making the image taller */
                 />
-                {/* Compare button overlay for product gallery */}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant={isInCompare(product.id) ? "default" : "secondary"}
-                        className={cn(
-                          "absolute top-2 left-2 z-10 w-8 h-8 rounded-full shadow-md",
-                          isInCompare(product.id) ? "bg-primary text-primary-foreground" : "bg-zinc-900 hover:bg-zinc-800"
-                        )}
-                        onClick={handleCompareToggle}
-                        disabled={isAddingToCompare}
-                      >
-                        {isAddingToCompare ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <BarChart2 className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                      <p>{isInCompare(product.id) ? "Remove from comparison" : "Add to comparison"}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            ) : (
-              <motion.div
-                className="relative aspect-square overflow-hidden bg-black"
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.3 }}
-              >
-                <AdaptiveImage
-                  src={product.images?.[0] || ""}
-                  alt={product.name}
-                  className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                  containerClassName="h-full w-full"
-                />
-                {/* Compare button overlay for regular product */}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant={isInCompare(product.id) ? "default" : "secondary"}
-                        className={cn(
-                          "absolute top-2 left-2 z-10 w-8 h-8 rounded-full shadow-md",
-                          isInCompare(product.id) ? "bg-primary text-primary-foreground" : "bg-zinc-900 hover:bg-zinc-800"
-                        )}
-                        onClick={handleCompareToggle}
-                        disabled={isAddingToCompare}
-                      >
-                        {isAddingToCompare ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <BarChart2 className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                      <p>{isInCompare(product.id) ? "Remove from comparison" : "Add to comparison"}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </motion.div>
-            )}
+              ) : (
+                <motion.div
+                  className="relative aspect-square overflow-hidden bg-black h-[300px] md:h-[350px]"  /* Making the image taller */
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <AdaptiveImage
+                    src={product.images?.[0] || ""}
+                    alt={product.name}
+                    className="w-full h-full object-contain object-center transition-transform duration-500 group-hover:scale-105"
+                    containerClassName="h-full w-full"
+                  />
+                </motion.div>
+              )}
+              
+              {/* Compare button overlay positioned consistently for all products */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant={isInCompare(product.id) ? "default" : "secondary"}
+                      className={cn(
+                        "absolute top-3 left-3 z-10 w-10 h-10 rounded-full shadow-md",
+                        isInCompare(product.id) ? "bg-primary text-primary-foreground" : "bg-zinc-900 hover:bg-zinc-800"
+                      )}
+                      onClick={handleCompareToggle}
+                      disabled={isAddingToCompare}
+                    >
+                      {isAddingToCompare ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <BarChart2 className="h-5 w-5" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>{isInCompare(product.id) ? "Remove from comparison" : "Add to comparison"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </Link>
 
           <motion.div className={`p-6 space-y-4 ${product.name.toLowerCase().includes('lighter') ? 'relative' : ''}`}
