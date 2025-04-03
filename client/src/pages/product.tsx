@@ -195,9 +195,8 @@ export default function ProductPage() {
           </motion.div>
           
           <div className="container py-8">
-            {/* Luxury Lighter Header */}
-            {product.collection === "luxury" || product.collection === "lighter" || 
-              product.category === "lighters" || product.name.toLowerCase().includes('lighter') ? (
+            {/* Luxury Lighter Header - Only show on luxury collection products */}
+            {product.collection === "luxury" ? (
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

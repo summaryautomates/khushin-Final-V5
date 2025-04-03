@@ -111,7 +111,8 @@ export default function Products() {
   return (
     <div className="container py-12">
       <div className="space-y-8">
-        {category === "lighters" && (
+        {/* Only show Luxury Lighters header if we're on the /products/premium-collection page */}
+        {location.includes("/products/premium-collection") && (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
