@@ -7,7 +7,15 @@ import { ProductGrid } from "@/components/products/product-grid";
 import { ExperienceBoxes } from "@/components/ExperienceBoxes";
 import type { Product } from "@shared/schema";
 import { Input } from "@/components/ui/input";
-import { Star, Clock, Calendar, Mic, Camera, Loader2, Search } from "lucide-react";
+import {
+  Star,
+  Clock,
+  Calendar,
+  Mic,
+  Camera,
+  Loader2,
+  Search,
+} from "lucide-react";
 import { useState, useRef, useEffect, useMemo, lazy, Suspense } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AdaptiveImage } from "@/components/ui/adaptive-image";
@@ -184,17 +192,18 @@ export default function Home() {
             transition={{ duration: 1.5 }}
             className="absolute inset-0 w-full h-full"
           >
-            <div style={{ display: 'contents' }}>
+            <div style={{ display: "contents" }}>
               <AdaptiveImage
                 src="/hero-image.png"
                 alt="Luxury KHUSH lighter"
                 className="absolute inset-0 w-full h-full object-cover opacity-85"
                 containerClassName="absolute inset-0"
                 onLoadError={(error: any) => {
-                  console.error('Hero image load error:', error);
+                  console.error("Hero image load error:", error);
                   toast({
                     title: "Image Load Error",
-                    description: "Failed to load hero image. Please refresh the page.",
+                    description:
+                      "Failed to load hero image. Please refresh the page.",
                     variant: "destructive",
                   });
                 }}
@@ -213,9 +222,7 @@ export default function Home() {
               transition={{ duration: 1, delay: 0.5 }}
               className="max-w-4xl mx-auto"
             >
-              <motion.h1
-                className="text-5xl sm:text-6xl md:text-7xl font-extralight mb-8 md:mb-10 tracking-wider text-center mx-auto leading-tight"
-              >
+              <motion.h1 className="text-5xl sm:text-6xl md:text-7xl font-extralight mb-8 md:mb-10 tracking-wider text-center mx-auto leading-tight">
                 <span className="block">
                   <AnimatedText
                     text="Make Your"
@@ -236,7 +243,8 @@ export default function Home() {
                 transition={{ delay: 1.2, duration: 0.8 }}
                 className="text-lg md:text-xl leading-relaxed text-zinc-300 max-w-2xl mx-auto tracking-wide text-center font-light"
               >
-                Exclusive luxury lighters - The perfect gift to light up our smile.
+                Exclusive luxury lighters - The perfect gift to light up your
+                smile.
               </motion.p>
 
               <motion.div
@@ -247,12 +255,16 @@ export default function Home() {
               >
                 <div className="flex flex-col items-center gap-6">
                   <div className="flex flex-col gap-3 w-full max-w-lg">
-                    <form onSubmit={(e) => {
-                      e.preventDefault();
-                      if (searchQuery.trim()) {
-                        setLocation(`/products?search=${encodeURIComponent(searchQuery)}`);
-                      }
-                    }}>
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (searchQuery.trim()) {
+                          setLocation(
+                            `/products?search=${encodeURIComponent(searchQuery)}`,
+                          );
+                        }
+                      }}
+                    >
                       <div className="flex gap-2">
                         <Input
                           value={searchQuery}
@@ -314,7 +326,9 @@ export default function Home() {
                             className="w-full justify-start text-left"
                             onClick={() => {
                               setSearchQuery(suggestion);
-                              setLocation(`/products?search=${encodeURIComponent(suggestion)}`);
+                              setLocation(
+                                `/products?search=${encodeURIComponent(suggestion)}`,
+                              );
                             }}
                           >
                             {suggestion}
