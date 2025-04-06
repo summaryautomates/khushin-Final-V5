@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import QRCode from "qrcode";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatPrice } from "@/lib/products";
 
 interface PaymentDetails {
   status: 'pending' | 'completed' | 'failed';
@@ -59,10 +60,13 @@ export default function CheckoutPayment() {
 
   useEffect(() => {
     if (paymentDetails && paymentMethod === 'upi') {
+      // Format the amount with 2 decimal places for UPI payment
+      const formattedAmount = (paymentDetails.amount / 100).toFixed(2);
+      
       const qrData = JSON.stringify({
         pa: paymentDetails.upiId,
         pn: paymentDetails.merchantName,
-        am: paymentDetails.amount.toString(),
+        am: formattedAmount,
         tr: paymentDetails.orderRef,
         tn: `Payment for order ${paymentDetails.orderRef}`,
       });
@@ -209,7 +213,7 @@ export default function CheckoutPayment() {
                   </p>
                 </div>
                 <div className="bg-black p-3 md:p-4 rounded-lg border">
-                  <p className="font-semibold text-sm md:text-base">Amount to be paid: ₹{paymentDetails?.amount}</p>
+                  <p className="font-semibold text-sm md:text-base">Amount to be paid: {paymentDetails?.amount ? formatPrice(paymentDetails.amount) : ''}</p>
                 </div>
                 <Button
                   className="w-full"
@@ -222,16 +226,21 @@ export default function CheckoutPayment() {
             </TabsContent>
 
             <TabsContent value="upi">
-              <div className="flex justify-center mt-4">
-                {qrCodeUrl ? (
-                  <div className="bg-white p-2 md:p-4 rounded-lg">
-                    <img src={qrCodeUrl} alt="Payment QR Code" className="w-48 h-48 md:w-64 md:h-64" />
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center w-48 h-48 md:w-64 md:h-64 bg-black rounded-lg border">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                )}
+              <div className="space-y-4 text-center">
+                <div className="flex justify-center mt-4">
+                  {qrCodeUrl ? (
+                    <div className="bg-white p-2 md:p-4 rounded-lg">
+                      <img src={qrCodeUrl} alt="Payment QR Code" className="w-48 h-48 md:w-64 md:h-64" />
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center w-48 h-48 md:w-64 md:h-64 bg-black rounded-lg border">
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                    </div>
+                  )}
+                </div>
+                <div className="bg-black p-3 md:p-4 rounded-lg border">
+                  <p className="font-semibold text-sm md:text-base">Amount to be paid: {paymentDetails?.amount ? formatPrice(paymentDetails.amount) : ''}</p>
+                </div>
               </div>
             </TabsContent>
 
@@ -245,7 +254,7 @@ export default function CheckoutPayment() {
                   </p>
                 </div>
                 <div className="bg-black p-3 md:p-4 rounded-lg border">
-                  <p className="font-semibold text-sm md:text-base">Amount to be paid: ₹{paymentDetails?.amount}</p>
+                  <p className="font-semibold text-sm md:text-base">Amount to be paid: {paymentDetails?.amount ? formatPrice(paymentDetails.amount) : ''}</p>
                 </div>
               </div>
             </TabsContent>
