@@ -127,14 +127,14 @@ export function ProductCard({ product }: ProductCardProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <Card className="border border-zinc-800/50 overflow-hidden group rounded-none hover:shadow-xl hover:shadow-primary/10 transition-all duration-500 bg-gradient-to-b from-zinc-900 to-black">
+      <Card className="border border-zinc-800/50 overflow-hidden group rounded-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-500 bg-gradient-to-b from-zinc-900 to-black">
         <CardContent className="p-0">
           <Link href={`/product/${product.id}`}>
             <div className="relative">
               {/* Premium badge for luxury products */}
               {product.collection === 'luxury' && (
-                <Badge className="absolute top-3 right-3 z-10 bg-primary/80 backdrop-blur-sm text-black font-light px-3 uppercase tracking-wider text-xs">
-                  <Crown className="h-3 w-3 mr-1" /> Premium
+                <Badge className="absolute top-4 right-4 z-10 bg-primary/90 backdrop-blur-sm text-black font-medium px-3 py-1 uppercase tracking-wider text-xs shadow-md">
+                  <Crown className="h-3.5 w-3.5 mr-1.5" /> Premium
                 </Badge>
               )}
               
@@ -146,13 +146,13 @@ export function ProductCard({ product }: ProductCardProps) {
                   className="aspect-square w-full max-h-[300px]" 
                 />
               ) : (
-                <div className="relative aspect-square overflow-hidden bg-gradient-to-b from-zinc-900 to-black w-full max-h-[300px]">
+                <div className="relative aspect-square overflow-hidden bg-gradient-to-b from-zinc-900/80 to-black w-full max-h-[300px]">
                   {/* Background pattern */}
-                  <div className="absolute inset-0 bg-[url('/images/dark-texture.svg')] opacity-30" />
+                  <div className="absolute inset-0 bg-[url('/images/dark-texture.svg')] opacity-20" />
                   
                   {/* Product Image */}
                   <motion.div
-                    className="relative z-10 h-full w-full"
+                    className="relative z-10 h-full w-full p-4"
                     whileHover={{ scale: 1.05 }}
                     transition={{ duration: 0.5, ease: "easeOut" }}
                   >
@@ -170,7 +170,7 @@ export function ProductCard({ product }: ProductCardProps) {
                     animate={{ opacity: isHovered ? 0.7 : 0 }}
                   >
                     <motion.div 
-                      className="flex gap-2"
+                      className="flex gap-3"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 10 }}
                       transition={{ duration: 0.3, delay: 0.1 }}
@@ -178,7 +178,7 @@ export function ProductCard({ product }: ProductCardProps) {
                       <Button
                         size="sm"
                         variant="secondary"
-                        className="border border-white/20 text-white hover:bg-white/10 backdrop-blur-md transition-all duration-300"
+                        className="border border-white/30 text-white hover:bg-white/10 backdrop-blur-md transition-all duration-300 px-4 shadow-lg"
                       >
                         <div className="flex items-center justify-center gap-2">
                           <Eye className="h-4 w-4" />
@@ -189,7 +189,7 @@ export function ProductCard({ product }: ProductCardProps) {
                       <Button
                         size="sm"
                         variant="default"
-                        className="bg-primary text-black dark:text-black border-primary font-bold hover:bg-primary/90 hover:shadow-lg shadow-md shadow-primary/20 backdrop-blur-md transition-all duration-300 transform hover:scale-105 px-2 py-1.5 text-xs"
+                        className="bg-primary/90 text-black dark:text-black font-bold hover:bg-primary/100 hover:shadow-lg shadow-md shadow-primary/30 backdrop-blur-md transition-all duration-300 transform hover:scale-105 px-4 py-2 text-xs"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -198,13 +198,13 @@ export function ProductCard({ product }: ProductCardProps) {
                         disabled={isAddingToCart}
                       >
                         {isAddingToCart ? (
-                          <div className="flex items-center justify-center gap-1">
-                            <Loader2 className="h-3 w-3 animate-spin" />
+                          <div className="flex items-center justify-center gap-1.5">
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             <span className="font-bold">ADDING...</span>
                           </div>
                         ) : (
-                          <div className="flex items-center justify-center gap-1">
-                            <ShoppingCart className="h-3 w-3" strokeWidth={2.5} />
+                          <div className="flex items-center justify-center gap-1.5">
+                            <ShoppingCart className="h-3.5 w-3.5" strokeWidth={2.5} />
                             <span className="font-bold">ADD TO CART</span>
                           </div>
                         )}
@@ -215,7 +215,7 @@ export function ProductCard({ product }: ProductCardProps) {
               )}
               
               {/* Action buttons */}
-              <div className="absolute top-3 left-3 z-30 flex flex-col gap-2">
+              <div className="absolute top-4 left-4 z-30 flex flex-col gap-2.5">
                 {/* Compare button */}
                 <TooltipProvider>
                   <Tooltip>
@@ -224,10 +224,10 @@ export function ProductCard({ product }: ProductCardProps) {
                         size="icon"
                         variant={isInCompare(product.id) ? "default" : "secondary"}
                         className={cn(
-                          "w-8 h-8 rounded-full shadow-md backdrop-blur-md",
+                          "w-9 h-9 rounded-full shadow-lg backdrop-blur-md",
                           isInCompare(product.id) 
-                            ? "bg-primary text-primary-foreground" 
-                            : "bg-black/50 hover:bg-black/70 border border-white/10"
+                            ? "bg-primary/90 text-primary-foreground" 
+                            : "bg-black/60 hover:bg-black/80 border border-white/20"
                         )}
                         onClick={(e) => {
                           e.preventDefault();
@@ -237,9 +237,9 @@ export function ProductCard({ product }: ProductCardProps) {
                         disabled={isAddingToCompare}
                       >
                         {isAddingToCompare ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="h-4.5 w-4.5 animate-spin" />
                         ) : (
-                          <BarChart2 className="h-4 w-4" />
+                          <BarChart2 className="h-4.5 w-4.5" />
                         )}
                       </Button>
                     </TooltipTrigger>
@@ -257,10 +257,10 @@ export function ProductCard({ product }: ProductCardProps) {
                         size="icon"
                         variant="secondary"
                         className={cn(
-                          "w-8 h-8 rounded-full shadow-md backdrop-blur-md",
+                          "w-9 h-9 rounded-full shadow-lg backdrop-blur-md",
                           isFavorite 
-                            ? "bg-red-500/80 text-white" 
-                            : "bg-black/50 hover:bg-black/70 border border-white/10"
+                            ? "bg-red-500/90 text-white" 
+                            : "bg-black/60 hover:bg-black/80 border border-white/20"
                         )}
                         onClick={(e) => {
                           e.preventDefault();
@@ -268,7 +268,7 @@ export function ProductCard({ product }: ProductCardProps) {
                           setIsFavorite(!isFavorite);
                         }}
                       >
-                        <Heart className={cn("h-4 w-4", isFavorite && "fill-current")} />
+                        <Heart className={cn("h-4.5 w-4.5", isFavorite && "fill-current")} />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="right">
@@ -281,35 +281,35 @@ export function ProductCard({ product }: ProductCardProps) {
           </Link>
 
           <motion.div 
-            className="p-6 space-y-4 relative bg-gradient-to-b from-zinc-900/50 to-black"
+            className="p-7 space-y-4 relative bg-gradient-to-b from-zinc-900/70 to-black rounded-b-lg"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
           >
             {/* Rating stars */}
-            <div className="flex justify-center gap-1">
+            <div className="flex justify-center gap-1.5">
               {[1, 2, 3, 4, 5].map((_, index) => (
-                <Star key={index} className="h-3.5 w-3.5 text-primary fill-primary" />
+                <Star key={index} className="h-4 w-4 text-primary fill-primary" />
               ))}
             </div>
 
             {/* Product name with hover effect */}
             <Link href={`/product/${product.id}`}>
-              <h3 className="font-light text-base tracking-widest text-white text-center line-clamp-2 min-h-[3rem] transition-colors duration-300 hover:text-primary">
+              <h3 className="font-medium text-base tracking-wide text-white text-center line-clamp-2 min-h-[3rem] transition-colors duration-300 hover:text-primary/90">
                 {product.name.toUpperCase()}
               </h3>
             </Link>
             
             {/* Product description */}
-            <p className="text-xs leading-relaxed text-zinc-400 tracking-wide text-center line-clamp-2 min-h-[2.5rem]">
+            <p className="text-sm leading-relaxed text-zinc-300 tracking-wide text-center line-clamp-2 min-h-[2.5rem]">
               {product.description}
             </p>
             
             {/* Price display */}
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-xs text-zinc-500 uppercase tracking-wider">Price</span>
+            <div className="flex flex-col items-center gap-1.5 mt-1">
+              <span className="text-xs text-zinc-400 uppercase tracking-wider font-medium">Price</span>
               <motion.div
-                className="font-light text-lg text-primary tracking-wider"
+                className="font-semibold text-xl text-primary tracking-wider"
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.3 }}
               >
@@ -318,22 +318,22 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
             
             {/* Add to cart button - Enhanced for better visibility and fixed overflow */}
-            <div className="pt-4">
+            <div className="pt-5">
               <Button 
                 variant="default"
-                size="default"
-                className="w-full bg-primary hover:bg-primary/90 text-black dark:text-black font-bold uppercase tracking-wider border-2 border-primary shadow-lg hover:shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 py-4 px-2 text-xs transform hover:scale-105"
+                size="lg"
+                className="w-full bg-primary/90 hover:bg-primary text-black dark:text-black font-bold uppercase tracking-wider border-0 shadow-lg hover:shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 py-6 text-sm transform hover:scale-102"
                 onClick={handleAddToCart}
                 disabled={isAddingToCart}
               >
                 {isAddingToCart ? (
-                  <div className="flex items-center justify-center gap-1">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="font-bold">ADDING...</span>
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span className="font-bold">ADDING TO CART...</span>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center gap-1">
-                    <ShoppingCart className="h-4 w-4" strokeWidth={2.5} />
+                  <div className="flex items-center justify-center gap-2">
+                    <ShoppingCart className="h-5 w-5" strokeWidth={2.5} />
                     <span className="font-bold">ADD TO CART</span>
                   </div>
                 )}
