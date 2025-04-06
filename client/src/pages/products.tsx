@@ -145,33 +145,35 @@ export default function Products() {
           </motion.div>
         )}
         
-        {category === "flask" && (
+        {/* Show Premium Flask header only if we're specifically on the flask category page */}
+        {category === "flask" && !location.includes("/products/category/lighters") && (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-12 relative overflow-hidden rounded-2xl bg-gradient-to-r from-zinc-900 to-zinc-800 p-8 md:p-12"
+            className="mb-12 relative overflow-hidden rounded-2xl bg-gradient-to-r from-zinc-900/95 to-zinc-800/95 p-8 md:p-12 border border-gold/20"
           >
             <div 
-              className="absolute inset-0 bg-cover bg-center opacity-30"
+              className="absolute inset-0 bg-cover bg-center opacity-20"
               style={{ backgroundImage: "url('/products/Flask 1.jpg')" }}
             />
+            <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-transparent to-gold/5"></div>
             <div className="relative z-10 max-w-3xl">
-              <div className="flex items-center gap-2 mb-6">
-                <Crown className="h-8 w-8 text-gold" />
-                <h1 className="text-4xl font-light tracking-wider text-white">Premium Flask Collection</h1>
+              <div className="flex items-center gap-3 mb-6">
+                <Crown className="h-9 w-9 text-gold" />
+                <h1 className="text-4xl font-light tracking-wide text-white">Luxury Flask Collection</h1>
               </div>
-              <p className="text-zinc-300 leading-relaxed mb-8">
-                Explore our premium collection of elegant flasks, perfect for carrying your favorite beverages in style.
-                Each flask is crafted with precision using high-quality materials for durability and sophistication.
+              <p className="text-zinc-200 leading-relaxed mb-8 text-lg">
+                Discover our exquisite collection of premium flasks, each piece meticulously crafted for the discerning connoisseur.
+                Combining timeless elegance with superior functionality, our flasks are the perfect companion for your finest spirits.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Badge variant="outline" className="bg-gold/10 text-gold border-gold/20 px-3 py-1.5">
+                <Badge variant="outline" className="bg-gold/10 text-gold border-gold/20 px-4 py-2 text-sm">
                   <Diamond className="w-4 h-4 mr-2" />
-                  Stainless Steel
+                  Premium Stainless Steel
                 </Badge>
-                <Badge variant="outline" className="bg-gold/10 text-gold border-gold/20 px-3 py-1.5">
+                <Badge variant="outline" className="bg-gold/10 text-gold border-gold/20 px-4 py-2 text-sm">
                   <Flame className="w-4 h-4 mr-2" />
-                  Luxury Design
+                  Exquisite Design
                 </Badge>
               </div>
             </div>
