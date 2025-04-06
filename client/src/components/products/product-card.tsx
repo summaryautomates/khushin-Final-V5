@@ -122,13 +122,19 @@ export function ProductCard({ product }: ProductCardProps) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 10 }}
+      whileHover={{ 
+        y: -5, 
+        scale: 1.02,
+        transition: { type: "spring", stiffness: 300, damping: 15 }
+      }}
+      whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className="w-full h-full"
+      className="w-full h-full perspective-1000"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      whileHover={{ y: -5 }}
     >
-      <Card className="border border-zinc-800/50 overflow-hidden group rounded-xl hover:shadow-2xl hover:shadow-primary/20 transition-all duration-500 bg-gradient-to-b from-zinc-900 to-black h-full transform hover:scale-[1.02]">
+      <Card className="border border-zinc-800/50 overflow-hidden group rounded-xl shadow-lg transition-all duration-300 bg-gradient-to-b from-zinc-900 to-black h-full">
         <CardContent className="p-0 h-full flex flex-col">
           <Link href={`/product/${product.id}`} className="block relative overflow-hidden group">
             <div className="relative">
@@ -438,41 +444,69 @@ export function ProductCard({ product }: ProductCardProps) {
               </motion.div>
             </div>
             
-            {/* Add to cart button - Enhanced with animations and better styling */}
-            <div className="pt-5 mt-auto">
-              <Button 
-                variant="default"
-                size="lg"
-                className="w-full bg-gradient-to-r from-primary/90 via-primary to-primary/90 hover:from-primary hover:to-primary text-black dark:text-black font-bold uppercase tracking-wider border-0 shadow-lg hover:shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 py-6 text-sm rounded-lg overflow-hidden relative"
-                onClick={handleAddToCart}
-                disabled={isAddingToCart}
+            {/* Add to cart button - Enhanced with rich animations and feedback */}
+            <div className="pt-5 mt-auto perspective-800">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ scale: 1.03, y: -2 }}
+                whileTap={{ scale: 0.97, y: 2 }}
+                transition={{ 
+                  duration: 0.3, 
+                  type: "spring", 
+                  stiffness: 300, 
+                  damping: 15 
+                }}
+                className="relative"
               >
-                {/* Animated background shine effect */}
+                {/* Animated glow effect around button */}
                 <motion.div 
-                  className="absolute inset-0 bg-white/20 skew-x-12 opacity-0"
-                  animate={isHovered ? {
-                    x: ["100%", "-100%"],
-                    opacity: [0, 0.3, 0]
-                  } : {}}
+                  className="absolute inset-0 bg-primary/30 blur-xl rounded-2xl"
+                  animate={{ 
+                    scale: isHovered ? [1, 1.15, 1.05] : 1,
+                    opacity: isHovered ? [0.4, 0.7, 0.4] : 0.2
+                  }}
                   transition={{ 
-                    duration: 1.5,
+                    duration: 2,
                     repeat: isHovered ? Infinity : 0,
-                    repeatDelay: 0.5
+                    repeatType: "reverse"
                   }}
                 />
                 
-                {isAddingToCart ? (
-                  <div className="flex items-center justify-center gap-2 relative z-10">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span className="font-bold tracking-wider">ADDING TO CART...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-2 relative z-10">
-                    <ShoppingCart className="h-5 w-5" strokeWidth={2.5} />
-                    <span className="font-bold tracking-wider">ADD TO CART</span>
-                  </div>
-                )}
-              </Button>
+                <Button 
+                  variant="default"
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-primary/90 via-primary to-primary/90 hover:from-primary hover:to-primary text-black dark:text-black font-bold uppercase tracking-wider border-0 shadow-lg hover:shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 py-6 text-sm rounded-lg overflow-hidden relative z-10"
+                  onClick={handleAddToCart}
+                  disabled={isAddingToCart}
+                >
+                  {/* Animated background pulse and shine effects */}
+                  <motion.div 
+                    className="absolute inset-0 bg-white/20 skew-x-12 opacity-0"
+                    animate={isHovered ? {
+                      x: ["100%", "-100%"],
+                      opacity: [0, 0.3, 0]
+                    } : {}}
+                    transition={{ 
+                      duration: 1.5,
+                      repeat: isHovered ? Infinity : 0,
+                      repeatDelay: 0.5
+                    }}
+                  />
+                  
+                  {isAddingToCart ? (
+                    <div className="flex items-center justify-center gap-2 relative z-10">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span className="font-bold tracking-wider">ADDING TO CART...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2 relative z-10">
+                      <ShoppingCart className="h-5 w-5" strokeWidth={2.5} />
+                      <span className="font-bold tracking-wider">ADD TO CART</span>
+                    </div>
+                  )}
+                </Button>
+              </motion.div>
             </div>
           </motion.div>
         </CardContent>
