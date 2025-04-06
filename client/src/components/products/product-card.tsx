@@ -189,7 +189,7 @@ export function ProductCard({ product }: ProductCardProps) {
                       <Button
                         size="sm"
                         variant="default"
-                        className="bg-primary text-black dark:text-black border-primary font-bold hover:bg-primary/90 hover:shadow-lg shadow-md shadow-primary/20 backdrop-blur-md transition-all duration-300 transform hover:scale-105"
+                        className="bg-primary text-black dark:text-black border-primary font-bold hover:bg-primary/90 hover:shadow-lg shadow-md shadow-primary/20 backdrop-blur-md transition-all duration-300 transform hover:scale-105 px-2 py-1.5 text-xs"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -198,13 +198,13 @@ export function ProductCard({ product }: ProductCardProps) {
                         disabled={isAddingToCart}
                       >
                         {isAddingToCart ? (
-                          <div className="flex items-center justify-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                          <div className="flex items-center justify-center gap-1">
+                            <Loader2 className="h-3 w-3 animate-spin" />
                             <span className="font-bold">ADDING...</span>
                           </div>
                         ) : (
-                          <div className="flex items-center justify-center gap-2">
-                            <ShoppingCart className="h-4 w-4" strokeWidth={2.5} />
+                          <div className="flex items-center justify-center gap-1">
+                            <ShoppingCart className="h-3 w-3" strokeWidth={2.5} />
                             <span className="font-bold">ADD TO CART</span>
                           </div>
                         )}
@@ -317,23 +317,23 @@ export function ProductCard({ product }: ProductCardProps) {
               </motion.div>
             </div>
             
-            {/* Add to cart button - Enhanced for better visibility */}
+            {/* Add to cart button - Enhanced for better visibility and fixed overflow */}
             <div className="pt-4">
               <Button 
                 variant="default"
                 size="default"
-                className="w-full bg-primary hover:bg-primary/90 text-black dark:text-black font-bold uppercase tracking-wider border-2 border-primary shadow-lg hover:shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 py-6 text-sm transform hover:scale-105"
+                className="w-full bg-primary hover:bg-primary/90 text-black dark:text-black font-bold uppercase tracking-wider border-2 border-primary shadow-lg hover:shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 py-4 px-2 text-xs transform hover:scale-105"
                 onClick={handleAddToCart}
                 disabled={isAddingToCart}
               >
                 {isAddingToCart ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span className="font-bold">ADDING TO CART...</span>
+                  <div className="flex items-center justify-center gap-1">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="font-bold">ADDING...</span>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center gap-2">
-                    <ShoppingCart className="h-5 w-5" strokeWidth={2.5} />
+                  <div className="flex items-center justify-center gap-1">
+                    <ShoppingCart className="h-4 w-4" strokeWidth={2.5} />
                     <span className="font-bold">ADD TO CART</span>
                   </div>
                 )}
