@@ -35,7 +35,7 @@ interface AuthSheetProps {
 }
 
 export function AuthSheet({ open, onOpenChange, onSuccess, showTrigger = true }: AuthSheetProps) {
-  const { loginMutation, registerMutation } = useAuth();
+  const { loginMutation, registerMutation, guestLoginMutation } = useAuth();
 
   const loginForm = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
@@ -78,6 +78,17 @@ export function AuthSheet({ open, onOpenChange, onSuccess, showTrigger = true }:
       onOpenChange?.(false);
     } catch (error) {
       console.error("Registration error in sheet:", error);
+      // Error is handled by the mutation
+    }
+  };
+  
+  const onGuestLogin = async () => {
+    try {
+      await guestLoginMutation.mutateAsync();
+      onSuccess?.();
+      onOpenChange?.(false);
+    } catch (error) {
+      console.error("Guest login error in sheet:", error);
       // Error is handled by the mutation
     }
   };
@@ -141,6 +152,29 @@ export function AuthSheet({ open, onOpenChange, onSuccess, showTrigger = true }:
                 >
                   {loginMutation.isPending ? "Logging in..." : "Login"}
                 </Button>
+                
+                <div className="mt-4 text-center">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-muted-foreground/30" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">
+                        Or continue without an account
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-4 w-full"
+                    onClick={onGuestLogin}
+                    disabled={guestLoginMutation.isPending}
+                  >
+                    {guestLoginMutation.isPending ? "Creating guest session..." : "Continue as Guest"}
+                  </Button>
+                </div>
               </form>
             </TabsContent>
 

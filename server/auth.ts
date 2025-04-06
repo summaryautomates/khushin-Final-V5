@@ -5,8 +5,9 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser, insertUserSchema } from "@shared/schema";
+import { User as SelectUser, insertUserSchema, guestUserSchema } from "@shared/schema";
 import MemoryStore from "memorystore";
+import { v4 as uuidv4 } from 'uuid';
 
 const MemoryStoreSession = MemoryStore(session);
 
@@ -170,6 +171,51 @@ export async function setupAuth(app: Express) {
   }
 }
 
+/**
+ * Creates a guest user with temporary credentials
+ * and sets their expiration to 30 days from now
+ */
+async function createGuestUser() {
+  try {
+    // Generate random username and password
+    const guestId = uuidv4().substring(0, 8);
+    const username = `guest_${guestId}`;
+    const password = randomBytes(12).toString('hex');
+    const email = `${username}@guest.local`;
+    
+    // Set expiration date to 30 days from now
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+    
+    // Hash password
+    const hashedPassword = await hashPassword(password);
+    
+    // Create the guest user
+    const guestUserData = {
+      username,
+      password: hashedPassword,
+      email,
+      first_name: null,
+      last_name: null,
+      is_guest: true,
+      expires_at: expiresAt
+    };
+    
+    console.log('Creating guest user:', { username, expiresAt });
+    const user = await storage.createUser(guestUserData);
+    console.log('Guest user created successfully:', { id: user.id, username: user.username });
+    
+    return user;
+  } catch (error) {
+    console.error('Error creating guest user:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+}
+
 function setupAuthRoutes(app: Express) {
   // Registration route with improved validation and error handling
   app.post("/api/register", async (req, res) => {
@@ -319,5 +365,110 @@ function setupAuthRoutes(app: Express) {
     }
     const { password: _, ...userWithoutPassword } = req.user;
     res.json(userWithoutPassword);
+  });
+  
+  // Guest login endpoint
+  app.post("/api/guest-login", async (req, res) => {
+    try {
+      console.log('Processing guest login request');
+      
+      // Check if the user is already authenticated
+      if (req.isAuthenticated()) {
+        console.log('Guest login: User already authenticated', { userId: req.user.id });
+        const { password: _, ...userWithoutPassword } = req.user;
+        return res.json(userWithoutPassword);
+      }
+      
+      // Create a new guest user
+      const guestUser = await createGuestUser();
+      
+      // Log in the guest user
+      req.login(guestUser, (loginErr) => {
+        if (loginErr) {
+          console.error('Guest login error:', {
+            error: loginErr.message,
+            stack: loginErr.stack,
+            timestamp: new Date().toISOString()
+          });
+          return res.status(500).json({ message: "Failed to create guest session" });
+        }
+        
+        console.log('Guest login successful:', { userId: guestUser.id });
+        const { password: _, ...userWithoutPassword } = guestUser;
+        return res.json(userWithoutPassword);
+      });
+    } catch (error) {
+      console.error('Guest login error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+      res.status(500).json({ message: "Failed to create guest account" });
+    }
+  });
+  
+  // Endpoint to convert guest account to permanent account
+  app.post("/api/convert-guest", async (req, res) => {
+    try {
+      console.log('Processing guest account conversion request');
+      
+      // Check if the user is authenticated
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      // Check if the user is a guest
+      if (!req.user.is_guest) {
+        return res.status(400).json({ message: "Only guest accounts can be converted" });
+      }
+      
+      // Validate conversion data
+      const validationResult = insertUserSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        console.log('Guest conversion validation failed:', {
+          errors: validationResult.error.errors
+        });
+        return res.status(400).json({
+          message: "Invalid account data",
+          errors: validationResult.error.errors
+        });
+      }
+      
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(req.body.username);
+      if (existingUser && existingUser.id !== req.user.id) {
+        console.log('Guest conversion failed: Username exists:', {
+          username: req.body.username
+        });
+        return res.status(400).json({
+          message: "Username already exists"
+        });
+      }
+      
+      // Hash password and update user
+      const hashedPassword = await hashPassword(req.body.password);
+      
+      // Update user record in the database
+      const updatedUser = await storage.updateUser(req.user.id, {
+        ...req.body,
+        password: hashedPassword,
+        is_guest: false,
+        expires_at: null
+      });
+      
+      console.log('Guest account converted successfully:', { id: updatedUser.id });
+      
+      // Return updated user data
+      const { password: _, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+      
+    } catch (error) {
+      console.error('Guest conversion error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+      res.status(500).json({ message: "Failed to convert guest account" });
+    }
   });
 }

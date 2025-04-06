@@ -10,6 +10,8 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).notNull(),
   first_name: varchar('first_name', { length: 255 }),
   last_name: varchar('last_name', { length: 255 }),
+  is_guest: boolean('is_guest').notNull().default(false),
+  expires_at: timestamp('expires_at'),
   created_at: timestamp('created_at').defaultNow().notNull()
 });
 
@@ -66,6 +68,8 @@ export interface User {
   email: string;
   first_name: string | null;
   last_name: string | null;
+  is_guest: boolean;
+  expires_at: Date | null;
   created_at: Date;
 }
 
@@ -217,7 +221,15 @@ export const insertUserSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   email: z.string().email("Invalid email address"),
   first_name: z.string().nullable(),
-  last_name: z.string().nullable()
+  last_name: z.string().nullable(),
+  is_guest: z.boolean().optional().default(false),
+  expires_at: z.date().nullable().optional()
+});
+
+// Schema for creating a guest user
+export const guestUserSchema = insertUserSchema.extend({
+  is_guest: z.literal(true),
+  expires_at: z.date()
 });
 
 export const insertProductSchema = z.object({
@@ -296,6 +308,7 @@ export const insertGiftOrderSchema = z.object({
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type GuestUser = z.infer<typeof guestUserSchema>;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
 export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;

@@ -23,6 +23,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  updateUser(id: number, userData: Partial<InsertUser> & { is_guest?: boolean, expires_at?: Date | null }): Promise<User>;
   sessionStore: session.Store;
   // Product methods
   getProducts(): Promise<typeof products.$inferSelect[]>;
@@ -60,17 +61,19 @@ export class ReplitDBStorage implements IStorage {
     console.log('ReplitDBStorage initialized successfully');
   }
 
-  async createUser(userData: InsertUser): Promise<User> {
+  async createUser(userData: InsertUser & { is_guest?: boolean, expires_at?: Date | null }): Promise<User> {
     try {
-      console.log('Creating user:', { username: userData.username });
+      console.log('Creating user:', { username: userData.username, isGuest: userData.is_guest });
       const [user] = await db.insert(users).values({
         username: userData.username,
         password: userData.password,
         email: userData.email,
         first_name: userData.first_name || null,
-        last_name: userData.last_name || null
+        last_name: userData.last_name || null,
+        is_guest: userData.is_guest || false,
+        expires_at: userData.expires_at || null
       }).returning();
-      console.log('User created successfully:', { id: user.id, username: user.username });
+      console.log('User created successfully:', { id: user.id, username: user.username, isGuest: user.is_guest });
       return user;
     } catch (error) {
       console.error('Error creating user:', error);
@@ -97,6 +100,35 @@ export class ReplitDBStorage implements IStorage {
     } catch (error) {
       console.error('Error fetching user by username:', error);
       return undefined;
+    }
+  }
+  
+  async updateUser(id: number, userData: Partial<InsertUser> & { is_guest?: boolean, expires_at?: Date | null }): Promise<User> {
+    try {
+      console.log('Updating user:', { id, ...userData });
+      
+      // Remove undefined values to avoid setting fields to null unintentionally
+      const updateData: Record<string, any> = {};
+      for (const [key, value] of Object.entries(userData)) {
+        if (value !== undefined) {
+          updateData[key] = value;
+        }
+      }
+      
+      const [updatedUser] = await db.update(users)
+        .set(updateData)
+        .where(eq(users.id, id))
+        .returning();
+      
+      if (!updatedUser) {
+        throw new Error(`User with ID ${id} not found`);
+      }
+      
+      console.log('User updated successfully:', { id: updatedUser.id, username: updatedUser.username });
+      return updatedUser;
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw error;
     }
   }
 

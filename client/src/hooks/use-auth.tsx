@@ -16,6 +16,8 @@ interface AuthContextType {
   loginMutation: ReturnType<typeof useLoginMutation>;
   logoutMutation: ReturnType<typeof useLogoutMutation>;
   registerMutation: ReturnType<typeof useRegisterMutation>;
+  guestLoginMutation: ReturnType<typeof useGuestLoginMutation>;
+  isGuest: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -139,8 +141,48 @@ function useLogoutMutation() {
   });
 }
 
+function useGuestLoginMutation() {
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await fetch("/api/guest-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: 'include',
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.message || "Guest login failed");
+        }
+
+        return res.json() as Promise<SelectUser>;
+      } catch (error) {
+        console.error('Guest login request failed:', error);
+        throw error;
+      }
+    },
+    onError: (error: Error) => {
+      console.error('Guest login mutation error:', error);
+      toast({
+        title: "Guest login failed",
+        description: error.message || "Unable to create guest account",
+        variant: "destructive",
+      });
+    },
+    onSuccess: (user) => {
+      queryClient.setQueryData(["/api/user"], user);
+      toast({
+        title: "Welcome, Guest!",
+        description: "You're now browsing as a guest user",
+      });
+    },
+  });
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { data: user, error, isLoading } = useQuery<SelectUser | null>({
+  const { data: user = null, error, isLoading } = useQuery<SelectUser | null>({
     queryKey: ["/api/user"],
     queryFn: async () => {
       try {
@@ -175,6 +217,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useLoginMutation();
   const registerMutation = useRegisterMutation();
   const logoutMutation = useLogoutMutation();
+  const guestLoginMutation = useGuestLoginMutation();
+  
+  // Check if the current user is a guest
+  const isGuest = user?.is_guest ?? false;
 
   return (
     <AuthContext.Provider
@@ -185,6 +231,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginMutation,
         registerMutation,
         logoutMutation,
+        guestLoginMutation,
+        isGuest
       }}
     >
       {children}
