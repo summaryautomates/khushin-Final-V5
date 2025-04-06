@@ -209,8 +209,11 @@ export default function Cart() {
       return;
     }
 
+    // Set checkout state to true
     setIsCheckingOut(true);
+    
     try {
+      // Prepare order payload with properly formatted data
       const orderPayload: Omit<InsertOrder, "orderRef"> = {
         userId: user.id.toString(),
         items: items.map(item => ({
@@ -227,12 +230,28 @@ export default function Cart() {
           pincode: shippingData.pincode,
           phone: shippingData.phone
         },
-        total: orderTotal * 100,
+        total: orderTotal * 100, // Convert to smallest currency unit (paise)
         status: "pending" as const
       };
 
       console.log("Checkout payload:", orderPayload);
 
+      // Validate all required fields before submitting
+      if (!orderPayload.userId || !orderPayload.shipping.fullName || 
+          !orderPayload.shipping.address || !orderPayload.shipping.city || 
+          !orderPayload.shipping.state || !orderPayload.shipping.pincode || 
+          !orderPayload.shipping.phone || !orderPayload.items.length) {
+        
+        toast({
+          title: "Checkout Error",
+          description: "Please ensure all required fields are filled correctly.",
+          variant: "destructive",
+        });
+        setIsCheckingOut(false);
+        return;
+      }
+
+      // Send checkout request with proper credentials
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: {
@@ -242,17 +261,20 @@ export default function Cart() {
         body: JSON.stringify(orderPayload),
       });
 
+      // Handle authentication errors
       if (response.status === 401) {
         setIsAuthSheetOpen(true);
         throw new Error("AUTH_REQUIRED");
       }
 
+      // Process response
       const contentType = response.headers.get("content-type");
-      let responseData;
-
+      
+      // Parse response data
+      let data;
       try {
         if (contentType?.includes("application/json")) {
-          responseData = await response.json();
+          data = await response.json();
         } else {
           const textContent = await response.text();
           console.error("Unexpected response:", textContent);
@@ -263,12 +285,14 @@ export default function Cart() {
         throw new Error("Failed to process server response");
       }
 
+      // Check for unsuccessful response
       if (!response.ok) {
-        console.error("Checkout failed:", responseData);
-        throw new Error(responseData?.message || "Checkout process failed");
+        console.error("Checkout failed:", data);
+        throw new Error(data?.message || "Checkout process failed");
       }
 
-      window.location.href = responseData.redirectUrl;
+      // Redirect to payment page
+      window.location.href = data.redirectUrl;
     } catch (error: any) {
       console.error("Checkout error:", error);
       if (error instanceof Error && error.message === "AUTH_REQUIRED") {

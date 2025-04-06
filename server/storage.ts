@@ -133,20 +133,38 @@ export class ReplitDBStorage implements IStorage {
 
   async createOrder(orderData: InsertOrder): Promise<Order> {
     try {
-      // Log the full order data to debug
+      // Validate required fields before proceeding
+      if (!orderData.userId) {
+        throw new Error('User ID is required');
+      }
+      
+      if (!orderData.orderRef) {
+        throw new Error('Order reference is required');
+      }
+      
+      if (!orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
+        throw new Error('Order must contain at least one item');
+      }
+      
+      if (!orderData.shipping) {
+        throw new Error('Shipping information is required');
+      }
+      
+      // Log the order data being created
       console.log('Creating order:', {
         userId: orderData.userId,
         itemCount: orderData.items.length,
         total: orderData.total,
-        orderRef: orderData.orderRef // Added orderRef to logging
+        orderRef: orderData.orderRef,
+        shippingComplete: !!orderData.shipping.fullName && 
+                         !!orderData.shipping.address && 
+                         !!orderData.shipping.city && 
+                         !!orderData.shipping.state && 
+                         !!orderData.shipping.pincode && 
+                         !!orderData.shipping.phone
       });
 
-      // Ensure orderRef is not null or undefined
-      if (!orderData.orderRef) {
-        throw new Error('Order reference is required');
-      }
-
-      // Ensure items and shipping are properly stringified
+      // Ensure data is properly formatted for database storage
       let itemsString = typeof orderData.items === 'string' 
         ? orderData.items 
         : JSON.stringify(orderData.items);
@@ -155,20 +173,28 @@ export class ReplitDBStorage implements IStorage {
         ? orderData.shipping 
         : JSON.stringify(orderData.shipping);
 
-      // Insert order into database
-      // Use the correct field names that match the schema
+      // Insert order into database with all required fields
       const [order] = await db.insert(orders).values({
         orderRef: orderData.orderRef,
         userId: orderData.userId,
-        status: orderData.status,
-        total: orderData.total || 0,   // Ensure total has a default value
+        status: orderData.status || 'pending',
+        total: orderData.total || 0,
         items: itemsString,
         shipping: shippingString,
         createdAt: new Date(),
-        lastUpdated: new Date()
+        lastUpdated: new Date(),
+        trackingNumber: null,
+        trackingStatus: null,
+        estimatedDelivery: null
       }).returning();
 
-      // Parse items and shipping back to objects when returning
+      console.log('Order created successfully:', { 
+        ref: order.orderRef, 
+        id: order.id,
+        status: order.status
+      });
+
+      // Parse items and shipping back to objects for returning to client
       try {
         const parsedItems = typeof order.items === 'string' 
           ? JSON.parse(order.items) 
@@ -185,7 +211,7 @@ export class ReplitDBStorage implements IStorage {
           estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
         };
       } catch (parseError) {
-        console.error('Error parsing order data:', parseError);
+        console.error('Error parsing order data after creation:', parseError);
         // Return the order with unparsed data rather than failing completely
         return {
           ...order,

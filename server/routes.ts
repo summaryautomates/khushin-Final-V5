@@ -73,6 +73,13 @@ export async function registerRoutes(app: Express) {
         return res.status(401).json({ message: "Authentication required" });
       }
 
+      // Log the received data
+      console.log("Checkout payload received:", {
+        userId: req.body.userId,
+        itemCount: req.body.items?.length,
+        hasShipping: !!req.body.shipping
+      });
+
       // Validate the order data
       const validationResult = insertOrderSchema.safeParse(req.body);
 
@@ -81,6 +88,17 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({
           message: "Invalid order data",
           errors: validationResult.error.errors
+        });
+      }
+
+      // Ensure user ID matches the authenticated user
+      if (req.user && validationResult.data.userId !== req.user.id.toString()) {
+        console.log("User ID mismatch:", {
+          authUserId: req.user.id,
+          payloadUserId: validationResult.data.userId
+        });
+        return res.status(400).json({
+          message: "User ID mismatch"
         });
       }
 
@@ -93,6 +111,28 @@ export async function registerRoutes(app: Express) {
         orderRef, // Ensure orderRef is explicitly set
         status: 'pending' as const
       };
+
+      // Validate shipping data explicitly
+      if (!orderData.shipping || 
+          !orderData.shipping.fullName || 
+          !orderData.shipping.address || 
+          !orderData.shipping.city || 
+          !orderData.shipping.state || 
+          !orderData.shipping.pincode || 
+          !orderData.shipping.phone) {
+        return res.status(400).json({
+          message: "Incomplete shipping information",
+          errors: ["Shipping information is required"]
+        });
+      }
+
+      // Validate items
+      if (!orderData.items || orderData.items.length === 0) {
+        return res.status(400).json({
+          message: "No items in order",
+          errors: ["At least one item is required"]
+        });
+      }
 
       console.log("Creating order:", {
         ref: orderRef,
