@@ -87,9 +87,11 @@ export default function CheckoutPayment() {
   useEffect(() => {
     if (paymentStatus === 'completed') {
       clearCart();
-      setLocation(`/checkout/success?ref=${orderRef}`);
+      // Pass the payment method to the success page
+      const successUrl = `/checkout/success?ref=${orderRef}${paymentMethod === 'cod' ? '&method=cod' : ''}`;
+      setLocation(successUrl);
     }
-  }, [paymentStatus, clearCart, orderRef, setLocation]);
+  }, [paymentStatus, clearCart, orderRef, setLocation, paymentMethod]);
 
   const handleStripeCheckout = async () => {
     if (!paymentDetails?.stripeSessionId) {
