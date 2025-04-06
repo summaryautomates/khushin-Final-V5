@@ -233,8 +233,8 @@ export default function ProductPage() {
               </motion.div>
             ) : null}
             
-            <div className="grid gap-12 md:grid-cols-2">
-              <div className="space-y-6">
+            <div className="grid gap-8 md:grid-cols-2">
+              <div className="space-y-4">
                 {/* Featured product badge */}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -268,8 +268,8 @@ export default function ProductPage() {
                       <Badge variant="secondary" className="bg-gold text-black px-3 py-1 flex items-center gap-2 shadow-md">
                         <Crown className="h-4 w-4" />
                         {product.collection === 'luxury' ? 'Luxury Collection' : 
-                         product.collection === 'lighter' ? 'Premium Lighter Collection' :
-                         product.collection === 'flask' ? 'Premium Flask Collection' : 
+                         product.collection === 'lighter' ? 'Premium Lighter' :
+                         product.collection === 'flask' ? 'Premium Flask' : 
                          'Standard Collection'}
                       </Badge>
                     </motion.div>
@@ -315,8 +315,8 @@ export default function ProductPage() {
                         <Badge variant="secondary" className="bg-gold text-black px-3 py-1 flex items-center gap-2 shadow-md">
                           <Crown className="h-4 w-4" />
                           {product.collection === 'luxury' ? 'Luxury Collection' : 
-                           product.collection === 'lighter' ? 'Premium Lighter Collection' :
-                           product.collection === 'flask' ? 'Premium Flask Collection' : 
+                           product.collection === 'lighter' ? 'Premium Lighter' :
+                           product.collection === 'flask' ? 'Premium Flask' : 
                            'Standard Collection'}
                         </Badge>
                       </motion.div>
@@ -341,7 +341,7 @@ export default function ProductPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="space-y-4 md:hidden mt-6 rounded-xl border p-6 bg-black"
+                  className="space-y-3 md:hidden mt-4 rounded-xl border border-zinc-800 p-4 bg-black/50"
                 >
                   <h3 className="text-lg font-medium tracking-wide">Specifications</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
@@ -368,7 +368,7 @@ export default function ProductPage() {
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="space-y-8"
+                className="space-y-6"
               >
                 {/* Collection badge and product name */}
                 <div className="space-y-4">
@@ -422,14 +422,14 @@ export default function ProductPage() {
                 </div>
 
                 {/* Description */}
-                <div className="space-y-4 rounded-xl border p-6 bg-black">
+                <div className="space-y-3">
                   <h3 className="text-xl font-medium">Description</h3>
                   <p className="text-muted-foreground leading-relaxed">
                     {product.description}
                   </p>
                   
                   {/* Key features */}
-                  <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="grid grid-cols-2 gap-3 mt-3">
                     <div className="flex items-center gap-2">
                       <Check className="h-5 w-5 text-emerald-600" />
                       <span className="text-sm">Hand-crafted</span>
@@ -450,16 +450,11 @@ export default function ProductPage() {
                 </div>
                 
                 {/* Delivery information */}
-                <div className="bg-black rounded-xl p-4 space-y-3 border">
-                  <div className="flex items-center gap-2">
-                    <Truck className="h-5 w-5 text-primary" />
-                    <span className="font-medium">Delivery Information</span>
-                  </div>
-                  <div className="flex items-center gap-2 ml-7 text-sm">
-                    <div className="flex flex-col">
-                      <p className="text-muted-foreground">Express delivery available</p>
-                      <p className="font-medium">Get it by <span className="text-primary">Tomorrow</span></p>
-                    </div>
+                <div className="flex items-center gap-3 border-t pt-4">
+                  <Truck className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="font-medium">Express Delivery</p>
+                    <p className="text-sm text-muted-foreground">Get it by <span className="text-primary font-medium">Tomorrow</span></p>
                   </div>
                 </div>
 
@@ -552,47 +547,47 @@ export default function ProductPage() {
                 </div>
 
                 {/* Product features */}
-                <div className="space-y-6 rounded-xl border p-6 bg-black">
-                  <h3 className="text-lg font-medium mb-4">Product Features</h3>
-                  <div className="flex items-center space-x-4">
-                    <Package className="h-5 w-5 text-primary" />
-                    <div>
-                      <h4 className="font-medium">Luxury Packaging</h4>
-                      <p className="text-sm text-muted-foreground">Premium gift box included</p>
+                <div className="border-t border-b py-4 my-3">
+                  <h3 className="text-lg font-medium mb-3">Key Benefits</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-start gap-2">
+                      <Package className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-sm">Luxury Packaging</h4>
+                        <p className="text-xs text-muted-foreground">Premium gift box included</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <Shield className="h-5 w-5 text-primary" />
-                    <div>
-                      <h4 className="font-medium">Authenticity Guaranteed</h4>
-                      <p className="text-sm text-muted-foreground">100% genuine products</p>
+                    <div className="flex items-start gap-2">
+                      <Shield className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-sm">Authenticity Guarantee</h4>
+                        <p className="text-xs text-muted-foreground">100% genuine products</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <Calendar className="h-5 w-5 text-primary" />
-                    <div>
-                      <h4 className="font-medium">Fast Delivery</h4>
-                      <p className="text-sm text-muted-foreground">Ships within 24 hours</p>
+                    <div className="flex items-start gap-2">
+                      <Calendar className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-sm">Fast Delivery</h4>
+                        <p className="text-xs text-muted-foreground">Ships within 24 hours</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <RefreshCcw className="h-5 w-5 text-primary" />
-                    <div>
-                      <h4 className="font-medium">Easy Returns</h4>
-                      <p className="text-sm text-muted-foreground">30-day hassle-free returns</p>
+                    <div className="flex items-start gap-2">
+                      <RefreshCcw className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-sm">Easy Returns</h4>
+                        <p className="text-xs text-muted-foreground">30-day returns</p>
+                      </div>
                     </div>
                   </div>
                 </div>
                 
                 {/* Gift options */}
-                <div className="space-y-3 rounded-xl border p-4 bg-black">
-                  <div className="flex items-center gap-2">
-                    <Gift className="h-5 w-5 text-primary" />
-                    <span className="font-medium">Gift Options Available</span>
+                <div className="flex items-center gap-3 pb-2">
+                  <Gift className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="font-medium">Gift Options Available</p>
+                    <p className="text-sm text-muted-foreground">Personalized message & luxury gift wrapping</p>
                   </div>
-                  <p className="text-sm text-muted-foreground ml-7">
-                    Add a personalized message or choose luxury gift wrapping during checkout.
-                  </p>
                 </div>
 
                 {/* Share buttons */}
@@ -621,25 +616,37 @@ export default function ProductPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="hidden md:block mt-16 bg-black rounded-xl border p-8"
+              className="hidden md:block mt-10 border-t pt-8"
             >
               <h2 className="text-2xl font-light tracking-wide mb-6">Product Specifications</h2>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-2">
-                  <h3 className="text-lg font-medium">Material</h3>
-                  <p className="text-muted-foreground">Premium quality materials sourced from the finest suppliers.</p>
+                  <h3 className="text-base font-medium flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                    Material
+                  </h3>
+                  <p className="text-muted-foreground text-sm">Premium quality materials sourced from the finest suppliers.</p>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-lg font-medium">Dimensions</h3>
-                  <p className="text-muted-foreground">12 × 4 × 2 cm (L × W × H)</p>
+                  <h3 className="text-base font-medium flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                    Dimensions
+                  </h3>
+                  <p className="text-muted-foreground text-sm">12 × 4 × 2 cm (L × W × H)</p>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-lg font-medium">Weight</h3>
-                  <p className="text-muted-foreground">180g - lightweight and easy to carry</p>
+                  <h3 className="text-base font-medium flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                    Weight
+                  </h3>
+                  <p className="text-muted-foreground text-sm">180g - lightweight and easy to carry</p>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-lg font-medium">Made in</h3>
-                  <p className="text-muted-foreground">Proudly crafted in India by skilled artisans</p>
+                  <h3 className="text-base font-medium flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                    Made in
+                  </h3>
+                  <p className="text-muted-foreground text-sm">Proudly crafted in India by skilled artisans</p>
                 </div>
               </div>
             </motion.div>
