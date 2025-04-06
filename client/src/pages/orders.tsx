@@ -530,7 +530,7 @@ export default function Orders() {
                         <div className="space-y-3">
                           <h3 className="font-medium text-sm uppercase tracking-wider text-primary">Actions</h3>
                           <div className="space-y-2">
-                            <Link href={`/order-details/${order.orderRef}`} className="w-full">
+                            <Link href={`/orders/${order.orderRef}`} className="w-full">
                               <Button variant="outline" size="sm" className="w-full justify-start gap-2 border-white/20">
                                 <span>View Details</span>
                               </Button>
