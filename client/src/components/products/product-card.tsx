@@ -177,17 +177,19 @@ export function ProductCard({ product }: ProductCardProps) {
                     >
                       <Button
                         size="sm"
-                        variant="outline"
-                        className="rounded-full border-white/20 text-white hover:bg-primary/20 hover:text-primary backdrop-blur-md"
+                        variant="secondary"
+                        className="border border-white/20 text-white hover:bg-white/10 backdrop-blur-md transition-all duration-300"
                       >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Quick View
+                        <div className="flex items-center justify-center gap-2">
+                          <Eye className="h-4 w-4" />
+                          <span>QUICK VIEW</span>
+                        </div>
                       </Button>
                       
                       <Button
                         size="sm"
-                        variant="outline"
-                        className="rounded-full border-white/20 text-white hover:bg-primary/20 hover:text-primary backdrop-blur-md"
+                        variant="default"
+                        className="bg-primary text-white border-primary/30 font-medium hover:bg-primary/90 hover:shadow-md shadow-sm backdrop-blur-md transition-all duration-300"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -196,11 +198,16 @@ export function ProductCard({ product }: ProductCardProps) {
                         disabled={isAddingToCart}
                       >
                         {isAddingToCart ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                          <div className="flex items-center justify-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Adding...</span>
+                          </div>
                         ) : (
-                          <ShoppingCart className="h-4 w-4 mr-1" />
+                          <div className="flex items-center justify-center gap-2">
+                            <ShoppingCart className="h-4 w-4" />
+                            <span>ADD TO CART</span>
+                          </div>
                         )}
-                        Add to Cart
                       </Button>
                     </motion.div>
                   </motion.div>
@@ -312,16 +319,25 @@ export function ProductCard({ product }: ProductCardProps) {
             
             {/* Add to cart button */}
             <div className="pt-2">
-              <LuxuryButton 
-                variant="outline"
+              <Button 
+                variant="default"
                 size="sm"
-                className="w-full"
+                className="w-full bg-primary hover:bg-primary/90 text-white font-medium uppercase tracking-wider border-2 border-primary/30 shadow-md transition-all duration-300"
                 onClick={handleAddToCart}
                 disabled={isAddingToCart}
-                iconRight={isAddingToCart ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
               >
-                Add to Cart
-              </LuxuryButton>
+                {isAddingToCart ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Adding...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2">
+                    <ShoppingCart className="h-4 w-4" />
+                    <span>ADD TO CART</span>
+                  </div>
+                )}
+              </Button>
             </div>
           </motion.div>
         </CardContent>
