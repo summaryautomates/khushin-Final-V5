@@ -234,7 +234,7 @@ export default function ProductPage() {
               </motion.div>
             ) : null}
             
-            <div className="grid gap-8 md:grid-cols-2">
+            <div className="grid gap-6 sm:gap-8 md:grid-cols-2">
               <div className="space-y-4">
                 {/* Featured product badge */}
                 <motion.div
@@ -409,14 +409,14 @@ export default function ProductPage() {
                   </div>
                   
                   {/* Price with original price crossed out for effect */}
-                  <div className="flex items-center gap-3">
-                    <p className="text-3xl font-medium tracking-wide text-primary">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <p className="text-2xl sm:text-3xl font-medium tracking-wide text-primary">
                       {formatPrice(product.price)}
                     </p>
-                    <p className="text-lg text-muted-foreground line-through">
+                    <p className="text-base sm:text-lg text-muted-foreground line-through">
                       {formatPrice(Math.floor(product.price * 1.2))}
                     </p>
-                    <Badge variant="secondary" className="bg-emerald-600 text-white ml-2">
+                    <Badge variant="secondary" className="bg-emerald-600 text-white ml-0 sm:ml-2">
                       20% OFF
                     </Badge>
                   </div>
@@ -451,17 +451,17 @@ export default function ProductPage() {
                 </div>
                 
                 {/* Delivery information */}
-                <div className="flex items-center gap-3 border-t pt-4">
-                  <Truck className="h-5 w-5 text-primary" />
+                <div className="flex items-start sm:items-center gap-3 border-t pt-4">
+                  <Truck className="h-5 w-5 text-primary flex-shrink-0 mt-1 sm:mt-0" />
                   <div>
-                    <p className="font-medium">Express Delivery</p>
-                    <p className="text-sm text-muted-foreground">Get it by <span className="text-primary font-medium">Tomorrow</span></p>
+                    <p className="font-medium text-sm sm:text-base">Express Delivery</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Get it by <span className="text-primary font-medium">Tomorrow</span></p>
                   </div>
                 </div>
 
                 {/* Product actions */}
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -469,7 +469,7 @@ export default function ProductPage() {
                             size="lg"
                             variant="default"
                             className="w-full tracking-wider border-2 transition-all duration-300 
-                                      hover:bg-primary/90 hover:shadow-lg font-semibold text-base"
+                                      hover:bg-primary/90 hover:shadow-lg font-semibold text-xs sm:text-base"
                             onClick={handleAddToCart}
                             disabled={isCheckingOut || isAddingToCart}
                           >
@@ -551,7 +551,7 @@ export default function ProductPage() {
                 {/* Product features */}
                 <div className="border-t border-b py-4 my-3">
                   <h3 className="text-lg font-medium mb-3">Key Benefits</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div className="flex items-start gap-2">
                       <Package className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                       <div>
@@ -584,16 +584,16 @@ export default function ProductPage() {
                 </div>
                 
                 {/* Gift options */}
-                <div className="flex items-center gap-3 pb-2">
-                  <Gift className="h-5 w-5 text-primary" />
+                <div className="flex items-start sm:items-center gap-3 pb-2">
+                  <Gift className="h-5 w-5 text-primary flex-shrink-0 mt-1 sm:mt-0" />
                   <div>
-                    <p className="font-medium">Gift Options Available</p>
-                    <p className="text-sm text-muted-foreground">Personalized message & luxury gift wrapping</p>
+                    <p className="font-medium text-sm sm:text-base">Gift Options Available</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Personalized message & luxury gift wrapping</p>
                   </div>
                 </div>
 
                 {/* Share buttons */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
                   <div className="flex items-center gap-2">
                     <p className="text-sm text-muted-foreground">Share this product:</p>
                     <ShareButtons
@@ -621,7 +621,7 @@ export default function ProductPage() {
               className="hidden md:block mt-10 border-t pt-8"
             >
               <h2 className="text-2xl font-light tracking-wide mb-6">Product Specifications</h2>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-2">
                   <h3 className="text-base font-medium flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>

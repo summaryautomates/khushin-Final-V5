@@ -252,7 +252,7 @@ export function ProductCard({ product }: ProductCardProps) {
               )}
               
               {/* Minimal action buttons */}
-              <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
+              <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-30 flex items-center gap-1 sm:gap-2">
                 {/* Favorite button with simple heart animation */}
                 <TooltipProvider>
                   <Tooltip>
@@ -401,7 +401,7 @@ export function ProductCard({ product }: ProductCardProps) {
                 <Button 
                   variant="default"
                   size="default"
-                  className="w-full bg-primary hover:bg-primary/90 text-black font-semibold tracking-wide border-0 shadow-md transition-all duration-200 py-5 rounded-lg overflow-hidden relative"
+                  className="w-full bg-primary hover:bg-primary/90 text-black font-semibold tracking-wide border-0 shadow-md transition-all duration-200 py-4 sm:py-5 text-sm sm:text-base rounded-lg overflow-hidden relative"
                   onClick={handleAddToCart}
                   disabled={isAddingToCart}
                 >

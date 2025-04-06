@@ -167,41 +167,9 @@ function AppRoutes() {
 
   return (
     <main className="flex-1">
-      {/* Mobile View Container */}
-      <div className="md:hidden w-full">
-        <div className="px-4 py-3">
-          <Switch>
-            <Route path="/" component={Home} />
-            <Route path="/products" component={Products} />
-            <Route path="/products/category/:category" component={Products} />
-            <Route path="/product/:id" component={Product} />
-            <Route path="/compare" component={Compare} />
-            <ProtectedRoute path="/cart" component={Cart} />
-            <ProtectedRoute path="/checkout/payment" component={CheckoutPayment} />
-            <ProtectedRoute path="/checkout/success" component={CheckoutSuccess} />
-            <Route path="/contact" component={Contact} />
-            <Route path="/customize" component={Customize} />
-            <Route path="/refueling" component={Refueling} />
-            <ProtectedRoute path="/orders" component={Orders} />
-            <ProtectedRoute path="/orders/:orderRef" component={OrderDetails} />
-            <Route path="/faqs" component={FAQs} />
-            <Route path="/warranty" component={Warranty} />
-            <Route path="/shipping" component={Shipping} />
-            <Route path="/returns" component={Returns} />
-            <Route path="/event-organizer" component={EventOrganizer} />
-            <Route path="/express-delivery" component={ExpressDelivery} />
-            <Route path="/loyalty" component={Loyalty} />
-            <Route path="/rewards" component={Rewards} />
-            <Route path="/referral" component={Referral} />
-            <Route path="/premium-collection" component={PremiumCollection} />
-            <Route component={NotFound} />
-          </Switch>
-        </div>
-      </div>
-
-      {/* Desktop View Container */}
-      <div className="hidden md:block w-full">
-        <div className="container mx-auto px-6 py-8 max-w-7xl">
+      {/* Responsive Container - Mobile First Approach */}
+      <div className="w-full">
+        <div className="px-4 py-3 sm:px-6 md:container md:mx-auto md:py-8 md:max-w-7xl">
           <Switch>
             <Route path="/" component={Home} />
             <Route path="/products" component={Products} />
