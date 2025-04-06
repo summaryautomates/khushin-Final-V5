@@ -205,7 +205,7 @@ const Refueling = () => {
               </Button>
             </div>
 
-            <div className="grid gap-8 grid-cols-1 md:grid-cols-3">
+            <div className="grid gap-8 grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto">
               {/* Refueling Steps */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
