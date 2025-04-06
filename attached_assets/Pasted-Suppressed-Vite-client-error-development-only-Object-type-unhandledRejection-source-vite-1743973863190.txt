@@ -1,0 +1,46 @@
+Suppressed Vite client error (development only): 
+Object {type: "unhandledRejection", source: "vite-hmr", timestamp: "2025-04-06T21:10:44.841Z"}
+Failed to fetch
+Suppressed Vite client error (development only): 
+Object {type: "unhandledRejection", source: "vite-hmr", timestamp: "2025-04-06T21:10:45.916Z"}
+WebSocket message received: 
+Object {type: "pong", timestamp: "2025-04-06T21:10:48.675Z"}
+Failed to fetch
+Suppressed Vite client error (development only): 
+Object {type: "unhandledRejection", source: "vite-hmr", timestamp: "2025-04-06T21:10:47.029Z"}
+Failed to fetch
+Suppressed Vite client error (development only): 
+Object {type: "unhandledRejection", source: "vite-hmr", timestamp: "2025-04-06T21:10:48.123Z"}
+Failed to fetch
+Suppressed Vite client error (development only): 
+Object {type: "unhandledRejection", source: "vite-hmr", timestamp: "2025-04-06T21:10:49.218Z"}
+Failed to fetch
+Suppressed Vite client error (development only): 
+Object {type: "unhandledRejection", source: "vite-hmr", timestamp: "2025-04-06T21:10:50.315Z"}
+Failed to fetch
+Suppressed Vite client error (development only): 
+Object {type: "unhandledRejection", source: "vite-hmr", timestamp: "2025-04-06T21:10:51.417Z"}
+Failed to fetch
+Suppressed Vite client error (development only): 
+Object {type: "unhandledRejection", source: "vite-hmr", timestamp: "2025-04-06T21:10:52.509Z"}
+Failed to fetch
+Suppressed Vite client error (development only): 
+Object {type: "unhandledRejection", source: "vite-hmr", timestamp: "2025-04-06T21:10:53.631Z"}
+Failed to fetch
+Suppressed Vite client error (development only): 
+Object {type: "unhandledRejection", source: "vite-hmr", timestamp: "2025-04-06T21:10:54.747Z"}
+Failed to fetch
+Suppressed Vite client error (development only): 
+Object {type: "unhandledRejection", source: "vite-hmr", timestamp: "2025-04-06T21:10:55.844Z"}
+Failed to fetch
+Suppressed Vite client error (development only): 
+Object {type: "unhandledRejection", source: "vite-hmr", timestamp: "2025-04-06T21:10:56.947Z"}
+Failed to fetch
+Suppressed Vite client error (development only): 
+Object {type: "unhandledRejection", source: "vite-hmr", timestamp: "2025-04-06T21:10:58.045Z"}
+Failed to fetch
+Suppressed Vite client error (development only): 
+Object {type: "unhandledRejection", source: "vite-hmr", timestamp: "2025-04-06T21:10:59.149Z"}
+Failed to fetch
+Suppressed Vite client error (development only): 
+Object {type: "unhandledRejection", source: "vite-hmr", timestamp: "2025-04-06T21:11:00.242Z"}
