@@ -157,6 +157,7 @@ export interface Order {
     pincode: string;
     phone: string;
   };
+  paymentMethod: string | null;
   trackingNumber: string | null;
   trackingStatus: string | null;
   estimatedDelivery: string | null;

@@ -153,9 +153,9 @@ function ReturnRequestDialog({ order }: { order: Order }) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="ml-auto">
-          <RotateCw className="mr-2 h-4 w-4" />
-          Request Return
+        <Button variant="outline" size="sm" className="w-full justify-start gap-2 border-white/20">
+          <RotateCw className="h-4 w-4" />
+          <span>Request Return</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
@@ -289,19 +289,26 @@ function ReturnRequests({ orderRef }: { orderRef: string }) {
   if (!returns?.length) return null;
 
   return (
-    <div className="mt-4 space-y-2">
-      <h4 className="font-semibold text-sm">Return Requests</h4>
+    <div className="space-y-2">
+      <h4 className="font-medium text-xs uppercase tracking-wide text-primary">Return Requests</h4>
       {returns.map((returnRequest) => (
         <div
           key={returnRequest.id}
-          className="text-sm p-2 border rounded-lg bg-muted/50"
+          className="text-sm p-3 rounded-lg bg-white/[0.02] border border-white/10"
         >
           <div className="flex justify-between items-start">
             <div>
-              <p className="font-medium">Status: {returnRequest.status}</p>
-              <p className="text-muted-foreground">{returnRequest.reason}</p>
+              <p className="font-medium flex items-center gap-2">
+                <Badge variant={
+                  returnRequest.status === 'approved' ? 'default' : 
+                  returnRequest.status === 'rejected' ? 'destructive' : 'secondary'
+                } className="text-xs px-2 py-0">
+                  {returnRequest.status}
+                </Badge>
+              </p>
+              <p className="text-white/70 mt-1 text-xs line-clamp-1">{returnRequest.reason}</p>
             </div>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-white/60">
               {new Date(returnRequest.createdAt).toLocaleDateString()}
             </span>
           </div>
@@ -316,16 +323,16 @@ export default function Orders() {
     queryKey: ['/api/orders'],
     retry: 3,
     refetchOnWindowFocus: false,
-    onError: (error) => {
-      console.error('Failed to fetch orders:', error);
-    }
   });
 
   if (isLoading) {
     return (
-      <div className="container py-20 min-h-screen bg-black/[0.96] backdrop-blur-sm">
+      <div className="container py-20 min-h-screen bg-gradient-to-b from-black/95 to-black/90 backdrop-blur-sm">
         <div className="flex justify-center items-center h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <p className="text-white/70 animate-pulse">Loading your orders...</p>
+          </div>
         </div>
       </div>
     );
@@ -333,7 +340,7 @@ export default function Orders() {
 
   if (error) {
     return (
-      <div className="container py-20 min-h-screen bg-black/[0.96] backdrop-blur-sm">
+      <div className="container py-20 min-h-screen bg-gradient-to-b from-black/95 to-black/90 backdrop-blur-sm">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -341,6 +348,9 @@ export default function Orders() {
         >
           <Card className="max-w-lg mx-auto border-none bg-white/[0.02] backdrop-blur-sm">
             <CardHeader className="space-y-1">
+              <div className="flex justify-center mb-4">
+                <XCircle className="h-16 w-16 text-red-500/80" />
+              </div>
               <CardTitle className="text-2xl font-light tracking-wide text-center">Error Loading Orders</CardTitle>
               <p className="text-muted-foreground font-light text-center">
                 There was an error loading your orders. Please try again later.
@@ -359,7 +369,7 @@ export default function Orders() {
 
   if (!orders || orders.length === 0) {
     return (
-      <div className="container py-20 min-h-screen bg-black/[0.96] backdrop-blur-sm">
+      <div className="container py-20 min-h-screen bg-gradient-to-b from-black/95 to-black/90 backdrop-blur-sm">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -367,15 +377,18 @@ export default function Orders() {
         >
           <Card className="max-w-lg mx-auto border-none bg-white/[0.02] backdrop-blur-sm">
             <CardHeader className="space-y-1">
+              <div className="flex justify-center mb-4">
+                <Package className="h-16 w-16 text-primary/80" />
+              </div>
               <CardTitle className="text-2xl font-light tracking-wide text-center">No Orders Found</CardTitle>
               <p className="text-muted-foreground font-light text-center">
-                You haven't placed any orders yet.
+                You haven't placed any orders yet. Start shopping to find your favorite premium products.
               </p>
             </CardHeader>
             <CardContent className="flex justify-center">
               <Link href="/products">
-                <Button variant="outline" className="border-white/20">
-                  Start Shopping
+                <Button variant="default" className="px-6">
+                  Explore Products
                 </Button>
               </Link>
             </CardContent>
@@ -386,14 +399,28 @@ export default function Orders() {
   }
 
   return (
-    <div className="container py-20 min-h-screen bg-black/[0.96] backdrop-blur-sm">
+    <div className="container py-20 min-h-screen bg-gradient-to-b from-black/95 to-black/90 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
+        className="max-w-6xl mx-auto"
       >
-        <h1 className="text-4xl font-light tracking-tight mb-8 text-white/90">Order History</h1>
-        <div className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-10">
+          <div>
+            <h1 className="text-4xl font-light tracking-tight text-white/90">Order History</h1>
+            <p className="text-white/60 mt-2">Track and manage your purchases</p>
+          </div>
+          <div className="mt-4 md:mt-0">
+            <Link href="/products">
+              <Button variant="outline" className="border-white/20">
+                Continue Shopping
+              </Button>
+            </Link>
+          </div>
+        </div>
+        
+        <div className="space-y-8">
           {orders.map((order, index) => (
             <motion.div
               key={order.orderRef}
@@ -401,86 +428,127 @@ export default function Orders() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
-              <Card className="border-none bg-white/[0.02] backdrop-blur-sm hover:bg-white/[0.04] transition-all duration-300">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-2xl font-light tracking-wide text-white/90">
-                      #{order.orderRef}
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground font-light">
-                      {new Date(order.createdAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <OrderStatusBadge status={order.status} />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div className="grid gap-6 md:grid-cols-2">
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-primary mb-3">
-                          <Package className="h-5 w-5" />
-                          <h3 className="font-light text-lg">Order Summary</h3>
-                        </div>
-                        <div className="space-y-2 divide-y divide-white/10">
-                          {order.items.map((item, index) => (
-                            <div key={index} className="flex justify-between items-center py-2 text-sm font-light">
-                              <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/5 flex items-center justify-center">
-                                  <Image
-                                    src={`/placeholders/product.svg`}
-                                    alt={item.name}
-                                    className="w-full h-full object-contain"
-                                    type="product"
-                                  />
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="text-white/90">{item.name}</span>
-                                  <span className="text-white/60">Qty: {item.quantity}</span>
-                                </div>
-                              </div>
-                              <span className="text-white/90 tabular-nums">
-                                {formatPrice(item.price * item.quantity)}
+              <Card className="border-none bg-white/[0.03] backdrop-blur-sm hover:bg-white/[0.05] transition-all duration-300 overflow-hidden">
+                <div className="relative">
+                  {/* Status indicator bar */}
+                  <div 
+                    className={`absolute top-0 left-0 right-0 h-1 ${
+                      order.status === 'completed' ? 'bg-green-500/80' : 
+                      order.status === 'pending' ? 'bg-amber-500/80' : 'bg-red-500/80'
+                    }`}
+                  />
+                  
+                  <CardHeader className="pt-6 flex flex-row items-center justify-between">
+                    <Link href={`/order-details/${order.orderRef}`} className="group">
+                      <div className="space-y-1">
+                        <CardTitle className="text-2xl font-light tracking-wide text-white/90 group-hover:text-primary transition-colors">
+                          Order #{order.orderRef}
+                        </CardTitle>
+                        <p className="text-sm text-white/60 font-light flex items-center gap-2">
+                          <span>Placed on</span> 
+                          <span className="text-white/80">
+                            {new Date(order.createdAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </span>
+                        </p>
+                      </div>
+                    </Link>
+                    <div className="flex items-center gap-3">
+                      <OrderStatusBadge status={order.status} />
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent>
+                    <div className="space-y-6">
+                      {/* Product preview */}
+                      <div className="flex flex-nowrap overflow-x-auto pb-4 gap-3 -mx-2 px-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                        {order.items.map((item, idx) => (
+                          <div 
+                            key={idx} 
+                            className="flex-none w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden bg-white/5 border border-white/10 relative group"
+                          >
+                            <Image
+                              src={`/placeholders/product.svg`}
+                              alt={item.name}
+                              className="w-full h-full object-contain p-2"
+                              type="product"
+                            />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <span className="text-xs text-white font-medium text-center px-1">
+                                {item.quantity > 1 ? `${item.quantity}x` : ''} {item.name.length > 10 ? `${item.name.substring(0, 10)}...` : item.name}
                               </span>
                             </div>
-                          ))}
-                          <div className="pt-4">
-                            <div className="flex justify-between font-light text-lg">
-                              <span>Total</span>
-                              <span className="text-primary tabular-nums">
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="grid gap-6 md:grid-cols-3">
+                        {/* Order Summary */}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 text-primary">
+                            <Package className="h-4 w-4" />
+                            <h3 className="font-medium text-sm uppercase tracking-wider">Summary</h3>
+                          </div>
+                          <div className="space-y-1 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-white/70">Items</span>
+                              <span className="text-white/90 font-medium">{order.items.length}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-white/70">Total Quantity</span>
+                              <span className="text-white/90 font-medium">
+                                {order.items.reduce((acc, item) => acc + item.quantity, 0)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between pt-2 border-t border-white/10">
+                              <span className="text-white/90 font-medium">Total</span>
+                              <span className="text-primary font-medium tabular-nums">
                                 {formatPrice(order.total)}
                               </span>
                             </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-primary mb-3">
-                          <MapPin className="h-5 w-5" />
-                          <h3 className="font-light text-lg">Delivery Address</h3>
+                        {/* Shipping Info */}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 text-primary">
+                            <MapPin className="h-4 w-4" />
+                            <h3 className="font-medium text-sm uppercase tracking-wider">Shipping</h3>
+                          </div>
+                          <div className="space-y-1 text-sm text-white/80">
+                            <p className="text-white/90 font-medium">{order.shipping.fullName}</p>
+                            <p className="line-clamp-1">{order.shipping.address}</p>
+                            <p>{order.shipping.city}, {order.shipping.state}</p>
+                            <p>{order.shipping.pincode}</p>
+                          </div>
                         </div>
-                        <div className="space-y-2 text-sm font-light text-white/80 bg-white/[0.02] p-4 rounded-lg border border-white/10">
-                          <p className="text-white/90 font-normal">{order.shipping.fullName}</p>
-                          <p>{order.shipping.address}</p>
-                          <p>
-                            {order.shipping.city}, {order.shipping.state} {order.shipping.pincode}
-                          </p>
-                          <p className="text-primary">{order.shipping.phone}</p>
+                        
+                        {/* Actions */}
+                        <div className="space-y-3">
+                          <h3 className="font-medium text-sm uppercase tracking-wider text-primary">Actions</h3>
+                          <div className="space-y-2">
+                            <Link href={`/order-details/${order.orderRef}`} className="w-full">
+                              <Button variant="outline" size="sm" className="w-full justify-start gap-2 border-white/20">
+                                <span>View Details</span>
+                              </Button>
+                            </Link>
+                            {order.status === 'completed' && (
+                              <ReturnRequestDialog order={order} />
+                            )}
+                          </div>
+                          
+                          {/* Existing return requests */}
+                          <div className="pt-2">
+                            <ReturnRequests orderRef={order.orderRef} />
+                          </div>
                         </div>
-                        {order.status === 'completed' && (
-                          <ReturnRequestDialog order={order} />
-                        )}
                       </div>
                     </div>
-                    <ReturnRequests orderRef={order.orderRef} />
-                  </div>
-                </CardContent>
+                  </CardContent>
+                </div>
               </Card>
             </motion.div>
           ))}

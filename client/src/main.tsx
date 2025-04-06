@@ -1,4 +1,5 @@
-import { createRoot } from "react-dom/client";
+import React from "react";
+import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
 // Import our error handler for Vite in development mode
@@ -24,4 +25,13 @@ window.addEventListener('unhandledrejection', (event) => {
   }
 });
 
-createRoot(document.getElementById("root")!).render(<App />);
+// Use the non-null assertion operator (!) to tell TypeScript that root won't be null
+const rootElement = document.getElementById("root");
+if (rootElement) {
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+}
