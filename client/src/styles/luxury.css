@@ -1,0 +1,143 @@
+/* Luxury Styles for KHUSHIN */
+
+/* Elegant scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, var(--primary), #e6b80d);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #f5d76e, var(--primary));
+}
+
+/* Luxury text selection */
+::selection {
+  background-color: var(--primary);
+  color: black;
+}
+
+/* Elegant focus outline */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Smooth page transitions */
+.page-transition-enter {
+  opacity: 0;
+  transform: translate3d(0, 15px, 0);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition: opacity 400ms ease-in-out, transform 400ms ease-in-out;
+}
+
+.page-transition-exit {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.page-transition-exit-active {
+  opacity: 0;
+  transform: translate3d(0, -15px, 0);
+  transition: opacity 250ms ease-in-out, transform 250ms ease-in-out;
+}
+
+/* Luxury typography adjustments */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+h1 {
+  letter-spacing: 2px;
+}
+
+.title-elegant {
+  position: relative;
+  display: inline-block;
+  font-weight: 200;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.title-elegant::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -8px;
+  width: 40px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--primary), transparent);
+}
+
+/* Luxury card effects */
+.card-luxury {
+  background: linear-gradient(145deg, rgba(30, 30, 30, 0.6), rgba(10, 10, 10, 0.8));
+  border: 1px solid rgba(255, 215, 0, 0.1);
+  backdrop-filter: blur(10px);
+  transition: all 0.4s ease;
+}
+
+.card-luxury:hover {
+  border-color: rgba(255, 215, 0, 0.2);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3),
+              0 0 15px -4px rgba(255, 215, 0, 0.15);
+  transform: translateY(-3px);
+}
+
+/* Gold accent line */
+.gold-accent {
+  position: relative;
+}
+
+.gold-accent::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -20px;
+  width: 15px;
+  height: 1px;
+  background: var(--primary);
+}
+
+/* Premium background effect */
+.bg-premium {
+  background-image: 
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.9)),
+    url('/images/dark-texture.svg');
+  background-blend-mode: overlay;
+}
+
+/* Subtle image hover effect */
+.hover-zoom {
+  overflow: hidden;
+}
+
+.hover-zoom img {
+  transition: transform 0.7s ease;
+}
+
+.hover-zoom:hover img {
+  transform: scale(1.07);
+}
+
+/* Gold gradient text */
+.text-gold-gradient {
+  background: linear-gradient(to right, #f5d76e, #f1c40f, #e6b80d);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+}

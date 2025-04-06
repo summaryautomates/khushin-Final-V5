@@ -1,117 +1,161 @@
+/* Luxury Button Styles */
+
 .luxury-button {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 180px;
-  padding: 14px 24px;
-  border: 1px solid rgba(255, 215, 0, 0.8);
-  border-radius: 4px;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: #ffd700;
-  font-weight: 600;
-  cursor: pointer;
   overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-/* Variants */
-.luxury-button-default {
-  background-color: rgba(0, 0, 0, 0.7);
-  color: #ffd700;
-  border-color: rgba(255, 215, 0, 0.8);
-}
-
-.luxury-button-outline {
+  padding: 0.5rem 1.25rem;
+  border-radius: 0;
+  font-weight: 300;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: white;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  border: 1px solid rgba(255, 215, 0, 0.1);
   background-color: transparent;
-  color: #ffd700;
-  border-color: #ffd700;
-}
-
-.luxury-button-destructive {
-  background-color: rgba(220, 38, 38, 0.9);
-  color: white;
-  border-color: rgba(220, 38, 38, 0.8);
-}
-
-.luxury-button-secondary {
-  background-color: rgba(55, 65, 81, 0.9);
-  color: white;
-  border-color: rgba(75, 85, 99, 0.8);
-}
-
-/* Sizes */
-.luxury-button-sm {
-  min-width: 120px;
-  padding: 8px 16px;
-  font-size: 14px;
-}
-
-.luxury-button-default {
-  min-width: 180px;
-  padding: 14px 24px;
-  font-size: 16px;
-}
-
-.luxury-button-lg {
-  min-width: 220px;
-  padding: 16px 32px;
-  font-size: 18px;
-}
-
-.luxury-button-icon {
-  min-width: auto;
-  width: 40px;
-  height: 40px;
-  padding: 8px;
-}
-
-.luxury-button:hover {
-  background-color: rgba(20, 20, 20, 0.9);
-  border-color: #ffd700;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(255, 215, 0, 0.2);
-}
-
-.luxury-button:active {
-  transform: translateY(1px);
+  z-index: 1;
 }
 
 .luxury-button-background {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(30, 30, 30, 0.8);
-  background-image: var(--background-image);
-  background-size: cover;
-  background-position: center;
-  opacity: 0.4;
-  z-index: 0;
-  transition: opacity 0.3s ease;
-}
-
-.luxury-button:hover .luxury-button-background {
-  opacity: 0.6;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  background: linear-gradient(135deg, rgba(20, 20, 20, 0.8), rgba(0, 0, 0, 0.95));
 }
 
 .luxury-button-text {
   position: relative;
-  z-index: 1;
-  font-size: inherit;
-  letter-spacing: 0.5px;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  z-index: 2;
+}
+
+/* Size variants */
+.luxury-button-default {
+  height: 40px;
+  min-width: 120px;
+  font-size: 14px;
+}
+
+.luxury-button-sm {
+  height: 32px;
+  min-width: 80px;
+  padding: 0.25rem 0.75rem;
+  font-size: 12px;
+}
+
+.luxury-button-lg {
+  height: 48px;
+  min-width: 160px;
+  padding: 0.75rem 1.5rem;
+  font-size: 16px;
+}
+
+.luxury-button-icon {
+  height: 40px;
+  width: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Variant styles */
+.luxury-button-default {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.luxury-button-outline {
+  background-color: transparent;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.luxury-button-outline:hover {
+  border-color: var(--primary);
+}
+
+.luxury-button-destructive {
+  background-color: rgba(220, 38, 38, 0.1);
+  border-color: rgba(220, 38, 38, 0.4);
+  color: rgba(239, 68, 68, 0.9);
+}
+
+.luxury-button-secondary {
+  background-color: rgba(64, 64, 64, 0.2);
+}
+
+/* Gold gradient border */
+.luxury-button-border {
+  border-radius: 0;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.luxury-button:hover .luxury-button-border {
+  opacity: 0.5;
+}
+
+/* Glint effect */
+.glint-effect {
+  position: absolute;
+  width: 40%;
+  height: 100%;
+  transform: skewX(-20deg) translateX(-150%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.active-glint .glint-effect {
+  animation: glintAnimation 1.5s infinite ease-in-out;
+  opacity: 1;
+}
+
+@keyframes glintAnimation {
+  0% {
+    transform: skewX(-20deg) translateX(-150%);
+  }
+  100% {
+    transform: skewX(-20deg) translateX(250%);
+  }
 }
 
 /* Disabled state */
 .luxury-button:disabled {
-  opacity: 0.5;
   cursor: not-allowed;
-  transform: none;
+  opacity: 0.5;
+  background-color: rgba(20, 20, 20, 0.5);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .luxury-button:disabled:hover {
-  transform: none;
-  box-shadow: none;
+  transform: none !important;
+}
+
+/* The gold shine below the button on hover */
+.luxury-button::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 80%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  opacity: 0;
+  transition: all 0.5s ease;
+}
+
+.luxury-button:hover::after {
+  transform: translateX(-50%) scaleX(1);
+  opacity: 1;
 }

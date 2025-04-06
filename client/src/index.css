@@ -2,10 +2,66 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import luxury styles */
+@import url('./styles/luxury.css');
+
 html {
   scroll-behavior: smooth;
 }
 
+body {
+  @apply antialiased bg-black text-white;
+  background-image: 
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.94), rgba(0, 0, 0, 0.97)),
+    url('/images/dark-texture.svg');
+  background-attachment: fixed;
+}
+
+#root {
+  @apply min-h-screen;
+}
+
+main {
+  padding-top: 5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased;
+  }
+  
+  /* Luxury typography defaults */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-light tracking-wide;
+  }
+  
+  h1 {
+    @apply tracking-wider text-3xl md:text-4xl lg:text-5xl;
+  }
+  
+  h2 {
+    @apply tracking-wide text-2xl md:text-3xl;
+  }
+  
+  p {
+    @apply font-light tracking-wide leading-relaxed;
+  }
+  
+  a {
+    @apply transition-colors duration-300;
+  }
+  
+  /* Improve form elements */
+  input, textarea, select {
+    @apply bg-zinc-900 border-zinc-700 rounded-none focus:border-primary focus:ring-primary/20;
+  }
+}
+
+/* Animations */
 .fade-in {
   animation: fadeIn 0.5s ease-in;
 }
@@ -28,28 +84,6 @@ html {
 
 .hover-lift:hover {
   transform: translateY(-5px);
-}
-
-body {
-  @apply antialiased;
-}
-
-#root {
-  @apply min-h-screen;
-}
-
-main {
-  padding-top: 5rem;
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply font-sans antialiased bg-background text-foreground;
-  }
 }
 
 /* Custom utility classes */
@@ -83,4 +117,33 @@ main {
 
 .hover-scale-image:hover {
   transform: scale(1.05);
+}
+
+/* Luxury container with subtle border */
+.container-luxury {
+  @apply container mx-auto px-4 sm:px-6 relative;
+  border: 1px solid rgba(255, 215, 0, 0.05);
+  background: linear-gradient(to bottom, rgba(20, 20, 20, 0.5), rgba(10, 10, 10, 0.5));
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* Elegant section divider */
+.divider-elegant {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(to right, transparent, rgba(255, 215, 0, 0.3), transparent);
+  margin: 2rem 0;
+}
+
+/* Luxury Button Styles (Global) */
+button {
+  @apply font-light tracking-wider; 
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+/* Premium section backgrounds */
+.bg-luxury-gradient {
+  background: linear-gradient(135deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%);
+  border: 1px solid rgba(255, 215, 0, 0.05);
 }
