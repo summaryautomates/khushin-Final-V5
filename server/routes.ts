@@ -261,15 +261,41 @@ export async function registerRoutes(app: Express) {
       
       const { productId, quantity, isGift, giftMessage } = validationResult.data;
       
-      await storage.addToCart(
-        req.user.id.toString(),
-        productId,
-        quantity,
-        isGift,
-        giftMessage
-      );
+      // Check if item exists in cart - if it does, update quantity instead of adding
+      const cartItems = await storage.getCartItems(req.user.id.toString());
+      const existingItem = cartItems.find(item => item.product.id === productId);
       
-      res.status(200).json({ message: "Item added to cart" });
+      if (existingItem) {
+        // Use updateCartItemQuantity for existing items
+        await storage.updateCartItemQuantity(
+          req.user.id.toString(),
+          productId,
+          quantity
+        );
+        
+        // If gift status is provided, update that too
+        if (isGift !== undefined) {
+          await storage.updateCartItemGiftStatus(
+            req.user.id.toString(),
+            productId,
+            isGift,
+            giftMessage
+          );
+        }
+        
+        res.status(200).json({ message: "Cart item updated" });
+      } else {
+        // Add new item to cart
+        await storage.addToCart(
+          req.user.id.toString(),
+          productId,
+          quantity,
+          isGift,
+          giftMessage
+        );
+        
+        res.status(200).json({ message: "Item added to cart" });
+      }
     } catch (error) {
       console.error('Error adding item to cart:', error);
       res.status(500).json({ message: "Failed to add item to cart" });

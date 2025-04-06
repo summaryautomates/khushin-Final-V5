@@ -341,17 +341,17 @@ export class ReplitDBStorage implements IStorage {
         ));
       
       if (existingItem) {
-        // Update the quantity if the item already exists
+        // Update the existing cart item - replace quantity instead of adding
         await db.update(cartItems)
           .set({
-            quantity: existingItem.quantity + quantity,
+            quantity, // Just use the provided quantity directly
             isGift,
             giftMessage: giftMessage || null,
             updatedAt: new Date()
           })
           .where(eq(cartItems.id, existingItem.id));
         
-        console.log('Updated cart item quantity');
+        console.log('Updated cart item information');
       } else {
         // Insert a new cart item
         await db.insert(cartItems).values({
