@@ -10,7 +10,9 @@ const API_KEY = 'AIzaSyA08rjxgp24C7emSPxqVTFjXKGsU1clEQM';
 // Initialize the Gemini API client
 const initializeGeminiClient = (): GoogleGenerativeAI | null => {
   try {
-    return new GoogleGenerativeAI(API_KEY);
+    // Create the client with the API key
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    return genAI;
   } catch (error) {
     console.error('Error initializing Gemini client:', error);
     return null;
@@ -27,8 +29,8 @@ export const getAIResponse = async (userMessage: string): Promise<string> => {
   }
   
   try {
-    // For text-only input, use the gemini-pro model
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    // Use the gemini-1.5-flash model based on the available models from the API
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
     const prompt = `You are a helpful shopping assistant for KHUSH.IN, a premium e-commerce store
 specializing in high-quality lighters and accessories. 
