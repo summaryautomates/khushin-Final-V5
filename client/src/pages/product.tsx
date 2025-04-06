@@ -5,7 +5,8 @@ import { formatPrice } from "@/lib/products";
 import {
   Truck, Shield, RefreshCcw, Loader2, Award, Crown,
   Star, ThumbsUp, Package, Medal, Heart, Calendar, Gift, 
-  Check, Info, Sparkles, ArrowLeft, BarChart2, Diamond
+  Check, Info, Sparkles, ArrowLeft, BarChart2, Diamond,
+  ShoppingCart
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@shared/schema";
@@ -466,20 +467,21 @@ export default function ProductPage() {
                         <TooltipTrigger asChild>
                           <Button
                             size="lg"
-                            variant="outline"
-                            className="w-full tracking-wider border-2 transition-all duration-300 hover:bg-primary/5"
+                            variant="default"
+                            className="w-full tracking-wider border-2 transition-all duration-300 
+                                      hover:bg-primary/90 hover:shadow-lg font-semibold text-base"
                             onClick={handleAddToCart}
                             disabled={isCheckingOut || isAddingToCart}
                           >
                             {isAddingToCart ? (
                               <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                                 Adding...
                               </>
                             ) : (
                               <>
-                                <Heart className="h-4 w-4 mr-2" />
-                                Add to Cart
+                                <ShoppingCart className="h-5 w-5 mr-2" />
+                                ADD TO CART
                               </>
                             )}
                           </Button>

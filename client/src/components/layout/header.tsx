@@ -214,8 +214,9 @@ export function Header() {
                   >
                     <ShoppingCart className="h-4 w-4 text-white group-hover:scale-110 transition-transform duration-300" />
                     <span className="sr-only">Shopping Cart</span>
+                    {/* Make the cart indicator more visible */}
                     {!cart.isLoading && cartItemCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground w-4 h-4 rounded-full text-xs flex items-center justify-center animate-in slide-in-from-top-2 duration-300">
+                      <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground w-5 h-5 rounded-full text-xs flex items-center justify-center animate-in slide-in-from-top-2 duration-300 font-medium border border-white/20">
                         {cartItemCount}
                       </span>
                     )}
