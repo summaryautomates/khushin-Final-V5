@@ -431,19 +431,10 @@ export async function registerRoutes(app: Express) {
       }
 
       try {
-        const query = validationResult.data.message.toLowerCase();
-        let response;
-
-        if (query.includes('product') || query.includes('lighter')) {
-          response = mockResponses.product(query);
-        } else if (query.includes('price') || query.includes('cost')) {
-          response = mockResponses.pricing(query);
-        } else if (query.includes('shipping') || query.includes('delivery')) {
-          response = mockResponses.shipping();
-        } else {
-          response = mockResponses.default(query);
-        }
-
+        // Import dynamically to avoid circular dependencies
+        const { getAIResponse } = await import('./services/ai');
+        const response = await getAIResponse(validationResult.data.message);
+        
         return res.json({ message: response });
       } catch (apiError) {
         console.error('AI chat error:', apiError);
