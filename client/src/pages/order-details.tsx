@@ -85,7 +85,15 @@ export default function OrderDetails() {
     }
   };
 
-  const orderStatus: StatusType = statusOptions[order.status as keyof typeof statusOptions] || statusOptions.pending;
+  // Make sure we have a valid status or default to pending
+  const normalizedStatus = order.status && 
+    (order.status.toLowerCase() === 'completed' || 
+     order.status.toLowerCase() === 'failed' || 
+     order.status.toLowerCase() === 'pending') 
+    ? order.status.toLowerCase() 
+    : 'pending';
+  
+  const orderStatus: StatusType = statusOptions[normalizedStatus as keyof typeof statusOptions];
 
   return (
     <div className="container py-12 min-h-screen bg-gradient-to-b from-black/95 to-black/90 backdrop-blur-sm">
