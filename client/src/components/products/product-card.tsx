@@ -122,74 +122,129 @@ export function ProductCard({ product }: ProductCardProps) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="w-full"
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="w-full h-full"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      whileHover={{ y: -5 }}
     >
-      <Card className="border border-zinc-800/50 overflow-hidden group rounded-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-500 bg-gradient-to-b from-zinc-900 to-black">
-        <CardContent className="p-0">
-          <Link href={`/product/${product.id}`}>
+      <Card className="border border-zinc-800/50 overflow-hidden group rounded-xl hover:shadow-2xl hover:shadow-primary/20 transition-all duration-500 bg-gradient-to-b from-zinc-900 to-black h-full transform hover:scale-[1.02]">
+        <CardContent className="p-0 h-full flex flex-col">
+          <Link href={`/product/${product.id}`} className="block relative overflow-hidden group">
             <div className="relative">
-              {/* Premium badge for luxury products */}
-              {product.collection === 'luxury' && (
-                <Badge className="absolute top-4 right-4 z-10 bg-primary/90 backdrop-blur-sm text-black font-medium px-3 py-1 uppercase tracking-wider text-xs shadow-md">
-                  <Crown className="h-3.5 w-3.5 mr-1.5" /> Premium
-                </Badge>
-              )}
+              {/* Premium badge for luxury products with animation */}
+              <AnimatePresence>
+                {product.collection === 'luxury' && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    className="absolute top-4 right-4 z-10"
+                  >
+                    <Badge className="bg-gradient-to-r from-primary/90 to-primary backdrop-blur-sm text-black font-medium px-3 py-1.5 uppercase tracking-wider text-xs shadow-lg flex items-center gap-1.5 border-none">
+                      <Crown className="h-3.5 w-3.5" />
+                      <span className="tracking-widest">Premium</span>
+                    </Badge>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               
               {hasMultipleImages ? (
                 <ProductImageGallery 
                   images={product.images} 
                   alt={product.name}
                   showThumbnails={false}
-                  className="aspect-square w-full max-h-[300px]" 
+                  className="aspect-square w-full max-h-[320px]" 
                 />
               ) : (
-                <div className="relative aspect-square overflow-hidden bg-gradient-to-b from-zinc-900/80 to-black w-full max-h-[300px]">
-                  {/* Background pattern */}
-                  <div className="absolute inset-0 bg-[url('/images/dark-texture.svg')] opacity-20" />
+                <div className="relative aspect-square overflow-hidden bg-gradient-to-b from-zinc-900/80 to-black w-full max-h-[320px] group-hover:from-zinc-800/80 transition-all duration-500">
+                  {/* Background pattern with subtle animation */}
+                  <motion.div 
+                    className="absolute inset-0 bg-[url('/images/dark-texture.svg')] opacity-20"
+                    animate={{ 
+                      opacity: isHovered ? 0.3 : 0.2,
+                      scale: isHovered ? 1.05 : 1 
+                    }}
+                    transition={{ duration: 0.7 }}
+                  />
                   
-                  {/* Product Image */}
+                  {/* Subtle glow effect on hover */}
+                  <motion.div 
+                    className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0"
+                    animate={{ 
+                      opacity: isHovered ? 0.6 : 0 
+                    }}
+                    transition={{ duration: 0.5 }}
+                  />
+                  
+                  {/* Product Image with enhanced animation */}
                   <motion.div
                     className="relative z-10 h-full w-full p-4"
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    initial={{ scale: 1 }}
+                    animate={{ 
+                      scale: isHovered ? 1.08 : 1,
+                      y: isHovered ? -5 : 0
+                    }}
+                    transition={{ 
+                      duration: 0.6, 
+                      ease: "easeOut",
+                      type: "spring",
+                      stiffness: 100
+                    }}
                   >
                     <AdaptiveImage
                       src={product.images?.[0] || ""}
                       alt={product.name}
-                      className="w-full h-full object-contain object-center transition-transform duration-500"
+                      className="w-full h-full object-contain object-center transition-all duration-700 filter drop-shadow-lg"
                       containerClassName="h-full w-full"
                     />
                   </motion.div>
                   
-                  {/* Overlay on hover */}
+                  {/* Enhanced overlay on hover with better animation */}
                   <motion.div 
-                    className="absolute inset-0 bg-black/70 backdrop-blur-sm opacity-0 transition-opacity duration-500 flex items-center justify-center z-20"
-                    animate={{ opacity: isHovered ? 0.7 : 0 }}
+                    className="absolute inset-0 bg-gradient-to-b from-black/70 to-black/90 backdrop-blur-sm opacity-0 transition-all duration-500 flex items-center justify-center z-20"
+                    animate={{ 
+                      opacity: isHovered ? 0.85 : 0 
+                    }}
+                    transition={{ duration: 0.4 }}
                   >
                     <motion.div 
-                      className="flex gap-3"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 10 }}
-                      transition={{ duration: 0.3, delay: 0.1 }}
+                      className="flex flex-col gap-4 px-4 w-full max-w-xs"
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ 
+                        opacity: isHovered ? 1 : 0, 
+                        y: isHovered ? 0 : 15 
+                      }}
+                      transition={{ 
+                        duration: 0.4, 
+                        delay: 0.1,
+                        type: "spring",
+                        stiffness: 100
+                      }}
                     >
+                      {/* Quick View Button */}
                       <Button
                         size="sm"
                         variant="secondary"
-                        className="border border-white/30 text-white hover:bg-white/10 backdrop-blur-md transition-all duration-300 px-4 shadow-lg"
+                        className="w-full border border-white/30 text-white hover:bg-white/20 backdrop-blur-md transition-all duration-300 py-5 shadow-lg rounded-lg group overflow-hidden relative"
                       >
-                        <div className="flex items-center justify-center gap-2">
+                        <motion.div 
+                          className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          animate={{ 
+                            opacity: isHovered ? 0.1 : 0 
+                          }}
+                        />
+                        <div className="flex items-center justify-center gap-2 relative z-10">
                           <Eye className="h-4 w-4" />
-                          <span>QUICK VIEW</span>
+                          <span className="font-medium tracking-wider">QUICK VIEW</span>
                         </div>
                       </Button>
                       
+                      {/* Add to Cart Button with enhanced animation */}
                       <Button
                         size="sm"
                         variant="default"
-                        className="bg-primary/90 text-black dark:text-black font-bold hover:bg-primary/100 hover:shadow-lg shadow-md shadow-primary/30 backdrop-blur-md transition-all duration-300 transform hover:scale-105 px-4 py-2 text-xs"
+                        className="w-full bg-primary hover:bg-primary/90 text-black dark:text-black font-bold hover:shadow-lg shadow-md shadow-primary/30 backdrop-blur-md transition-all duration-300 transform hover:scale-105 py-5 rounded-lg relative overflow-hidden"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -197,15 +252,29 @@ export function ProductCard({ product }: ProductCardProps) {
                         }}
                         disabled={isAddingToCart}
                       >
+                        {/* Animated background effect */}
+                        <motion.div 
+                          className="absolute inset-0 bg-gradient-to-r from-primary/60 via-primary to-primary/60 opacity-0"
+                          animate={{ 
+                            x: isHovered ? ["0%", "100%"] : "0%",
+                            opacity: isHovered ? 0.6 : 0
+                          }}
+                          transition={{ 
+                            duration: 1.5, 
+                            repeat: Infinity,
+                            repeatType: "reverse" 
+                          }}
+                        />
+                        
                         {isAddingToCart ? (
-                          <div className="flex items-center justify-center gap-1.5">
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            <span className="font-bold">ADDING...</span>
+                          <div className="flex items-center justify-center gap-2 relative z-10">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="font-bold tracking-wider">ADDING...</span>
                           </div>
                         ) : (
-                          <div className="flex items-center justify-center gap-1.5">
-                            <ShoppingCart className="h-3.5 w-3.5" strokeWidth={2.5} />
-                            <span className="font-bold">ADD TO CART</span>
+                          <div className="flex items-center justify-center gap-2 relative z-10">
+                            <ShoppingCart className="h-4 w-4" strokeWidth={2.5} />
+                            <span className="font-bold tracking-wider">ADD TO CART</span>
                           </div>
                         )}
                       </Button>
@@ -214,64 +283,84 @@ export function ProductCard({ product }: ProductCardProps) {
                 </div>
               )}
               
-              {/* Action buttons */}
-              <div className="absolute top-4 left-4 z-30 flex flex-col gap-2.5">
+              {/* Action buttons with enhanced animations */}
+              <div className="absolute top-5 left-5 z-30 flex flex-col gap-3">
                 {/* Compare button */}
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant={isInCompare(product.id) ? "default" : "secondary"}
-                        className={cn(
-                          "w-9 h-9 rounded-full shadow-lg backdrop-blur-md",
-                          isInCompare(product.id) 
-                            ? "bg-primary/90 text-primary-foreground" 
-                            : "bg-black/60 hover:bg-black/80 border border-white/20"
-                        )}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleCompareToggle();
-                        }}
-                        disabled={isAddingToCompare}
+                      <motion.div
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
                       >
-                        {isAddingToCompare ? (
-                          <Loader2 className="h-4.5 w-4.5 animate-spin" />
-                        ) : (
-                          <BarChart2 className="h-4.5 w-4.5" />
-                        )}
-                      </Button>
+                        <Button
+                          size="icon"
+                          variant={isInCompare(product.id) ? "default" : "secondary"}
+                          className={cn(
+                            "w-10 h-10 rounded-full shadow-xl backdrop-blur-md border-2 transition-all duration-300",
+                            isInCompare(product.id) 
+                              ? "bg-primary/90 text-primary-foreground border-primary/50" 
+                              : "bg-black/70 hover:bg-black/90 border-white/20 hover:border-white/40"
+                          )}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleCompareToggle();
+                          }}
+                          disabled={isAddingToCompare}
+                        >
+                          {isAddingToCompare ? (
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                          ) : (
+                            <BarChart2 className="h-5 w-5" />
+                          )}
+                        </Button>
+                      </motion.div>
                     </TooltipTrigger>
-                    <TooltipContent side="right">
+                    <TooltipContent side="right" className="bg-black/90 text-white border-zinc-700 shadow-xl">
                       <p>{isInCompare(product.id) ? "Remove from comparison" : "Add to comparison"}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                 
-                {/* Favorite button */}
+                {/* Favorite button with heart animation */}
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="secondary"
-                        className={cn(
-                          "w-9 h-9 rounded-full shadow-lg backdrop-blur-md",
-                          isFavorite 
-                            ? "bg-red-500/90 text-white" 
-                            : "bg-black/60 hover:bg-black/80 border border-white/20"
-                        )}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setIsFavorite(!isFavorite);
-                        }}
+                      <motion.div
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
                       >
-                        <Heart className={cn("h-4.5 w-4.5", isFavorite && "fill-current")} />
-                      </Button>
+                        <Button
+                          size="icon"
+                          variant="secondary"
+                          className={cn(
+                            "w-10 h-10 rounded-full shadow-xl backdrop-blur-md border-2 transition-all duration-300",
+                            isFavorite 
+                              ? "bg-red-500/90 text-white border-red-400/50" 
+                              : "bg-black/70 hover:bg-black/90 border-white/20 hover:border-white/40"
+                          )}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setIsFavorite(!isFavorite);
+                          }}
+                        >
+                          <motion.div
+                            animate={isFavorite ? 
+                              { scale: [1, 1.2, 1] } : 
+                              { scale: 1 }
+                            }
+                            transition={{ duration: 0.3 }}
+                          >
+                            <Heart className={cn("h-5 w-5", isFavorite && "fill-current")} />
+                          </motion.div>
+                        </Button>
+                      </motion.div>
                     </TooltipTrigger>
-                    <TooltipContent side="right">
+                    <TooltipContent side="right" className="bg-black/90 text-white border-zinc-700 shadow-xl">
                       <p>{isFavorite ? "Remove from wishlist" : "Add to wishlist"}</p>
                     </TooltipContent>
                   </Tooltip>
@@ -280,61 +369,107 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
           </Link>
 
+          {/* Product info section with enhanced styling */}
           <motion.div 
-            className="p-7 space-y-4 relative bg-gradient-to-b from-zinc-900/70 to-black rounded-b-lg"
+            className="p-7 pt-6 space-y-4 relative bg-gradient-to-b from-zinc-900/70 to-black rounded-b-xl flex-grow flex flex-col"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
           >
-            {/* Rating stars */}
-            <div className="flex justify-center gap-1.5">
+            {/* Rating stars with hover animation */}
+            <motion.div 
+              className="flex justify-center gap-1.5"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.3 }}
+            >
               {[1, 2, 3, 4, 5].map((_, index) => (
-                <Star key={index} className="h-4 w-4 text-primary fill-primary" />
+                <motion.div 
+                  key={index}
+                  initial={{ opacity: 0.8, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3, delay: index * 0.06 }}
+                >
+                  <Star className="h-4 w-4 text-primary fill-primary drop-shadow-md" />
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
 
-            {/* Product name with hover effect */}
-            <Link href={`/product/${product.id}`}>
-              <h3 className="font-medium text-base tracking-wide text-white text-center line-clamp-2 min-h-[3rem] transition-colors duration-300 hover:text-primary/90">
-                {product.name.toUpperCase()}
-              </h3>
-            </Link>
-            
-            {/* Product description */}
-            <p className="text-sm leading-relaxed text-zinc-300 tracking-wide text-center line-clamp-2 min-h-[2.5rem]">
-              {product.description}
-            </p>
-            
-            {/* Price display */}
-            <div className="flex flex-col items-center gap-1.5 mt-1">
-              <span className="text-xs text-zinc-400 uppercase tracking-wider font-medium">Price</span>
-              <motion.div
-                className="font-semibold text-xl text-primary tracking-wider"
-                whileHover={{ scale: 1.05 }}
+            {/* Product name with enhanced hover effect */}
+            <Link href={`/product/${product.id}`} className="block group">
+              <motion.h3 
+                className="font-medium text-base md:text-lg tracking-wide text-white text-center line-clamp-2 min-h-[3rem] transition-colors duration-300 group-hover:text-primary/90 relative overflow-hidden"
+                whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.3 }}
               >
-                {formatPrice(product.price)}
+                <span className="relative inline-block">
+                  {product.name.toUpperCase()}
+                  <motion.span 
+                    className="absolute bottom-0 left-0 w-full h-0.5 bg-primary/70 rounded-full transform scale-x-0 origin-left"
+                    animate={{ scaleX: isHovered ? 1 : 0 }}
+                    transition={{ duration: 0.4, delay: 0.1 }}
+                  />
+                </span>
+              </motion.h3>
+            </Link>
+            
+            {/* Product description with improved readability */}
+            <motion.p 
+              className="text-sm leading-relaxed text-zinc-300 tracking-wide text-center line-clamp-2 min-h-[2.5rem] opacity-80 hover:opacity-100 transition-opacity duration-300"
+              whileHover={{ scale: 1.01 }}
+              transition={{ duration: 0.3 }}
+            >
+              {product.description}
+            </motion.p>
+            
+            {/* Price display with enhanced animation */}
+            <div className="flex flex-col items-center gap-1.5 mt-1">
+              <span className="text-xs text-zinc-400 uppercase tracking-wide font-medium">Price</span>
+              <motion.div
+                className="relative"
+                whileHover={{ scale: 1.08 }}
+                transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+              >
+                {/* Glow effect behind price */}
+                <div className="absolute inset-0 bg-primary/20 blur-md rounded-full transform scale-110" />
+                
+                <div className="relative font-semibold text-xl md:text-2xl text-primary tracking-wider font-serif bg-clip-text bg-gradient-to-r from-primary to-primary-light">
+                  {formatPrice(product.price)}
+                </div>
               </motion.div>
             </div>
             
-            {/* Add to cart button - Enhanced for better visibility and fixed overflow */}
-            <div className="pt-5">
+            {/* Add to cart button - Enhanced with animations and better styling */}
+            <div className="pt-5 mt-auto">
               <Button 
                 variant="default"
                 size="lg"
-                className="w-full bg-primary/90 hover:bg-primary text-black dark:text-black font-bold uppercase tracking-wider border-0 shadow-lg hover:shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 py-6 text-sm transform hover:scale-102"
+                className="w-full bg-gradient-to-r from-primary/90 via-primary to-primary/90 hover:from-primary hover:to-primary text-black dark:text-black font-bold uppercase tracking-wider border-0 shadow-lg hover:shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 py-6 text-sm rounded-lg overflow-hidden relative"
                 onClick={handleAddToCart}
                 disabled={isAddingToCart}
               >
+                {/* Animated background shine effect */}
+                <motion.div 
+                  className="absolute inset-0 bg-white/20 skew-x-12 opacity-0"
+                  animate={isHovered ? {
+                    x: ["100%", "-100%"],
+                    opacity: [0, 0.3, 0]
+                  } : {}}
+                  transition={{ 
+                    duration: 1.5,
+                    repeat: isHovered ? Infinity : 0,
+                    repeatDelay: 0.5
+                  }}
+                />
+                
                 {isAddingToCart ? (
-                  <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center justify-center gap-2 relative z-10">
                     <Loader2 className="h-5 w-5 animate-spin" />
-                    <span className="font-bold">ADDING TO CART...</span>
+                    <span className="font-bold tracking-wider">ADDING TO CART...</span>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center justify-center gap-2 relative z-10">
                     <ShoppingCart className="h-5 w-5" strokeWidth={2.5} />
-                    <span className="font-bold">ADD TO CART</span>
+                    <span className="font-bold tracking-wider">ADD TO CART</span>
                   </div>
                 )}
               </Button>
