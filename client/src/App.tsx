@@ -80,18 +80,29 @@ function WebSocketProvider({ children }: { children: React.ReactNode }) {
 
       // Skip Vite HMR-related errors completely 
       // These happen in development mode and aren't actual application errors
-      if (
+      const isViteError = 
         event.reason?.stack?.includes('@vite/client') || 
-        (typeof event.reason === 'object' && 
-         Object.keys(event.reason).length === 0) || 
-        event.reason?.message?.includes('Failed to fetch')
-      ) {
-        // Just log these without additional handling
-        console.debug('Suppressed Vite client error (development only):', {
-          type: 'unhandledRejection',
-          source: 'vite-hmr',
-          timestamp: new Date().toISOString()
-        });
+        (typeof event.reason === 'object' && Object.keys(event.reason).length === 0) || 
+        event.reason?.message?.includes('Failed to fetch') ||
+        event.reason?.message?.includes('Network Error') ||
+        event.reason?.message?.includes('WebSocket') ||
+        (window as any).__suppressViteHMRErrors === true && (
+          event.reason?.message?.includes('Vite') ||
+          event.reason?.message?.includes('hmr') || 
+          event.reason?.message?.includes('HMR') ||
+          event.reason?.stack?.includes('vite') ||
+          event.reason?.message?.includes('sockjs')
+        );
+      
+      if (isViteError) {
+        // Just silently log these without additional handling
+        if (process.env.NODE_ENV !== 'production') {
+          console.debug('Suppressed Vite client error (development only):', {
+            type: 'unhandledRejection',
+            source: 'vite-hmr',
+            timestamp: new Date().toISOString()
+          });
+        }
         return;
       }
 
@@ -101,8 +112,9 @@ function WebSocketProvider({ children }: { children: React.ReactNode }) {
         timestamp: new Date().toISOString()
       });
 
-      // Skip WebSocket connection errors as they are handled by the WebSocket hook
-      if (event.reason?.message?.includes('WebSocket')) {
+      // Skip any connection errors as they should be handled by their respective hooks
+      if (event.reason?.message?.includes('connection') || 
+          event.reason?.message?.includes('Connection')) {
         return;
       }
 
