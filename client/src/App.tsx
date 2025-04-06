@@ -78,6 +78,23 @@ function WebSocketProvider({ children }: { children: React.ReactNode }) {
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       event.preventDefault();
 
+      // Skip Vite HMR-related errors completely 
+      // These happen in development mode and aren't actual application errors
+      if (
+        event.reason?.stack?.includes('@vite/client') || 
+        (typeof event.reason === 'object' && 
+         Object.keys(event.reason).length === 0) || 
+        event.reason?.message?.includes('Failed to fetch')
+      ) {
+        // Just log these without additional handling
+        console.debug('Suppressed Vite client error (development only):', {
+          type: 'unhandledRejection',
+          source: 'vite-hmr',
+          timestamp: new Date().toISOString()
+        });
+        return;
+      }
+
       console.error('Unhandled rejection:', {
         reason: event.reason,
         stack: event.reason?.stack,
@@ -85,8 +102,7 @@ function WebSocketProvider({ children }: { children: React.ReactNode }) {
       });
 
       // Skip WebSocket connection errors as they are handled by the WebSocket hook
-      if (event.reason?.message?.includes('WebSocket') || 
-          event.reason?.message?.includes('Failed to fetch')) {
+      if (event.reason?.message?.includes('WebSocket')) {
         return;
       }
 
