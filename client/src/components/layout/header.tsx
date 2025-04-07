@@ -103,6 +103,18 @@ export function Header() {
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <Link
+                  href="/showroom"
+                  className={
+                    navigationMenuTriggerStyle() +
+                    " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em] flex items-center"
+                  }
+                >
+                  <Flame className="mr-1 h-4 w-4 text-primary" />
+                  VIRTUAL SHOWROOM
+                </Link>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <Link
                   href="/contact"
                   className={
                     navigationMenuTriggerStyle() +
@@ -159,6 +171,13 @@ export function Header() {
                     onClick={() => handleNavigate("/customize")}
                   >
                     CUSTOMIZE
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="text-white tracking-widest text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary flex gap-2 items-center"
+                    onClick={() => handleNavigate("/showroom")}
+                  >
+                    <Flame className="h-4 w-4 text-primary" />
+                    VIRTUAL SHOWROOM
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     className="text-white tracking-widest text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"

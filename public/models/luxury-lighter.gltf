@@ -1,0 +1,147 @@
+{
+  "asset": {
+    "generator": "KHUSH-IN Custom 3D Model",
+    "version": "2.0"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "nodes": [0, 1]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "LuxuryBox"
+    },
+    {
+      "mesh": 1,
+      "name": "LuxuryDecor",
+      "translation": [0, 0.3, 0]
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1
+          },
+          "indices": 2,
+          "material": 0
+        }
+      ]
+    },
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 3,
+            "NORMAL": 4
+          },
+          "indices": 5,
+          "material": 1
+        }
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "name": "GoldMaterial",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [0.83, 0.68, 0.22, 1.0],
+        "metallicFactor": 1.0,
+        "roughnessFactor": 0.1
+      }
+    },
+    {
+      "name": "SilverMaterial",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [0.95, 0.95, 0.95, 1.0],
+        "metallicFactor": 0.8,
+        "roughnessFactor": 0.2
+      }
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 24,
+      "max": [0.5, 0.25, 0.4],
+      "min": [-0.5, -0.25, -0.4],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5126,
+      "count": 240,
+      "max": [0.1, 0.1, 0.1],
+      "min": [-0.1, -0.1, -0.1],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 240,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5123,
+      "count": 360,
+      "type": "SCALAR"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 288,
+      "byteOffset": 0
+    },
+    {
+      "buffer": 0,
+      "byteLength": 288,
+      "byteOffset": 288
+    },
+    {
+      "buffer": 0,
+      "byteLength": 72,
+      "byteOffset": 576
+    },
+    {
+      "buffer": 0,
+      "byteLength": 2880,
+      "byteOffset": 648
+    },
+    {
+      "buffer": 0,
+      "byteLength": 2880,
+      "byteOffset": 3528
+    },
+    {
+      "buffer": 0,
+      "byteLength": 720,
+      "byteOffset": 6408
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 7128,
+      "uri": "data:application/octet-stream;base64,AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAPgAAAD4AAAA+AAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAAAAAAAAD8AAAAAAAIAAwADAAEAAAAEAAYABwAHAAUABAAIAAoACwALAAkACAAMAA4ADwAPAA0ADAAQABIAEwATABEAEAAUABYAFwAXABUAFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+    }
+  ]
+}
