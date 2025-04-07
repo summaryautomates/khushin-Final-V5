@@ -1,37 +1,43 @@
-import React, { forwardRef } from 'react';
-import { cn } from '@/lib/utils';
-import { Button, ButtonProps } from '@/components/ui/button';
-import { FlameElement } from '@/components/ui/flame-element';
+import { Button } from "@/components/ui/button";
+import { FlameElement } from "@/components/ui/flame-element";
+import { cn } from "@/lib/utils";
+import React from "react";
 
-interface FlameButtonProps extends ButtonProps {
-  flameIntensity?: 'low' | 'medium' | 'high';
+interface FlameButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  intensity?: 'low' | 'medium' | 'high';
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  size?: 'default' | 'sm' | 'lg' | 'icon';
 }
 
-export const FlameButton = forwardRef<HTMLButtonElement, FlameButtonProps>(
-  ({ children, className, flameIntensity = 'medium', ...props }, ref) => {
+export const FlameButton = React.forwardRef<HTMLButtonElement, FlameButtonProps>(
+  ({ 
+    className, 
+    children, 
+    intensity = 'medium', 
+    variant = 'default',
+    size = 'default',
+    ...props 
+  }, ref) => {
     return (
-      <FlameElement intensity={flameIntensity}>
+      <FlameElement intensity={intensity} className="w-fit">
         <Button
           ref={ref}
+          variant={variant}
+          size={size}
           className={cn(
-            'relative overflow-hidden transition-all duration-300',
+            "relative overflow-hidden transition-all duration-300",
             {
-              'hover:shadow-lg hover:shadow-orange-500/20': flameIntensity === 'low',
-              'hover:shadow-xl hover:shadow-orange-500/30': flameIntensity === 'medium',
-              'hover:shadow-2xl hover:shadow-orange-500/40': flameIntensity === 'high',
+              'hover:bg-primary/90 hover:scale-105': variant === 'default',
+              'hover:bg-destructive/90 hover:scale-105': variant === 'destructive',
+              'hover:bg-secondary/90 hover:scale-105': variant === 'secondary',
+              'hover:bg-transparent hover:scale-105': variant === 'ghost' || variant === 'outline',
             },
             className
           )}
           {...props}
         >
-          {/* Create a subtle flame gradient on hover */}
-          <span 
-            className="absolute inset-0 opacity-0 transition-opacity duration-300 
-                      bg-gradient-to-t from-orange-600/10 to-yellow-400/5 
-                      group-hover:opacity-100 pointer-events-none" 
-          />
-          
-          {children}
+          <span className="relative z-10">{children}</span>
+          <div className="absolute inset-0 z-0 opacity-0 bg-gradient-to-r from-amber-500/0 via-amber-500/30 to-amber-500/0 group-hover:opacity-100 transition-opacity duration-300" />
         </Button>
       </FlameElement>
     );
