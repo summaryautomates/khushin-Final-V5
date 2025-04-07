@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth.tsx';
 import { useWebSocket } from '@/lib/websocket';
 
 export function useOrderTracking(orderRef: string | null) {
