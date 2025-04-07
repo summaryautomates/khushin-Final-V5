@@ -27,8 +27,8 @@ export function cartRoutes(app: Express) {
     }
   });
 
-  // Add item to cart
-  app.post("/api/cart/add", async (req, res) => {
+  // Add item to cart or update quantity
+  app.post("/api/cart", async (req, res) => {
     try {
       if (!req.user) {
         return res.status(401).json({
@@ -62,23 +62,34 @@ export function cartRoutes(app: Express) {
         });
       }
 
-      await storage.addToCart(userId, productId, quantity, isGift, giftMessage);
+      // First check if this product is already in the cart
+      const cartItems = await storage.getCartItems(userId);
+      const existingItem = cartItems.find(item => item.product.id === productId);
+
+      if (existingItem) {
+        // Update quantity if it already exists
+        await storage.updateCartItemQuantity(userId, productId, quantity);
+      } else {
+        // Add as new item if it doesn't exist
+        await storage.addToCart(userId, productId, quantity, isGift, giftMessage);
+      }
+
       const updatedCart = await storage.getCartItems(userId);
       
       res.json({
-        message: "Item added to cart",
+        message: existingItem ? "Cart item quantity updated" : "Item added to cart",
         cart: updatedCart
       });
     } catch (error) {
-      console.error('Error adding item to cart:', error);
+      console.error('Error updating cart:', error);
       res.status(500).json({
-        message: "Failed to add item to cart"
+        message: "Failed to update cart"
       });
     }
   });
 
   // Remove item from cart
-  app.delete("/api/cart/remove/:productId", async (req, res) => {
+  app.delete("/api/cart/:productId", async (req, res) => {
     try {
       if (!req.user) {
         return res.status(401).json({
@@ -110,7 +121,7 @@ export function cartRoutes(app: Express) {
   });
 
   // Update cart item quantity
-  app.patch("/api/cart/update/:productId", async (req, res) => {
+  app.patch("/api/cart/:productId/quantity", async (req, res) => {
     try {
       if (!req.user) {
         return res.status(401).json({
@@ -156,7 +167,7 @@ export function cartRoutes(app: Express) {
   });
 
   // Update gift status
-  app.patch("/api/cart/gift/:productId", async (req, res) => {
+  app.patch("/api/cart/:productId/gift", async (req, res) => {
     try {
       if (!req.user) {
         return res.status(401).json({
@@ -203,7 +214,7 @@ export function cartRoutes(app: Express) {
   });
 
   // Clear cart
-  app.delete("/api/cart/clear", async (req, res) => {
+  app.delete("/api/cart", async (req, res) => {
     try {
       if (!req.user) {
         return res.status(401).json({

@@ -188,8 +188,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const response = await fetch('/api/cart', {
         credentials: 'include',
         headers: {
-          'Accept': 'application/json',
-          'x-user-id': user.id.toString()
+          'Accept': 'application/json'
         }
       });
 
@@ -266,16 +265,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "OPTIMISTIC_UPDATE_QUANTITY", productId, quantity });
 
     try {
-      const response = await fetch('/api/cart', {
-        method: 'POST',
+      const response = await fetch(`/api/cart/${productId}/quantity`, {
+        method: 'PATCH',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'x-user-id': user.id.toString()
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
-          productId,
           quantity,
         })
       });
@@ -332,8 +329,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'x-user-id': user.id.toString()
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
           productId: product.id,
@@ -374,7 +370,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const removeItem = async (productId: number) => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to remove items from cart.",
+        variant: "destructive",
+      });
+      throw new Error("AUTH_REQUIRED");
+    }
 
     if (state.pendingUpdates.has(productId)) {
       return;
@@ -388,18 +391,30 @@ export function CartProvider({ children }: { children: ReactNode }) {
         method: 'DELETE',
         credentials: 'include',
         headers: {
-          'Accept': 'application/json',
-          'x-user-id': user.id.toString()
+          'Accept': 'application/json'
         }
       });
 
+      if (response.status === 401) {
+        throw new Error("AUTH_REQUIRED");
+      }
+
       if (!response.ok) {
-        throw new Error('Failed to remove item from cart');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to remove item from cart');
       }
 
       await fetchCartItems();
+      
+      toast({
+        title: "Item Removed",
+        description: "Item removed from cart"
+      });
     } catch (error: any) {
       console.error('Failed to remove item from cart:', error);
+      if (error.message === "AUTH_REQUIRED") {
+        throw error;
+      }
       await fetchCartItems(); 
       toast({
         title: "Error",
@@ -416,7 +431,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const updateGiftStatus = async (productId: number, isGift: boolean, giftMessage?: string) => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to update gift status.",
+        variant: "destructive",
+      });
+      throw new Error("AUTH_REQUIRED");
+    }
 
     if (state.pendingUpdates.has(productId)) {
       return;
@@ -431,8 +453,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'x-user-id': user.id.toString()
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
           isGift,
@@ -440,13 +461,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
         })
       });
 
+      if (response.status === 401) {
+        throw new Error("AUTH_REQUIRED");
+      }
+
       if (!response.ok) {
-        throw new Error('Failed to update gift status');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update gift status');
       }
 
       await fetchCartItems();
+      
+      toast({
+        title: "Gift Status Updated",
+        description: isGift ? "Item marked as gift" : "Gift status removed"
+      });
     } catch (error: any) {
       console.error('Failed to update gift status:', error);
+      if (error.message === "AUTH_REQUIRED") {
+        throw error;
+      }
       await fetchCartItems(); 
       toast({
         title: "Error",
@@ -459,25 +493,44 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const clearCart = async () => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to clear your cart.",
+        variant: "destructive",
+      });
+      throw new Error("AUTH_REQUIRED");
+    }
 
     try {
       const response = await fetch('/api/cart', {
         method: 'DELETE',
         credentials: 'include',
         headers: {
-          'Accept': 'application/json',
-          'x-user-id': user.id.toString()
+          'Accept': 'application/json'
         }
       });
 
+      if (response.status === 401) {
+        throw new Error("AUTH_REQUIRED");
+      }
+
       if (!response.ok) {
-        throw new Error('Failed to clear cart');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to clear cart');
       }
 
       dispatch({ type: "CLEAR_CART" });
+      
+      toast({
+        title: "Cart Cleared",
+        description: "Your cart has been cleared"
+      });
     } catch (error: any) {
       console.error('Failed to clear cart:', error);
+      if (error.message === "AUTH_REQUIRED") {
+        throw error;
+      }
       toast({
         title: "Error",
         description: "Failed to clear cart. Please try again.",

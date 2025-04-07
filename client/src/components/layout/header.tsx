@@ -18,6 +18,7 @@ import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth.tsx";
 import { useLocation } from "wouter";
 import { AuthSheet } from "@/components/auth/auth-sheet";
+import { CartSheet } from "@/components/cart/cart-sheet";
 import { useState } from "react";
 
 export function Header() {
@@ -185,7 +186,7 @@ export function Header() {
                   <span className="sr-only">Logout</span>
                 </Button>
 
-                <Link href="/cart">
+                <CartSheet>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -200,7 +201,7 @@ export function Header() {
                       </span>
                     )}
                   </Button>
-                </Link>
+                </CartSheet>
               </>
             ) : (
               <>
