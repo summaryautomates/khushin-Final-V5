@@ -45,50 +45,34 @@ export function ProductImageGallery({ images, alt, className, showThumbnails = t
   // If there's only one image, render a simple image display
   if (images.length === 1) {
     return (
-      <motion.div
-        className={cn("relative aspect-square overflow-hidden bg-black rounded-lg group", className)}
-        whileHover={{ scale: 1.03 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-      >
-        <motion.div
-          className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 z-10 transition-opacity duration-300"
-          whileHover={{ opacity: 0.4 }}
-        />
+      <div className={cn("relative w-full h-full", className)}>
         <AdaptiveImage
           src={images[0] || ""}
           alt={alt}
-          className="w-full h-full object-contain object-center transition-all duration-500 group-hover:scale-110"
-          containerClassName="h-full w-full bg-zinc-900"
+          className="w-full h-full object-contain object-center"
+          containerClassName="h-full w-full"
         />
-      </motion.div>
+      </div>
     );
   }
 
   return (
     <>
-      <div className={cn("space-y-4", className)}>
+      <div className={cn("h-full w-full", className)}>
         {/* Main carousel - simplified */}
-        <div className="relative">
-          <Carousel className="w-full" setApi={setApi}>
-            <CarouselContent>
+        <div className="relative h-full w-full">
+          <Carousel className="w-full h-full" setApi={setApi}>
+            <CarouselContent className="h-full w-full">
               {images.map((image, index) => (
-                <CarouselItem key={index} className="flex justify-center">
-                  <motion.div
-                    className="aspect-square overflow-hidden bg-black rounded-lg relative group"
-                    whileHover={{ scale: 1.03 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                  >
-                    <motion.div
-                      className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 z-10 transition-opacity duration-300"
-                      whileHover={{ opacity: 0.4 }}
-                    />
+                <CarouselItem key={index} className="flex justify-center items-center h-full w-full">
+                  <div className="w-full h-full">
                     <AdaptiveImage
                       src={image}
                       alt={`${alt} - Image ${index + 1}`}
-                      className="w-full h-full object-contain object-center transition-all duration-500 group-hover:scale-110"
-                      containerClassName="h-full w-full bg-zinc-900"
+                      className="w-full h-full object-contain object-center"
+                      containerClassName="h-full w-full"
                     />
-                  </motion.div>
+                  </div>
                 </CarouselItem>
               ))}
             </CarouselContent>
