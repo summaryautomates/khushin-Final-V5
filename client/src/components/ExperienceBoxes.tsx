@@ -20,7 +20,7 @@ function LuxuryCard({
   return (
     <motion.div 
       className={cn(
-        "relative overflow-hidden bg-black/60 backdrop-blur-sm p-10 border border-zinc-800",
+        "luxury-card relative p-10 border border-zinc-800",
         "group transition-all duration-500 ease-in-out",
         className
       )}
@@ -36,37 +36,11 @@ function LuxuryCard({
       {/* Subtle background pattern */}
       <div className="absolute inset-0 bg-[url('/images/dark-texture.svg')] opacity-10 mix-blend-overlay" />
       
-      {/* Gold corner accent */}
-      <div className="absolute top-0 left-0 w-10 h-10">
-        <div className="absolute top-0 left-0 w-full h-[1px] bg-primary transform origin-left" 
-          style={{ 
-            width: isHovered ? '100%' : '30%',
-            transition: 'width 0.5s ease-in-out'
-          }} 
-        />
-        <div className="absolute top-0 left-0 h-full w-[1px] bg-primary transform origin-top" 
-          style={{ 
-            height: isHovered ? '100%' : '30%',
-            transition: 'height 0.5s ease-in-out'
-          }} 
-        />
-      </div>
-      
-      {/* Gold corner accent (bottom right) */}
-      <div className="absolute bottom-0 right-0 w-10 h-10">
-        <div className="absolute bottom-0 right-0 w-full h-[1px] bg-primary transform origin-right" 
-          style={{ 
-            width: isHovered ? '100%' : '30%',
-            transition: 'width 0.5s ease-in-out'
-          }} 
-        />
-        <div className="absolute bottom-0 right-0 h-full w-[1px] bg-primary transform origin-bottom" 
-          style={{ 
-            height: isHovered ? '100%' : '30%',
-            transition: 'height 0.5s ease-in-out'
-          }} 
-        />
-      </div>
+      {/* Gold corner accents */}
+      <div className="luxury-accent luxury-accent-top-left" />
+      <div className="luxury-accent luxury-accent-left" />
+      <div className="luxury-accent luxury-accent-bottom-right" />
+      <div className="luxury-accent luxury-accent-right" />
       
       {/* Content */}
       <div className="relative z-10">
@@ -99,12 +73,12 @@ export function ExperienceBoxes() {
         >
           <div className="relative">
             <Clock className={cn(
-              "w-16 h-16 transition-all duration-500",
+              "luxury-icon w-16 h-16",
               hoveredCard === 0 ? "text-primary" : "text-white"
             )} />
             {hoveredCard === 0 && (
               <motion.div 
-                className="absolute -inset-4 rounded-full bg-primary/5 blur-md z-0"
+                className="luxury-icon-glow"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
@@ -113,13 +87,13 @@ export function ExperienceBoxes() {
           </div>
           
           <h2 className={cn(
-            "text-2xl font-light tracking-wider uppercase transition-all duration-500",
+            "luxury-title",
             hoveredCard === 0 ? "text-primary" : "text-white"
           )}>
             Book Experience
           </h2>
           
-          <p className="text-zinc-400 max-w-sm leading-relaxed">
+          <p className="luxury-description max-w-sm">
             Schedule premium styling sessions with our expert consultants for a personalized luxury experience
           </p>
           
@@ -148,12 +122,12 @@ export function ExperienceBoxes() {
         >
           <div className="relative">
             <Gift className={cn(
-              "w-16 h-16 transition-all duration-500",
+              "luxury-icon w-16 h-16",
               hoveredCard === 1 ? "text-primary" : "text-white"
             )} />
             {hoveredCard === 1 && (
               <motion.div 
-                className="absolute -inset-4 rounded-full bg-primary/5 blur-md z-0"
+                className="luxury-icon-glow"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
@@ -162,13 +136,13 @@ export function ExperienceBoxes() {
           </div>
           
           <h2 className={cn(
-            "text-2xl font-light tracking-wider uppercase transition-all duration-500",
+            "luxury-title",
             hoveredCard === 1 ? "text-primary" : "text-white"
           )}>
             Loyalty Program
           </h2>
           
-          <p className="text-zinc-400 max-w-sm leading-relaxed">
+          <p className="luxury-description max-w-sm">
             Join our exclusive rewards program and earn points on every purchase for special discounts
           </p>
           

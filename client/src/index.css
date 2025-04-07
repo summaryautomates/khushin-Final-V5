@@ -4,6 +4,7 @@
 
 /* Import luxury styles */
 @import url('./styles/luxury.css');
+@import url('./styles/luxury-cards.css');
 
 html {
   scroll-behavior: smooth;
