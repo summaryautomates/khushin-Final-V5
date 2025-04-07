@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  @keyframes shine {
+    100% {
+      left: 125%;
+    }
+  }
+  
+  .animate-shine {
+    animation: shine 1.5s ease-in-out;
+  }
+}
+
 /* Import luxury styles */
 @import url('./styles/luxury.css');
 @import url('./styles/luxury-cards.css');
