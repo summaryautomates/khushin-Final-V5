@@ -39,7 +39,7 @@ export function Header() {
 
   return (
     <header className="fixed top-0 z-50 w-full bg-gradient-to-b from-black/95 to-black/85 backdrop-blur-md supports-[backdrop-filter]:bg-black/60">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-2 md:px-4 max-w-screen-2xl">
         <div className="flex h-16 md:h-20 items-center justify-between">
           <Link href="/" className="flex items-center space-x-2">
             <div className="relative w-24 md:w-32 h-12 md:h-16 flex items-center group transition-transform duration-300 hover:scale-105">
@@ -55,78 +55,47 @@ export function Header() {
             </div>
           </Link>
 
-          <NavigationMenu className="hidden md:flex">
-            <NavigationMenuList className="space-x-6">
-              <NavigationMenuItem>
-                <Link
-                  href="/products"
-                  className={
-                    navigationMenuTriggerStyle() +
-                    " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"
-                  }
-                >
-                  COLLECTIONS
-                </Link>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <Link
-                  href="/products/category/lighters"
-                  className={
-                    navigationMenuTriggerStyle() +
-                    " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"
-                  }
-                >
-                  LUXURY LIGHTERS
-                </Link>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <Link
-                  href="/refueling"
-                  className={
-                    navigationMenuTriggerStyle() +
-                    " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"
-                  }
-                >
-                  REFUELING SOLUTIONS
-                </Link>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <Link
-                  href="/customize"
-                  className={
-                    navigationMenuTriggerStyle() +
-                    " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"
-                  }
-                >
-                  CUSTOMIZE
-                </Link>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <Link
-                  href="/showroom"
-                  className={
-                    navigationMenuTriggerStyle() +
-                    " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em] flex items-center"
-                  }
-                >
-                  <Flame className="mr-1 h-4 w-4 text-primary" />
-                  VIRTUAL SHOWROOM
-                </Link>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <Link
-                  href="/contact"
-                  className={
-                    navigationMenuTriggerStyle() +
-                    " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em]"
-                  }
-                >
-                  CONTACT
-                </Link>
-              </NavigationMenuItem>
-
-            </NavigationMenuList>
-          </NavigationMenu>
+          <div className="hidden md:flex flex-1 justify-center">
+            <nav className="flex items-center">
+              <Link
+                href="/products"
+                className="text-xs uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-2.5 py-2 mx-1"
+              >
+                Collections
+              </Link>
+              <Link
+                href="/products/category/lighters"
+                className="text-xs uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-2.5 py-2 mx-1"
+              >
+                Luxury Lighters
+              </Link>
+              <Link
+                href="/refueling"
+                className="text-xs uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-2.5 py-2 mx-1"
+              >
+                Refueling
+              </Link>
+              <Link
+                href="/customize"
+                className="text-xs uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-2.5 py-2 mx-1"
+              >
+                Customize
+              </Link>
+              <Link
+                href="/showroom"
+                className="text-xs uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-2.5 py-2 mx-1 flex items-center"
+              >
+                <Flame className="mr-1 h-3 w-3 text-primary" />
+                Showroom
+              </Link>
+              <Link
+                href="/contact"
+                className="text-xs uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-2.5 py-2 mx-1"
+              >
+                Contact
+              </Link>
+            </nav>
+          </div>
 
           <div className="flex items-center space-x-3">
             {/* Mobile Navigation Menu */}
@@ -149,41 +118,41 @@ export function Header() {
                   sideOffset={24}
                 >
                   <DropdownMenuItem 
-                    className="text-white tracking-widest text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
+                    className="text-white uppercase tracking-wide text-xs py-2.5 mb-1 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
                     onClick={() => handleNavigate("/products")}
                   >
-                    COLLECTIONS
+                    Collections
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    className="text-white tracking-widest text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
+                    className="text-white uppercase tracking-wide text-xs py-2.5 mb-1 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
                     onClick={() => handleNavigate("/products/category/lighters")}
                   >
-                    LUXURY LIGHTERS
+                    Luxury Lighters
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    className="text-white tracking-widest text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
+                    className="text-white uppercase tracking-wide text-xs py-2.5 mb-1 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
                     onClick={() => handleNavigate("/refueling")}
                   >
-                    REFUELING SOLUTIONS
+                    Refueling
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    className="text-white tracking-widest text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
+                    className="text-white uppercase tracking-wide text-xs py-2.5 mb-1 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
                     onClick={() => handleNavigate("/customize")}
                   >
-                    CUSTOMIZE
+                    Customize
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    className="text-white tracking-widest text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary flex gap-2 items-center"
+                    className="text-white uppercase tracking-wide text-xs py-2.5 mb-1 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary flex gap-2 items-center"
                     onClick={() => handleNavigate("/showroom")}
                   >
-                    <Flame className="h-4 w-4 text-primary" />
-                    VIRTUAL SHOWROOM
+                    <Flame className="h-3 w-3 text-primary" />
+                    Showroom
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    className="text-white tracking-widest text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
+                    className="text-white uppercase tracking-wide text-xs py-2.5 mb-1 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
                     onClick={() => handleNavigate("/contact")}
                   >
-                    CONTACT
+                    Contact
                   </DropdownMenuItem>
                   
 
@@ -191,11 +160,11 @@ export function Header() {
                   {/* Add orders link for authenticated users in mobile view */}
                   {user && (
                     <DropdownMenuItem 
-                      className="text-white tracking-widest text-sm py-3 mt-3 border-t border-white/10 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary flex gap-2 items-center"
+                      className="text-white uppercase tracking-wide text-xs py-2.5 mt-2 border-t border-white/10 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary flex gap-2 items-center"
                       onClick={() => handleNavigate("/orders")}
                     >
-                      <ClockIcon className="h-4 w-4" />
-                      MY ORDERS
+                      <ClockIcon className="h-3 w-3" />
+                      My Orders
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
