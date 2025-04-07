@@ -36,7 +36,6 @@ import ExpressDelivery from "@/pages/express-delivery";
 import Loyalty from "@/pages/loyalty";
 import Rewards from "@/pages/rewards";
 import Referral from "@/pages/referral";
-import Showroom from "@/pages/showroom";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import PremiumCollection from "@/pages/premium-collection";
 
@@ -196,7 +195,6 @@ function AppRoutes() {
             <Route path="/rewards" component={Rewards} />
             <Route path="/referral" component={Referral} />
             <Route path="/premium-collection" component={PremiumCollection} />
-            <Route path="/showroom" component={Showroom} />
             <Route component={NotFound} />
           </Switch>
         </div>

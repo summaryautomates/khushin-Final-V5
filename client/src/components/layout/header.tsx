@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ShoppingCart, ClockIcon, UserCircle2, Menu, Flame } from "lucide-react";
+import { ShoppingCart, ClockIcon, UserCircle2, Menu } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth.tsx";
 import { useLocation } from "wouter";
@@ -81,13 +81,7 @@ export function Header() {
               >
                 Customize
               </Link>
-              <Link
-                href="/showroom"
-                className="text-sm uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-3 py-2.5 mx-2 flex items-center"
-              >
-                <Flame className="mr-1.5 h-4 w-4 text-primary" />
-                Showroom
-              </Link>
+
               <Link
                 href="/contact"
                 className="text-sm uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-3 py-2.5 mx-2"
@@ -141,13 +135,7 @@ export function Header() {
                   >
                     Customize
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="text-white uppercase tracking-wide text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary flex gap-2 items-center"
-                    onClick={() => handleNavigate("/showroom")}
-                  >
-                    <Flame className="h-4 w-4 text-primary" />
-                    Showroom
-                  </DropdownMenuItem>
+
                   <DropdownMenuItem 
                     className="text-white uppercase tracking-wide text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
                     onClick={() => handleNavigate("/contact")}
