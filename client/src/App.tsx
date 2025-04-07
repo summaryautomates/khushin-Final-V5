@@ -11,7 +11,7 @@ import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AIAssistant } from "@/components/ai-assistant/AIAssistant";
 import { useWebSocket } from "@/lib/websocket";
-import { LuxuryCursor } from "@/components/ui/luxury-cursor";
+import MouseGlow from "@/components/effects/MouseGlow";
 
 // Page imports
 import Home from "@/pages/home";
@@ -216,7 +216,7 @@ function App() {
                   <AppRoutes />
                   <Footer />
                   <AIAssistant />
-                  <LuxuryCursor />
+                  <MouseGlow />
                 </div>
                 <Toaster />
               </CartProvider>
