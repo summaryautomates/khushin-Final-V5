@@ -21,9 +21,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 
 const FALLBACK_IMAGES = [
-  "/product-placeholder.svg",
-  "/placeholder-product-2.svg",
-  "/placeholder-product-3.svg"
+  "/placeholders/product-placeholder.svg",
+  "/placeholders/placeholder-product.svg",
+  "/placeholders/placeholder-product-2.svg",
+  "/placeholders/placeholder-product-3.svg",
+  "/placeholders/image-placeholder.svg"
 ];
 
 interface ProductCardProps {

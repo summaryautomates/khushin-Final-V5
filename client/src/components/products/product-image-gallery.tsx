@@ -42,15 +42,16 @@ export function ProductImageGallery({ images, alt, className, showThumbnails = t
     }
   }, [api]);
 
-  // If there's only one image, render a simple image display
-  if (images.length === 1) {
+  // If there's only one image or no images, render a simple image display
+  if (!images || images.length === 0 || images.length === 1) {
     return (
       <div className={cn("relative w-full h-full", className)}>
         <AdaptiveImage
-          src={images[0] || ""}
+          src={images && images.length > 0 ? images[0] : ""}
           alt={alt}
           className="w-full h-full object-contain object-center"
           containerClassName="h-full w-full"
+          fallbackSrc="/placeholders/product-placeholder.svg"
         />
       </div>
     );
@@ -71,6 +72,7 @@ export function ProductImageGallery({ images, alt, className, showThumbnails = t
                       alt={`${alt} - Image ${index + 1}`}
                       className="w-full h-full object-contain object-center"
                       containerClassName="h-full w-full"
+                      fallbackSrc="/placeholders/product-placeholder.svg"
                     />
                   </div>
                 </CarouselItem>
@@ -121,6 +123,7 @@ export function ProductImageGallery({ images, alt, className, showThumbnails = t
                     alt={`Thumbnail ${index + 1}`}
                     className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
                     containerClassName="h-full w-full"
+                    fallbackSrc="/placeholders/product-placeholder.svg"
                   />
                 </motion.div>
               ))}

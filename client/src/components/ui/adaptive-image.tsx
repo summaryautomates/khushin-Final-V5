@@ -5,6 +5,9 @@ import { cn } from "@/lib/utils";
 // Default fallback images that will be tried in order
 const FALLBACK_IMAGES = [
   "/placeholders/product-placeholder.svg",
+  "/placeholders/placeholder-product.svg",
+  "/placeholders/placeholder-product-2.svg",
+  "/placeholders/placeholder-product-3.svg",
   "/placeholders/image-placeholder.svg" // Final fallback
 ];
 
