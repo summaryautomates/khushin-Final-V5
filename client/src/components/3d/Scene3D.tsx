@@ -1,10 +1,14 @@
 import React, { useRef, useEffect, Suspense, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Environment, ContactShadows, useGLTF, Box, Sphere } from '@react-three/drei';
-import { Group, Color, MeshStandardMaterial } from 'three';
+import { OrbitControls, Environment, ContactShadows, Box, Sphere } from '@react-three/drei';
+import { Group } from 'three';
 
-// Fallback luxury product model when GLTF fails to load
-function LuxuryBox({ scale = 1, position = [0, 0, 0], rotation = [0, 0, 0] }) {
+// Simple luxury product model (Box with decorative elements)
+function LuxuryBox({ scale = 1, position = [0, 0, 0], rotation = [0, 0, 0] }: { 
+  scale?: number;
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+}) {
   const boxRef = useRef<Group>(null);
   const [hovered, setHovered] = useState(false);
   
@@ -15,14 +19,6 @@ function LuxuryBox({ scale = 1, position = [0, 0, 0], rotation = [0, 0, 0] }) {
       boxRef.current.rotation.y = rotation[1] + Math.sin(clock.getElapsedTime() * 0.2) * 0.1;
       boxRef.current.rotation.x = rotation[0] + Math.sin(clock.getElapsedTime() * 0.1) * 0.05;
     }
-  });
-  
-  // Create a gold material
-  const goldMaterial = new MeshStandardMaterial({
-    color: new Color("#d4af37"), 
-    metalness: 1,
-    roughness: 0.1,
-    envMapIntensity: 1,
   });
   
   return (
@@ -36,8 +32,7 @@ function LuxuryBox({ scale = 1, position = [0, 0, 0], rotation = [0, 0, 0] }) {
     >
       {/* Luxury box model */}
       <Box 
-        args={[1, 0.5, 0.8]} 
-        material={goldMaterial}
+        args={[1, 0.5, 0.8]}
         receiveShadow
         castShadow
         scale={hovered ? 1.05 : 1}
@@ -65,51 +60,15 @@ function LuxuryBox({ scale = 1, position = [0, 0, 0], rotation = [0, 0, 0] }) {
   );
 }
 
-// Component to render 3D model with error handling
+// Component to render 3D model - using simpler approach due to GLTF loading issues
 function Model({ path, scale = 1, position = [0, 0, 0], rotation = [0, 0, 0] }: { 
   path: string;
   scale?: number;
   position?: [number, number, number];
   rotation?: [number, number, number];
 }) {
-  // Use a ref to track loaded model for animations
-  const modelRef = useRef<Group>(null);
-  const [loadError, setLoadError] = useState(false);
-  
-  try {
-    // Try to load the GLTF model
-    const { scene } = useGLTF(path);
-    
-    // Apply effect when model loaded
-    useEffect(() => {
-      if (modelRef.current) {
-        // Apply any initial transformations if needed
-      }
-    }, [scene]);
-    
-    // Apply gentle rotation animation
-    useFrame(({ clock }) => {
-      if (modelRef.current) {
-        // Very subtle automatic rotation effect
-        modelRef.current.rotation.y = rotation[1] + Math.sin(clock.getElapsedTime() * 0.1) * 0.05;
-      }
-    });
-    
-    // If model loaded successfully, render it
-    return (
-      <group
-        ref={modelRef}
-        position={position}
-        rotation={rotation}
-        scale={scale}
-      >
-        <primitive object={scene.clone()} />
-      </group>
-    );
-  } catch (error) {
-    // If loading fails, use fallback luxury box
-    return <LuxuryBox scale={scale} position={position} rotation={rotation} />;
-  }
+  // We'll just use our LuxuryBox component for now
+  return <LuxuryBox scale={scale} position={position} rotation={rotation} />;
 }
 
 // Main Scene container component
@@ -192,5 +151,4 @@ export function InteractiveProduct3D({
   );
 }
 
-// Preload and cache models to avoid continuous reloading
-useGLTF.preload("https://market-assets.fra1.cdn.digitaloceanspaces.com/market-assets/models/lighter/model.gltf");
+// No longer using external models - using local components instead
