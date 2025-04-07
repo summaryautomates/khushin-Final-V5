@@ -1,6 +1,6 @@
 import express, { type Express } from "express";
 import { createServer } from "http";
-import { registerRoutes } from './routes';
+import { registerRoutes } from './routes/index';
 import { setupVite } from './vite';
 import { setupAuth } from './auth';
 import { setupWebSocket } from './websocket';
@@ -101,17 +101,7 @@ async function startServer() {
 
       const server = createServer(app);
 
-      // Health check endpoint
-      app.get('/api/health', (_req, res) => {
-        res.json({
-          status: 'ok',
-          timestamp: Date.now(),
-          websocket: 'enabled',
-          environment: process.env.NODE_ENV,
-          port: REQUIRED_PORT,
-          startupAttempt: startupAttempts + 1
-        });
-      });
+      // Health check endpoint is now managed in routes/healthRoutes.ts
 
       // Set up auth with session support
       console.log('Setting up authentication...');

@@ -1,69 +1,43 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { z } from 'zod';
+/**
+ * AI service for handling chat and assistant functionalities
+ */
 
-// Validation schema for API key
-const apiKeySchema = z.string().min(1, "API key is required");
-
-// Environment variable setup - using the provided key directly
-const API_KEY = 'AIzaSyA08rjxgp24C7emSPxqVTFjXKGsU1clEQM';
-
-// Initialize the Gemini API client
-const initializeGeminiClient = (): GoogleGenerativeAI | null => {
+/**
+ * Generate a response from the AI system based on user's message
+ * 
+ * @param message User's message text
+ * @returns AI-generated response
+ */
+export async function getAIResponse(message: string): Promise<string> {
   try {
-    // Create the client with the API key
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    return genAI;
-  } catch (error) {
-    console.error('Error initializing Gemini client:', error);
-    return null;
-  }
-};
-
-// Get AI response for user query
-export const getAIResponse = async (userMessage: string): Promise<string> => {
-  const genAI = initializeGeminiClient();
-  
-  if (!genAI) {
-    console.warn('Using fallback response: Gemini client unavailable');
-    return getFallbackResponse(userMessage);
-  }
-  
-  try {
-    // Use the gemini-1.5-flash model based on the available models from the API
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // This is a placeholder implementation that will be replaced with actual AI integration
+    // when the appropriate API keys are available
     
-    const prompt = `You are a helpful shopping assistant for KHUSH.IN, a premium e-commerce store
-specializing in high-quality lighters and accessories. 
-Respond to the following customer query: "${userMessage}"
-Be concise, helpful, and conversational. Limit your response to 100 words maximum.`;
-    
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
-    
-    if (!text) {
-      console.warn('Empty response from Gemini API');
-      return getFallbackResponse(userMessage);
+    // For now, return a simulated response
+    if (message.toLowerCase().includes('hello') || message.toLowerCase().includes('hi')) {
+      return "Hello! How can I help you with your shopping today?";
     }
     
-    return text;
+    if (message.toLowerCase().includes('product') || message.toLowerCase().includes('item')) {
+      return "We have a wide range of products. You can browse our collections or let me know what specific item you're looking for.";
+    }
+    
+    if (message.toLowerCase().includes('order') || message.toLowerCase().includes('delivery')) {
+      return "I can help you track your order or provide information about our delivery process. Could you please provide more details?";
+    }
+    
+    if (message.toLowerCase().includes('price') || message.toLowerCase().includes('cost')) {
+      return "Our products are competitively priced. If you're interested in a specific item, I can provide you with pricing information.";
+    }
+    
+    if (message.toLowerCase().includes('return') || message.toLowerCase().includes('cancel')) {
+      return "We have a hassle-free return and cancellation policy. You can return any item within 7 days of delivery.";
+    }
+    
+    // Default response
+    return "I'm here to assist you with your shopping experience. Feel free to ask about our products, orders, or any other questions you might have.";
   } catch (error) {
-    console.error('Error getting Gemini AI response:', error);
-    return getFallbackResponse(userMessage);
+    console.error('Error in AI service:', error);
+    throw new Error('Failed to generate AI response');
   }
-};
-
-// Fallback responses when API is unavailable
-const getFallbackResponse = (query: string): string => {
-  const lowerQuery = query.toLowerCase();
-  
-  if (lowerQuery.includes('product') || lowerQuery.includes('lighter')) {
-    return `Here are some details about our products that match your query "${query}". We have a wide range of premium lighters and accessories.`;
-  } else if (lowerQuery.includes('price') || lowerQuery.includes('cost')) {
-    return `Our products are premium quality and prices vary. For specific pricing on "${query}", I recommend checking our product catalog.`;
-  } else if (lowerQuery.includes('shipping') || lowerQuery.includes('delivery')) {
-    return "We offer worldwide shipping. Standard delivery takes 3-5 business days within India, and international shipping typically takes 7-14 business days.";
-  } else {
-    return `I understand you're asking about: ${query}. As your shopping assistant, I'm here to help with product information, shipping details, and any other questions about KHUSH.IN's premium products.`;
-  }
-};
+}
