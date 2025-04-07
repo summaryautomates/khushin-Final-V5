@@ -1,7 +1,7 @@
 import { createContext, useContext, useReducer, useEffect, ReactNode } from "react";
 import { Product } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-auth.tsx";
 import { useRef } from "react";
 
 interface CartItem {

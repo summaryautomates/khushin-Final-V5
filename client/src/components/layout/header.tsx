@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ShoppingCart, ClockIcon, UserCircle2, Menu, Flame } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-auth.tsx";
 import { useLocation } from "wouter";
 import { AuthSheet } from "@/components/auth/auth-sheet";
 import { useState } from "react";

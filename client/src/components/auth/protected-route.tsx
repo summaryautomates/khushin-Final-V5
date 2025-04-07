@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Route, useLocation } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-auth.tsx";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { AuthSheet } from "./auth-sheet";

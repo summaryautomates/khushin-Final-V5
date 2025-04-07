@@ -9,7 +9,7 @@ import { Link, useLocation } from "wouter"
 import { X } from "lucide-react"
 import { useState } from "react"
 import { useToast } from "@/hooks/use-toast"
-import { useAuth } from "@/hooks/use-auth"
+import { useAuth } from "@/hooks/use-auth.tsx"
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),

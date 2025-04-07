@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-auth.tsx";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { AuthSheet } from "@/components/auth/auth-sheet";
 import { type InsertOrder } from "@shared/schema";
