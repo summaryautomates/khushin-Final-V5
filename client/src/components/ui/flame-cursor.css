@@ -1,0 +1,169 @@
+/* Flame Cursor Styles */
+.flame-cursor-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 999;
+  overflow: hidden;
+}
+
+.flame-cursor {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  will-change: transform;
+}
+
+.flame-particle {
+  position: absolute;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 247, 148, 0.8) 0%,
+    rgba(255, 177, 66, 0.7) 30%,
+    rgba(255, 128, 27, 0.6) 60%,
+    rgba(255, 78, 0, 0.3) 80%,
+    rgba(255, 0, 0, 0.1) 100%
+  );
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  transform-origin: center bottom;
+  animation-name: flameAnimation;
+  animation-timing-function: ease-out;
+}
+
+.flame-trail {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 247, 148, 0.3) 0%,
+    rgba(255, 177, 66, 0.2) 30%,
+    rgba(255, 128, 27, 0.1) 60%,
+    rgba(255, 78, 0, 0.05) 80%,
+    rgba(255, 0, 0, 0) 100%
+  );
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  animation: trailFadeOut 1s ease-out forwards;
+}
+
+.flame-burst {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 247, 148, 0.9) 0%,
+    rgba(255, 177, 66, 0.8) 30%,
+    rgba(255, 128, 27, 0.6) 60%,
+    rgba(255, 78, 0, 0.4) 80%,
+    rgba(255, 0, 0, 0) 100%
+  );
+  transform: translate(-50%, -50%);
+  mix-blend-mode: screen;
+  animation: burstAnimation 0.6s ease-out forwards;
+}
+
+.flame-ember {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: rgba(255, 220, 100, 0.9);
+  transform: translate(-50%, -50%);
+  mix-blend-mode: screen;
+  animation: emberFloat 1.5s ease-out forwards;
+}
+
+/* Animation Keyframes */
+@keyframes flameAnimation {
+  0% {
+    opacity: 0.8;
+    transform: scale(1) translateY(0) rotate(0deg);
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5) translateY(-30px) rotate(var(--rotation));
+  }
+}
+
+@keyframes trailFadeOut {
+  0% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+}
+
+@keyframes burstAnimation {
+  0% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2);
+  }
+}
+
+@keyframes emberFloat {
+  0% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: 
+      translate(
+        calc(-50% + var(--x-offset)), 
+        calc(-50% - var(--y-offset))
+      ) 
+      scale(0.5);
+  }
+}
+
+/* Flame Intensity Variations */
+.flame-intensity-low .flame-particle {
+  --base-size: 12px;
+  opacity: 0.6;
+}
+
+.flame-intensity-medium .flame-particle {
+  --base-size: 16px;
+  opacity: 0.8;
+}
+
+.flame-intensity-high .flame-particle {
+  --base-size: 20px;
+  opacity: 1;
+}
+
+/* Hover Enhancement for Interactive Elements */
+.interactive-element-hover .flame-particle {
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 247, 148, 1) 0%,
+    rgba(255, 177, 66, 0.9) 30%,
+    rgba(255, 128, 27, 0.8) 60%,
+    rgba(255, 78, 0, 0.5) 80%,
+    rgba(255, 0, 0, 0.2) 100%
+  );
+  animation-duration: 1.5s !important;
+  transform-origin: center bottom;
+}

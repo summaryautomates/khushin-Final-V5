@@ -7,11 +7,11 @@ import { CartProvider } from "@/hooks/use-cart";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Switch, Route, useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AIAssistant } from "@/components/ai-assistant/AIAssistant";
 import { useWebSocket } from "@/lib/websocket";
-import MouseGlow from "@/components/effects/MouseGlow";
+import { FlameCursor } from "@/components/ui/flame-cursor";
 
 // Page imports
 import Home from "@/pages/home";
@@ -36,6 +36,7 @@ import ExpressDelivery from "@/pages/express-delivery";
 import Loyalty from "@/pages/loyalty";
 import Rewards from "@/pages/rewards";
 import Referral from "@/pages/referral";
+import FlameDemo from "@/pages/flame-demo";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import PremiumCollection from "@/pages/premium-collection";
 
@@ -195,6 +196,7 @@ function AppRoutes() {
             <Route path="/rewards" component={Rewards} />
             <Route path="/referral" component={Referral} />
             <Route path="/premium-collection" component={PremiumCollection} />
+            <Route path="/flame-demo" component={FlameDemo} />
             <Route component={NotFound} />
           </Switch>
         </div>
@@ -216,7 +218,7 @@ function App() {
                   <AppRoutes />
                   <Footer />
                   <AIAssistant />
-                  <MouseGlow />
+                  <FlameCursor />
                 </div>
                 <Toaster />
               </CartProvider>

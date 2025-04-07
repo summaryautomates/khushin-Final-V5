@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ShoppingCart, ClockIcon, UserCircle2, Menu } from "lucide-react";
+import { ShoppingCart, ClockIcon, UserCircle2, Menu, Flame } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
@@ -112,6 +112,18 @@ export function Header() {
                   CONTACT
                 </Link>
               </NavigationMenuItem>
+              <NavigationMenuItem>
+                <Link
+                  href="/flame-demo"
+                  className={
+                    navigationMenuTriggerStyle() +
+                    " text-sm tracking-widest text-zinc-300 hover:text-white transition-all duration-300 hover:tracking-[0.2em] flex items-center gap-1"
+                  }
+                >
+                  <Flame className="h-3.5 w-3.5 text-orange-500" />
+                  FLAME DEMO
+                </Link>
+              </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
 
@@ -164,6 +176,14 @@ export function Header() {
                     onClick={() => handleNavigate("/contact")}
                   >
                     CONTACT
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem 
+                    className="text-white tracking-widest text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary flex items-center gap-2"
+                    onClick={() => handleNavigate("/flame-demo")}
+                  >
+                    <Flame className="h-4 w-4 text-orange-500" />
+                    FLAME DEMO
                   </DropdownMenuItem>
                   
                   {/* Add orders link for authenticated users in mobile view */}
