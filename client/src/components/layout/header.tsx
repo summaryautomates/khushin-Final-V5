@@ -59,38 +59,38 @@ export function Header() {
             <nav className="flex items-center">
               <Link
                 href="/products"
-                className="text-xs uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-2.5 py-2 mx-1"
+                className="text-sm uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-3 py-2.5 mx-2"
               >
                 Collections
               </Link>
               <Link
                 href="/products/category/lighters"
-                className="text-xs uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-2.5 py-2 mx-1"
+                className="text-sm uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-3 py-2.5 mx-2"
               >
                 Luxury Lighters
               </Link>
               <Link
                 href="/refueling"
-                className="text-xs uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-2.5 py-2 mx-1"
+                className="text-sm uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-3 py-2.5 mx-2"
               >
                 Refueling
               </Link>
               <Link
                 href="/customize"
-                className="text-xs uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-2.5 py-2 mx-1"
+                className="text-sm uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-3 py-2.5 mx-2"
               >
                 Customize
               </Link>
               <Link
                 href="/showroom"
-                className="text-xs uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-2.5 py-2 mx-1 flex items-center"
+                className="text-sm uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-3 py-2.5 mx-2 flex items-center"
               >
-                <Flame className="mr-1 h-3 w-3 text-primary" />
+                <Flame className="mr-1.5 h-4 w-4 text-primary" />
                 Showroom
               </Link>
               <Link
                 href="/contact"
-                className="text-xs uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-2.5 py-2 mx-1"
+                className="text-sm uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-3 py-2.5 mx-2"
               >
                 Contact
               </Link>
@@ -118,38 +118,38 @@ export function Header() {
                   sideOffset={24}
                 >
                   <DropdownMenuItem 
-                    className="text-white uppercase tracking-wide text-xs py-2.5 mb-1 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
+                    className="text-white uppercase tracking-wide text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
                     onClick={() => handleNavigate("/products")}
                   >
                     Collections
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    className="text-white uppercase tracking-wide text-xs py-2.5 mb-1 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
+                    className="text-white uppercase tracking-wide text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
                     onClick={() => handleNavigate("/products/category/lighters")}
                   >
                     Luxury Lighters
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    className="text-white uppercase tracking-wide text-xs py-2.5 mb-1 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
+                    className="text-white uppercase tracking-wide text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
                     onClick={() => handleNavigate("/refueling")}
                   >
                     Refueling
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    className="text-white uppercase tracking-wide text-xs py-2.5 mb-1 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
+                    className="text-white uppercase tracking-wide text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
                     onClick={() => handleNavigate("/customize")}
                   >
                     Customize
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    className="text-white uppercase tracking-wide text-xs py-2.5 mb-1 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary flex gap-2 items-center"
+                    className="text-white uppercase tracking-wide text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary flex gap-2 items-center"
                     onClick={() => handleNavigate("/showroom")}
                   >
-                    <Flame className="h-3 w-3 text-primary" />
+                    <Flame className="h-4 w-4 text-primary" />
                     Showroom
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    className="text-white uppercase tracking-wide text-xs py-2.5 mb-1 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
+                    className="text-white uppercase tracking-wide text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
                     onClick={() => handleNavigate("/contact")}
                   >
                     Contact
@@ -160,10 +160,10 @@ export function Header() {
                   {/* Add orders link for authenticated users in mobile view */}
                   {user && (
                     <DropdownMenuItem 
-                      className="text-white uppercase tracking-wide text-xs py-2.5 mt-2 border-t border-white/10 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary flex gap-2 items-center"
+                      className="text-white uppercase tracking-wide text-sm py-3 mt-3 border-t border-white/10 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary flex gap-2 items-center"
                       onClick={() => handleNavigate("/orders")}
                     >
-                      <ClockIcon className="h-3 w-3" />
+                      <ClockIcon className="h-4 w-4" />
                       My Orders
                     </DropdownMenuItem>
                   )}
