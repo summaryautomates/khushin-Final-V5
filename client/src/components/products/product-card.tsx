@@ -193,64 +193,7 @@ export function ProductCard({ product }: ProductCardProps) {
                   )}
                 </motion.div>
                 
-                {/* Standardized hover overlay with focused content */}
-                <motion.div 
-                  className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/80 backdrop-blur-[2px] opacity-0 flex items-center justify-center z-20"
-                  animate={{ opacity: isHovered ? 1 : 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <motion.div 
-                    className="flex flex-col gap-3 px-6 w-full max-w-[85%]"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ 
-                      opacity: isHovered ? 1 : 0, 
-                      y: isHovered ? 0 : 10 
-                    }}
-                    transition={{ 
-                      duration: 0.3, 
-                      delay: 0.05
-                    }}
-                  >
-                    {/* Add to Cart Button - standardized for all products */}
-                    <Button
-                      size="sm"
-                      variant="default"
-                      className="w-full bg-primary hover:bg-primary/90 text-black dark:text-black font-bold shadow-md transition-all duration-300 py-4 rounded-lg relative overflow-hidden"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleAddToCart();
-                      }}
-                      disabled={isAddingToCart}
-                    >
-                      {/* Subtle shine effect */}
-                      <motion.div 
-                        className="absolute inset-0 bg-white/20 skew-x-12 opacity-0"
-                        animate={{ 
-                          x: isHovered ? ["100%", "-100%"] : "0%",
-                          opacity: isHovered ? [0, 0.2, 0] : 0
-                        }}
-                        transition={{ 
-                          duration: 1.5, 
-                          repeat: isHovered ? Infinity : 0,
-                          repeatDelay: 0.8
-                        }}
-                      />
-                      
-                      {isAddingToCart ? (
-                        <div className="flex items-center justify-center gap-2 relative z-10">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span className="font-bold tracking-wider">ADDING...</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center gap-2 relative z-10">
-                          <ShoppingCart className="h-4 w-4" strokeWidth={2.5} />
-                          <span className="font-bold tracking-wider">ADD TO CART</span>
-                        </div>
-                      )}
-                    </Button>
-                  </motion.div>
-                </motion.div>
+                {/* Removed hover overlay that was blocking image preview */}
               </div>
               
               {/* Minimal action buttons */}
