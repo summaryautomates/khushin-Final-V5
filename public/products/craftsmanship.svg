@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#000000" />
+      <stop offset="50%" stop-color="#101010" />
+      <stop offset="100%" stop-color="#000000" />
+    </linearGradient>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd700" />
+      <stop offset="50%" stop-color="#ffcc00" />
+      <stop offset="100%" stop-color="#d4af37" />
+    </linearGradient>
+    <linearGradient id="metalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#888888" />
+      <stop offset="50%" stop-color="#cccccc" />
+      <stop offset="100%" stop-color="#888888" />
+    </linearGradient>
+    <filter id="lightGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect x="0" y="0" width="600" height="600" fill="url(#bgGradient)" />
+  
+  <!-- Soft Light Overlay -->
+  <circle cx="300" cy="250" r="200" fill="#ffffff" opacity="0.05" filter="url(#lightGlow)" />
+  
+  <!-- Craftsman's Workbench -->
+  <rect x="100" y="350" width="400" height="50" fill="#3d2817" />
+  <rect x="100" y="400" width="400" height="100" fill="#5d3c1f" />
+  
+  <!-- Hands Crafting -->
+  <path d="M200,300 C210,280 230,260 250,255 C270,250 290,245 310,250 C330,255 350,265 360,280" stroke="#d2a679" stroke-width="15" fill="none" stroke-linecap="round" />
+  <path d="M180,340 C190,320 210,300 230,295 C250,290 270,285 290,290 C310,295 330,305 340,320" stroke="#d2a679" stroke-width="15" fill="none" stroke-linecap="round" />
+  
+  <!-- Tools -->
+  <rect x="350" y="290" width="30" height="60" transform="rotate(30, 350, 290)" fill="#555555" stroke="#333333" stroke-width="1" />
+  <rect x="150" y="320" width="20" height="40" fill="url(#metalGradient)" />
+  <circle cx="400" cy="330" r="15" fill="#444444" stroke="#666666" stroke-width="1" />
+  
+  <!-- Lighter Being Crafted -->
+  <rect x="250" y="300" width="80" height="160" rx="10" ry="10" fill="url(#metalGradient)" stroke="url(#goldGradient)" stroke-width="2" />
+  <rect x="250" y="300" width="80" height="30" rx="10" ry="10" fill="#444444" stroke="url(#goldGradient)" stroke-width="2" />
+  <rect x="270" y="315" width="40" height="10" rx="2" ry="2" fill="#222222" />
+  
+  <!-- Decorative Elements -->
+  <circle cx="270" cy="350" r="5" fill="url(#goldGradient)" />
+  <circle cx="310" cy="350" r="5" fill="url(#goldGradient)" />
+  <circle cx="270" cy="380" r="5" fill="url(#goldGradient)" />
+  <circle cx="310" cy="380" r="5" fill="url(#goldGradient)" />
+  
+  <!-- Detail Tools -->
+  <line x1="130" y1="370" x2="170" y2="370" stroke="#666666" stroke-width="2" />
+  <line x1="130" y1="375" x2="170" y2="375" stroke="#666666" stroke-width="2" />
+  <line x1="130" y1="380" x2="150" y2="380" stroke="#666666" stroke-width="2" />
+  
+  <circle cx="410" cy="360" r="10" fill="#222222" stroke="#444444" stroke-width="1" />
+  <circle cx="420" cy="380" r="8" fill="#222222" stroke="#444444" stroke-width="1" />
+  <rect x="370" y="370" width="30" height="20" fill="#333333" stroke="#555555" stroke-width="1" />
+  
+  <!-- Magnifying Glass -->
+  <circle cx="450" cy="320" r="20" fill="none" stroke="#cccccc" stroke-width="2" />
+  <line x1="465" y1="335" x2="480" y2="350" stroke="#cccccc" stroke-width="3" />
+  
+  <!-- Title -->
+  <text x="300" y="500" font-family="Arial" font-size="24" text-anchor="middle" fill="#ffffff">MASTER CRAFTSMANSHIP</text>
+  <text x="300" y="530" font-family="Arial" font-size="18" text-anchor="middle" fill="url(#goldGradient)">HAND-FINISHED BY ARTISANS</text>
+</svg>
