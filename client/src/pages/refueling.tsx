@@ -80,7 +80,7 @@ const TouchSwipeCards = ({ images }: { images: string[] }) => {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 
                       flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 rounded-lg
                       border border-primary/50 md:hidden animate-pulse">
-          <Hand className="w-6 h-6 text-primary mr-2" />
+          <Pointer className="w-6 h-6 text-primary mr-2" />
           <span className="text-sm text-zinc-200">Swipe to view all</span>
         </div>
       )}
@@ -450,6 +450,7 @@ const Refueling = () => {
             <div className="h-[1px] w-40 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto mt-8"></div>
           </div>
           
+          {/* Feature grid - desktop version with hover, mobile version with tap */}
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4 max-w-7xl mx-auto">
             {[
               {
@@ -485,39 +486,47 @@ const Refueling = () => {
                 viewport={{ once: true, margin: "-50px" }}
                 className="group h-full"
               >
-                <div className="relative h-full bg-black/50 backdrop-blur-sm border border-zinc-800 p-6 overflow-hidden transition-all duration-500 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
-                  {/* Gold accent corner lines */}
-                  <div className="absolute top-0 left-0 w-10 h-10 pointer-events-none">
-                    <div className="absolute top-0 left-0 w-[30%] h-[1px] bg-primary transform origin-left transition-all duration-500 group-hover:w-full"></div>
-                    <div className="absolute top-0 left-0 h-[30%] w-[1px] bg-primary transform origin-top transition-all duration-500 group-hover:h-full"></div>
-                  </div>
-                  
-                  <div className="absolute bottom-0 right-0 w-10 h-10 pointer-events-none">
-                    <div className="absolute bottom-0 right-0 w-[30%] h-[1px] bg-primary transform origin-right transition-all duration-500 group-hover:w-full"></div>
-                    <div className="absolute bottom-0 right-0 h-[30%] w-[1px] bg-primary transform origin-bottom transition-all duration-500 group-hover:h-full"></div>
-                  </div>
-                  
-                  {/* Icon with glow effect */}
-                  <div className="relative mb-6 w-14 h-14 rounded-full flex items-center justify-center bg-black/40 border border-zinc-800 transition-all duration-500 group-hover:border-primary/30 group-hover:bg-black/60">
-                    <feature.icon className="w-7 h-7 text-primary transition-all duration-500" />
+                {isMobile ? (
+                  <MobileTapFeatureCard 
+                    icon={feature.icon} 
+                    title={feature.title} 
+                    description={feature.description}
+                  />
+                ) : (
+                  <div className="relative h-full bg-black/50 backdrop-blur-sm border border-zinc-800 p-6 overflow-hidden transition-all duration-500 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+                    {/* Gold accent corner lines */}
+                    <div className="absolute top-0 left-0 w-10 h-10 pointer-events-none">
+                      <div className="absolute top-0 left-0 w-[30%] h-[1px] bg-primary transform origin-left transition-all duration-500 group-hover:w-full"></div>
+                      <div className="absolute top-0 left-0 h-[30%] w-[1px] bg-primary transform origin-top transition-all duration-500 group-hover:h-full"></div>
+                    </div>
                     
-                    <div className="absolute -inset-1 rounded-full opacity-0 bg-primary/5 blur-xl transition-opacity duration-500 group-hover:opacity-100"></div>
+                    <div className="absolute bottom-0 right-0 w-10 h-10 pointer-events-none">
+                      <div className="absolute bottom-0 right-0 w-[30%] h-[1px] bg-primary transform origin-right transition-all duration-500 group-hover:w-full"></div>
+                      <div className="absolute bottom-0 right-0 h-[30%] w-[1px] bg-primary transform origin-bottom transition-all duration-500 group-hover:h-full"></div>
+                    </div>
+                    
+                    {/* Icon with glow effect */}
+                    <div className="relative mb-6 w-14 h-14 rounded-full flex items-center justify-center bg-black/40 border border-zinc-800 transition-all duration-500 group-hover:border-primary/30 group-hover:bg-black/60">
+                      <feature.icon className="w-7 h-7 text-primary transition-all duration-500" />
+                      
+                      <div className="absolute -inset-1 rounded-full opacity-0 bg-primary/5 blur-xl transition-opacity duration-500 group-hover:opacity-100"></div>
+                    </div>
+                    
+                    {/* Title and description */}
+                    <h3 className="text-xl font-light tracking-wide uppercase mb-3 transition-colors duration-300 group-hover:text-primary">
+                      {feature.title}
+                    </h3>
+                    
+                    <p className="text-zinc-400 leading-relaxed transition-colors duration-300 group-hover:text-zinc-300">
+                      {feature.description}
+                    </p>
+                    
+                    {/* Subtle animated arrow that appears on hover */}
+                    <div className="absolute bottom-6 right-6 opacity-0 transform translate-x-2 transition-all duration-500 group-hover:opacity-100 group-hover:translate-x-0">
+                      <ChevronRight className="w-5 h-5 text-primary" />
+                    </div>
                   </div>
-                  
-                  {/* Title and description */}
-                  <h3 className="text-xl font-light tracking-wide uppercase mb-3 transition-colors duration-300 group-hover:text-primary">
-                    {feature.title}
-                  </h3>
-                  
-                  <p className="text-zinc-400 leading-relaxed transition-colors duration-300 group-hover:text-zinc-300">
-                    {feature.description}
-                  </p>
-                  
-                  {/* Subtle animated arrow that appears on hover */}
-                  <div className="absolute bottom-6 right-6 opacity-0 transform translate-x-2 transition-all duration-500 group-hover:opacity-100 group-hover:translate-x-0">
-                    <ChevronRight className="w-5 h-5 text-primary" />
-                  </div>
-                </div>
+                )}
               </motion.div>
             ))}
           </div>
@@ -601,7 +610,39 @@ const Refueling = () => {
               <div className="h-[1px] w-32 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto"></div>
             </div>
 
-            <div className="grid gap-10 grid-cols-1 md:grid-cols-2 max-w-5xl mx-auto">
+            {/* Mobile swipe instructions */}
+            {isMobile && (
+              <div className="mb-12">
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-light uppercase tracking-wider text-primary/90 mb-2">
+                    Interactive Instruction Guide
+                  </h3>
+                  <div className="flex items-center justify-center gap-2">
+                    <ChevronLeft className="w-4 h-4 text-primary/70" />
+                    <p className="text-sm text-zinc-400 swipe-hint">Swipe left and right to view all steps</p>
+                    <ChevronRight className="w-4 h-4 text-primary/70" />
+                  </div>
+                </div>
+                
+                <TouchSwipeCards
+                  images={[
+                    "/RII.png", 
+                    "/RI.png", 
+                    "/RS.png", 
+                    "/RII.png", 
+                    "/RI.png"
+                  ]}
+                />
+                
+                <div className="flex items-center justify-center mt-8 gap-2">
+                  <Smartphone className="w-5 h-5 text-primary/70" />
+                  <span className="text-xs text-zinc-400">Mobile-optimized interactive guide</span>
+                </div>
+              </div>
+            )}
+            
+            {/* Desktop cards */}
+            <div className={`grid gap-10 grid-cols-1 md:grid-cols-2 max-w-5xl mx-auto ${isMobile ? 'mt-8' : ''}`}>
               {/* Luxury Refueling Steps Card */}
               <LuxuryInstructionCard
                 title="Refueling Steps"
@@ -634,18 +675,44 @@ const Refueling = () => {
               />
             </div>
             
-            {/* Extra Information Button */}
-            <div className="flex justify-center mt-16">
-              <LuxuryButton
-                variant="outline"
-                size="lg"
-                onClick={() => {
-                  window.open("/RII.png", "_blank", "noopener,noreferrer");
-                }}
+            {/* Mobile floating action button for detailed instructions */}
+            {isMobile ? (
+              <motion.div 
+                className="fixed bottom-6 right-6 z-20"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
               >
-                View Detailed Instructions
-              </LuxuryButton>
-            </div>
+                <button
+                  onClick={() => {
+                    window.open("/RII.png", "_blank", "noopener,noreferrer");
+                    // Add haptic feedback
+                    if (window.navigator && window.navigator.vibrate) {
+                      window.navigator.vibrate(50);
+                    }
+                  }}
+                  className="h-14 w-14 rounded-full bg-primary text-black shadow-lg shadow-primary/20 flex items-center justify-center action-button-pulse touch-target"
+                >
+                  <Settings className="w-6 h-6" />
+                </button>
+                <span className="absolute -top-8 right-0 whitespace-nowrap text-xs bg-black/80 text-primary px-3 py-1 rounded-full">
+                  Detailed Guide
+                </span>
+              </motion.div>
+            ) : (
+              <div className="flex justify-center mt-16">
+                <LuxuryButton
+                  variant="outline"
+                  size="lg"
+                  onClick={() => {
+                    window.open("/RII.png", "_blank", "noopener,noreferrer");
+                  }}
+                >
+                  View Detailed Instructions
+                </LuxuryButton>
+              </div>
+            )}
+            
           </motion.div>
         </div>
       </section>

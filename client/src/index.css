@@ -17,6 +17,7 @@
 /* Import luxury styles */
 @import url('./styles/luxury.css');
 @import url('./styles/luxury-cards.css');
+@import url('./styles/mobile-touch.css');
 
 html {
   scroll-behavior: smooth;
