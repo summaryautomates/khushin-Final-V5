@@ -9,16 +9,50 @@ import {
   Sparkles, 
   RefreshCcw,
   Star,
-  ChevronRight
+  ChevronRight,
+  ShoppingCart,
+  ArrowRight
 } from "lucide-react";
 import type { Product } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductCard } from "@/components/products/product-card";
 import { LuxuryButton } from "@/components/ui/luxury-button";
-import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Link, useLocation } from "wouter";
+import { useCart } from "@/hooks/use-cart";
+import { useToast } from "@/hooks/use-toast";
+import { formatPrice } from "@/lib/products";
 
 export default function LuxuryLighters() {
+  // Navigation
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const { addItem } = useCart();
+  const [loadingStates, setLoadingStates] = useState<{[key: number]: boolean}>({});
+
+  // Quick buy function
+  const handleQuickBuy = async (product: Product) => {
+    setLoadingStates(prev => ({...prev, [product.id]: true}));
+    try {
+      await addItem(product);
+      toast({
+        title: "Added to Cart",
+        description: `${product.name} has been added to your cart.`,
+      });
+      // Navigate to cart page immediately
+      setLocation('/cart?buyNow=true');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "There was a problem adding this item to your cart.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingStates(prev => ({...prev, [product.id]: false}));
+    }
+  };
+
   // Fetch all products
   const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -27,8 +61,11 @@ export default function LuxuryLighters() {
   // Filter for luxury lighter products
   const luxuryLighters = products?.filter(product => 
     product.collection === "luxury" && 
-    product.category === "lighters"
+    product.category === "Lighter"
   ) || [];
+
+  // Featured product (first in the list)
+  const featuredProduct = luxuryLighters[0];
 
   // For feature highlighting
   const [activeFeature, setActiveFeature] = useState(0);
@@ -65,11 +102,11 @@ export default function LuxuryLighters() {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      {/* Hero Section */}
+      {/* Hero Section with Quick Buy */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-16 relative overflow-hidden rounded-2xl bg-gradient-to-r from-zinc-900 to-zinc-800 p-8 md:p-16"
+        className="mb-12 relative overflow-hidden rounded-2xl bg-gradient-to-r from-zinc-900 to-zinc-800 p-8 md:p-16"
       >
         <div 
           className="absolute inset-0 bg-cover bg-center opacity-30"
@@ -82,7 +119,7 @@ export default function LuxuryLighters() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
-            className="flex items-center justify-center gap-3 mb-8"
+            className="flex items-center justify-center gap-3 mb-6"
           >
             <div className="h-px w-12 bg-gold/60"></div>
             <Crown className="h-10 w-10 text-gold" />
@@ -93,7 +130,7 @@ export default function LuxuryLighters() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
-            className="text-5xl md:text-6xl font-light tracking-wider text-white mb-6"
+            className="text-4xl md:text-5xl font-light tracking-wider text-white mb-4"
           >
             Luxury Lighters Collection
           </motion.h1>
@@ -102,121 +139,63 @@ export default function LuxuryLighters() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.6 }}
-            className="text-zinc-300 leading-relaxed mb-10 text-lg max-w-2xl mx-auto"
+            className="text-zinc-300 leading-relaxed mb-6 text-lg max-w-2xl mx-auto"
           >
             Discover our exquisite collection of premium lighters, each piece a testament to unparalleled craftsmanship
-            and timeless elegance. From limited editions to bespoke designs, find your perfect companion of sophistication.
+            and timeless elegance.
           </motion.p>
           
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-            className="flex flex-wrap justify-center gap-4"
-          >
-            {features.map((feature, index) => (
-              <Badge 
-                key={index} 
-                variant="outline" 
-                className={`bg-gold/10 text-gold border-gold/20 px-4 py-2 text-sm transition-all duration-300 ${
-                  activeFeature === index ? 'scale-110 border-gold/40' : ''
-                }`}
-              >
-                {feature.icon}
-                <span className="ml-2">{feature.title}</span>
-              </Badge>
-            ))}
-          </motion.div>
-        </div>
-      </motion.div>
-
-      {/* Featured Luxury Lighter */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.6, duration: 0.8 }}
-        className="mb-20"
-      >
-        <div className="relative z-10">
-          <div className="mb-8 text-center">
-            <h2 className="text-3xl font-light tracking-wider text-white mb-4">
-              Current Feature
-            </h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-transparent via-gold to-transparent mx-auto"></div>
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-10 p-8 bg-gradient-to-br from-zinc-900/80 to-black/80 rounded-2xl border border-zinc-800/50">
-            {/* Feature Highlight */}
-            <motion.div 
-              className="flex-1 space-y-6"
-              animate={{ opacity: 1 }}
-              initial={{ opacity: 0 }}
-              key={activeFeature}
-              transition={{ duration: 0.5 }}
+          {/* Direct Buy Section */}
+          {featuredProduct && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
+              className="mt-8 max-w-md mx-auto bg-black/50 backdrop-blur-sm rounded-xl p-5 border border-gold/20"
             >
-              <div className="flex items-center gap-3">
-                {features[activeFeature].icon}
-                <h3 className="text-2xl font-light text-white tracking-wider">{features[activeFeature].title}</h3>
+              <div className="flex items-center justify-center mb-4">
+                <h3 className="text-gold text-xl font-light tracking-wider mr-3">Featured: {featuredProduct.name}</h3>
+                <Badge className="bg-gold/20 text-gold">{formatPrice(featuredProduct.price)}</Badge>
               </div>
-              <p className="text-zinc-300 leading-relaxed">
-                {features[activeFeature].description}
-              </p>
-              <div className="pt-4 flex justify-start">
-                <div className="flex space-x-1">
-                  {features.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setActiveFeature(index)}
-                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                        activeFeature === index ? 'bg-gold w-6' : 'bg-zinc-700'
-                      }`}
-                      aria-label={`View feature ${index + 1}`}
-                    />
-                  ))}
-                </div>
+              <div className="flex justify-center gap-4 mt-4">
+                <Button 
+                  className="bg-primary hover:bg-primary/90 text-black font-semibold px-6"
+                  onClick={() => handleQuickBuy(featuredProduct)}
+                  disabled={loadingStates[featuredProduct.id]}
+                >
+                  {loadingStates[featuredProduct.id] ? (
+                    <>Processing...</>
+                  ) : (
+                    <>Buy Now <ArrowRight className="ml-2 h-4 w-4" /></>
+                  )}
+                </Button>
+                <Link href={`/product/${featuredProduct.id}`}>
+                  <Button variant="outline" className="border-gold/30 text-gold hover:bg-gold/10">
+                    View Details
+                  </Button>
+                </Link>
               </div>
             </motion.div>
-
-            {/* Video or image showcase */}
-            <div className="flex-1 flex items-center justify-center">
-              <div className="relative aspect-video w-full max-w-md rounded-xl overflow-hidden border border-zinc-800/50">
-                <div className="absolute inset-0 bg-gradient-to-br from-zinc-900/50 to-black/50"></div>
-                <video
-                  className="w-full h-full object-cover"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  poster="/products/luxury-lighters-poster.jpg"
-                >
-                  <source src="/products/luxury-lighter-flame.mp4" type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Sparkles className="h-12 w-12 text-gold/80" />
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </motion.div>
 
-      {/* Product Grid Section */}
-      <div className="mb-16">
-        <div className="mb-10 text-center">
+      {/* Product Grid Section - Most Important Part */}
+      <div className="mb-10">
+        <div className="mb-6 text-center">
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-3xl font-light tracking-wider text-white mb-4"
           >
-            Discover the Collection
+            Shop Luxury Lighters
           </motion.h2>
           <div className="w-24 h-1 bg-gradient-to-r from-transparent via-gold to-transparent mx-auto"></div>
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {Array(4)
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Array(3)
               .fill(0)
               .map((_, i) => (
                 <div key={i} className="space-y-4">
@@ -231,11 +210,90 @@ export default function LuxuryLighters() {
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, staggerChildren: 0.1 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+            transition={{ duration: 0.5 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           >
+            {/* Simplified Product Cards with Quick Buy Buttons */}
             {luxuryLighters.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <motion.div 
+                key={product.id}
+                className="bg-gradient-to-br from-zinc-900 to-black rounded-xl overflow-hidden border border-zinc-800/40 hover:border-gold/30 transition-all duration-300 hover:shadow-[0_0_15px_rgba(218,165,32,0.15)]"
+                whileHover={{ y: -5 }}
+              >
+                <Link href={`/product/${product.id}`}>
+                  <div className="relative aspect-square bg-black/50 overflow-hidden">
+                    <img 
+                      src={product.images[0]} 
+                      alt={product.name}
+                      className="w-full h-full object-contain p-6 transition-transform duration-500 hover:scale-105"
+                    />
+                    <div className="absolute top-2 left-2">
+                      <Badge className="bg-gold/20 text-gold px-2 py-1">
+                        <Crown className="h-3 w-3 mr-1" /> 
+                        Premium
+                      </Badge>
+                    </div>
+                  </div>
+                </Link>
+                
+                <div className="p-6">
+                  <Link href={`/product/${product.id}`}>
+                    <h3 className="text-xl font-light text-white mb-2 hover:text-gold transition-colors">
+                      {product.name}
+                    </h3>
+                  </Link>
+                  
+                  <p className="text-zinc-400 text-sm mb-4 line-clamp-2 h-10">
+                    {product.description.substring(0, 100)}...
+                  </p>
+                  
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="text-gold text-xl font-light">
+                      {formatPrice(product.price)}
+                    </div>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((_, i) => (
+                        <Star key={i} className="h-4 w-4 text-gold" fill="#daa520" />
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button 
+                      className="flex-1 bg-primary hover:bg-primary/90 text-black font-semibold"
+                      onClick={() => handleQuickBuy(product)}
+                      disabled={loadingStates[product.id]}
+                    >
+                      {loadingStates[product.id] ? (
+                        <>Processing...</>
+                      ) : (
+                        <>Buy Now <ArrowRight className="ml-1 h-4 w-4" /></>
+                      )}
+                    </Button>
+                    
+                    <Button 
+                      variant="outline"
+                      className="border-zinc-700 hover:border-gold/30 hover:bg-black/50"
+                      onClick={async () => {
+                        try {
+                          await addItem(product);
+                          toast({
+                            description: `${product.name} added to cart`,
+                          });
+                        } catch (error) {
+                          toast({
+                            title: "Error",
+                            description: "Failed to add item to cart",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
             ))}
           </motion.div>
         ) : (
@@ -254,54 +312,25 @@ export default function LuxuryLighters() {
         )}
       </div>
 
-      {/* Craftsmanship Section */}
+      {/* Features Section (Condensed) */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.6 }}
-        className="mb-20 p-10 bg-gradient-to-br from-zinc-900/80 to-black/80 rounded-2xl border border-zinc-800/50"
+        transition={{ delay: 0.6, duration: 0.8 }}
+        className="mb-10 bg-gradient-to-br from-zinc-900/80 to-black/80 rounded-xl border border-zinc-800/50 p-6"
       >
-        <div className="flex flex-col lg:flex-row gap-10">
-          <div className="flex-1">
-            <h2 className="text-3xl font-light tracking-wider text-white mb-6">Unparalleled Craftsmanship</h2>
-            <div className="space-y-6 text-zinc-300">
-              <p>
-                Every KHUSHIN luxury lighter represents the pinnacle of design and engineering. Our master craftsmen 
-                meticulously handcraft each piece, ensuring perfection in every detail.
-              </p>
-              <p>
-                From the selection of premium materials to the final finishing touches, we maintain 
-                the highest standards of quality and precision that define true luxury.
-              </p>
-            </div>
-            <div className="mt-8">
-              <Link href="/customize">
-                <LuxuryButton>
-                  Explore Customization <ChevronRight className="h-4 w-4 ml-1" />
-                </LuxuryButton>
-              </Link>
-            </div>
-          </div>
-          <div className="flex-1 flex items-center justify-center">
-            <div className="relative aspect-square w-full max-w-sm rounded-xl overflow-hidden bg-gradient-to-br from-zinc-900 to-black">
-              <div className="absolute inset-0 flex items-center justify-center p-10">
-                <img 
-                  src="/products/craftsmanship.jpg" 
-                  alt="Luxury lighter craftsmanship" 
-                  className="w-full h-full object-cover rounded-lg opacity-80" 
-                />
-                <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/70"></div>
-                <div className="absolute bottom-4 left-4 right-4 text-center">
-                  <div className="flex justify-center gap-1 mb-2">
-                    {[1, 2, 3, 4, 5].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 text-gold" fill="#daa520" />
-                    ))}
-                  </div>
-                  <p className="text-white text-sm font-light tracking-wider">Handcrafted Excellence</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {features.map((feature, index) => (
+            <div key={index} className="p-4 hover:bg-black/50 rounded-lg transition-colors">
+              <div className="flex items-start">
+                <div className="mr-3 mt-1">{feature.icon}</div>
+                <div>
+                  <h3 className="text-white font-light mb-1">{feature.title}</h3>
+                  <p className="text-zinc-400 text-sm">{feature.description}</p>
                 </div>
               </div>
             </div>
-          </div>
+          ))}
         </div>
       </motion.div>
 
@@ -310,27 +339,20 @@ export default function LuxuryLighters() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4, duration: 0.6 }}
-        className="text-center py-10"
+        className="text-center py-8 mt-4 bg-gradient-to-br from-zinc-900/80 to-black/80 rounded-xl border border-zinc-800/50"
       >
-        <h2 className="text-3xl font-light tracking-wider text-white mb-6">
-          Experience Luxury Today
+        <h2 className="text-2xl font-light tracking-wider text-white mb-4">
+          Fast and Secure Checkout
         </h2>
-        <p className="text-zinc-300 mb-8 max-w-2xl mx-auto">
-          Our luxury lighters are more than accessories—they're heirlooms designed to be passed down 
-          through generations. Join the world of KHUSHIN luxury.
+        <p className="text-zinc-300 mb-6 max-w-md mx-auto">
+          Enjoy exclusive benefits with your luxury lighter purchase:
+          free shipping, 30-day returns, and lifetime support.
         </p>
-        <div className="flex flex-wrap justify-center gap-4">
-          <Link href="/products/category/lighters">
-            <LuxuryButton>
-              Browse All Lighters
-            </LuxuryButton>
-          </Link>
-          <Link href="/premium-collection">
-            <LuxuryButton variant="secondary">
-              Premium Collection
-            </LuxuryButton>
-          </Link>
-        </div>
+        <Link href={featuredProduct ? `/product/${featuredProduct.id}` : "/premium-collection"}>
+          <LuxuryButton>
+            Shop Now <ChevronRight className="h-4 w-4 ml-1" />
+          </LuxuryButton>
+        </Link>
       </motion.div>
     </div>
   );
