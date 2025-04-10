@@ -196,6 +196,7 @@ function AppRoutes() {
             <Route path="/rewards" component={Rewards} />
             <Route path="/referral" component={Referral} />
             <Route path="/premium-collection" component={PremiumCollection} />
+            <Route path="/luxury-lighters" component={LuxuryLighters} />
             <Route component={NotFound} />
           </Switch>
         </div>

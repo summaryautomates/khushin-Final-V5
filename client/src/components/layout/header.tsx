@@ -65,7 +65,7 @@ export function Header() {
                 Collections
               </Link>
               <Link
-                href="/products/category/lighters"
+                href="/luxury-lighters"
                 className="text-sm uppercase tracking-wide text-zinc-300 hover:text-white transition-all duration-300 px-3 py-2.5 mx-2"
               >
                 Luxury Lighters
@@ -120,7 +120,7 @@ export function Header() {
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     className="text-white uppercase tracking-wide text-sm py-3 mb-2 hover:bg-white/10 focus:bg-white/10 transition-all duration-300 hover:text-primary focus:text-primary"
-                    onClick={() => handleNavigate("/products/category/lighters")}
+                    onClick={() => handleNavigate("/luxury-lighters")}
                   >
                     Luxury Lighters
                   </DropdownMenuItem>
