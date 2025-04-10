@@ -38,6 +38,7 @@ import Rewards from "@/pages/rewards";
 import Referral from "@/pages/referral";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import PremiumCollection from "@/pages/premium-collection";
+import LuxuryLighters from "@/pages/luxury-lighters";
 
 
 function WebSocketProvider({ children }: { children: React.ReactNode }) {
