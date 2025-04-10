@@ -1,8 +1,9 @@
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useTransform } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LuxuryButton } from "@/components/ui/luxury-button";
 import { LuxuryInstructionCard } from "@/components/LuxuryInstructionCard";
+import { useState, useEffect, useRef } from "react";
 import {
   Droplet,
   Zap,
@@ -14,9 +15,268 @@ import {
   CreditCard,
   AlertTriangle,
   Flame,
+  ChevronLeft,
+  ChevronUp,
+  ChevronDown,
+  Smartphone,
+  Hand,
+  Pointer,
 } from "lucide-react";
 
+// Mobile-friendly touch swipe component for detailed instructions
+const TouchSwipeCards = ({ images }: { images: string[] }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const x = useMotionValue(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cardWidth = useRef(0);
+  const [showTouchHint, setShowTouchHint] = useState(true);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      cardWidth.current = containerRef.current.clientWidth;
+    }
+    
+    // Hide touch hint after 3 seconds
+    const timer = setTimeout(() => {
+      setShowTouchHint(false);
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleDragEnd = (event: any, info: any) => {
+    if (Math.abs(info.offset.x) > cardWidth.current * 0.4) {
+      if (info.offset.x > 0 && currentIndex > 0) {
+        // Swiped right
+        setCurrentIndex(currentIndex - 1);
+        // Add vibration for haptic feedback if supported
+        if (window.navigator && window.navigator.vibrate) {
+          window.navigator.vibrate(50);
+        }
+      } else if (info.offset.x < 0 && currentIndex < images.length - 1) {
+        // Swiped left
+        setCurrentIndex(currentIndex + 1);
+        // Add vibration for haptic feedback if supported
+        if (window.navigator && window.navigator.vibrate) {
+          window.navigator.vibrate(50);
+        }
+      }
+    }
+    x.set(0);
+  };
+
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index);
+    // Add vibration for haptic feedback if supported
+    if (window.navigator && window.navigator.vibrate) {
+      window.navigator.vibrate(20);
+    }
+  };
+
+  return (
+    <div className="relative w-full overflow-hidden">
+      {/* Touch hint indicator (mobile only) */}
+      {showTouchHint && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 
+                      flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 rounded-lg
+                      border border-primary/50 md:hidden animate-pulse">
+          <Hand className="w-6 h-6 text-primary mr-2" />
+          <span className="text-sm text-zinc-200">Swipe to view all</span>
+        </div>
+      )}
+      
+      <motion.div
+        ref={containerRef}
+        className="relative overflow-hidden w-full touch-pan-y"
+        style={{ height: "250px" }}
+      >
+        <motion.div
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.2}
+          onDragEnd={handleDragEnd}
+          style={{ x }}
+          className="absolute inset-0 flex items-center"
+        >
+          {images.map((image, idx) => (
+            <motion.div
+              key={idx}
+              className={`min-w-full flex items-center justify-center transition-opacity duration-300 ${
+                idx === currentIndex ? "opacity-100" : "opacity-0"
+              }`}
+              style={{
+                transform: `translateX(${(idx - currentIndex) * 100}%)`,
+              }}
+            >
+              <div className="relative p-[1px] bg-gradient-to-br from-primary/30 via-primary/80 to-primary/30 overflow-hidden max-w-[90%] mx-auto">
+                <img 
+                  src={image} 
+                  alt={`Refueling instruction ${idx + 1}`}
+                  className="max-h-[240px] w-auto object-contain bg-black/90"
+                />
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      </motion.div>
+      
+      {/* Custom pagination indicators */}
+      <div className="flex justify-center gap-2 mt-4">
+        {images.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => goToSlide(idx)}
+            className={`w-2 h-2 rounded-full transition-all duration-300 
+                      ${idx === currentIndex 
+                        ? "bg-primary w-4" 
+                        : "bg-zinc-600 hover:bg-primary/50"}`}
+            aria-label={`Go to slide ${idx + 1}`}
+          />
+        ))}
+      </div>
+      
+      {/* Navigation buttons (more visible on mobile) */}
+      <div className="flex justify-between absolute top-1/2 left-0 right-0 transform -translate-y-1/2 px-2 pointer-events-none">
+        {currentIndex > 0 && (
+          <button
+            onClick={() => goToSlide(currentIndex - 1)}
+            className="h-10 w-10 rounded-full bg-black/50 backdrop-blur-sm border border-primary/30 
+                     flex items-center justify-center pointer-events-auto
+                     text-primary/80 hover:text-primary transition-colors"
+            aria-label="Previous slide"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        )}
+        {currentIndex < images.length - 1 && (
+          <button
+            onClick={() => goToSlide(currentIndex + 1)}
+            className="h-10 w-10 rounded-full bg-black/50 backdrop-blur-sm border border-primary/30 
+                     flex items-center justify-center ml-auto pointer-events-auto
+                     text-primary/80 hover:text-primary transition-colors"
+            aria-label="Next slide"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Mobile-optimized tap feature card
+const MobileTapFeatureCard = ({ icon: Icon, title, description }: { icon: any, title: string, description: string }) => {
+  const [tapped, setTapped] = useState(false);
+  
+  const handleTap = () => {
+    setTapped(!tapped);
+    // Add haptic feedback
+    if (window.navigator && window.navigator.vibrate) {
+      window.navigator.vibrate(30);
+    }
+  };
+  
+  return (
+    <motion.div 
+      className={`relative bg-black/50 backdrop-blur-sm border p-5 
+                ${tapped ? 'border-primary/50 shadow-lg shadow-primary/5' : 'border-zinc-800'}`}
+      onClick={handleTap}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.2 }}
+    >
+      {/* Corner accents */}
+      <div className="absolute top-0 left-0 w-10 h-10 pointer-events-none">
+        <div 
+          className={`absolute top-0 left-0 h-[1px] bg-primary transition-all duration-300`}
+          style={{ width: tapped ? '100%' : '30%' }} 
+        />
+        <div 
+          className={`absolute top-0 left-0 w-[1px] bg-primary transition-all duration-300`}
+          style={{ height: tapped ? '100%' : '30%' }} 
+        />
+      </div>
+      
+      <div className="absolute bottom-0 right-0 w-10 h-10 pointer-events-none">
+        <div 
+          className={`absolute bottom-0 right-0 h-[1px] bg-primary transition-all duration-300`}
+          style={{ width: tapped ? '100%' : '30%' }} 
+        />
+        <div 
+          className={`absolute bottom-0 right-0 w-[1px] bg-primary transition-all duration-300`}
+          style={{ height: tapped ? '100%' : '30%' }} 
+        />
+      </div>
+      
+      <div className="flex items-start">
+        <div className={`relative min-w-[50px] h-[50px] rounded-full flex items-center justify-center 
+                       bg-black/40 border transition-all duration-300 mr-4
+                       ${tapped ? 'border-primary/50 bg-black/70' : 'border-zinc-800'}`}>
+          <Icon className={`w-6 h-6 transition-all duration-300 ${tapped ? 'text-primary' : 'text-zinc-400'}`} />
+          {tapped && (
+            <motion.div 
+              className="absolute -inset-1 rounded-full bg-primary/5 blur-lg" 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            />
+          )}
+        </div>
+        
+        <div>
+          <h3 className={`font-light tracking-wide uppercase mb-2 transition-colors duration-300 
+                        ${tapped ? 'text-primary' : 'text-white'}`}>
+            {title}
+          </h3>
+          
+          <p className={`text-sm transition-colors duration-300 
+                       ${tapped ? 'text-zinc-300' : 'text-zinc-500'}`}>
+            {description}
+          </p>
+        </div>
+        
+        <div className={`ml-auto transform transition-all duration-300 
+                       ${tapped ? 'opacity-100 translate-x-0 rotate-90' : 'opacity-0 translate-x-2'}`}>
+          <ChevronUp className="w-5 h-5 text-primary" />
+        </div>
+      </div>
+      
+      {tapped && (
+        <motion.div 
+          className="mt-4 pt-4 border-t border-zinc-800"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <p className="text-zinc-300 text-sm">
+            {title === "Premium Butane" && "Our premium butane is triple-refined to ensure the highest purity, providing cleaner burns and protecting your luxury lighter's valve system from impurities."}
+            {title === "Quick Refill" && "The specially designed nozzle adapter ensures precise connection with your lighter's valve, resulting in efficient and mess-free refueling in under 10 seconds."}
+            {title === "Safety First" && "Each refill canister is equipped with multiple safety mechanisms including pressure-release valves and child-resistant features to ensure safe handling."}
+            {title === "Maintenance" && "The complete maintenance kit includes specialized tools for valve cleaning, flint replacement, and proper ignition adjustment to extend your lighter's lifespan."}
+          </p>
+        </motion.div>
+      )}
+    </motion.div>
+  );
+};
+
 const Refueling = () => {
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // Initial check
+    checkIfMobile();
+    
+    // Add event listener for window resize
+    window.addEventListener('resize', checkIfMobile);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', checkIfMobile);
+  }, []);
+  
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
