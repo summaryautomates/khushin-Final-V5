@@ -185,7 +185,7 @@ export default function Home() {
     >
       <div className="flex flex-col">
         {/* Hero Section */}
-        <section className="relative min-h-[90vh] lg:min-h-[85vh] xl:min-h-[80vh] w-full flex items-center justify-center bg-black">
+        <section className="relative min-h-[85vh] lg:min-h-[80vh] xl:min-h-screen h-screen w-full flex items-center justify-center bg-black">
           <motion.div
             initial={{ scale: 1.1, opacity: 0 }}
             animate={{ scale: 1, opacity: 0.85 }}
@@ -214,7 +214,7 @@ export default function Home() {
 
           <motion.div
             style={{ opacity, scale }}
-            className="container relative z-10 px-4 sm:px-6 py-16 md:py-24 lg:max-w-7xl xl:max-w-[1400px] mx-auto"
+            className="container relative z-10 px-4 sm:px-6 py-12 md:py-16 lg:py-8 lg:max-w-7xl xl:max-w-[1400px] mx-auto"
           >
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -222,14 +222,14 @@ export default function Home() {
               transition={{ duration: 1, delay: 0.5 }}
               className="max-w-4xl mx-auto"
             >
-              <motion.h1 className="text-5xl sm:text-6xl md:text-7xl font-extralight mb-8 md:mb-10 tracking-wider text-center mx-auto leading-tight">
+              <motion.h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-6xl font-extralight mb-5 md:mb-6 tracking-wider text-center mx-auto leading-tight">
                 <span className="block">
                   <AnimatedText
                     text="Make Your"
                     className="bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent"
                   />
                 </span>
-                <span className="block mt-2">
+                <span className="block mt-1 md:mt-2">
                   <AnimatedText
                     text="Loved One Happy!"
                     className="bg-gradient-to-r from-white via-primary/80 to-white bg-clip-text text-transparent"
@@ -251,7 +251,7 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.5, duration: 0.8 }}
-                className="mt-12 md:mt-16"
+                className="mt-8 md:mt-10 lg:mt-8"
               >
                 <div className="flex flex-col items-center gap-6">
                   <div className="flex flex-col gap-3 w-full max-w-lg">
