@@ -21,6 +21,7 @@
 
 html {
   scroll-behavior: smooth;
+  height: 100%;
 }
 
 body {
@@ -29,10 +30,28 @@ body {
     linear-gradient(to bottom, rgba(0, 0, 0, 0.94), rgba(0, 0, 0, 0.97)),
     url('/images/dark-texture.svg');
   background-attachment: fixed;
+  height: 100%;
+  overflow-y: auto;
 }
 
 #root {
   @apply min-h-screen;
+}
+
+/* Page-by-page scrolling */
+.snap-y {
+  scroll-snap-type: y mandatory;
+  height: 100vh;
+  overflow-y: scroll;
+  scroll-behavior: smooth;
+}
+
+.snap-start {
+  scroll-snap-align: start;
+}
+
+.snap-always {
+  scroll-snap-stop: always;
 }
 
 main {
