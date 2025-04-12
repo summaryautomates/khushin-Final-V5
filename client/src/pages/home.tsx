@@ -368,7 +368,7 @@ export default function Home() {
         </section>
 
         {/* Featured Products */}
-        <section className="py-24 md:py-32 bg-zinc-950">
+        <section className="py-16 md:py-20 bg-zinc-950">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -381,7 +381,7 @@ export default function Home() {
               whileInView={{ letterSpacing: "0.2em", opacity: 1 }}
               transition={{ duration: 1 }}
               viewport={{ once: true }}
-              className="text-3xl md:text-5xl font-extralight text-center mb-16 md:mb-24 text-white tracking-wider"
+              className="text-3xl md:text-5xl font-extralight text-center mb-8 md:mb-12 text-white tracking-wider"
             >
               Featured Pieces
             </motion.h2>
@@ -401,7 +401,7 @@ export default function Home() {
               />
             )}
 
-            <div className="mt-16 text-center">
+            <div className="mt-8 text-center">
               <Button
                 variant="outline"
                 size="lg"
@@ -415,7 +415,7 @@ export default function Home() {
         </section>
 
         {/* Experience Boxes Section */}
-        <section className="py-16 md:py-24 lg:py-32 px-4 sm:px-6">
+        <section className="py-8 md:py-12 px-4 sm:px-6">
           <div className="mx-auto">
             <ExperienceBoxes />
           </div>
