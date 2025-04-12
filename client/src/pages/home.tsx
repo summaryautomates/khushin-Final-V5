@@ -183,14 +183,9 @@ export default function Home() {
         </div>
       }
     >
-      <div className="flex flex-col snap-y snap-mandatory relative">
+      <div className="flex flex-col">
         {/* Hero Section */}
-        <section className="relative min-h-screen h-screen w-full flex items-center justify-center bg-black snap-start snap-always">
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10 animate-bounce">
-            <div className="w-6 h-10 rounded-full border-2 border-white/30 flex items-start justify-center p-1">
-              <div className="w-1.5 h-3 bg-white/70 rounded-full"></div>
-            </div>
-          </div>
+        <section className="relative min-h-[85vh] lg:min-h-[80vh] xl:min-h-screen h-screen w-full flex items-center justify-center bg-black">
           <motion.div
             initial={{ scale: 1.1, opacity: 0 }}
             animate={{ scale: 1, opacity: 0.85 }}
@@ -373,12 +368,7 @@ export default function Home() {
         </section>
 
         {/* Featured Products */}
-        <section className="min-h-screen h-screen py-16 md:py-20 bg-zinc-950 snap-start snap-always flex items-center relative">
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10 animate-bounce">
-            <div className="w-6 h-10 rounded-full border-2 border-white/30 flex items-start justify-center p-1">
-              <div className="w-1.5 h-3 bg-white/70 rounded-full"></div>
-            </div>
-          </div>
+        <section className="py-16 md:py-20 bg-zinc-950">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -425,7 +415,7 @@ export default function Home() {
         </section>
 
         {/* Experience Boxes Section */}
-        <section className="min-h-screen h-screen flex items-center justify-center py-8 md:py-12 px-4 sm:px-6 snap-start snap-always">
+        <section className="py-8 md:py-12 px-4 sm:px-6">
           <div className="mx-auto">
             <ExperienceBoxes />
           </div>
