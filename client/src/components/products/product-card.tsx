@@ -157,13 +157,13 @@ export function ProductCard({ product }: ProductCardProps) {
                 )}
               </AnimatePresence>
               
-              <div className="relative aspect-square overflow-hidden bg-gradient-to-b from-zinc-900/60 to-black w-full max-h-[320px] transition-all duration-300">
+              <div className="relative aspect-square overflow-hidden bg-gradient-to-b from-zinc-900/60 to-black w-full max-h-[320px] lg:max-h-[340px] xl:max-h-[360px] transition-all duration-300">
                 {/* Clean minimalist background */}
                 <div className="absolute inset-0 bg-gradient-to-br from-zinc-900/40 to-black/70" />
                 
                 {/* Product Image with refined animation */}
                 <motion.div
-                  className="relative z-10 h-full w-full p-6 flex items-center justify-center"
+                  className="relative z-10 h-full w-full p-6 md:p-8 flex items-center justify-center"
                   initial={{ scale: 1 }}
                   animate={{ 
                     scale: isHovered ? 1.06 : 1,

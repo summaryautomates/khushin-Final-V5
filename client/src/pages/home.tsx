@@ -185,7 +185,7 @@ export default function Home() {
     >
       <div className="flex flex-col">
         {/* Hero Section */}
-        <section className="relative min-h-[90vh] w-full flex items-center justify-center bg-black">
+        <section className="relative min-h-[90vh] lg:min-h-[85vh] xl:min-h-[80vh] w-full flex items-center justify-center bg-black">
           <motion.div
             initial={{ scale: 1.1, opacity: 0 }}
             animate={{ scale: 1, opacity: 0.85 }}
@@ -196,7 +196,7 @@ export default function Home() {
               <AdaptiveImage
                 src="/hero-image.png"
                 alt="Luxury KHUSH lighter"
-                className="absolute inset-0 w-full h-full object-cover opacity-85"
+                className="absolute inset-0 w-full h-full object-cover opacity-85 lg:object-center"
                 containerClassName="absolute inset-0"
                 onLoadError={(error: any) => {
                   console.error("Hero image load error:", error);
@@ -214,7 +214,7 @@ export default function Home() {
 
           <motion.div
             style={{ opacity, scale }}
-            className="container relative z-10 px-4 sm:px-6 py-16 md:py-24"
+            className="container relative z-10 px-4 sm:px-6 py-16 md:py-24 lg:max-w-7xl xl:max-w-[1400px] mx-auto"
           >
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -374,7 +374,7 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="container px-4 sm:px-6"
+            className="container px-4 sm:px-6 lg:max-w-7xl xl:max-w-[1400px] mx-auto"
           >
             <motion.h2
               initial={{ letterSpacing: "0.3em", opacity: 0 }}
@@ -415,8 +415,8 @@ export default function Home() {
         </section>
 
         {/* Experience Boxes Section */}
-        <section className="py-16 md:py-24 px-4 sm:px-6">
-          <div className="max-w-7xl mx-auto">
+        <section className="py-16 md:py-24 lg:py-32 px-4 sm:px-6">
+          <div className="mx-auto">
             <ExperienceBoxes />
           </div>
         </section>

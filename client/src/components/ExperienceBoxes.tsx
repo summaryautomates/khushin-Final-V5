@@ -20,8 +20,8 @@ function LuxuryCard({
   return (
     <motion.div 
       className={cn(
-        "luxury-card relative p-10 border border-zinc-800",
-        "group transition-all duration-500 ease-in-out",
+        "luxury-card relative p-10 md:p-12 lg:p-16 border border-zinc-800",
+        "group transition-all duration-500 ease-in-out h-full",
         className
       )}
       initial={{ y: 20, opacity: 0 }}
@@ -54,14 +54,14 @@ export function ExperienceBoxes() {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   
   return (
-    <div className="relative container mx-auto px-4 py-16 overflow-hidden">
+    <div className="relative container mx-auto px-4 py-16 overflow-hidden lg:max-w-7xl xl:max-w-[1400px]">
       {/* Section Heading with gold underline */}
-      <div className="text-center mb-12">
-        <h2 className="text-3xl md:text-4xl font-light tracking-wider uppercase mb-4">Exclusive Experiences</h2>
-        <div className="h-[1px] w-24 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto"></div>
+      <div className="text-center mb-12 lg:mb-16">
+        <h2 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-wider uppercase mb-4 lg:mb-6">Exclusive Experiences</h2>
+        <div className="h-[1px] w-24 md:w-32 lg:w-40 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto"></div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 xl:gap-24 max-w-6xl mx-auto">
         {/* Book Experience Box */}
         <LuxuryCard 
           isHovered={hoveredCard === 0}
