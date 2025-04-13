@@ -12,6 +12,8 @@ import { promisify } from 'util';
 import path from 'path';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
+import WebSocket from 'ws';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -129,7 +131,71 @@ async function startServer() {
       } else {
         // In production, use our enhanced static file serving
         console.log('Setting up static file serving for production...');
-        setupProductionStatic(app);
+        
+        // --- Inline setupProductionStatic function ---
+        // Check multiple possible locations for the built files
+        const possiblePaths = [
+          path.resolve(__dirname, "public"),
+          path.resolve(__dirname, "..", "public"),
+          path.resolve(__dirname, "..", "dist", "public"),
+          path.resolve(process.cwd(), "dist", "public")
+        ];
+        
+        let distPath = '';
+        for (const distDir of possiblePaths) {
+          if (fs.existsSync(distDir)) {
+            distPath = distDir;
+            console.log(`Found static files at: ${distPath}`);
+            break;
+          }
+        }
+
+        if (!distPath) {
+          console.error('Warning: Could not find the build directory, checked:', possiblePaths);
+          // Create a simple HTML page to indicate the build is missing
+          app.use("*", (_req, res) => {
+            res.status(500).send(`
+              <!DOCTYPE html>
+              <html>
+                <head>
+                  <title>Build Not Found</title>
+                  <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
+                    .error { color: #e74c3c; margin: 20px 0; }
+                  </style>
+                </head>
+                <body>
+                  <h1>Application Error</h1>
+                  <p class="error">The production build files could not be found.</p>
+                  <p>Please make sure the application was built correctly before deployment.</p>
+                </body>
+              </html>
+            `);
+          });
+        } else {
+          // Configure static file serving with proper caching
+          app.use(express.static(distPath, {
+            maxAge: '1d',
+            etag: true,
+            index: false // Don't automatically serve index.html for directory requests
+          }));
+
+          // Serve specific asset directories with longer cache times
+          if (fs.existsSync(path.join(distPath, 'assets'))) {
+            app.use('/assets', express.static(path.join(distPath, 'assets'), {
+              maxAge: '7d',
+              immutable: true,
+              etag: true
+            }));
+          }
+
+          // fall through to index.html for any route not found - enables client-side routing
+          app.use("*", (_req, res) => {
+            res.sendFile(path.resolve(distPath, "index.html"));
+          });
+        }
+        // --- End of inline function ---
+        
         console.log('Static file serving for production complete');
       }
 
@@ -256,72 +322,6 @@ async function startServer() {
       }
     }
   }
-}
-
-// Enhanced static file serving for production environment
-function setupProductionStatic(app: Express) {
-  // Check multiple possible locations for the built files
-  const possiblePaths = [
-    path.resolve(__dirname, "public"),
-    path.resolve(__dirname, "..", "public"),
-    path.resolve(__dirname, "..", "dist", "public"),
-    path.resolve(process.cwd(), "dist", "public")
-  ];
-  
-  let distPath = '';
-  for (const distDir of possiblePaths) {
-    if (fs.existsSync(distDir)) {
-      distPath = distDir;
-      console.log(`Found static files at: ${distPath}`);
-      break;
-    }
-  }
-
-  if (!distPath) {
-    console.error('Warning: Could not find the build directory, checked:', possiblePaths);
-    // Create a simple HTML page to indicate the build is missing
-    app.use("*", (_req, res) => {
-      res.status(500).send(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Build Not Found</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
-              .error { color: #e74c3c; margin: 20px 0; }
-            </style>
-          </head>
-          <body>
-            <h1>Application Error</h1>
-            <p class="error">The production build files could not be found.</p>
-            <p>Please make sure the application was built correctly before deployment.</p>
-          </body>
-        </html>
-      `);
-    });
-    return;
-  }
-
-  // Configure static file serving with proper caching
-  app.use(express.static(distPath, {
-    maxAge: '1d',
-    etag: true,
-    index: false // Don't automatically serve index.html for directory requests
-  }));
-
-  // Serve specific asset directories with longer cache times
-  if (fs.existsSync(path.join(distPath, 'assets'))) {
-    app.use('/assets', express.static(path.join(distPath, 'assets'), {
-      maxAge: '7d',
-      immutable: true,
-      etag: true
-    }));
-  }
-
-  // fall through to index.html for any route not found - enables client-side routing
-  app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
-  });
 }
 
 process.on('unhandledRejection', (error) => {
