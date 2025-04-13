@@ -121,16 +121,29 @@ async function startServer() {
       await registerRoutes(app);
       console.log('Routes registered successfully');
 
-      // Setup Vite
-      console.log('Setting up Vite...');
-      await setupVite(app, server);
-      console.log('Vite setup complete');
+      // Setup Vite in development mode only
+      if (!isProduction) {
+        console.log('Setting up Vite for development...');
+        await setupVite(app, server);
+        console.log('Vite setup complete');
+      } else {
+        // In production, use our enhanced static file serving
+        console.log('Setting up static file serving for production...');
+        setupProductionStatic(app);
+        console.log('Static file serving for production complete');
+      }
 
-      // Attempt to acquire a port, preferring the required port but accepting others
-      console.log(`Attempting to acquire port ${REQUIRED_PORT} or another available port...`);
-      const port = await portManager.acquirePort(REQUIRED_PORT, REQUIRED_PORT + 100);
-
-      console.log(`Successfully acquired port ${port}${port !== REQUIRED_PORT ? ` (preferred was ${REQUIRED_PORT})` : ''}`);
+      // In production, use PORT env var or fixed port, in dev use port manager
+      let port: number;
+      if (isProduction) {
+        port = parseInt(process.env.PORT || '8080', 10);
+        console.log(`Using production port: ${port}`);
+      } else {
+        // Attempt to acquire a port, preferring the required port but accepting others
+        console.log(`Attempting to acquire port ${REQUIRED_PORT} or another available port...`);
+        port = await portManager.acquirePort(REQUIRED_PORT, REQUIRED_PORT + 100);
+        console.log(`Successfully acquired port ${port}${port !== REQUIRED_PORT ? ` (preferred was ${REQUIRED_PORT})` : ''}`);
+      }
 
       // Start the server
       await new Promise<void>((resolve, reject) => {
@@ -243,6 +256,72 @@ async function startServer() {
       }
     }
   }
+}
+
+// Enhanced static file serving for production environment
+function setupProductionStatic(app: Express) {
+  // Check multiple possible locations for the built files
+  const possiblePaths = [
+    path.resolve(__dirname, "public"),
+    path.resolve(__dirname, "..", "public"),
+    path.resolve(__dirname, "..", "dist", "public"),
+    path.resolve(process.cwd(), "dist", "public")
+  ];
+  
+  let distPath = '';
+  for (const distDir of possiblePaths) {
+    if (fs.existsSync(distDir)) {
+      distPath = distDir;
+      console.log(`Found static files at: ${distPath}`);
+      break;
+    }
+  }
+
+  if (!distPath) {
+    console.error('Warning: Could not find the build directory, checked:', possiblePaths);
+    // Create a simple HTML page to indicate the build is missing
+    app.use("*", (_req, res) => {
+      res.status(500).send(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Build Not Found</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
+              .error { color: #e74c3c; margin: 20px 0; }
+            </style>
+          </head>
+          <body>
+            <h1>Application Error</h1>
+            <p class="error">The production build files could not be found.</p>
+            <p>Please make sure the application was built correctly before deployment.</p>
+          </body>
+        </html>
+      `);
+    });
+    return;
+  }
+
+  // Configure static file serving with proper caching
+  app.use(express.static(distPath, {
+    maxAge: '1d',
+    etag: true,
+    index: false // Don't automatically serve index.html for directory requests
+  }));
+
+  // Serve specific asset directories with longer cache times
+  if (fs.existsSync(path.join(distPath, 'assets'))) {
+    app.use('/assets', express.static(path.join(distPath, 'assets'), {
+      maxAge: '7d',
+      immutable: true,
+      etag: true
+    }));
+  }
+
+  // fall through to index.html for any route not found - enables client-side routing
+  app.use("*", (_req, res) => {
+    res.sendFile(path.resolve(distPath, "index.html"));
+  });
 }
 
 process.on('unhandledRejection', (error) => {
