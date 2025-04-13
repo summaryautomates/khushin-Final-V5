@@ -1,28 +1,46 @@
-# Deployment Fix Instructions
+# KHUSH Gift Gallery Deployment Fix
 
-Your deployment is having issues because of environment variable configuration. To fix this:
+## Issue
+The application was experiencing deployment issues where the site would show a blank page when deployed to khushgiftgallery.replit.app, while working correctly on the development URL.
 
-1. Click the three dots in the top right corner of your Replit workspace
-2. Select "Deployment" from the dropdown menu
-3. Click on "Configure Deployment"
-4. Add the following environment variables:
-   - Key: `NODE_ENV` 
-   - Value: `production`
-   - Key: `SESSION_SECRET`
-   - Value: (use the same value as in your development environment)
-   - Key: `PORT`
-   - Value: `8080`
-5. Click "Save" and then "Deploy"
+## What was fixed
 
-This will ensure your application starts correctly in production mode with the correct port configuration.
+1. Enhanced static file path detection:
+   - Added more potential paths to check for static files in production
+   - Included Replit-specific paths like `/home/runner/app/dist/public`
 
-## Alternatively, you can use the existing files
+2. Improved error handling:
+   - Added better error handling when serving index.html
+   - Added a fallback HTML page if the index.html cannot be found
+   - Added detailed logging to help diagnose issues
 
-1. Build the application first:
+3. Made environment variables more resilient:
+   - SESSION_SECRET: Now has a fallback if not set
+   - PORT: Defaults to 8080 for production
+   - NODE_ENV: Properly handled with fallback values
+
+## How to Deploy
+
+1. Run the deployment script:
    ```
-   npm run build
+   ./deploy.sh
    ```
 
-2. Then deploy by clicking the "Deploy" button in Replit
+2. Click "Deploy" in the Replit interface
 
-The deployment should work correctly as it will now have all the necessary environment variables and port configurations.
+3. Make sure these environment variables are set in the deployment settings:
+   - NODE_ENV=production
+   - SESSION_SECRET=a2408a928353a9dc67e5d343bd022e4fbc900437a27869fc1d038cc17de00289
+   - PORT=8080
+
+## Testing the Deployment
+
+After deployment, your site should be available at:
+- khushgiftgallery.replit.app
+
+If you still encounter issues, please check:
+1. Replit logs for any error messages
+2. That all environment variables are set correctly
+3. That the build completed successfully
+
+The changes made make the application much more resilient to the Replit deployment environment's specifics and should resolve the blank page issue.

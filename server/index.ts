@@ -198,7 +198,39 @@ async function startServer() {
 
           // fall through to index.html for any route not found - enables client-side routing
           app.use("*", (_req, res) => {
-            res.sendFile(path.resolve(distPath, "index.html"));
+            try {
+              console.log(`Attempting to serve index.html from: ${path.resolve(distPath, "index.html")}`);
+              res.sendFile(path.resolve(distPath, "index.html"));
+            } catch (err) {
+              console.error(`Error serving index.html: ${err}`);
+              // Fallback to a simple HTML response if file cannot be found
+              res.status(200).send(`
+                <!DOCTYPE html>
+                <html>
+                  <head>
+                    <title>KHUSH Gift Gallery</title>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <style>
+                      body { font-family: Arial, sans-serif; background: #000; color: #fff; text-align: center; padding: 20px; }
+                      h1 { color: #f5a623; }
+                      .container { max-width: 800px; margin: 0 auto; }
+                      .message { margin: 30px 0; line-height: 1.6; }
+                      .footer { margin-top: 40px; font-size: 14px; color: #777; }
+                    </style>
+                  </head>
+                  <body>
+                    <div class="container">
+                      <h1>KHUSH Gift Gallery</h1>
+                      <div class="message">
+                        <p>Welcome to our luxury gift boutique.</p>
+                        <p>Please try refreshing the page. If the problem persists, please check back soon.</p>
+                      </div>
+                    </div>
+                  </body>
+                </html>
+              `);
+            }
           });
         }
         // --- End of inline function ---
