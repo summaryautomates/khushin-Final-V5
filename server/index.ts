@@ -140,7 +140,12 @@ async function startServer() {
           path.resolve(__dirname, "public"),
           path.resolve(__dirname, "..", "public"),
           path.resolve(__dirname, "..", "dist", "public"),
-          path.resolve(process.cwd(), "dist", "public")
+          path.resolve(process.cwd(), "dist", "public"),
+          path.resolve(process.cwd(), "public"),
+          // Add Replit deployment specific paths
+          "/home/runner/app/dist/public",
+          "/dist/public",
+          "/public"
         ];
         
         let distPath = '';
