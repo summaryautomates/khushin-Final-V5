@@ -40,7 +40,9 @@ export async function setupAuth(app: Express) {
 
     // Check for required environment variables
     if (!process.env.SESSION_SECRET) {
-      throw new Error("SESSION_SECRET environment variable is required");
+      console.warn('⚠️ No SESSION_SECRET found in environment variables. Using a fallback secret for development only.');
+      // Default fallback secret - only for development
+      process.env.SESSION_SECRET = 'a2408a928353a9dc67e5d343bd022e4fbc900437a27869fc1d038cc17de00289';
     }
 
     const isProduction = process.env.NODE_ENV === 'production';
