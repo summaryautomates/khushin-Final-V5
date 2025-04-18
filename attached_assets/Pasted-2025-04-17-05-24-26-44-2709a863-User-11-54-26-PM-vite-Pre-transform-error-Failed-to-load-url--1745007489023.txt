@@ -1,0 +1,84 @@
+2025-04-17 05:24:26.44
+2709a863
+User
+11:54:26 PM [vite] Pre-transform error: Failed to load url /src/main.tsx?v=yW4BNMBDc6GnqK_U77h4- (resolved id: /src/main.tsx?v=yW4BNMBDc6GnqK_U77h4-). Does the file exist?
+2025-04-17 05:25:43.49
+2709a863
+User
+},
+2025-04-17 05:25:43.49
+2709a863
+User
+_closeAfterHandlingError: false,
+2025-04-17 05:25:43.49
+2709a863
+User
+_readableState: ReadableState {
+2025-04-17 05:25:43.49
+2709a863
+User
+buffer: [],
+2025-04-17 05:25:43.49
+2709a863
+User
+bufferIndex: 0,
+2025-04-17 05:25:43.49
+2709a863
+User
+pipes: [],
+2025-04-17 05:25:43.49
+2709a863
+User
+[Symbol(kState)]: 194519348
+2025-04-17 05:25:43.49
+2709a863
+User
+},
+2025-04-17 05:25:43.49
+2709a863
+User
+highWaterMark: 16384,
+2025-04-17 05:25:43.49
+2709a863
+User
+writelen: 0,
+2025-04-17 05:25:43.49
+2709a863
+User
+[Symbol(kState)]: 17563956,
+2025-04-18 23:43:20.81
+59475bd7
+User
+6:13:20 PM [vite] Pre-transform error: Failed to load url /src/main.tsx?v=rSLLmMxdaj9V8GCOqpRZ6 (resolved id: /src/main.tsx?v=rSLLmMxdaj9V8GCOqpRZ6). Does the file exist?
+2025-04-18 23:43:20.82
+59475bd7
+System
+command finished with error [sh -c node dist/index.js]: exit status 1
+2025-04-18 23:43:29.94
+59475bd7
+System
+command finished with error [sh -c node dist/index.js]: signal: terminated
+2025-04-18 23:43:41.03
+59475bd7
+User
+6:13:41 PM [vite] Pre-transform error: Failed to load url /src/main.tsx?v=Qcxw4uX1wdE3_b5VzYchC (resolved id: /src/main.tsx?v=Qcxw4uX1wdE3_b5VzYchC). Does the file exist?
+2025-04-18 23:43:41.04
+59475bd7
+System
+command finished with error [sh -c node dist/index.js]: exit status 1
+2025-04-19 00:59:43.48
+59475bd7
+User
+7:29:43 PM [vite] Pre-transform error: Failed to load url /src/main.tsx?v=KS4XIyZ-Joage38XiI54M (resolved id: /src/main.tsx?v=KS4XIyZ-Joage38XiI54M). Does the file exist?
+2025-04-19 00:59:43.51
+59475bd7
+System
+command finished with error [sh -c node dist/index.js]: exit status 1
+2025-04-19 01:20:14.84
+59475bd7
+User
+7:50:14 PM [vite] Pre-transform error: Failed to load url /src/main.tsx?v=N4wtbuaeqWcKvg2BGb86P (resolved id: /src/main.tsx?v=N4wtbuaeqWcKvg2BGb86P). Does the file exist?
+2025-04-19 01:20:14.86
+59475bd7
+System
+command finished with error [sh -c node dist/index.js]: exit status 1
