@@ -5,6 +5,9 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 [nix]
 channel = "stable-24_05"
 
+[env]
+DATABASE_URL = "postgresql://postgres:password@localhost:5432/khush_lighters"
+
 [deployment]
 deploymentTarget = "cloudrun"
 build = ["sh", "-c", "npm run build"]
