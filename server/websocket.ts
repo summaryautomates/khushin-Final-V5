@@ -21,6 +21,8 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
     server,
     path: '/ws',
     clientTracking: true,
+    perMessageDeflate: false, // Disable compression to reduce overhead
+    maxPayload: 16 * 1024, // 16KB max payload
     verifyClient: async (info: any, callback: any) => {
       try {
         // Create a mock response object for session middleware
@@ -30,9 +32,14 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
           removeHeader: () => {}
         };
 
-        // Apply session middleware with promise wrapper
-        await new Promise<void>((resolve, reject) => {
+        // Apply session middleware with promise wrapper and timeout
+        const sessionPromise = new Promise<void>((resolve, reject) => {
+          const timeoutId = setTimeout(() => {
+            reject(new Error('Session middleware timeout'));
+          }, 5000); // 5 second timeout
+
           sessionMiddleware(info.req, res, (err: Error) => {
+            clearTimeout(timeoutId);
             if (err) {
               console.error('Session middleware error:', {
                 error: err.message,
@@ -46,6 +53,8 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
           });
         });
 
+        await sessionPromise;
+
         const session = info.req.session as ExtendedSessionData;
 
         // Debug session state
@@ -54,9 +63,9 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
           sessionId: session?.id,
           hasPassport: !!session?.passport,
           userId: session?.passport?.user,
-          cookies: info.req.headers.cookie,
           timestamp: new Date().toISOString(),
-          headers: info.req.headers
+          origin: info.origin,
+          userAgent: info.req.headers['user-agent']
         });
 
         // In development, allow connections but mark auth status
@@ -87,8 +96,9 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
         // In development, allow connection but mark as unauthenticated
         const isProduction = process.env.NODE_ENV === 'production';
         if (isProduction) {
-          callback(false, 401, 'Unauthorized');
+          callback(false, 500, 'Internal Server Error');
         } else {
+          // Always provide a callback to prevent hanging connections
           callback(true, undefined, undefined, {
             isAuthenticated: false,
             sessionId: null,
@@ -100,11 +110,14 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
   });
 
   // Track active connections with a maximum limit
-  const MAX_CONNECTIONS = 1000;
+  const MAX_CONNECTIONS = 500; // Reduced from 1000 to prevent resource exhaustion
   const activeConnections = new Map<string, AuthenticatedWebSocket>();
 
   // Heartbeat interval (every 30 seconds)
   const heartbeatInterval = setInterval(() => {
+    const clientCount = wss.clients.size;
+    console.log(`WebSocket heartbeat check - ${clientCount} active connections`);
+    
     wss.clients.forEach((ws: WebSocket) => {
       const client = ws as AuthenticatedWebSocket;
       if (!client.isAlive) {
@@ -120,7 +133,9 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
       }
       client.isAlive = false;
       try {
-        client.ping();
+        if (client.readyState === WebSocket.OPEN) {
+          client.ping();
+        }
       } catch (error) {
         console.error('Error sending ping:', error);
         client.terminate();
@@ -132,6 +147,7 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
     try {
       // Check connection limit
       if (activeConnections.size >= MAX_CONNECTIONS) {
+        console.warn('Maximum WebSocket connections reached, rejecting new connection');
         ws.close(1013, 'Maximum connections reached');
         return;
       }
@@ -148,13 +164,13 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
         userId: ws.userId,
         isAuthenticated: !!ws.userId,
         timestamp: new Date().toISOString(),
-        headers: req.headers
+        totalConnections: activeConnections.size + 1
       });
 
       if (ws.sessionId) {
         // Close existing connection if it exists
         const existingConnection = activeConnections.get(ws.sessionId);
-        if (existingConnection) {
+        if (existingConnection && existingConnection.readyState === WebSocket.OPEN) {
           try {
             existingConnection.close(1000, 'New connection established');
           } catch (err) {
@@ -164,28 +180,68 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
         activeConnections.set(ws.sessionId, ws);
       }
 
-      // Send initial connection status
-      try {
-        ws.send(JSON.stringify({
-          type: 'connected',
-          data: {
-            userId: ws.userId,
-            isAuthenticated: !!ws.userId,
-            timestamp: new Date().toISOString()
+      // Send initial connection status with retry logic
+      const sendInitialMessage = async (retries = 3) => {
+        for (let i = 0; i < retries; i++) {
+          try {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({
+                type: 'connected',
+                data: {
+                  userId: ws.userId,
+                  isAuthenticated: !!ws.userId,
+                  timestamp: new Date().toISOString()
+                }
+              }));
+              break;
+            }
+          } catch (sendError) {
+            console.error(`Error sending initial message (attempt ${i + 1}):`, sendError);
+            if (i === retries - 1) {
+              console.error('Failed to send initial message after all retries');
+            } else {
+              await new Promise(resolve => setTimeout(resolve, 100 * (i + 1))); // Exponential backoff
+            }
           }
-        }));
-      } catch (sendError) {
-        console.error('Error sending initial message:', sendError);
-      }
+        }
+      };
+
+      await sendInitialMessage();
 
       // Handle pong messages to keep connection alive
       ws.on('pong', () => {
         ws.isAlive = true;
       });
 
-      // Handle incoming messages
+      // Handle incoming messages with rate limiting
+      let messageCount = 0;
+      let lastMessageTime = Date.now();
+      const MESSAGE_RATE_LIMIT = 10; // Max 10 messages per second
+      const RATE_LIMIT_WINDOW = 1000; // 1 second window
+
       ws.on('message', (data: WebSocket.RawData) => {
         try {
+          // Simple rate limiting
+          const now = Date.now();
+          if (now - lastMessageTime > RATE_LIMIT_WINDOW) {
+            messageCount = 0;
+            lastMessageTime = now;
+          }
+          
+          messageCount++;
+          if (messageCount > MESSAGE_RATE_LIMIT) {
+            console.warn('Rate limit exceeded for WebSocket connection', {
+              sessionId: ws.sessionId,
+              userId: ws.userId
+            });
+            ws.send(JSON.stringify({
+              type: 'error',
+              error: 'Rate limit exceeded',
+              timestamp: new Date().toISOString()
+            }));
+            return;
+          }
+
           const messageStr = data instanceof Buffer ? data.toString() : data.toString();
           let parsedMessage;
 
@@ -195,26 +251,28 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
             console.warn('Failed to parse WebSocket message:', {
               error: parseError instanceof Error ? parseError.message : 'Unknown error',
               timestamp: new Date().toISOString(),
-              messagePreview: data instanceof Buffer ? 
-                data.toString('utf8', 0, 100) : 
-                String(data).substring(0, 100)
+              messagePreview: messageStr.substring(0, 100)
             });
 
-            ws.send(JSON.stringify({
-              type: 'error',
-              error: 'Invalid message format',
-              timestamp: new Date().toISOString()
-            }));
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({
+                type: 'error',
+                error: 'Invalid message format',
+                timestamp: new Date().toISOString()
+              }));
+            }
             return;
           }
 
           // Handle ping message specifically
           if (parsedMessage && parsedMessage.type === 'ping') {
             ws.isAlive = true;
-            ws.send(JSON.stringify({ 
-              type: 'pong', 
-              timestamp: new Date().toISOString() 
-            }));
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ 
+                type: 'pong', 
+                timestamp: new Date().toISOString() 
+              }));
+            }
             return;
           }
 
@@ -242,32 +300,71 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
       });
 
       // Handle connection close
-      ws.on('close', () => {
+      ws.on('close', (code, reason) => {
         if (ws.sessionId) {
           activeConnections.delete(ws.sessionId);
         }
         console.log('WebSocket connection closed:', {
           userId: ws.userId,
           sessionId: ws.sessionId,
-          timestamp: new Date().toISOString()
+          code,
+          reason: reason?.toString(),
+          timestamp: new Date().toISOString(),
+          remainingConnections: activeConnections.size
         });
       });
 
     } catch (error) {
       console.error('Connection handling error:', error);
       try {
-        ws.close(1011, 'Server error');
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.close(1011, 'Server error');
+        }
       } catch (closeError) {
         console.error('Error closing WebSocket after error:', closeError);
       }
     }
   });
 
+  // Handle WebSocket server errors
+  wss.on('error', (error) => {
+    console.error('WebSocket server error:', error);
+  });
+
   // Cleanup on server close
   wss.on('close', () => {
+    console.log('WebSocket server closing, cleaning up resources');
     clearInterval(heartbeatInterval);
     activeConnections.clear();
   });
+
+  // Graceful shutdown handler
+  const gracefulShutdown = () => {
+    console.log('Initiating WebSocket server graceful shutdown');
+    clearInterval(heartbeatInterval);
+    
+    // Close all active connections
+    wss.clients.forEach((client) => {
+      try {
+        if (client.readyState === WebSocket.OPEN) {
+          client.close(1001, 'Server shutting down');
+        }
+      } catch (error) {
+        console.error('Error closing client during shutdown:', error);
+      }
+    });
+    
+    activeConnections.clear();
+    
+    // Close the WebSocket server
+    wss.close(() => {
+      console.log('WebSocket server closed gracefully');
+    });
+  };
+
+  // Register shutdown handlers
+  process.on('SIGTERM', gracefulShutdown);
+  process.on('SIGINT', gracefulShutdown);
 
   return wss;
 }

@@ -13,7 +13,7 @@ import {
 import { eq, desc, and } from "drizzle-orm";
 import session from "express-session";
 import MemoryStore from "memorystore";
-import { db } from "./db";
+import { db, supabase } from "./db";
 import { sql } from "drizzle-orm";
 
 const MemoryStoreSession = MemoryStore(session);
@@ -62,26 +62,69 @@ export class ReplitDBStorage implements IStorage {
   }
 
   private checkDatabaseConnection() {
-    if (!db) {
-      throw new Error('Database connection not available. Please check your DATABASE_URL configuration.');
+    if (!db && !supabase) {
+      throw new Error('No database connection available. Please check your DATABASE_URL or Supabase configuration.');
     }
+    
+    if (!db && supabase) {
+      console.warn('⚠️ Using Supabase client as fallback - some operations may be limited');
+    }
+  }
+
+  private async executeWithFallback<T>(
+    directDbOperation: () => Promise<T>,
+    supabaseOperation?: () => Promise<T>,
+    operationName: string = 'database operation'
+  ): Promise<T> {
+    this.checkDatabaseConnection();
+    
+    // Try direct database connection first
+    if (db) {
+      try {
+        return await directDbOperation();
+      } catch (error) {
+        console.error(`Direct database ${operationName} failed:`, error);
+        // Don't immediately fall back, let the error propagate for critical operations
+        if (!supabaseOperation) {
+          throw error;
+        }
+      }
+    }
+    
+    // Fall back to Supabase if available and fallback operation is provided
+    if (supabase && supabaseOperation) {
+      try {
+        console.log(`Falling back to Supabase for ${operationName}`);
+        return await supabaseOperation();
+      } catch (fallbackError) {
+        console.error(`Supabase fallback ${operationName} failed:`, fallbackError);
+        throw fallbackError;
+      }
+    }
+    
+    throw new Error(`${operationName} failed - no available database connection`);
   }
 
   async createUser(userData: InsertUser & { is_guest?: boolean, expires_at?: Date | null }): Promise<User> {
     try {
-      this.checkDatabaseConnection();
       console.log('Creating user:', { username: userData.username, isGuest: userData.is_guest });
-      const [user] = await db.insert(users).values({
-        username: userData.username,
-        password: userData.password,
-        email: userData.email,
-        first_name: userData.first_name || null,
-        last_name: userData.last_name || null,
-        is_guest: userData.is_guest || false,
-        expires_at: userData.expires_at || null
-      }).returning();
-      console.log('User created successfully:', { id: user.id, username: user.username, isGuest: user.is_guest });
-      return user;
+      
+      return await this.executeWithFallback(
+        async () => {
+          const [user] = await db.insert(users).values({
+            username: userData.username,
+            password: userData.password,
+            email: userData.email,
+            first_name: userData.first_name || null,
+            last_name: userData.last_name || null,
+            is_guest: userData.is_guest || false,
+            expires_at: userData.expires_at || null
+          }).returning();
+          return user;
+        },
+        undefined, // No Supabase fallback for user creation due to auth complexity
+        'user creation'
+      );
     } catch (error) {
       console.error('Error creating user:', error);
       throw error;
@@ -90,10 +133,16 @@ export class ReplitDBStorage implements IStorage {
 
   async getUser(id: number): Promise<User | undefined> {
     try {
-      this.checkDatabaseConnection();
       console.log('Fetching user by ID:', id);
-      const [user] = await db.select().from(users).where(eq(users.id, id));
-      return user;
+      
+      return await this.executeWithFallback(
+        async () => {
+          const [user] = await db.select().from(users).where(eq(users.id, id));
+          return user;
+        },
+        undefined, // No Supabase fallback for user operations due to auth complexity
+        'user fetch by ID'
+      );
     } catch (error) {
       console.error('Error fetching user by ID:', error);
       return undefined;
@@ -102,10 +151,16 @@ export class ReplitDBStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     try {
-      this.checkDatabaseConnection();
       console.log('Fetching user by username:', username);
-      const [user] = await db.select().from(users).where(eq(users.username, username));
-      return user;
+      
+      return await this.executeWithFallback(
+        async () => {
+          const [user] = await db.select().from(users).where(eq(users.username, username));
+          return user;
+        },
+        undefined, // No Supabase fallback for user operations due to auth complexity
+        'user fetch by username'
+      );
     } catch (error) {
       console.error('Error fetching user by username:', error);
       return undefined;
@@ -114,28 +169,32 @@ export class ReplitDBStorage implements IStorage {
   
   async updateUser(id: number, userData: Partial<InsertUser> & { is_guest?: boolean, expires_at?: Date | null }): Promise<User> {
     try {
-      this.checkDatabaseConnection();
       console.log('Updating user:', { id, ...userData });
       
-      // Remove undefined values to avoid setting fields to null unintentionally
-      const updateData: Record<string, any> = {};
-      for (const [key, value] of Object.entries(userData)) {
-        if (value !== undefined) {
-          updateData[key] = value;
-        }
-      }
-      
-      const [updatedUser] = await db.update(users)
-        .set(updateData)
-        .where(eq(users.id, id))
-        .returning();
-      
-      if (!updatedUser) {
-        throw new Error(`User with ID ${id} not found`);
-      }
-      
-      console.log('User updated successfully:', { id: updatedUser.id, username: updatedUser.username });
-      return updatedUser;
+      return await this.executeWithFallback(
+        async () => {
+          // Remove undefined values to avoid setting fields to null unintentionally
+          const updateData: Record<string, any> = {};
+          for (const [key, value] of Object.entries(userData)) {
+            if (value !== undefined) {
+              updateData[key] = value;
+            }
+          }
+          
+          const [updatedUser] = await db.update(users)
+            .set(updateData)
+            .where(eq(users.id, id))
+            .returning();
+          
+          if (!updatedUser) {
+            throw new Error(`User with ID ${id} not found`);
+          }
+          
+          return updatedUser;
+        },
+        undefined, // No Supabase fallback for user operations due to auth complexity
+        'user update'
+      );
     } catch (error) {
       console.error('Error updating user:', error);
       throw error;
@@ -144,11 +203,22 @@ export class ReplitDBStorage implements IStorage {
 
   async getProducts(): Promise<typeof products.$inferSelect[]> {
     try {
-      this.checkDatabaseConnection();
       console.log('Fetching all products');
-      const result = await db.select().from(products);
-      console.log(`Successfully fetched ${result.length} products`);
-      return result;
+      
+      return await this.executeWithFallback(
+        async () => {
+          const result = await db.select().from(products);
+          console.log(`Successfully fetched ${result.length} products`);
+          return result;
+        },
+        async () => {
+          const { data, error } = await supabase.from('products').select('*');
+          if (error) throw error;
+          console.log(`Successfully fetched ${data?.length || 0} products via Supabase`);
+          return data || [];
+        },
+        'products fetch'
+      );
     } catch (error) {
       console.error('Error fetching products:', error);
       // Return empty array instead of throwing to prevent complete app failure
@@ -159,10 +229,20 @@ export class ReplitDBStorage implements IStorage {
 
   async getProductById(id: number): Promise<typeof products.$inferSelect | undefined> {
     try {
-      this.checkDatabaseConnection();
       console.log('Fetching product by ID:', id);
-      const [product] = await db.select().from(products).where(eq(products.id, id));
-      return product;
+      
+      return await this.executeWithFallback(
+        async () => {
+          const [product] = await db.select().from(products).where(eq(products.id, id));
+          return product;
+        },
+        async () => {
+          const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
+          if (error && error.code !== 'PGRST116') throw error;
+          return data;
+        },
+        'product fetch by ID'
+      );
     } catch (error) {
       console.error('Error fetching product by ID:', error);
       return undefined;
@@ -171,9 +251,19 @@ export class ReplitDBStorage implements IStorage {
 
   async getProductsByCategory(category: string): Promise<typeof products.$inferSelect[]> {
     try {
-      this.checkDatabaseConnection();
       console.log('Fetching products by category:', category);
-      return await db.select().from(products).where(eq(products.category, category));
+      
+      return await this.executeWithFallback(
+        async () => {
+          return await db.select().from(products).where(eq(products.category, category));
+        },
+        async () => {
+          const { data, error } = await supabase.from('products').select('*').eq('category', category);
+          if (error) throw error;
+          return data || [];
+        },
+        'products fetch by category'
+      );
     } catch (error) {
       console.error('Error fetching products by category:', error);
       return [];
@@ -182,8 +272,6 @@ export class ReplitDBStorage implements IStorage {
 
   async createOrder(orderData: InsertOrder): Promise<Order> {
     try {
-      this.checkDatabaseConnection();
-      
       // Validate required fields before proceeding
       if (!orderData.userId) {
         throw new Error('User ID is required');
@@ -215,60 +303,66 @@ export class ReplitDBStorage implements IStorage {
                          !!orderData.shipping.phone
       });
 
-      // Ensure data is properly formatted for database storage
-      let itemsString = typeof orderData.items === 'string' 
-        ? orderData.items 
-        : JSON.stringify(orderData.items);
-        
-      let shippingString = typeof orderData.shipping === 'string' 
-        ? orderData.shipping 
-        : JSON.stringify(orderData.shipping);
+      return await this.executeWithFallback(
+        async () => {
+          // Ensure data is properly formatted for database storage
+          let itemsString = typeof orderData.items === 'string' 
+            ? orderData.items 
+            : JSON.stringify(orderData.items);
+            
+          let shippingString = typeof orderData.shipping === 'string' 
+            ? orderData.shipping 
+            : JSON.stringify(orderData.shipping);
 
-      // Insert order into database with all required fields
-      const [order] = await db.insert(orders).values({
-        orderRef: orderData.orderRef,
-        userId: orderData.userId,
-        status: orderData.status || 'pending',
-        total: orderData.total || 0,
-        items: itemsString,
-        shipping: shippingString,
-        createdAt: new Date(),
-        lastUpdated: new Date(),
-        trackingNumber: null,
-        trackingStatus: null,
-        estimatedDelivery: null
-      }).returning();
+          // Insert order into database with all required fields
+          const [order] = await db.insert(orders).values({
+            orderRef: orderData.orderRef,
+            userId: orderData.userId,
+            status: orderData.status || 'pending',
+            total: orderData.total || 0,
+            items: itemsString,
+            shipping: shippingString,
+            createdAt: new Date(),
+            lastUpdated: new Date(),
+            trackingNumber: null,
+            trackingStatus: null,
+            estimatedDelivery: null
+          }).returning();
 
-      console.log('Order created successfully:', { 
-        ref: order.orderRef, 
-        id: order.id,
-        status: order.status
-      });
+          console.log('Order created successfully:', { 
+            ref: order.orderRef, 
+            id: order.id,
+            status: order.status
+          });
 
-      // Parse items and shipping back to objects for returning to client
-      try {
-        const parsedItems = typeof order.items === 'string' 
-          ? JSON.parse(order.items) 
-          : order.items;
-          
-        const parsedShipping = typeof order.shipping === 'string' 
-          ? JSON.parse(order.shipping) 
-          : order.shipping;
+          // Parse items and shipping back to objects for returning to client
+          try {
+            const parsedItems = typeof order.items === 'string' 
+              ? JSON.parse(order.items) 
+              : order.items;
+              
+            const parsedShipping = typeof order.shipping === 'string' 
+              ? JSON.parse(order.shipping) 
+              : order.shipping;
 
-        return {
-          ...order,
-          items: parsedItems,
-          shipping: parsedShipping,
-          estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
-        };
-      } catch (parseError) {
-        console.error('Error parsing order data after creation:', parseError);
-        // Return the order with unparsed data rather than failing completely
-        return {
-          ...order,
-          estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
-        } as unknown as Order;
-      }
+            return {
+              ...order,
+              items: parsedItems,
+              shipping: parsedShipping,
+              estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
+            };
+          } catch (parseError) {
+            console.error('Error parsing order data after creation:', parseError);
+            // Return the order with unparsed data rather than failing completely
+            return {
+              ...order,
+              estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
+            } as unknown as Order;
+          }
+        },
+        undefined, // No Supabase fallback for complex order operations
+        'order creation'
+      );
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;
@@ -277,35 +371,41 @@ export class ReplitDBStorage implements IStorage {
 
   async getOrderByRef(orderRef: string): Promise<Order | undefined> {
     try {
-      this.checkDatabaseConnection();
       console.log('Fetching order by ref:', orderRef);
-      const [order] = await db.select().from(orders).where(eq(orders.orderRef, orderRef));
-      if (!order) return undefined;
+      
+      return await this.executeWithFallback(
+        async () => {
+          const [order] = await db.select().from(orders).where(eq(orders.orderRef, orderRef));
+          if (!order) return undefined;
 
-      try {
-        // Parse items and shipping from string to object
-        const parsedItems = typeof order.items === 'string' 
-          ? JSON.parse(order.items) 
-          : order.items;
-          
-        const parsedShipping = typeof order.shipping === 'string' 
-          ? JSON.parse(order.shipping) 
-          : order.shipping;
+          try {
+            // Parse items and shipping from string to object
+            const parsedItems = typeof order.items === 'string' 
+              ? JSON.parse(order.items) 
+              : order.items;
+              
+            const parsedShipping = typeof order.shipping === 'string' 
+              ? JSON.parse(order.shipping) 
+              : order.shipping;
 
-        return {
-          ...order,
-          items: parsedItems,
-          shipping: parsedShipping,
-          estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
-        };
-      } catch (parseError) {
-        console.error('Error parsing order data:', parseError);
-        // Return the order with unparsed data rather than failing completely
-        return {
-          ...order,
-          estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
-        } as unknown as Order;
-      }
+            return {
+              ...order,
+              items: parsedItems,
+              shipping: parsedShipping,
+              estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
+            };
+          } catch (parseError) {
+            console.error('Error parsing order data:', parseError);
+            // Return the order with unparsed data rather than failing completely
+            return {
+              ...order,
+              estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
+            } as unknown as Order;
+          }
+        },
+        undefined, // No Supabase fallback for complex order operations
+        'order fetch by ref'
+      );
     } catch (error) {
       console.error('Error fetching order by ref:', error);
       return undefined;
@@ -318,22 +418,27 @@ export class ReplitDBStorage implements IStorage {
     paymentMethod: 'upi' | 'cod'
   ): Promise<void> {
     try {
-      this.checkDatabaseConnection();
       console.log('Updating order status:', {
         ref: orderRef,
         status,
         paymentMethod
       });
 
-      await db.update(orders)
-        .set({
-          status,
-          paymentMethod,
-          lastUpdated: new Date()
-        })
-        .where(eq(orders.orderRef, orderRef));
+      await this.executeWithFallback(
+        async () => {
+          await db.update(orders)
+            .set({
+              status,
+              paymentMethod,
+              lastUpdated: new Date()
+            })
+            .where(eq(orders.orderRef, orderRef));
 
-      console.log('Order status updated successfully');
+          console.log('Order status updated successfully');
+        },
+        undefined, // No Supabase fallback for complex order operations
+        'order status update'
+      );
     } catch (error) {
       console.error('Error updating order status:', error);
       throw error;
@@ -342,39 +447,45 @@ export class ReplitDBStorage implements IStorage {
 
   async getOrdersByUserId(userId: string): Promise<Order[]> {
     try {
-      this.checkDatabaseConnection();
       console.log('Fetching orders for user:', userId);
-      const ordersList = await db.select()
-        .from(orders)
-        .where(eq(orders.userId, userId))
-        .orderBy(desc(orders.createdAt));
+      
+      return await this.executeWithFallback(
+        async () => {
+          const ordersList = await db.select()
+            .from(orders)
+            .where(eq(orders.userId, userId))
+            .orderBy(desc(orders.createdAt));
 
-      // Parse items and shipping for each order with error handling
-      return ordersList.map(order => {
-        try {
-          const parsedItems = typeof order.items === 'string' 
-            ? JSON.parse(order.items) 
-            : order.items;
-            
-          const parsedShipping = typeof order.shipping === 'string' 
-            ? JSON.parse(order.shipping) 
-            : order.shipping;
+          // Parse items and shipping for each order with error handling
+          return ordersList.map(order => {
+            try {
+              const parsedItems = typeof order.items === 'string' 
+                ? JSON.parse(order.items) 
+                : order.items;
+                
+              const parsedShipping = typeof order.shipping === 'string' 
+                ? JSON.parse(order.shipping) 
+                : order.shipping;
 
-          return {
-            ...order,
-            items: parsedItems,
-            shipping: parsedShipping,
-            estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
-          };
-        } catch (parseError) {
-          console.error('Error parsing order data:', parseError);
-          // Return the order with unparsed data rather than failing completely
-          return {
-            ...order,
-            estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
-          } as unknown as Order;
-        }
-      });
+              return {
+                ...order,
+                items: parsedItems,
+                shipping: parsedShipping,
+                estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
+              };
+            } catch (parseError) {
+              console.error('Error parsing order data:', parseError);
+              // Return the order with unparsed data rather than failing completely
+              return {
+                ...order,
+                estimatedDelivery: order.estimatedDelivery ? order.estimatedDelivery.toISOString() : null
+              } as unknown as Order;
+            }
+          });
+        },
+        undefined, // No Supabase fallback for complex order operations
+        'orders fetch by user ID'
+      );
     } catch (error) {
       console.error('Error fetching orders for user:', error);
       return [];
@@ -384,25 +495,30 @@ export class ReplitDBStorage implements IStorage {
   // Cart methods implementation
   async getCartItems(userId: string): Promise<{ product: typeof products.$inferSelect, quantity: number, isGift: boolean, giftMessage?: string }[]> {
     try {
-      this.checkDatabaseConnection();
       console.log('Fetching cart items for user:', userId);
       
-      // Join cart_items with products to get product details
-      const items = await db.select({
-        cart: cartItems,
-        product: products
-      })
-      .from(cartItems)
-      .innerJoin(products, eq(cartItems.productId, products.id))
-      .where(eq(cartItems.userId, userId));
-      
-      // Transform the result to match the expected return type
-      return items.map(item => ({
-        product: item.product,
-        quantity: item.cart.quantity,
-        isGift: item.cart.isGift,
-        giftMessage: item.cart.giftMessage || undefined
-      }));
+      return await this.executeWithFallback(
+        async () => {
+          // Join cart_items with products to get product details
+          const items = await db.select({
+            cart: cartItems,
+            product: products
+          })
+          .from(cartItems)
+          .innerJoin(products, eq(cartItems.productId, products.id))
+          .where(eq(cartItems.userId, userId));
+          
+          // Transform the result to match the expected return type
+          return items.map(item => ({
+            product: item.product,
+            quantity: item.cart.quantity,
+            isGift: item.cart.isGift,
+            giftMessage: item.cart.giftMessage || undefined
+          }));
+        },
+        undefined, // No Supabase fallback for complex cart operations
+        'cart items fetch'
+      );
     } catch (error) {
       console.error('Error fetching cart items:', error);
       return [];
@@ -411,43 +527,48 @@ export class ReplitDBStorage implements IStorage {
 
   async addToCart(userId: string, productId: number, quantity: number, isGift: boolean = false, giftMessage?: string): Promise<void> {
     try {
-      this.checkDatabaseConnection();
       console.log('Adding item to cart:', { userId, productId, quantity, isGift });
       
-      // Check if the item already exists in the cart
-      const [existingItem] = await db.select()
-        .from(cartItems)
-        .where(and(
-          eq(cartItems.userId, userId),
-          eq(cartItems.productId, productId)
-        ));
-      
-      if (existingItem) {
-        // Update the existing cart item - replace quantity instead of adding
-        await db.update(cartItems)
-          .set({
-            quantity, // Just use the provided quantity directly
-            isGift,
-            giftMessage: giftMessage || null,
-            updatedAt: new Date()
-          })
-          .where(eq(cartItems.id, existingItem.id));
-        
-        console.log('Updated cart item information');
-      } else {
-        // Insert a new cart item
-        await db.insert(cartItems).values({
-          userId,
-          productId,
-          quantity,
-          isGift,
-          giftMessage: giftMessage || null,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        });
-        
-        console.log('Added new item to cart');
-      }
+      await this.executeWithFallback(
+        async () => {
+          // Check if the item already exists in the cart
+          const [existingItem] = await db.select()
+            .from(cartItems)
+            .where(and(
+              eq(cartItems.userId, userId),
+              eq(cartItems.productId, productId)
+            ));
+          
+          if (existingItem) {
+            // Update the existing cart item - replace quantity instead of adding
+            await db.update(cartItems)
+              .set({
+                quantity, // Just use the provided quantity directly
+                isGift,
+                giftMessage: giftMessage || null,
+                updatedAt: new Date()
+              })
+              .where(eq(cartItems.id, existingItem.id));
+            
+            console.log('Updated cart item information');
+          } else {
+            // Insert a new cart item
+            await db.insert(cartItems).values({
+              userId,
+              productId,
+              quantity,
+              isGift,
+              giftMessage: giftMessage || null,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            });
+            
+            console.log('Added new item to cart');
+          }
+        },
+        undefined, // No Supabase fallback for complex cart operations
+        'add to cart'
+      );
     } catch (error) {
       console.error('Error adding item to cart:', error);
       throw error;
@@ -456,16 +577,21 @@ export class ReplitDBStorage implements IStorage {
 
   async removeFromCart(userId: string, productId: number): Promise<void> {
     try {
-      this.checkDatabaseConnection();
       console.log('Removing item from cart:', { userId, productId });
       
-      await db.delete(cartItems)
-        .where(and(
-          eq(cartItems.userId, userId),
-          eq(cartItems.productId, productId)
-        ));
-      
-      console.log('Item removed from cart');
+      await this.executeWithFallback(
+        async () => {
+          await db.delete(cartItems)
+            .where(and(
+              eq(cartItems.userId, userId),
+              eq(cartItems.productId, productId)
+            ));
+          
+          console.log('Item removed from cart');
+        },
+        undefined, // No Supabase fallback for complex cart operations
+        'remove from cart'
+      );
     } catch (error) {
       console.error('Error removing item from cart:', error);
       throw error;
@@ -474,7 +600,6 @@ export class ReplitDBStorage implements IStorage {
 
   async updateCartItemQuantity(userId: string, productId: number, quantity: number): Promise<void> {
     try {
-      this.checkDatabaseConnection();
       console.log('Updating cart item quantity:', { userId, productId, quantity });
       
       if (quantity <= 0) {
@@ -483,17 +608,23 @@ export class ReplitDBStorage implements IStorage {
         return;
       }
       
-      await db.update(cartItems)
-        .set({
-          quantity,
-          updatedAt: new Date()
-        })
-        .where(and(
-          eq(cartItems.userId, userId),
-          eq(cartItems.productId, productId)
-        ));
-      
-      console.log('Cart item quantity updated');
+      await this.executeWithFallback(
+        async () => {
+          await db.update(cartItems)
+            .set({
+              quantity,
+              updatedAt: new Date()
+            })
+            .where(and(
+              eq(cartItems.userId, userId),
+              eq(cartItems.productId, productId)
+            ));
+          
+          console.log('Cart item quantity updated');
+        },
+        undefined, // No Supabase fallback for complex cart operations
+        'update cart item quantity'
+      );
     } catch (error) {
       console.error('Error updating cart item quantity:', error);
       throw error;
@@ -502,21 +633,26 @@ export class ReplitDBStorage implements IStorage {
 
   async updateCartItemGiftStatus(userId: string, productId: number, isGift: boolean, giftMessage?: string): Promise<void> {
     try {
-      this.checkDatabaseConnection();
       console.log('Updating cart item gift status:', { userId, productId, isGift, giftMessage });
       
-      await db.update(cartItems)
-        .set({
-          isGift,
-          giftMessage: giftMessage || null,
-          updatedAt: new Date()
-        })
-        .where(and(
-          eq(cartItems.userId, userId),
-          eq(cartItems.productId, productId)
-        ));
-      
-      console.log('Cart item gift status updated');
+      await this.executeWithFallback(
+        async () => {
+          await db.update(cartItems)
+            .set({
+              isGift,
+              giftMessage: giftMessage || null,
+              updatedAt: new Date()
+            })
+            .where(and(
+              eq(cartItems.userId, userId),
+              eq(cartItems.productId, productId)
+            ));
+          
+          console.log('Cart item gift status updated');
+        },
+        undefined, // No Supabase fallback for complex cart operations
+        'update cart item gift status'
+      );
     } catch (error) {
       console.error('Error updating cart item gift status:', error);
       throw error;
@@ -525,13 +661,18 @@ export class ReplitDBStorage implements IStorage {
 
   async clearCart(userId: string): Promise<void> {
     try {
-      this.checkDatabaseConnection();
       console.log('Clearing cart for user:', userId);
       
-      await db.delete(cartItems)
-        .where(eq(cartItems.userId, userId));
-      
-      console.log('Cart cleared');
+      await this.executeWithFallback(
+        async () => {
+          await db.delete(cartItems)
+            .where(eq(cartItems.userId, userId));
+          
+          console.log('Cart cleared');
+        },
+        undefined, // No Supabase fallback for complex cart operations
+        'clear cart'
+      );
     } catch (error) {
       console.error('Error clearing cart:', error);
       throw error;

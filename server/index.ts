@@ -50,16 +50,21 @@ async function startServer() {
       await portManager.releaseAll();
       console.log('Complete port cleanup finished');
 
-      // Wait a moment for ports to fully release
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Increased wait time for ports to fully release (was 1000ms, now 3000ms)
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
-      // Check database health (non-blocking)
+      // Check database health (non-blocking but with better error handling)
       console.log('Checking database health...');
-      const isHealthy = await checkDatabaseHealth();
-      if (isHealthy) {
-        console.log('✅ Database health check passed');
-      } else {
-        console.log('⚠️ Database health check failed, but continuing server startup');
+      try {
+        const isHealthy = await checkDatabaseHealth();
+        if (isHealthy) {
+          console.log('✅ Database health check passed');
+        } else {
+          console.log('⚠️ Database health check failed, but continuing server startup');
+        }
+      } catch (dbError) {
+        console.error('Database health check error:', dbError);
+        console.log('⚠️ Database health check failed with error, but continuing server startup');
       }
 
       // Setup CORS with credentials support
@@ -74,8 +79,8 @@ async function startServer() {
       console.log('CORS configuration applied');
 
       // Configure express middleware
-      app.use(express.json());
-      app.use(express.urlencoded({ extended: true }));
+      app.use(express.json({ limit: '10mb' }));
+      app.use(express.urlencoded({ extended: true, limit: '10mb' }));
       app.set("trust proxy", 1);
 
       app.use('/placeholders', express.static('client/public/placeholders', {
@@ -115,15 +120,20 @@ async function startServer() {
       const sessionMiddleware = await setupAuth(app);
       console.log('Authentication setup complete');
 
-      // Setup WebSocket with session support
-      console.log('Setting up WebSocket...');
-      const wss = await setupWebSocket(server, sessionMiddleware);
-      console.log('WebSocket setup complete');
-
-      // Register routes
+      // Register routes first, before WebSocket setup
       console.log('Registering routes...');
       await registerRoutes(app);
       console.log('Routes registered successfully');
+
+      // Setup WebSocket with session support (after routes are registered)
+      console.log('Setting up WebSocket...');
+      try {
+        const wss = await setupWebSocket(server, sessionMiddleware);
+        console.log('WebSocket setup complete');
+      } catch (wsError) {
+        console.error('WebSocket setup failed:', wsError);
+        console.log('⚠️ Continuing without WebSocket support');
+      }
 
       // Setup Vite in development mode only
       if (!isProduction) {
@@ -250,7 +260,7 @@ async function startServer() {
         console.log(`Successfully acquired port ${port}${port !== REQUIRED_PORT ? ` (preferred was ${REQUIRED_PORT})` : ''}`);
       }
 
-      // Start the server
+      // Start the server with enhanced error handling
       await new Promise<void>((resolve, reject) => {
         const serverInstance = server.listen(port, '0.0.0.0', () => {
           console.log('Server successfully started:', {
@@ -276,40 +286,18 @@ async function startServer() {
             reject(new Error(`Failed to start server: ${error.message}`));
           }
         });
+
+        // Set server timeout to prevent hanging connections
+        serverInstance.timeout = 30000; // 30 seconds
+        serverInstance.keepAliveTimeout = 5000; // 5 seconds
+        serverInstance.headersTimeout = 6000; // 6 seconds (must be > keepAliveTimeout)
       });
 
       // Setup cleanup handlers
       const cleanup = async () => {
         console.log('Starting cleanup process...');
         try {
-          // First notify all clients of shutdown
-          if (wss) {
-            const clientCount = wss.clients.size;
-            console.log(`Notifying ${clientCount} WebSocket clients of shutdown`);
-
-            wss.clients.forEach((client) => {
-              try {
-                if (client.readyState === WebSocket.OPEN) {
-                  client.send(JSON.stringify({
-                    type: 'shutdown',
-                    message: 'Server is shutting down',
-                    timestamp: new Date().toISOString()
-                  }));
-                  client.close(1000, 'Server shutting down');
-                }
-              } catch (error) {
-                console.error('Error notifying client of shutdown:', error);
-              }
-            });
-
-            await new Promise<void>((resolve) => {
-              wss.close(() => {
-                console.log('WebSocket server closed');
-                resolve();
-              });
-            });
-          }
-
+          // Close the HTTP server first
           await new Promise<void>((resolve) => {
             server.close(() => {
               console.log('HTTP server closed');
@@ -352,7 +340,7 @@ async function startServer() {
       }
 
       if (startupAttempts < MAX_STARTUP_RETRIES) {
-        const delay = startupAttempts * 2000;
+        const delay = startupAttempts * 3000; // Increased delay between retries
         console.log(`Waiting ${delay}ms before next attempt...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       } else {
