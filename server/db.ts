@@ -8,7 +8,7 @@ const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
 // Check if DATABASE_URL is set for direct database connection
-const DATABASE_URL = process.env.DATABASE_URL;
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_m2gYrtGfDna5@ep-misty-wave-a5yxp4e1.us-east-2.aws.neon.tech/neondb?sslmode=require';
 
 let db: any = null;
 let supabase: any = null;
@@ -30,7 +30,7 @@ async function initializeDatabase() {
   }
 
   // Try direct database connection if DATABASE_URL is available
-  if (DATABASE_URL && DATABASE_URL !== 'postgresql://localhost:5432/temp_db') {
+  if (DATABASE_URL) {
     console.log('Attempting direct database connection...');
     
     while (connectionAttempts < MAX_CONNECTION_ATTEMPTS) {
@@ -79,14 +79,14 @@ async function initializeDatabase() {
   }
 }
 
-export async function checkDatabaseHealth(): Promise<boolean> {
+export async function checkDatabaseHealth(): Promise<{healthy: boolean, error?: string}> {
   try {
     // First try to initialize the database if not already done
     if (!db && !supabase) {
       const initialized = await initializeDatabase();
       if (!initialized) {
         console.warn('⚠️ No database connection available');
-        return false;
+        return {healthy: false, error: 'No database connection available'};
       }
     }
 
@@ -95,10 +95,11 @@ export async function checkDatabaseHealth(): Promise<boolean> {
       try {
         await db.execute('SELECT 1 as health_check');
         console.log('✅ Database health check passed (direct connection)');
-        return true;
+        return {healthy: true};
       } catch (error) {
         console.error('❌ Direct database health check failed:', error);
         db = null; // Reset connection for retry
+        return {healthy: false, error: error instanceof Error ? error.message : 'Unknown database error'};
       }
     }
     
@@ -108,30 +109,21 @@ export async function checkDatabaseHealth(): Promise<boolean> {
         const { data, error } = await supabase.from('products').select('id').limit(1);
         if (!error || error.code === 'PGRST116') { // Table not found is acceptable for health check
           console.log('✅ Database health check passed (Supabase fallback)');
-          return true;
+          return {healthy: true};
         }
         console.error('❌ Supabase health check failed:', error);
+        return {healthy: false, error: error.message || 'Supabase connection failed'};
       } catch (error) {
         console.error('❌ Supabase health check error:', error);
+        return {healthy: false, error: error instanceof Error ? error.message : 'Unknown Supabase error'};
       }
     }
     
-    // If we reach here, try to reinitialize
-    console.log('Attempting to reinitialize database connection...');
-    connectionAttempts = 0; // Reset attempts counter
-    const reinitialized = await initializeDatabase();
-    if (reinitialized) {
-      console.log('✅ Database connection reinitialized successfully');
-      return true;
-    }
-    
-    console.log('⚠️ Database unavailable - server will start with limited functionality');
-    return false;
+    return {healthy: false, error: 'No database connection available'};
     
   } catch (error) {
     console.error('❌ Database health check failed:', error);
-    console.log('⚠️ Database unavailable - server will start with limited functionality');
-    return false;
+    return {healthy: false, error: error instanceof Error ? error.message : 'Unknown error during health check'};
   }
 }
 
