@@ -1,12 +1,9 @@
 modules = ["nodejs-20", "web", "postgresql-16"]
-run = "DATABASE_URL='postgresql://postgres:password@localhost:5432/khush_lighters' npm run dev"
+run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-
-[env]
-DATABASE_URL = "postgresql://postgres:password@localhost:5432/khush_lighters"
 
 [deployment]
 deploymentTarget = "cloudrun"
@@ -101,7 +98,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "DATABASE_URL='postgresql://postgres:password@localhost:5432/khush_lighters' npm run dev"
+args = "npm run dev"
 waitForPort = 5000
 
 [[workflows.workflow]]
@@ -110,7 +107,7 @@ author = 39720243
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "DATABASE_URL='postgresql://postgres:password@localhost:5432/khush_lighters' npm run dev"
+args = "npm run dev"
 
 [[workflows.workflow]]
 name = "Start"
@@ -118,4 +115,4 @@ author = 39774376
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "DATABASE_URL='postgresql://postgres:password@localhost:5432/khush_lighters' npm run dev"
+args = "npm run dev"
