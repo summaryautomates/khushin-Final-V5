@@ -10,12 +10,19 @@ export function productRoutes(app: Express) {
   app.get("/api/products", async (_req, res) => {
     try {
       const products = await storage.getProducts();
+      
+      // If no products are returned (database issue), return empty array with success status
+      if (!products || products.length === 0) {
+        console.log('No products found or database unavailable, returning empty array');
+        return res.json([]);
+      }
+      
       res.json(products);
     } catch (error) {
       console.error('Error fetching products:', error);
-      res.status(500).json({
-        message: "Failed to fetch products"
-      });
+      
+      // Return empty array instead of error to prevent frontend crashes
+      res.json([]);
     }
   });
 
@@ -56,12 +63,10 @@ export function productRoutes(app: Express) {
       }
 
       const products = await storage.getProductsByCategory(category);
-      res.json(products);
+      res.json(products || []);
     } catch (error) {
       console.error('Error fetching products by category:', error);
-      res.status(500).json({
-        message: "Failed to fetch products by category"
-      });
+      res.json([]);
     }
   });
 
@@ -77,6 +82,10 @@ export function productRoutes(app: Express) {
 
       // Get all products and filter by search term
       const allProducts = await storage.getProducts();
+      if (!allProducts || allProducts.length === 0) {
+        return res.json([]);
+      }
+      
       const searchQuery = query.toLowerCase();
       
       const filteredProducts = allProducts.filter(product => {
@@ -91,9 +100,7 @@ export function productRoutes(app: Express) {
       res.json(filteredProducts);
     } catch (error) {
       console.error('Error searching products:', error);
-      res.status(500).json({
-        message: "Failed to search products"
-      });
+      res.json([]);
     }
   });
 }

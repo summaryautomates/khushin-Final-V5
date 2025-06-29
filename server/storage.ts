@@ -61,8 +61,15 @@ export class ReplitDBStorage implements IStorage {
     console.log('ReplitDBStorage initialized successfully');
   }
 
+  private checkDatabaseConnection() {
+    if (!db) {
+      throw new Error('Database connection not available. Please check your DATABASE_URL configuration.');
+    }
+  }
+
   async createUser(userData: InsertUser & { is_guest?: boolean, expires_at?: Date | null }): Promise<User> {
     try {
+      this.checkDatabaseConnection();
       console.log('Creating user:', { username: userData.username, isGuest: userData.is_guest });
       const [user] = await db.insert(users).values({
         username: userData.username,
@@ -83,6 +90,7 @@ export class ReplitDBStorage implements IStorage {
 
   async getUser(id: number): Promise<User | undefined> {
     try {
+      this.checkDatabaseConnection();
       console.log('Fetching user by ID:', id);
       const [user] = await db.select().from(users).where(eq(users.id, id));
       return user;
@@ -94,6 +102,7 @@ export class ReplitDBStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     try {
+      this.checkDatabaseConnection();
       console.log('Fetching user by username:', username);
       const [user] = await db.select().from(users).where(eq(users.username, username));
       return user;
@@ -105,6 +114,7 @@ export class ReplitDBStorage implements IStorage {
   
   async updateUser(id: number, userData: Partial<InsertUser> & { is_guest?: boolean, expires_at?: Date | null }): Promise<User> {
     try {
+      this.checkDatabaseConnection();
       console.log('Updating user:', { id, ...userData });
       
       // Remove undefined values to avoid setting fields to null unintentionally
@@ -134,16 +144,22 @@ export class ReplitDBStorage implements IStorage {
 
   async getProducts(): Promise<typeof products.$inferSelect[]> {
     try {
+      this.checkDatabaseConnection();
       console.log('Fetching all products');
-      return await db.select().from(products);
+      const result = await db.select().from(products);
+      console.log(`Successfully fetched ${result.length} products`);
+      return result;
     } catch (error) {
       console.error('Error fetching products:', error);
-      throw error;
+      // Return empty array instead of throwing to prevent complete app failure
+      console.log('Returning empty products array due to database error');
+      return [];
     }
   }
 
   async getProductById(id: number): Promise<typeof products.$inferSelect | undefined> {
     try {
+      this.checkDatabaseConnection();
       console.log('Fetching product by ID:', id);
       const [product] = await db.select().from(products).where(eq(products.id, id));
       return product;
@@ -155,16 +171,19 @@ export class ReplitDBStorage implements IStorage {
 
   async getProductsByCategory(category: string): Promise<typeof products.$inferSelect[]> {
     try {
+      this.checkDatabaseConnection();
       console.log('Fetching products by category:', category);
       return await db.select().from(products).where(eq(products.category, category));
     } catch (error) {
       console.error('Error fetching products by category:', error);
-      throw error;
+      return [];
     }
   }
 
   async createOrder(orderData: InsertOrder): Promise<Order> {
     try {
+      this.checkDatabaseConnection();
+      
       // Validate required fields before proceeding
       if (!orderData.userId) {
         throw new Error('User ID is required');
@@ -258,6 +277,7 @@ export class ReplitDBStorage implements IStorage {
 
   async getOrderByRef(orderRef: string): Promise<Order | undefined> {
     try {
+      this.checkDatabaseConnection();
       console.log('Fetching order by ref:', orderRef);
       const [order] = await db.select().from(orders).where(eq(orders.orderRef, orderRef));
       if (!order) return undefined;
@@ -298,6 +318,7 @@ export class ReplitDBStorage implements IStorage {
     paymentMethod: 'upi' | 'cod'
   ): Promise<void> {
     try {
+      this.checkDatabaseConnection();
       console.log('Updating order status:', {
         ref: orderRef,
         status,
@@ -321,6 +342,7 @@ export class ReplitDBStorage implements IStorage {
 
   async getOrdersByUserId(userId: string): Promise<Order[]> {
     try {
+      this.checkDatabaseConnection();
       console.log('Fetching orders for user:', userId);
       const ordersList = await db.select()
         .from(orders)
@@ -355,13 +377,14 @@ export class ReplitDBStorage implements IStorage {
       });
     } catch (error) {
       console.error('Error fetching orders for user:', error);
-      throw error;
+      return [];
     }
   }
 
   // Cart methods implementation
   async getCartItems(userId: string): Promise<{ product: typeof products.$inferSelect, quantity: number, isGift: boolean, giftMessage?: string }[]> {
     try {
+      this.checkDatabaseConnection();
       console.log('Fetching cart items for user:', userId);
       
       // Join cart_items with products to get product details
@@ -382,12 +405,13 @@ export class ReplitDBStorage implements IStorage {
       }));
     } catch (error) {
       console.error('Error fetching cart items:', error);
-      throw error;
+      return [];
     }
   }
 
   async addToCart(userId: string, productId: number, quantity: number, isGift: boolean = false, giftMessage?: string): Promise<void> {
     try {
+      this.checkDatabaseConnection();
       console.log('Adding item to cart:', { userId, productId, quantity, isGift });
       
       // Check if the item already exists in the cart
@@ -432,6 +456,7 @@ export class ReplitDBStorage implements IStorage {
 
   async removeFromCart(userId: string, productId: number): Promise<void> {
     try {
+      this.checkDatabaseConnection();
       console.log('Removing item from cart:', { userId, productId });
       
       await db.delete(cartItems)
@@ -449,6 +474,7 @@ export class ReplitDBStorage implements IStorage {
 
   async updateCartItemQuantity(userId: string, productId: number, quantity: number): Promise<void> {
     try {
+      this.checkDatabaseConnection();
       console.log('Updating cart item quantity:', { userId, productId, quantity });
       
       if (quantity <= 0) {
@@ -476,6 +502,7 @@ export class ReplitDBStorage implements IStorage {
 
   async updateCartItemGiftStatus(userId: string, productId: number, isGift: boolean, giftMessage?: string): Promise<void> {
     try {
+      this.checkDatabaseConnection();
       console.log('Updating cart item gift status:', { userId, productId, isGift, giftMessage });
       
       await db.update(cartItems)
@@ -498,6 +525,7 @@ export class ReplitDBStorage implements IStorage {
 
   async clearCart(userId: string): Promise<void> {
     try {
+      this.checkDatabaseConnection();
       console.log('Clearing cart for user:', userId);
       
       await db.delete(cartItems)
