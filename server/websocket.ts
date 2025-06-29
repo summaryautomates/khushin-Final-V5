@@ -32,25 +32,31 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
           removeHeader: () => {}
         };
 
-        // Apply session middleware with promise wrapper and timeout
+        // Apply session middleware with promise wrapper and increased timeout
         const sessionPromise = new Promise<void>((resolve, reject) => {
           const timeoutId = setTimeout(() => {
             reject(new Error('Session middleware timeout'));
-          }, 5000); // 5 second timeout
+          }, 10000); // Increased to 10 second timeout
 
-          sessionMiddleware(info.req, res, (err: Error) => {
+          try {
+            sessionMiddleware(info.req, res, (err: Error) => {
+              clearTimeout(timeoutId);
+              if (err) {
+                console.error('Session middleware error:', {
+                  error: err.message,
+                  stack: err.stack,
+                  timestamp: new Date().toISOString()
+                });
+                reject(err);
+                return;
+              }
+              resolve();
+            });
+          } catch (syncError) {
             clearTimeout(timeoutId);
-            if (err) {
-              console.error('Session middleware error:', {
-                error: err.message,
-                stack: err.stack,
-                timestamp: new Date().toISOString()
-              });
-              reject(err);
-              return;
-            }
-            resolve();
-          });
+            console.error('Synchronous session middleware error:', syncError);
+            reject(syncError);
+          }
         });
 
         await sessionPromise;
@@ -93,17 +99,27 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
           timestamp: new Date().toISOString()
         });
 
-        // In development, allow connection but mark as unauthenticated
-        const isProduction = process.env.NODE_ENV === 'production';
-        if (isProduction) {
-          callback(false, 500, 'Internal Server Error');
-        } else {
-          // Always provide a callback to prevent hanging connections
-          callback(true, undefined, undefined, {
-            isAuthenticated: false,
-            sessionId: null,
-            userId: null
-          });
+        // Always provide a callback to prevent hanging connections
+        try {
+          // In development, allow connection but mark as unauthenticated
+          const isProduction = process.env.NODE_ENV === 'production';
+          if (isProduction) {
+            callback(false, 500, 'Internal Server Error');
+          } else {
+            callback(true, undefined, undefined, {
+              isAuthenticated: false,
+              sessionId: null,
+              userId: null
+            });
+          }
+        } catch (callbackError) {
+          console.error('Error calling WebSocket verification callback:', callbackError);
+          // Last resort - reject the connection
+          try {
+            callback(false, 500, 'Internal Server Error');
+          } catch (finalError) {
+            console.error('Final callback error:', finalError);
+          }
         }
       }
     }

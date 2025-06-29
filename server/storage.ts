@@ -13,7 +13,7 @@ import {
 import { eq, desc, and } from "drizzle-orm";
 import session from "express-session";
 import MemoryStore from "memorystore";
-import { db, supabase } from "./db";
+import { db, supabase, checkDatabaseHealth } from "./db";
 import { sql } from "drizzle-orm";
 
 const MemoryStoreSession = MemoryStore(session);
@@ -61,22 +61,30 @@ export class ReplitDBStorage implements IStorage {
     console.log('ReplitDBStorage initialized successfully');
   }
 
-  private checkDatabaseConnection() {
-    if (!db && !supabase) {
-      throw new Error('No database connection available. Please check your DATABASE_URL or Supabase configuration.');
-    }
-    
-    if (!db && supabase) {
-      console.warn('⚠️ Using Supabase client as fallback - some operations may be limited');
-    }
-  }
-
   private async executeWithFallback<T>(
     directDbOperation: () => Promise<T>,
     supabaseOperation?: () => Promise<T>,
     operationName: string = 'database operation'
   ): Promise<T> {
-    this.checkDatabaseConnection();
+    // Check database health and attempt to re-initialize if needed
+    try {
+      const healthStatus = await checkDatabaseHealth();
+      if (!healthStatus.healthy) {
+        console.warn(`Database health check failed for ${operationName}:`, healthStatus.error);
+        
+        // If no database connection is available at all, throw error
+        if (!db && !supabase) {
+          throw new Error(`No database connection available for ${operationName}. Please check your DATABASE_URL or Supabase configuration.`);
+        }
+      }
+    } catch (healthError) {
+      console.error(`Database health check error for ${operationName}:`, healthError);
+      
+      // If health check fails and no connections available, throw error
+      if (!db && !supabase) {
+        throw new Error(`Database connection not available. Please check your DATABASE_URL configuration.`);
+      }
+    }
     
     // Try direct database connection first
     if (db) {
