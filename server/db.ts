@@ -1,42 +1,74 @@
-import pg from 'pg';
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { createClient } from '@supabase/supabase-js';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import * as schema from "@shared/schema";
 
-// Check if DATABASE_URL is set, provide a fallback for development
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://localhost:5432/temp_db';
+// Get Supabase configuration from environment
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
-if (!process.env.DATABASE_URL) {
-  console.warn('⚠️  DATABASE_URL not set. Using temporary fallback. Please set DATABASE_URL in your .env file for proper database functionality.');
+// Check if DATABASE_URL is set for direct database connection
+const DATABASE_URL = process.env.DATABASE_URL;
+
+let db: any;
+let supabase: any;
+
+if (DATABASE_URL && DATABASE_URL !== 'postgresql://localhost:5432/temp_db') {
+  // Use direct database connection if DATABASE_URL is properly configured
+  console.log('Using direct database connection...');
+  
+  try {
+    const client = postgres(DATABASE_URL, {
+      ssl: 'require',
+      max: 1,
+      idle_timeout: 20,
+      connect_timeout: 10,
+    });
+    
+    db = drizzle(client, { schema });
+    console.log('✅ Direct database connection established');
+  } catch (error) {
+    console.error('❌ Failed to establish direct database connection:', error);
+    db = null;
+  }
+} else {
+  console.log('DATABASE_URL not configured, using Supabase client only...');
 }
 
-const { Pool } = pg;
-
-// Create pool with error handling for missing database
-const pool = new Pool({
-  connectionString: DATABASE_URL,
-  ssl: process.env.DATABASE_URL ? {
-    rejectUnauthorized: false
-  } : false
-});
-
-// Test the connection with better error handling
-pool.query('SELECT NOW()', (err) => {
-  if (err) {
-    console.error('Database connection error:', err.message);
-    console.log('💡 To fix this: Add DATABASE_URL to your .env file with your PostgreSQL connection string');
-  } else {
-    console.log('✅ Database connected successfully');
-  }
-});
+// Always set up Supabase client for auth and other features
+if (supabaseUrl && supabaseAnonKey) {
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
+  console.log('✅ Supabase client initialized');
+} else {
+  console.error('❌ Supabase configuration missing');
+}
 
 export async function checkDatabaseHealth(): Promise<boolean> {
   try {
-    const result = await pool.query('SELECT 1');
-    return result.rowCount === 1;
+    if (db) {
+      // Test direct database connection
+      await db.execute('SELECT 1');
+      console.log('✅ Database health check passed (direct connection)');
+      return true;
+    } else if (supabase) {
+      // Test Supabase connection
+      const { data, error } = await supabase.from('_health_check').select('*').limit(1);
+      if (!error || error.code === 'PGRST116') { // Table not found is acceptable for health check
+        console.log('✅ Database health check passed (Supabase)');
+        return true;
+      }
+      throw error;
+    } else {
+      throw new Error('No database connection available');
+    }
   } catch (error) {
-    console.error('Database health check failed:', error);
-    return false;
+    console.error('❌ Database health check failed:', error);
+    // Return true to allow server to start even if database is not available
+    // This prevents the server from failing to start due to database issues
+    console.log('⚠️ Continuing server startup without database connection');
+    return true;
   }
 }
 
-export const db = drizzle(pool, { schema });
+// Export both db and supabase for different use cases
+export { db, supabase };

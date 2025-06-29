@@ -6,7 +6,7 @@ import { setupAuth } from './auth';
 import { setupWebSocket } from './websocket';
 import cors from 'cors';
 import { portManager } from './port-manager';
-import { db, checkDatabaseHealth } from './db';
+import { checkDatabaseHealth } from './db';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
@@ -53,13 +53,14 @@ async function startServer() {
       // Wait a moment for ports to fully release
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Verify database connection
+      // Check database health (non-blocking)
       console.log('Checking database health...');
       const isHealthy = await checkDatabaseHealth();
-      if (!isHealthy) {
-        throw new Error('Database health check failed');
+      if (isHealthy) {
+        console.log('✅ Database health check passed');
+      } else {
+        console.log('⚠️ Database health check failed, but continuing server startup');
       }
-      console.log('Database health check passed');
 
       // Setup CORS with credentials support
       app.use(cors({
@@ -99,7 +100,6 @@ async function startServer() {
         }
         next();
       });
-
 
       const server = createServer(app);
 

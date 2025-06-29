@@ -1,10 +1,12 @@
 import { defineConfig } from "drizzle-kit";
 
-// Use fallback for development if DATABASE_URL is not set
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://localhost:5432/temp_db';
+// Use Supabase database URL if available, otherwise use fallback
+const DATABASE_URL = process.env.DATABASE_URL;
 
-if (!process.env.DATABASE_URL) {
-  console.warn('⚠️  DATABASE_URL not set in drizzle config. Please add it to your .env file.');
+if (!DATABASE_URL || DATABASE_URL === 'postgresql://localhost:5432/temp_db') {
+  console.warn('⚠️ DATABASE_URL not properly configured in drizzle config.');
+  console.warn('💡 To use database migrations, set DATABASE_URL in your .env file with your Supabase database connection string.');
+  console.warn('📝 Format: postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres');
 }
 
 export default defineConfig({
@@ -12,6 +14,6 @@ export default defineConfig({
   schema: "./shared/schema.ts",
   dialect: "postgresql",
   dbCredentials: {
-    url: DATABASE_URL,
+    url: DATABASE_URL || 'postgresql://localhost:5432/temp_db',
   },
 });
