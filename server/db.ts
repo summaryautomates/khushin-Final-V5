@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import pg from 'pg';
 import * as schema from "@shared/schema";
 
 // Get Supabase configuration from environment
@@ -18,11 +18,12 @@ if (DATABASE_URL && DATABASE_URL !== 'postgresql://localhost:5432/temp_db') {
   console.log('Using direct database connection...');
   
   try {
-    const client = postgres(DATABASE_URL, {
-      ssl: 'require',
+    const client = new pg.Pool({
+      connectionString: DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
       max: 1,
-      idle_timeout: 20,
-      connect_timeout: 10,
+      idleTimeoutMillis: 20000,
+      connectionTimeoutMillis: 10000,
     });
     
     db = drizzle(client, { schema });
