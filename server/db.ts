@@ -41,7 +41,7 @@ async function initializeDatabase() {
         ssl: { rejectUnauthorized: false },
         max: 5, // Reduced connection pool size
         idle_timeout: 20,
-        connect_timeout: 30, // Increased timeout
+        connect_timeout: 60, // Increased from 30 to 60 seconds
         transform: {
           undefined: null
         },
@@ -54,7 +54,7 @@ async function initializeDatabase() {
       // Test the connection with longer timeout
       const testQuery = client`SELECT 1 as test`;
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), 15000)
+        setTimeout(() => reject(new Error('Connection timeout')), 30000) // Increased from 15 to 30 seconds
       );
       
       await Promise.race([testQuery, timeoutPromise]);
@@ -65,7 +65,7 @@ async function initializeDatabase() {
       db = null;
       
       if (connectionAttempts < MAX_CONNECTION_ATTEMPTS) {
-        const delay = connectionAttempts * 3000; // Increased delay
+        const delay = connectionAttempts * 5000; // Increased from 3000 to 5000ms
         console.log(`Waiting ${delay}ms before next attempt...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
@@ -88,11 +88,11 @@ export async function checkDatabaseHealth(): Promise<{healthy: boolean, error?: 
     }
 
     if (db) {
-      // Test direct database connection with timeout
+      // Test direct database connection with increased timeout
       try {
         const healthCheckPromise = db.execute('SELECT 1 as health_check');
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Health check timeout')), 10000)
+          setTimeout(() => reject(new Error('Health check timeout')), 20000) // Increased from 10 to 20 seconds
         );
         
         await Promise.race([healthCheckPromise, timeoutPromise]);

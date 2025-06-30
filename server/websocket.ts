@@ -36,7 +36,7 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
         const sessionPromise = new Promise<void>((resolve, reject) => {
           const timeoutId = setTimeout(() => {
             reject(new Error('Session middleware timeout'));
-          }, 10000); // Increased to 10 second timeout
+          }, 20000); // Increased from 10 to 20 seconds
 
           try {
             sessionMiddleware(info.req, res, (err: Error) => {
