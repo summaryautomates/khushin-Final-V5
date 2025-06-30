@@ -17,9 +17,7 @@ import { sql } from "drizzle-orm";
 
 const require = createRequire(import.meta.url);
 const session = require("express-session");
-const MemoryStore = require("memorystore");
-
-const MemoryStoreSession = MemoryStore(session);
+const MemoryStore = require("memorystore")(session);
 
 export interface IStorage {
   // User methods
@@ -51,7 +49,7 @@ export class ReplitDBStorage implements IStorage {
 
   constructor() {
     console.log('Initializing ReplitDBStorage...');
-    this.sessionStore = new MemoryStoreSession({
+    this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // Prune expired entries every 24h
       ttl: 24 * 60 * 60 * 1000, // Time to live - 24 hours
       noDisposeOnSet: true,

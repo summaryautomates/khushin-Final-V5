@@ -10,9 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const require = createRequire(import.meta.url);
 const session = require("express-session");
-const MemoryStore = require("memorystore");
-
-const MemoryStoreSession = MemoryStore(session);
+const MemoryStore = require("memorystore")(session);
 
 declare global {
   namespace Express {
@@ -55,7 +53,7 @@ export async function setupAuth(app: Express) {
     });
 
     // Initialize session store with optimized settings
-    const sessionStore = new MemoryStoreSession({
+    const sessionStore = new MemoryStore({
       checkPeriod: 86400000, // Prune expired entries every 24h
       ttl: 24 * 60 * 60 * 1000, // Time to live - 24 hours
       noDisposeOnSet: true, // Improve performance by not disposing old sessions on set
