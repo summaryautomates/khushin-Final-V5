@@ -1,13 +1,16 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
-import session from "express-session";
+import { createRequire } from "module";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser, insertUserSchema, guestUserSchema } from "@shared/schema";
-import MemoryStore from "memorystore";
 import { v4 as uuidv4 } from 'uuid';
+
+const require = createRequire(import.meta.url);
+const session = require("express-session");
+const MemoryStore = require("memorystore");
 
 const MemoryStoreSession = MemoryStore(session);
 

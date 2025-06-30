@@ -11,10 +11,13 @@ import {
   cartItems
 } from "@shared/schema";
 import { eq, desc, and } from "drizzle-orm";
-import session from "express-session";
-import MemoryStore from "memorystore";
+import { createRequire } from "module";
 import { db, supabase, checkDatabaseHealth } from "./db";
 import { sql } from "drizzle-orm";
+
+const require = createRequire(import.meta.url);
+const session = require("express-session");
+const MemoryStore = require("memorystore");
 
 const MemoryStoreSession = MemoryStore(session);
 
@@ -24,7 +27,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   updateUser(id: number, userData: Partial<InsertUser> & { is_guest?: boolean, expires_at?: Date | null }): Promise<User>;
-  sessionStore: session.Store;
+  sessionStore: any;
   // Product methods
   getProducts(): Promise<typeof products.$inferSelect[]>;
   getProductById(id: number): Promise<typeof products.$inferSelect | undefined>;
@@ -44,7 +47,7 @@ export interface IStorage {
 }
 
 export class ReplitDBStorage implements IStorage {
-  sessionStore: session.Store;
+  sessionStore: any;
 
   constructor() {
     console.log('Initializing ReplitDBStorage...');
