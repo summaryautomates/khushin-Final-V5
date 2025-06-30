@@ -53,18 +53,20 @@ async function startServer() {
       // Increased wait time for ports to fully release (was 1000ms, now 3000ms)
       await new Promise(resolve => setTimeout(resolve, 3000));
 
-      // Check database health (non-blocking but with better error handling)
+      // Check database health (non-blocking)
       console.log('Checking database health...');
       try {
-        const isHealthy = await checkDatabaseHealth();
-        if (isHealthy) {
+        const dbHealth = await checkDatabaseHealth();
+        if (dbHealth.healthy) {
           console.log('✅ Database health check passed');
         } else {
           console.log('⚠️ Database health check failed, but continuing server startup');
+          console.log('The application will run with limited functionality without database access');
         }
       } catch (dbError) {
         console.error('Database health check error:', dbError);
         console.log('⚠️ Database health check failed with error, but continuing server startup');
+        console.log('The application will run with limited functionality without database access');
       }
 
       // Setup CORS with credentials support

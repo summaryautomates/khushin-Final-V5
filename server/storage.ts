@@ -13,7 +13,6 @@ import {
 import { eq, desc, and } from "drizzle-orm";
 import { createRequire } from "module";
 import { db, supabase, checkDatabaseHealth } from "./db";
-import { sql } from "drizzle-orm";
 
 const require = createRequire(import.meta.url);
 const session = require("express-session");
