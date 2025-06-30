@@ -1,9 +1,23 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import * as schema from "@shared/schema";
 
 // Get database configuration from environment
 const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_m2gYrtGfDna5@ep-misty-wave-a5yxp4e1.us-east-2.aws.neon.tech/neondb?sslmode=require';
+
+// Initialize Supabase client
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+
+let supabase: SupabaseClient | null = null;
+
+if (supabaseUrl && supabaseAnonKey) {
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
+  console.log('✅ Supabase client initialized');
+} else {
+  console.warn('⚠️ Supabase credentials not found in environment variables');
+}
 
 let db: any = null;
 let connectionAttempts = 0;
@@ -119,5 +133,5 @@ initializeDatabase().catch(error => {
   // Don't exit the process, let the application continue without database
 });
 
-// Export db for use in other modules
-export { db };
+// Export db and supabase for use in other modules
+export { db, supabase };
