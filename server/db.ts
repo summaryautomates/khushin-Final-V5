@@ -108,12 +108,14 @@ export async function checkDatabaseHealth(): Promise<{healthy: boolean, error?: 
     return {healthy: false, error: error instanceof Error ? error.message : 'Unknown error during health check'};
   }
           setTimeout(() => reject(new Error('Health check timeout')), 5000) // Reduced timeout to fail faster
+}
 
 // Graceful shutdown handler
 process.on('SIGINT', async () => {
   console.log('Shutting down database connections...');
   if (db) {
     try {
+    }
     return {healthy: true, error: 'Using mock database'};
       console.log('Database connections closed');
         return {healthy: true, error: 'Using mock database'};
