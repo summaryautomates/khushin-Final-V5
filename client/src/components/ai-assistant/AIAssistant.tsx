@@ -29,7 +29,7 @@ export const AIAssistant = () => {
     mutationFn: async (message: string) => {
       try {
         // Check if we're on Netlify - if so, use mock responses
-        if (window.location.hostname.includes('netlify.app')) {
+        if (window.location.hostname.includes('netlify.app') || !window.location.hostname.includes('localhost')) {
           // Simulate network delay
           await new Promise(resolve => setTimeout(resolve, 1000));
           
@@ -91,7 +91,7 @@ export const AIAssistant = () => {
     onSuccess: (data) => {
       setMessages(prev => [...prev, 
         { role: 'assistant', content: data.message }
-      ]);
+    if (window.location.hostname.includes('netlify.app') || !window.location.hostname.includes('localhost')) return;
     },
     onError: (error: Error) => {
       toast({

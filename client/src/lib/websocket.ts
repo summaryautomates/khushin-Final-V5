@@ -14,9 +14,9 @@ export function useWebSocket() {
   const connect = useCallback(() => {
     console.log('Initializing WebSocket connection...');
 
-    // Check if we're on Netlify deployment - if so, don't attempt WebSocket connection
-    if (window.location.hostname.includes('netlify.app')) {
-      console.log('Running on Netlify - WebSocket connections disabled');
+    // Check if we're on Netlify or other deployment - if so, don't attempt WebSocket connection
+    if (window.location.hostname.includes('netlify.app') || !window.location.hostname.includes('localhost')) {
+      console.log('Running on deployment - WebSocket connections disabled');
       setConnected(true); // Pretend we're connected to prevent reconnection attempts
       return;
     }
@@ -170,12 +170,12 @@ export function useWebSocket() {
   
   useEffect(() => {
     // Only attempt connection if not on Netlify
-    if (!window.location.hostname.includes('netlify.app')) {
+    if (window.location.hostname.includes('localhost')) {
       setTimeout(connect, 1000); // Delay initial connection by 1 second to allow server to start
     }
 
     // For Netlify, we'll simulate a connected state after a delay
-    if (window.location.hostname.includes('netlify.app')) {
+    if (window.location.hostname.includes('netlify.app') || !window.location.hostname.includes('localhost')) {
       setTimeout(() => {
         setConnected(true);
         setAuthenticated(true);
@@ -196,8 +196,8 @@ export function useWebSocket() {
   // Expose a function to send messages through the WebSocket
   const sendMessage = useCallback((data: any) => {
     // For Netlify, just log the message and return true to simulate success
-    if (window.location.hostname.includes('netlify.app')) {
-      console.log('Simulating WebSocket message send on Netlify:', data);
+    if (window.location.hostname.includes('netlify.app') || !window.location.hostname.includes('localhost')) {
+      console.log('Simulating WebSocket message send on deployment:', data);
       return true;
     }
 
