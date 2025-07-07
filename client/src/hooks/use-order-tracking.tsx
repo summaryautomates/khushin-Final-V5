@@ -6,11 +6,11 @@ import { useWebSocket } from '@/lib/websocket';
 export function useOrderTracking(orderRef: string | null) {
   const [status, setStatus] = useState<string | null>("pending");
   const { toast } = useToast();
-  const { user } = useAuth();
-  const { send, isConnected, reconnect } = useWebSocket();
+  const { user } = useAuth(); 
+  const { send, isConnected, reconnect } = useWebSocket(); 
 
   useEffect(() => {
-    // For Netlify deployments, we'll use a mock status
+    // For Netlify deployments, use a mock status with simulated changes
     if (window.location.hostname.includes('netlify.app')) {
       // Simulate order status changes for demo purposes
       setStatus('pending');
@@ -26,7 +26,7 @@ export function useOrderTracking(orderRef: string | null) {
       
       const completedTimer = setTimeout(() => {
         setStatus('completed');
-      }, 15000);
+      }, 15000); 
       
       return () => {
         clearTimeout(processingTimer);
@@ -34,7 +34,7 @@ export function useOrderTracking(orderRef: string | null) {
         clearTimeout(completedTimer);
       };
       return;
-    }
+    } 
 
     if (!orderRef) return;
 
@@ -42,7 +42,7 @@ export function useOrderTracking(orderRef: string | null) {
     if (isConnected) {
       try {
         const subscribed = send({
-          type: 'subscribe',
+          type: 'subscribe', 
           data: { orderRef }
         });
         console.log('Subscribed to order updates for:', orderRef);
@@ -50,7 +50,7 @@ export function useOrderTracking(orderRef: string | null) {
         if (!subscribed) {
           console.warn('Failed to send subscription message');
         }
-      } catch (error) {
+      } catch (error) { 
         console.error('Error subscribing to order updates:', error);
       }
     }
@@ -58,7 +58,7 @@ export function useOrderTracking(orderRef: string | null) {
     // If not connected, try to reconnect
     if (!isConnected) {
       console.log('WebSocket not connected, attempting to reconnect...');
-      reconnect();
+      reconnect(); 
     }
 
     // Set up message handler for this specific order
@@ -66,7 +66,7 @@ export function useOrderTracking(orderRef: string | null) {
       try {
         // Safely parse the message data
         let data;
-        try {
+        try { 
           if (typeof event.data === 'string') {
             data = JSON.parse(event.data);
           } else {
@@ -77,7 +77,7 @@ export function useOrderTracking(orderRef: string | null) {
           return;
         }
 
-        switch (data.type) {
+        switch (data.type) { 
           case 'connected':
           case 'status':
             if (data.data?.orderRef === orderRef && data.data?.status) {
@@ -85,7 +85,7 @@ export function useOrderTracking(orderRef: string | null) {
             }
             break;
           case 'error':
-            if (data.data?.orderRef === orderRef) {
+            if (data.data?.orderRef === orderRef) { 
               toast({
                 title: 'Order Update Error',
                 description: data.message,
@@ -93,7 +93,7 @@ export function useOrderTracking(orderRef: string | null) {
               });
             }
             break;
-        }
+        } 
       } catch (error) {
         console.error('Error handling order tracking message:', error);
       }
@@ -101,7 +101,7 @@ export function useOrderTracking(orderRef: string | null) {
 
     window.addEventListener('message', handleMessage);
     
-    // Set a default status after a delay if none is received
+    // Set a default status after a delay if none is received 
     const defaultStatusTimer = setTimeout(() => {
       if (status === null) {
         setStatus('pending');
@@ -114,7 +114,7 @@ export function useOrderTracking(orderRef: string | null) {
 
       // Unsubscribe from order updates if connected
       if (isConnected) {
-        try {
+        try { 
           send({
             type: 'unsubscribe',
             data: { orderRef }
@@ -124,7 +124,7 @@ export function useOrderTracking(orderRef: string | null) {
         }
       }
     };
-  }, [orderRef, isConnected, send, toast, user]);
+  }, [orderRef, isConnected, send, toast, user, reconnect, status]);
 
   return {
     status,

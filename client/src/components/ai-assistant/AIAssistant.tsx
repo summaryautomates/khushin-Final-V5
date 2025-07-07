@@ -28,7 +28,36 @@ export const AIAssistant = () => {
   const askAI = useMutation({
     mutationFn: async (message: string) => {
       try {
-        // Try to use the real API endpoint first
+        // Check if we're on Netlify - if so, use mock responses
+        if (window.location.hostname.includes('netlify.app')) {
+          // Simulate network delay
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Generate a simple response based on the message content
+          let response = "I'm here to help with your shopping experience at KHUSH.IN. Feel free to ask about our luxury lighters, flasks, or any other products.";
+          
+          if (message.toLowerCase().includes('hello') || message.toLowerCase().includes('hi')) {
+            response = "Hello! Welcome to KHUSH.IN. How can I assist you with your luxury shopping experience today?";
+          } else if (message.toLowerCase().includes('product') || message.toLowerCase().includes('lighter')) {
+            response = "Our luxury lighter collection features premium materials like gold-plated brass and sterling silver. Each piece comes with a lifetime warranty and free refills for the first year. Our prices range from ₹14,999 to ₹29,999 depending on the model and customization options.";
+          } else if (message.toLowerCase().includes('price') || message.toLowerCase().includes('cost')) {
+            response = "Our luxury lighters range from ₹14,999 for the Silver Pocket model to ₹29,999 for the Gold Edition. Premium flasks start at ₹12,999. All prices include complimentary gift wrapping and free shipping on orders over ₹5,000.";
+          } else if (message.toLowerCase().includes('delivery') || message.toLowerCase().includes('shipping')) {
+            response = "We offer express delivery within 24 hours in Mumbai, Delhi, and Bangalore. Standard delivery takes 3-5 business days nationwide. International shipping is available to select countries. All shipments are fully insured and trackable in real-time.";
+          } else if (message.toLowerCase().includes('refund') || message.toLowerCase().includes('return')) {
+            response = "We have a 30-day hassle-free return policy for all unused products in their original packaging. For customized items, please contact our VIP customer service team at support@khush.in for personalized assistance.";
+          } else if (message.toLowerCase().includes('flask')) {
+            response = "Our premium flask collection includes stainless steel flasks with leather wrapping, available in various sizes from 6oz to 12oz. Prices start at ₹12,999 and include optional personalized engraving. Each flask comes with a 5-year warranty against leaks.";
+          } else if (message.toLowerCase().includes('customize') || message.toLowerCase().includes('engraving')) {
+            response = "We offer personalized engraving on most of our products. You can add names, dates, or custom messages. For luxury lighters, we also offer custom designs and premium materials. The customization process takes 2-3 business days in addition to standard shipping time.";
+          } else if (message.toLowerCase().includes('warranty')) {
+            response = "All our luxury lighters come with a lifetime warranty against manufacturing defects. Premium flasks have a 5-year warranty. We also offer a complimentary maintenance service for lighters purchased from us - just bring them to any of our stores once a year.";
+          }
+          
+          return { message: response };
+        }
+        
+        // Try the real API if not on Netlify
         try {
           const response = await fetch('/api/ai/chat', {
             method: 'POST',
@@ -37,6 +66,8 @@ export const AIAssistant = () => {
               'Accept': 'application/json'
             },
             credentials: 'include',
+            body: JSON.stringify({ message })
+          });
             body: JSON.stringify({ message })
           });
 
@@ -70,12 +101,20 @@ export const AIAssistant = () => {
         } else if (message.toLowerCase().includes('flask')) {
           response = "Our premium flask collection includes stainless steel flasks with leather wrapping, available in various sizes from 6oz to 12oz. Prices start at ₹12,999 and include optional personalized engraving. Each flask comes with a 5-year warranty against leaks.";
         } else if (message.toLowerCase().includes('customize') || message.toLowerCase().includes('engraving')) {
-          response = "We offer personalized engraving on most of our products. You can add names, dates, or custom messages. For luxury lighters, we also offer custom designs and premium materials. The customization process takes 2-3 business days in addition to standard shipping time.";
-        } else if (message.toLowerCase().includes('warranty')) {
-          response = "All our luxury lighters come with a lifetime warranty against manufacturing defects. Premium flasks have a 5-year warranty. We also offer a complimentary maintenance service for lighters purchased from us - just bring them to any of our stores once a year.";
-        }
+          if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: 'Failed to get AI response' }));
+            throw new Error(error.message || "Failed to get AI response");
+          }
         
-        return { message: response };
+          return await response.json();
+        } catch (apiError) {
+          console.error('API request failed, using fallback response:', apiError);
+          
+          // Fallback response if API fails
+          return { 
+            message: "I'm here to help with your shopping experience. Our luxury lighters and flasks are crafted with premium materials and come with extended warranties. How can I assist you today?" 
+          };
+        }
       } catch (error) {
         console.error('AI Chat Error:', error);
         throw error;
