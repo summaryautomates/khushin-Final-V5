@@ -38,7 +38,8 @@ export function useWebSocket() {
       
       // Simplified WebSocket URL construction
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      wsUrl = `${protocol}//${window.location.host}/ws`;
+      const port = window.location.port ? `:${window.location.port}` : '';
+      wsUrl = `${protocol}//${window.location.hostname}${port}/ws`;
       
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws; 
