@@ -78,7 +78,10 @@ export function useWebSocket() {
           }
           
           // Dispatch a custom event that other components can listen for
-          window.dispatchEvent(new MessageEvent('message', { data }));
+          window.dispatchEvent(new MessageEvent('message', { 
+            data,
+            origin: window.location.origin
+          }));
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);
         }
