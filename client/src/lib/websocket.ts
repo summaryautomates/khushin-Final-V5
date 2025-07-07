@@ -25,9 +25,10 @@ export function useWebSocket() {
       wsRef.current.close();
     }
 
-    // Determine the WebSocket URL
-    // Always use secure WebSocket protocol for Netlify deployments
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    try {
+      // Determine the WebSocket URL
+      // Always use secure WebSocket protocol for Netlify deployments
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws; 
       
