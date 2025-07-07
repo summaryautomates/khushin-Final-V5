@@ -27,10 +27,20 @@ export function useWebSocket() {
 
     try {
       // Determine the WebSocket URL
-      // Always use secure WebSocket protocol for Netlify deployments
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host;
-      const wsUrl = `${protocol}//${host}/ws`;
+      // Determine the WebSocket URL based on environment
+      let wsUrl: string;
+      
+      if (window.location.hostname === 'localhost' || window.location.hostname.includes('webcontainer')) {
+        // Development environment - connect directly to port 5000
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${protocol}//localhost:5000/ws`;
+      } else {
+        // Production environment - use current host
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host;
+        wsUrl = `${protocol}//${host}/ws`;
+      }
+      
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws; 
       
