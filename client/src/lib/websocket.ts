@@ -14,7 +14,7 @@ export function useWebSocket() {
   const connect = useCallback(() => {
     console.log('Initializing WebSocket connection...');
 
-    // Check if we're on Netlify - if so, don't attempt WebSocket connection
+    // Check if we're on Netlify deployment - if so, don't attempt WebSocket connection
     if (window.location.hostname.includes('netlify.app')) {
       console.log('Running on Netlify - WebSocket connections disabled');
       setConnected(true); // Pretend we're connected to prevent reconnection attempts
@@ -36,24 +36,9 @@ export function useWebSocket() {
       // Determine the WebSocket URL based on environment
       let wsUrl: string;
       
-      // In webcontainer environment, use the current hostname with port 5000
-      if (window.location.hostname.includes('webcontainer')) {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        // Parse the webcontainer hostname and replace the external port with internal port 5000
-        const hostname = window.location.hostname;
-        // Webcontainer hostnames have format: hash--externalport--internalport.domain
-        // We need to replace the external port (443) with our server port (5000)
-        const modifiedHostname = hostname.replace(/--443--/, '--5000--');
-        wsUrl = `${protocol}//${modifiedHostname}/ws`;
-      } else if (window.location.hostname === 'localhost') {
-        // Local development - connect directly to port 5000
-        wsUrl = `ws://localhost:5000/ws`;
-      } else {
-        // Production environment - use current host
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const host = window.location.host;
-        wsUrl = `${protocol}//${host}/ws`;
-      }
+      // Simplified WebSocket URL construction
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${protocol}//${window.location.host}/ws`;
       
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws; 
@@ -169,7 +154,10 @@ export function useWebSocket() {
   }, [connect, toast]);
   
   useEffect(() => {
-    setTimeout(connect, 1000); // Delay initial connection by 1 second to allow server to start
+    // Only attempt connection if not on Netlify
+    if (!window.location.hostname.includes('netlify.app')) {
+      setTimeout(connect, 1000); // Delay initial connection by 1 second to allow server to start
+    }
 
     // For Netlify, we'll simulate a connected state after a delay
     if (window.location.hostname.includes('netlify.app')) {

@@ -21,10 +21,8 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
     server,
     path: '/ws', 
     clientTracking: true,
-    perMessageDeflate: {
-      threshold: 1024, // Only compress messages larger than 1KB
-    },
-    maxPayload: 64 * 1024, // Increased to 64KB max payload
+    perMessageDeflate: false, // Disable compression to reduce overhead
+    maxPayload: 16 * 1024, // 16KB max payload
     verifyClient: async (info: any, callback: any) => {
       try {
         // Create a mock response object for session middleware
@@ -37,9 +35,8 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
         // Apply session middleware with promise wrapper and increased timeout
         const sessionPromise = new Promise<void>((resolve, reject) => {
           const timeoutId = setTimeout(() => {
-            console.warn('Session middleware timeout, continuing without session');
-            resolve(); // Resolve anyway to allow connection in development
-          }, 5000); // Reduced timeout to prevent hanging
+            reject(new Error('Session middleware timeout'));
+          }, 10000); // 10 seconds timeout
 
           try {
             sessionMiddleware(info.req, res, (err: Error) => {
@@ -81,9 +78,13 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
         const isProduction = process.env.NODE_ENV === 'production';
         const isAuthenticated = !!session?.passport?.user;
         
-        // Always accept connections in both development and production
-        // This allows the WebSocket to work even for unauthenticated users
-        // They'll still see their authentication status in the connection message
+        // In development, allow connections but mark auth status
+        // In production, check auth
+        if (isProduction && !isAuthenticated) {
+          console.warn('Production WebSocket connection rejected - not authenticated');
+          callback(false, 401, 'Unauthorized');
+          return;
+        }
 
         // Allow connection with auth info
         callback(true, undefined, undefined, {
@@ -104,12 +105,7 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
           // In development, allow connection but mark as unauthenticated
           const isProduction = process.env.NODE_ENV === 'production';
           if (isProduction) {
-            // Even in production, allow connection but mark as unauthenticated
-            callback(true, undefined, undefined, {
-              isAuthenticated: false,
-              sessionId: null,
-              userId: null
-            });
+            callback(false, 500, 'Internal Server Error');
           } else {
             callback(true, undefined, undefined, {
               isAuthenticated: false,

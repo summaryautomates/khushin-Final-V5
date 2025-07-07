@@ -145,10 +145,8 @@ function WebSocketProvider({ children }: { children: React.ReactNode }) {
   // Initialize WebSocket connection
   const { isConnected } = useWebSocket();
   
-  // Only show connection status toast if not connected
-  // Skip on Netlify deployments
+  // Show connection status to user, but skip on Netlify deployments
   useEffect(() => {
-    // Skip on Netlify deployments
     if (window.location.hostname.includes('netlify.app')) return;
 
     if (!isConnected) {
@@ -157,7 +155,7 @@ function WebSocketProvider({ children }: { children: React.ReactNode }) {
         description: "Connecting to server...",
         duration: 2000,
       });
-    } 
+    }
   }, [isConnected, toast]);
 
   return <>{children}</>;

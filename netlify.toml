@@ -3,8 +3,10 @@
 [build]
   # Directory to publish (relative to root of your repo)
   publish = "dist/public"
-  # Build command
+  # Build command - only build the client for Netlify
   command = "npm install && npm run build:client"
+  # Ignore the server build for Netlify
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ./client/"
 
 # Redirect all routes to index.html for client-side routing
 [[redirects]]
