@@ -27,14 +27,8 @@ export function useWebSocket() {
 
     // Determine the WebSocket URL
     // For development in WebContainer, always use ws:// protocol
-    let protocol = 'ws:';
+    let protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     
-    // In production or when deployed, use the appropriate protocol
-    if (window.location.hostname !== 'localhost' && 
-        !window.location.hostname.includes('webcontainer') && 
-        window.location.protocol === 'https:') {
-      protocol = 'wss:';
-    }
     const host = window.location.host;
     const wsUrl = `${protocol}//${host}/ws`;
     
