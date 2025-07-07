@@ -29,8 +29,14 @@ export function useWebSocket() {
       // Determine the WebSocket URL
       // Determine the WebSocket URL based on environment
       let wsUrl: string;
-      
-      if (window.location.hostname === 'localhost' || window.location.hostname.includes('webcontainer')) {
+
+      // For Netlify deployments, we need to disable WebSockets since they won't work
+      if (window.location.hostname.includes('netlify.app')) {
+        console.log('WebSocket disabled on Netlify deployment');
+        // Return early without creating a WebSocket
+        setConnected(false);
+        return;
+      } else if (window.location.hostname === 'localhost' || window.location.hostname.includes('webcontainer')) {
         // Development environment - connect directly to port 5000
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         wsUrl = `${protocol}//localhost:5000/ws`;

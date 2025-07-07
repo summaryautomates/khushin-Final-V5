@@ -10,6 +10,12 @@ export function useOrderTracking(orderRef: string | null) {
   const { send, isConnected, reconnect } = useWebSocket();
 
   useEffect(() => {
+    // For Netlify deployments, we'll use a mock status
+    if (window.location.hostname.includes('netlify.app')) {
+      setStatus('pending');
+      return;
+    }
+
     if (!orderRef) return;
 
     // Subscribe to order updates when connected
