@@ -3,8 +3,8 @@
 [build]
   # Directory to publish (relative to root of your repo)
   publish = "dist/public"
-  # Build command that only builds the client-side code
-  command = "npx vite build"
+  # Build command
+  command = "npm run build:client"
 
 # Redirect all routes to index.html for client-side routing
 [[redirects]]
@@ -15,7 +15,6 @@
 # Set environment variables
 [build.environment]
   NODE_ENV = "production"
-  VITE_API_URL = "https://api.khush.in"
 
 # Set headers for caching and security
 [[headers]]

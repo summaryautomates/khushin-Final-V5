@@ -9,18 +9,21 @@ interface OrderTrackingProps {
 
 export function OrderTracking({ orderRef }: OrderTrackingProps) {
   const { status, isConnected } = useOrderTracking(orderRef);
+  const isNetlify = window.location.hostname.includes('netlify.app');
 
   return (
     <Card className="w-full max-w-md mx-auto bg-black">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           Order Tracking
-          <Badge
-            variant={isConnected ? "default" : "destructive"}
-            className="ml-2"
-          >
-            {isConnected ? "Connected" : "Disconnected"}
-          </Badge>
+          {!isNetlify && (
+            <Badge
+              variant={isConnected ? "default" : "destructive"}
+              className="ml-2"
+            >
+              {isConnected ? "Connected" : "Disconnected"}
+            </Badge>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent>
