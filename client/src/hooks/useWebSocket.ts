@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -26,26 +25,19 @@ export function useWebSocket() {
     
     // Handle WebContainer environment URL format
     let host = window.location.hostname;
-    let wsUrl;
+    let port = '';
     
-    if (host.includes('--')) {
-      // WebContainer environment - reconstruct hostname with backend port
-      const parts = host.split('--');
-      if (parts.length >= 3) {
-        // Format: prefix--443--suffix.domain -> prefix--5000--suffix.domain
-        const prefix = parts[0];
-        const suffix = parts.slice(2).join('--');
-        const backendHost = `${prefix}--5000--${suffix}`;
-        wsUrl = `${protocol}//${backendHost}/ws`;
-      } else {
-        // Fallback if hostname format is unexpected
-        wsUrl = `${protocol}//${host}/ws`;
-      }
+    // For WebContainer environments, use the same port as the current page
+    if (host.includes('webcontainer-api.io')) {
+      // Use the current window's port or default to empty for standard ports
+      port = window.location.port ? `:${window.location.port}` : '';
     } else {
-      // For non-WebContainer environments (localhost, production), use port
-      const port = window.location.hostname === 'localhost' ? '5000' : window.location.port || '80';
-      wsUrl = `${protocol}//${host}:${port}/ws`;
+      // For local development environments, use localhost with port 5000
+      host = 'localhost';
+      port = ':5000';
     }
+    
+    const wsUrl = `${protocol}//${host}${port}/ws`;
     
     console.log('Attempting WebSocket connection to:', wsUrl);
     
