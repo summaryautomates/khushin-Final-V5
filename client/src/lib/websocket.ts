@@ -1,230 +1,166 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 export function useWebSocket() {
+  const [connected, setConnected] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectAttemptRef = useRef(0); 
+  const maxReconnectAttempts = 10; // Increased from 5 to 10
+  const reconnectTimeouts = [1000, 2000, 3000, 5000, 8000, 13000, 21000, 30000, 30000, 30000]; // Fibonacci-like sequence
+  const keepAliveIntervalRef = useRef<number | null>(null);
   const { toast } = useToast();
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
-  const maxReconnectAttempts = 5;
-  const reconnectAttempts = useRef(0);
-  const isMounted = useRef(true);
-  const isReconnecting = useRef(false);
 
-  const connect = () => {
+  const connect = useCallback(() => {
+    console.log('Initializing WebSocket connection...');
+
+    // Set a flag to prevent multiple connection attempts
+    if (wsRef.current && (wsRef.current.readyState === WebSocket.CONNECTING || wsRef.current.readyState === WebSocket.OPEN)) {
+      console.log('WebSocket connection already exists, not creating a new one');
+      return;
+    }
+    
+    // Clear any existing connection
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+
+    // Determine the WebSocket URL
+    // For development in WebContainer, always use ws:// protocol
+    let protocol = 'ws:';
+    
+    // In production or when deployed, use the appropriate protocol
+    if (window.location.hostname !== 'localhost' && 
+        !window.location.hostname.includes('webcontainer') && 
+        window.location.protocol === 'https:') {
+      protocol = 'wss:';
+    }
+    const host = window.location.host;
+    const wsUrl = `${protocol}//${host}/ws`;
+    
+    console.log('Attempting WebSocket connection to:', wsUrl);
+    
     try {
-      // Don't attempt to connect if already connecting
-      if (isReconnecting.current) {
-        console.log('Already attempting to reconnect...');
-        return;
-      }
-
-      isReconnecting.current = true;
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
-
-      console.log('Attempting WebSocket connection to:', wsUrl);
-
-      // Create WebSocket with credentials
       const ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
-
-      // Connection successful
+      wsRef.current = ws; 
+      
+      // Connection established
       ws.onopen = () => {
         console.log('WebSocket connected successfully');
-        isReconnecting.current = false;
-        reconnectAttempts.current = 0;
-
-        toast({
-          title: "Connected",
-          description: "Successfully connected to server",
-          duration: 2000,
-        });
-
-        // Send initial ping
-        try {
-          ws.send(JSON.stringify({ type: 'ping' }));
-        } catch (error) {
-          console.error('Error sending initial ping:', error);
+        setConnected(true);
+        reconnectAttemptRef.current = 0;
+        
+        // Start keep-alive ping
+        if (keepAliveIntervalRef.current) {
+          clearInterval(keepAliveIntervalRef.current);
         }
-      };
 
+        keepAliveIntervalRef.current = window.setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping' }));
+          }
+        }, 30000);
+      };
+      
+      // Message received
       ws.onmessage = (event) => {
         try {
-          const data = JSON.parse(event.data);
+          const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
           console.log('WebSocket message received:', data);
-
-          // Handle different message types
-          switch (data.type) {
-            case 'error':
-              console.error('Server reported an error:', data.error);
-              if (isMounted.current) {
-                toast({
-                  title: "Server Error",
-                  description: data.error || "An error occurred",
-                  variant: "destructive",
-                });
-              }
-              break;
-
-            case 'connected':
-              console.log('Connection status:', data);
-              if (!data.data.isAuthenticated) {
-                console.warn('Connected but not authenticated');
-                if (isMounted.current) {
-                  toast({
-                    title: "Authentication Required",
-                    description: "Please log in to enable all features",
-                    variant: "default",
-                  });
-                }
-              }
-              break;
-
-            case 'pong':
-              // Connection is alive, reset ping timeout
-              break;
-
-            default:
-              console.log('Unhandled message type:', data.type);
+          
+          if (data.type === 'connected') {
+            setAuthenticated(data.data?.isAuthenticated || false);
           }
+          
+          // Handle other message types here
+          if (data.type === 'pong') {
+            console.log('Received pong from server');
+          }
+          
+          // Dispatch a custom event that other components can listen for
+          window.dispatchEvent(new MessageEvent('message', { data }));
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);
         }
       };
-
-      ws.onerror = (event) => {
-        console.error('WebSocket error:', event);
-        isReconnecting.current = false;
-
-        if (isMounted.current) {
-          handleReconnect();
-        }
-      };
-
+      
+      // Connection closed
       ws.onclose = (event) => {
-        console.log('WebSocket closed:', event.code, event.reason);
-        isReconnecting.current = false;
-
-        if (isMounted.current && event.code !== 1000 && event.code !== 1001) {
-          handleReconnect();
+        console.log('WebSocket closed:', event.code, event.reason || 'No reason provided');
+        setConnected(false);
+        
+        // Clear keep-alive interval
+        if (keepAliveIntervalRef.current) {
+          clearInterval(keepAliveIntervalRef.current);
+          keepAliveIntervalRef.current = null;
+        }
+        
+        // Attempt to reconnect if not a normal closure (1000 or 1001)
+        if (event.code !== 1000 && event.code !== 1001) {
+          attemptReconnect();
         }
       };
-
-      // Setup periodic ping to keep connection alive
-      const pingInterval = setInterval(() => {
-        if (ws.readyState === WebSocket.OPEN) {
-          try {
-            ws.send(JSON.stringify({ type: 'ping' }));
-          } catch (error) {
-            console.error('Error sending ping:', error);
-          }
-        }
-      }, 30000);
-
-      // Clear ping interval on unmount
-      return () => clearInterval(pingInterval);
-
+      
+      // Error handling
+      ws.onerror = (error) => {
+        console.error('WebSocket error occurred');
+        // Don't need to do anything here as onclose will be called
+      };
+      
     } catch (error) {
       console.error('WebSocket setup error:', error);
-      isReconnecting.current = false;
-      if (isMounted.current) {
-        handleReconnect();
-      }
+      attemptReconnect();
     }
-  };
-
-  const handleReconnect = () => {
-    if (reconnectAttempts.current >= maxReconnectAttempts) {
-      console.error('Maximum reconnection attempts reached');
+  }, []);
+  
+  const attemptReconnect = useCallback(() => {
+    if (reconnectAttemptRef.current >= maxReconnectAttempts) {
+      console.error('Maximum WebSocket reconnection attempts reached');
       toast({
-        title: "Connection Failed",
-        description: "Unable to establish a connection after multiple attempts.",
-        variant: "destructive",
+        title: 'WebSocket Connection Error',
+        description: 'Unable to establish a stable connection. Please refresh the page.',
+        variant: 'destructive',
       });
       return;
     }
-
-    // Clear any existing reconnect timeout
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-    }
-
-    reconnectAttempts.current++;
-    console.log(`Reconnecting (attempt ${reconnectAttempts.current}/${maxReconnectAttempts})...`);
-
-    // Exponential backoff with max delay of 30 seconds
-    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current - 1), 30000);
-
-    reconnectTimeoutRef.current = setTimeout(() => {
-      if (isMounted.current) {
-        connect();
-      }
-    }, delay);
-  };
-
+    
+    const timeout = reconnectTimeouts[reconnectAttemptRef.current] || 30000;
+    console.log(`Attempting to reconnect WebSocket in ${timeout}ms (attempt ${reconnectAttemptRef.current + 1}/${maxReconnectAttempts})`);
+    
+    setTimeout(() => {
+      console.log(`Reconnecting (attempt ${reconnectAttemptRef.current + 1}/${maxReconnectAttempts})...`);
+      reconnectAttemptRef.current++;
+      connect();
+    }, timeout);
+  }, [connect, toast]);
+  
   useEffect(() => {
-    isMounted.current = true;
-    console.log('Initializing WebSocket connection...');
-
-    connect();
-
-    // Handle network state changes
-    const handleOnline = () => {
-      console.log('Network online, attempting reconnect...');
-      if (wsRef.current?.readyState !== WebSocket.OPEN) {
-        connect();
-      }
-    };
-
-    const handleOffline = () => {
-      console.log('Network offline');
-      toast({
-        title: "Network Status",
-        description: "You are offline. Reconnecting when network is available.",
-        variant: "default",
-      });
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
+    setTimeout(connect, 1000); // Delay initial connection by 1 second to allow server to start
+    
     return () => {
-      isMounted.current = false;
-      isReconnecting.current = false;
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-
       if (wsRef.current) {
         wsRef.current.close(1000, 'Component unmounted');
       }
+      
+      if (keepAliveIntervalRef.current) {
+        clearInterval(keepAliveIntervalRef.current);
+      }
     };
-  }, [toast]);
-
-  return {
-    send: (data: unknown) => {
-      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-        console.warn('WebSocket not ready, message not sent:', data);
-        return false;
-      }
-
-      try {
-        wsRef.current.send(JSON.stringify(data));
-        return true;
-      } catch (error) {
-        console.error('Error sending WebSocket message:', error);
-        return false;
-      }
-    },
-    isConnected: wsRef.current?.readyState === WebSocket.OPEN,
-    reconnect: () => {
-      if (!isReconnecting.current) {
-        reconnectAttempts.current = 0;
-        connect();
-      }
+  }, [connect]);
+  
+  // Expose a function to send messages through the WebSocket
+  const sendMessage = useCallback((data: any) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(data));
+      return true;
     }
+    return false;
+  }, []);
+  
+  return {
+    isConnected: connected,
+    authenticated,
+    send: sendMessage,
+    reconnect: connect
   };
 }

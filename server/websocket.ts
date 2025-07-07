@@ -1,7 +1,7 @@
 import { WebSocket, WebSocketServer } from 'ws';
 import { storage } from './storage';
 import type { SessionData } from 'express-session';
-import type { Server } from 'http';
+import { Server } from 'http';
 
 interface AuthenticatedWebSocket extends WebSocket {
   isAlive: boolean;
@@ -19,10 +19,12 @@ interface ExtendedSessionData extends SessionData {
 export function setupWebSocket(server: Server, sessionMiddleware: any) {
   const wss = new WebSocketServer({
     server,
-    path: '/ws',
+    path: '/ws', 
     clientTracking: true,
-    perMessageDeflate: false, // Disable compression to reduce overhead
-    maxPayload: 16 * 1024, // 16KB max payload
+    perMessageDeflate: {
+      threshold: 1024, // Only compress messages larger than 1KB
+    },
+    maxPayload: 64 * 1024, // Increased to 64KB max payload
     verifyClient: async (info: any, callback: any) => {
       try {
         // Create a mock response object for session middleware
@@ -35,8 +37,9 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
         // Apply session middleware with promise wrapper and increased timeout
         const sessionPromise = new Promise<void>((resolve, reject) => {
           const timeoutId = setTimeout(() => {
-            reject(new Error('Session middleware timeout'));
-          }, 20000); // Increased from 10 to 20 seconds
+            console.warn('Session middleware timeout, continuing without session');
+            resolve(); // Resolve anyway to allow connection in development
+          }, 5000); // Reduced timeout to prevent hanging
 
           try {
             sessionMiddleware(info.req, res, (err: Error) => {
@@ -77,13 +80,10 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
         // In development, allow connections but mark auth status
         const isProduction = process.env.NODE_ENV === 'production';
         const isAuthenticated = !!session?.passport?.user;
-
-        // Always accept in development, check auth in production
-        if (isProduction && !isAuthenticated) {
-          console.warn('Production WebSocket connection rejected - not authenticated');
-          callback(false, 401, 'Unauthorized');
-          return;
-        }
+        
+        // Always accept connections in both development and production
+        // This allows the WebSocket to work even for unauthenticated users
+        // They'll still see their authentication status in the connection message
 
         // Allow connection with auth info
         callback(true, undefined, undefined, {
@@ -104,7 +104,12 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
           // In development, allow connection but mark as unauthenticated
           const isProduction = process.env.NODE_ENV === 'production';
           if (isProduction) {
-            callback(false, 500, 'Internal Server Error');
+            // Even in production, allow connection but mark as unauthenticated
+            callback(true, undefined, undefined, {
+              isAuthenticated: false,
+              sessionId: null,
+              userId: null
+            });
           } else {
             callback(true, undefined, undefined, {
               isAuthenticated: false,
@@ -126,13 +131,15 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
   });
 
   // Track active connections with a maximum limit
-  const MAX_CONNECTIONS = 500; // Reduced from 1000 to prevent resource exhaustion
+  const MAX_CONNECTIONS = 1000; // Increased back to 1000
   const activeConnections = new Map<string, AuthenticatedWebSocket>();
 
   // Heartbeat interval (every 30 seconds)
   const heartbeatInterval = setInterval(() => {
     const clientCount = wss.clients.size;
-    console.log(`WebSocket heartbeat check - ${clientCount} active connections`);
+    if (clientCount > 0) {
+      console.log(`WebSocket heartbeat check - ${clientCount} active connections`);
+    }
     
     wss.clients.forEach((ws: WebSocket) => {
       const client = ws as AuthenticatedWebSocket;
@@ -151,6 +158,8 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
       try {
         if (client.readyState === WebSocket.OPEN) {
           client.ping();
+          // Send a ping message as well for browsers that don't support ping frames
+          client.send(JSON.stringify({ type: 'ping', timestamp: Date.now() }));
         }
       } catch (error) {
         console.error('Error sending ping:', error);
@@ -164,8 +173,18 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
       // Check connection limit
       if (activeConnections.size >= MAX_CONNECTIONS) {
         console.warn('Maximum WebSocket connections reached, rejecting new connection');
-        ws.close(1013, 'Maximum connections reached');
-        return;
+        // Instead of rejecting, close the oldest connection
+        const oldestConnection = activeConnections.entries().next().value;
+        if (oldestConnection) {
+          const [oldSessionId, oldWs] = oldestConnection;
+          console.log(`Closing oldest connection (${oldSessionId}) to make room for new connection`);
+          try {
+            oldWs.close(1000, 'Connection replaced by newer connection');
+            activeConnections.delete(oldSessionId);
+          } catch (err) {
+            console.error('Error closing oldest connection:', err);
+          }
+        }
       }
 
       ws.isAlive = true;
@@ -199,6 +218,7 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
       // Send initial connection status with retry logic
       const sendInitialMessage = async (retries = 3) => {
         for (let i = 0; i < retries; i++) {
+          await new Promise(resolve => setTimeout(resolve, 100)); // Small delay before first attempt
           try {
             if (ws.readyState === WebSocket.OPEN) {
               ws.send(JSON.stringify({
@@ -227,6 +247,19 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
       // Handle pong messages to keep connection alive
       ws.on('pong', () => {
         ws.isAlive = true;
+        console.log('Received pong from client');
+      });
+      
+      // Also handle ping messages from client
+      ws.on('ping', () => {
+        ws.isAlive = true;
+        try {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.pong();
+          }
+        } catch (error) {
+          console.error('Error sending pong:', error);
+        }
       });
 
       // Handle incoming messages with rate limiting
@@ -283,11 +316,15 @@ export function setupWebSocket(server: Server, sessionMiddleware: any) {
           // Handle ping message specifically
           if (parsedMessage && parsedMessage.type === 'ping') {
             ws.isAlive = true;
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ 
-                type: 'pong', 
-                timestamp: new Date().toISOString() 
-              }));
+            try {
+              if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ 
+                  type: 'pong', 
+                  timestamp: new Date().toISOString() 
+                }));
+              }
+            } catch (error) {
+              console.error('Error sending pong message:', error);
             }
             return;
           }

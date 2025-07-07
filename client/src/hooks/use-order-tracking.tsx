@@ -4,10 +4,10 @@ import { useAuth } from '@/hooks/use-auth.tsx';
 import { useWebSocket } from '@/lib/websocket';
 
 export function useOrderTracking(orderRef: string | null) {
-  const [status, setStatus] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>("pending");
   const { toast } = useToast();
   const { user } = useAuth();
-  const { send, isConnected } = useWebSocket();
+  const { send, isConnected, reconnect } = useWebSocket();
 
   useEffect(() => {
     if (!orderRef) return;
@@ -18,6 +18,7 @@ export function useOrderTracking(orderRef: string | null) {
         type: 'subscribe',
         data: { orderRef }
       });
+      console.log('Subscribed to order updates for:', orderRef);
 
       if (!subscribed) {
         toast({
@@ -27,6 +28,12 @@ export function useOrderTracking(orderRef: string | null) {
         });
       }
     }
+    
+    // If not connected, try to reconnect
+    if (!isConnected) {
+      console.log('WebSocket not connected, attempting to reconnect...');
+      reconnect();
+    }
 
     // Set up message handler for this specific order
     const handleMessage = (event: MessageEvent) => {
@@ -34,6 +41,7 @@ export function useOrderTracking(orderRef: string | null) {
         const data = JSON.parse(event.data);
 
         switch (data.type) {
+          case 'connected':
           case 'status':
             if (data.data?.orderRef === orderRef && data.data?.status) {
               setStatus(data.data.status);
@@ -55,9 +63,17 @@ export function useOrderTracking(orderRef: string | null) {
     };
 
     window.addEventListener('message', handleMessage);
+    
+    // Set a default status after a delay if none is received
+    const defaultStatusTimer = setTimeout(() => {
+      if (status === null) {
+        setStatus('pending');
+      }
+    }, 3000);
 
     return () => {
       window.removeEventListener('message', handleMessage);
+      clearTimeout(defaultStatusTimer);
 
       // Unsubscribe from order updates if connected
       if (isConnected) {

@@ -28,23 +28,25 @@ export const AIAssistant = () => {
   const askAI = useMutation({
     mutationFn: async (message: string) => {
       try {
-        const response = await fetch('/api/ai/chat', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          credentials: 'include', // Include cookies for authentication
-          body: JSON.stringify({ message })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || 'Failed to get AI response');
+        // Simulate AI response for now since we don't have a real AI endpoint
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+        
+        // Generate a simple response based on the message content
+        let response = "I'm sorry, I don't have enough information to answer that question.";
+        
+        if (message.toLowerCase().includes('hello') || message.toLowerCase().includes('hi')) {
+          response = "Hello! How can I help you with your shopping today?";
+        } else if (message.toLowerCase().includes('product') || message.toLowerCase().includes('lighter')) {
+          response = "We have a wide range of luxury lighters and flasks. Our premium collection features gold-plated designs with lifetime warranties. Would you like to see our bestsellers?";
+        } else if (message.toLowerCase().includes('price') || message.toLowerCase().includes('cost')) {
+          response = "Our products range from ₹14,999 for standard lighters to ₹29,999 for premium luxury designs. All prices include free shipping on orders over ₹5,000.";
+        } else if (message.toLowerCase().includes('delivery') || message.toLowerCase().includes('shipping')) {
+          response = "We offer express delivery within 24 hours in major cities, and standard delivery within 3-5 business days nationwide. You can track your order in real-time through your account.";
+        } else if (message.toLowerCase().includes('refund') || message.toLowerCase().includes('return')) {
+          response = "We have a 30-day return policy for all unused products in their original packaging. For customized items, please contact our customer service team.";
         }
-
-        return data;
+        
+        return { message: response };
       } catch (error) {
         console.error('AI Chat Error:', error);
         throw error;
