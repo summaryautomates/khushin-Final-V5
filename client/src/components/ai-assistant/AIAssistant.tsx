@@ -91,7 +91,8 @@ export const AIAssistant = () => {
     onSuccess: (data) => {
       setMessages(prev => [...prev, 
         { role: 'assistant', content: data.message }
-    if (window.location.hostname.includes('netlify.app') || !window.location.hostname.includes('localhost')) return;
+      ]);
+      if (window.location.hostname.includes('netlify.app') || !window.location.hostname.includes('localhost')) return;
     },
     onError: (error: Error) => {
       toast({
