@@ -21,9 +21,10 @@ export function useWebSocket() {
     }
 
     // Determine the WebSocket URL
-    // Derive WebSocket URL directly from the current page origin
-    const base = window.location.origin.replace(/^http/, 'ws').replace(/^https/, 'wss');
-    const wsUrl = `${base}/ws`;
+    // Use a more reliable approach to determine WebSocket URL
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    const wsUrl = `${protocol}//${host}/ws`;
     
     console.log('Attempting WebSocket connection to:', wsUrl);
     
@@ -35,6 +36,11 @@ export function useWebSocket() {
       ws.onopen = () => {
         console.log('WebSocket connected successfully');
         setConnected(true);
+        toast({
+          title: "Connected",
+          description: "WebSocket connection established",
+          variant: "default",
+        });
         reconnectAttemptRef.current = 0;
         
         // Set up keep-alive ping
@@ -68,6 +74,13 @@ export function useWebSocket() {
       // Connection closed
       ws.onclose = (event) => {
         console.log('WebSocket closed:', event.code, event.reason);
+        if (connected) {
+          toast({
+            title: "Disconnected",
+            description: "WebSocket connection closed",
+            variant: "destructive",
+          });
+        }
         setConnected(false);
         
         // Clear keep-alive interval
