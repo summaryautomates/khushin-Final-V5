@@ -22,7 +22,7 @@ export function useWebSocket() {
     }
 
     // Determine the WebSocket URL
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const protocol = 'ws:';
     
     // Handle port correctly for WebContainer environments
     let host = window.location.hostname;
