@@ -22,8 +22,14 @@ export function useWebSocket() {
     }
 
     // Determine the WebSocket URL
-    const protocol = 'wss:';
-    const host = window.location.host;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const hostname = window.location.hostname;
+    
+    // In webcontainer environment, use port 5000 explicitly
+    const isWebContainer = hostname.includes('webcontainer-api.io') || hostname.includes('local-credentialless');
+    const port = isWebContainer ? '5000' : window.location.port;
+    const host = port ? `${hostname}:${port}` : hostname;
+    
     const wsUrl = `${protocol}//${host}/ws`;
     
     console.log('Attempting WebSocket connection to:', wsUrl);
