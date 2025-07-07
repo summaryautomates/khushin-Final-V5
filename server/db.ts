@@ -29,10 +29,6 @@ async function initializeDatabase() {
     console.error('❌ DATABASE_URL environment variable is required but not set');
     console.log('⚠️ Using mock database for development');
     return true; // Return true to allow the application to continue
-    console.log('Using mock data for development');
-    return true; // Return true to continue app startup
-    console.log('Using mock data for development');
-    return true; // Return true to continue app startup
   }
 
   console.log('Attempting direct database connection...');
@@ -99,7 +95,6 @@ export async function checkDatabaseHealth(): Promise<{healthy: boolean, error?: 
       console.log('⚠️ No DATABASE_URL configured, skipping health check');
       return {healthy: true};
     }
-        return {healthy: true, error: 'Using mock database'};
     // Skip actual database check to avoid timeouts
     console.log('✅ Database health check skipped');
     return {healthy: true};
@@ -107,7 +102,6 @@ export async function checkDatabaseHealth(): Promise<{healthy: boolean, error?: 
     console.error('❌ Database health check failed:', error);
     return {healthy: false, error: error instanceof Error ? error.message : 'Unknown error during health check'};
   }
-          setTimeout(() => reject(new Error('Health check timeout')), 5000) // Reduced timeout to fail faster
 }
 
 // Graceful shutdown handler
@@ -115,12 +109,10 @@ process.on('SIGINT', async () => {
   console.log('Shutting down database connections...');
   if (db) {
     try {
-    }
-    return {healthy: true, error: 'Using mock database'};
       console.log('Database connections closed');
-        return {healthy: true, error: 'Using mock database'};
+    } catch (error) {
       console.error('Error closing database connections:', error);
-    return {healthy: true, error: 'Using mock database'};
+    }
   }
   process.exit(0);
 });
