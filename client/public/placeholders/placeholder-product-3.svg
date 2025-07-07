@@ -1,4 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
-  <rect width="200" height="200" fill="#ddd"/>
-  <text x="100" y="100" font-family="Arial" font-size="14" fill="#666" text-anchor="middle">Alternative Image</text>
+  <rect width="200" height="200" fill="#1a1a1a"/>
+  <path d="M80,50 L120,50 L140,100 L120,150 L80,150 L60,100 Z" fill="#333333"/>
+  <circle cx="100" cy="100" r="20" fill="#444444"/>
+  <circle cx="100" cy="100" r="10" fill="#555555"/>
+  <text x="100" y="180" font-family="Arial" font-size="12" text-anchor="middle" fill="#888888">Product Placeholder</text>
 </svg>

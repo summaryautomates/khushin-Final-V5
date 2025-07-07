@@ -1,5 +1,7 @@
-
-<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
-  <rect width="400" height="400" fill="#f0f0f0"/>
-  <text x="50%" y="50%" font-family="Arial" font-size="24" fill="#666" text-anchor="middle">Product Image</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#1a1a1a"/>
+  <path d="M100,50 L130,90 L130,150 L70,150 L70,90 Z" fill="#333333"/>
+  <rect x="85" y="150" width="30" height="10" fill="#444444"/>
+  <circle cx="100" cy="75" r="10" fill="#555555"/>
+  <text x="100" y="180" font-family="Arial" font-size="12" text-anchor="middle" fill="#888888">Product Placeholder</text>
 </svg>

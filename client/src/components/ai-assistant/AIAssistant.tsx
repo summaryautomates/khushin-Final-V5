@@ -28,9 +28,11 @@ export const AIAssistant = () => {
   const askAI = useMutation({
     mutationFn: async (message: string) => {
       try {
-        // Check if we're on a deployment (not localhost) - if so, use mock responses
-        const isDeployment = !window.location.hostname.includes('localhost') && 
-                             !window.location.hostname.includes('127.0.0.1');
+        // Check if we're in a deployment environment
+        const isDeployment = typeof window !== 'undefined' && 
+                            !window.location.hostname.includes('localhost') && 
+                            !window.location.hostname.includes('127.0.0.1');
+                            
         if (isDeployment) {
           // Simulate network delay
           await new Promise(resolve => setTimeout(resolve, 1000));

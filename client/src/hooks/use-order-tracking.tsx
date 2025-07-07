@@ -7,11 +7,15 @@ export function useOrderTracking(orderRef: string | null) {
   const [status, setStatus] = useState<string | null>("pending");
   const { toast } = useToast();
   const { user } = useAuth(); 
-  const { send, isConnected, reconnect } = useWebSocket(); 
+  const { send, isConnected, reconnect } = useWebSocket();
+  
+  // Check if we're in a deployment environment
+  const isDeployment = !window.location.hostname.includes('localhost') && 
+                      !window.location.hostname.includes('127.0.0.1');
 
   useEffect(() => {
-    // For Netlify deployments, use a mock status with simulated changes
-    if (window.location.hostname.includes('netlify.app')) {
+    // For deployments, use a mock status with simulated changes
+    if (isDeployment) {
       // Simulate order status changes for demo purposes
       setStatus('pending');
       
@@ -37,6 +41,9 @@ export function useOrderTracking(orderRef: string | null) {
     } 
 
     if (!orderRef) return;
+    
+    // Skip WebSocket connection in deployment environments
+    if (isDeployment) return;
 
     // Subscribe to order updates when connected
     if (isConnected) {

@@ -43,6 +43,11 @@ import LuxuryLighters from "@/pages/luxury-lighters";
 
 function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
+  
+  // Check if we're in a deployment environment
+  const isDeployment = typeof window !== 'undefined' && 
+                      !window.location.hostname.includes('localhost') && 
+                      !window.location.hostname.includes('127.0.0.1');
 
   useEffect(() => {
     // Maintain a log of recent errors to prevent duplicate toasts
@@ -145,9 +150,9 @@ function WebSocketProvider({ children }: { children: React.ReactNode }) {
   // Initialize WebSocket connection
   const { isConnected } = useWebSocket();
   
-  // Show connection status to user, but skip on Netlify deployments
+  // Show connection status to user, but skip on deployments
   useEffect(() => {
-    if (window.location.hostname.includes('netlify.app')) return;
+    if (isDeployment) return;
 
     if (!isConnected) {
       toast({

@@ -5,6 +5,11 @@ export function useWebSocket() {
   const [connected, setConnected] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
   const wsRef = useRef<WebSocket | null>(null); 
+  
+  // Check if we're in a deployment environment
+  const isDeployment = typeof window !== 'undefined' && 
+                      !window.location.hostname.includes('localhost') && 
+                      !window.location.hostname.includes('127.0.0.1');
   const reconnectAttemptRef = useRef(0); 
   const maxReconnectAttempts = 10; // Increased from 5 to 10
   const reconnectTimeouts = [1000, 2000, 3000, 5000, 8000, 13000, 21000, 30000, 30000, 30000]; // Fibonacci-like sequence
@@ -14,9 +19,6 @@ export function useWebSocket() {
   const connect = useCallback(() => {
     console.log('Initializing WebSocket connection...');
 
-    // Check if we're on a deployment (not localhost) - if so, don't attempt WebSocket connection
-    const isDeployment = !window.location.hostname.includes('localhost') && 
-                         !window.location.hostname.includes('127.0.0.1');
     if (isDeployment) {
       console.log('Running on deployment environment - WebSocket connections disabled');
       setConnected(true); // Pretend we're connected to prevent reconnection attempts
@@ -171,15 +173,13 @@ export function useWebSocket() {
   }, [connect, toast]);
   
   useEffect(() => {
-    // Only attempt connection if on localhost
-    const isLocalhost = window.location.hostname.includes('localhost') || 
-                        window.location.hostname.includes('127.0.0.1');
-    if (isLocalhost) {
+    // Only attempt connection if not in deployment environment
+    if (!isDeployment) {
       setTimeout(connect, 1000); // Delay initial connection by 1 second to allow server to start
     }
 
-    // For deployments, simulate a connected state after a delay
-    if (!isLocalhost) {
+    // For deployments, simulate a connected state
+    if (isDeployment) {
       setTimeout(() => {
         setConnected(true);
         setAuthenticated(true);
@@ -199,10 +199,8 @@ export function useWebSocket() {
   
   // Expose a function to send messages through the WebSocket
   const sendMessage = useCallback((data: any) => {
-    // For deployments, just log the message and return true to simulate success
-    const isLocalhost = window.location.hostname.includes('localhost') || 
-                        window.location.hostname.includes('127.0.0.1');
-    if (!isLocalhost) {
+    // For deployments, simulate success
+    if (isDeployment) {
       console.log('Simulating WebSocket message send on deployment environment:', data);
       return true;
     }
