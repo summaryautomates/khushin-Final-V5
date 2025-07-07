@@ -21,7 +21,7 @@ if (supabaseUrl && supabaseAnonKey) {
 
 let db: any = null;
 let connectionAttempts = 0;
-const MAX_CONNECTION_ATTEMPTS = 3;
+const MAX_CONNECTION_ATTEMPTS = 5;
 
 // Initialize database connection with retry logic
 async function initializeDatabase() {
@@ -40,8 +40,8 @@ async function initializeDatabase() {
       const client = postgres(DATABASE_URL, {
         ssl: { rejectUnauthorized: false },
         max: 5, // Reduced connection pool size
-        idle_timeout: 20,
-        connect_timeout: 120, // Increased from 90 to 120 seconds
+        idle_timeout: 30,
+        connect_timeout: 180, // Increased from 120 to 180 seconds
         transform: {
           undefined: null
         },
@@ -51,10 +51,10 @@ async function initializeDatabase() {
       
       db = drizzle(client, { schema });
       
-      // Test the connection with longer timeout - increased from 60 to 90 seconds
+      // Test the connection with longer timeout - increased from 90 to 120 seconds
       const testQuery = client`SELECT 1 as test`;
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), 90000) // Increased from 60 to 90 seconds
+        setTimeout(() => reject(new Error('Connection timeout')), 120000) // Increased from 90 to 120 seconds
       );
       
       await Promise.race([testQuery, timeoutPromise]);
@@ -62,6 +62,16 @@ async function initializeDatabase() {
       return true;
     } catch (error) {
       console.error(`❌ Database connection attempt ${connectionAttempts} failed:`, error);
+      
+      // Explicitly close the client if it was created
+      if (db && db.$client) {
+        try {
+          await db.$client.end();
+        } catch (closeError) {
+          console.error('Error closing failed connection:', closeError);
+        }
+      }
+      
       db = null;
       
       if (connectionAttempts < MAX_CONNECTION_ATTEMPTS) {
@@ -88,11 +98,11 @@ export async function checkDatabaseHealth(): Promise<{healthy: boolean, error?: 
     }
 
     if (db) {
-      // Test direct database connection with increased timeout - increased from 45 to 60 seconds
+      // Test direct database connection with increased timeout - increased from 60 to 90 seconds
       try {
         const healthCheckPromise = db.execute('SELECT 1 as health_check');
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Health check timeout')), 60000) // Increased from 45 to 60 seconds
+          setTimeout(() => reject(new Error('Health check timeout')), 90000) // Increased from 60 to 90 seconds
         );
         
         await Promise.race([healthCheckPromise, timeoutPromise]);

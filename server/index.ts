@@ -33,7 +33,7 @@ async function startServer() {
   const app = express();
   const isProduction = process.env.NODE_ENV === 'production';
   const REQUIRED_PORT = 5000; // Changed from 3000 to 5000 to match workflow requirements
-  const MAX_STARTUP_RETRIES = 3;
+  const MAX_STARTUP_RETRIES = 5;
   let startupAttempts = 0;
   let server: any = null;
 
