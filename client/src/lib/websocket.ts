@@ -37,9 +37,15 @@ export function useWebSocket() {
         setConnected(false);
         return;
       } else if (window.location.hostname === 'localhost' || window.location.hostname.includes('webcontainer')) {
-        // Development environment - connect directly to port 5000
+        // Development environment - use current host for webcontainer, localhost:5000 for local dev
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        wsUrl = `${protocol}//localhost:5000/ws`;
+        if (window.location.hostname.includes('webcontainer')) {
+          // In webcontainer, use the current host which provides the correct external domain
+          wsUrl = `${protocol}//${window.location.host}/ws`;
+        } else {
+          // Local development - connect directly to port 5000
+          wsUrl = `${protocol}//localhost:5000/ws`;
+        }
       } else {
         // Production environment - use current host
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
