@@ -24,18 +24,23 @@ export function useWebSocket() {
     // Determine the WebSocket URL
     const protocol = 'ws:';
     
-    // Handle WebContainer environment URL format
+    // Handle WebContainer environment URL format - clean embedded port info
     let host = window.location.hostname;
     let port = '5000'; // Always use port 5000 for backend in WebContainer
     
     // Clean hostname for WebContainer environments (remove embedded port info like --443--)
     if (host.includes('--')) {
-      // Extract the base hostname without embedded port information
+      // Extract the base hostname and reconstruct with port 5000
       const parts = host.split('--');
       if (parts.length >= 3) {
-        // Format: prefix--port--suffix.domain
-        host = parts[0] + '--5000--' + parts.slice(2).join('--');
+        // Format: prefix--oldport--suffix.domain -> prefix--5000--suffix.domain
+        const prefix = parts[0];
+        const suffix = parts.slice(2).join('--');
+        host = `${prefix}--5000--${suffix}`;
       }
+    } else {
+      // For non-WebContainer environments, use localhost with port
+      host = 'localhost';
     }
     
     const wsUrl = `${protocol}//${host}:${port}/ws`;
