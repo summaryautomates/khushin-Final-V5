@@ -39,10 +39,10 @@ async function initializeDatabase() {
       console.log(`Database connection attempt ${connectionAttempts}/${MAX_CONNECTION_ATTEMPTS}`);
       
       const client = postgres(DATABASE_URL, {
-        ssl: false, // Disable SSL for local development
+        ssl: true, // Enable SSL for cloud database connections
         max: 3, // Further reduced connection pool size for stability
         idle_timeout: 20,
-        connect_timeout: 30, // Increased timeout to allow more time for connection
+        connect_timeout: 60, // Increased timeout to allow more time for connection
         transform: {
           undefined: null
         },
@@ -56,7 +56,7 @@ async function initializeDatabase() {
         // Test the connection with reasonable timeout
         const testQuery = client`SELECT 1 as test LIMIT 1`;
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Connection timeout')), 15000)
+          setTimeout(() => reject(new Error('Connection timeout')), 30000)
         );
         
         await Promise.race([testQuery, timeoutPromise]);
