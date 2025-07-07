@@ -82,23 +82,40 @@ export async function setupWebSocket(server: Server, sessionMiddleware: any) {
   });
   
   // Setup heartbeat to detect dead connections
-  const interval = setInterval(() => {
-    clients.forEach((client, id) => {
-      if (!client.isAlive) {
-        console.log(`Terminating inactive client: ${id}`);
-        client.ws.terminate();
-        clients.delete(id);
-        return;
-      }
-      
-      client.isAlive = false;
-      client.ws.ping();
-    });
-  }, 30000);
+  // Add a small delay before starting heartbeat to allow server to stabilize
+  const interval = setTimeout(() => {
+    const heartbeatInterval = setInterval(() => {
+      clients.forEach((client, id) => {
+        if (!client.isAlive) {
+          console.log(`Terminating inactive client: ${id}`);
+          client.ws.terminate();
+          // Explicitly nullify the client reference
+          client.ws = null as any;
+          clients.delete(id);
+          return;
+        }
+        
+        // Check readyState before sending ping to prevent operations on closed sockets
+        if (client.ws.readyState === WebSocket.OPEN) {
+          client.isAlive = false;
+          client.ws.ping();
+        } else {
+          console.log(`Removing client with closed connection: ${id}`);
+          clients.delete(id);
+        }
+      });
+    }, 30000);
+    
+    // Store the heartbeat interval for cleanup
+    wss.heartbeatInterval = heartbeatInterval;
+  }, 1000);
   
   // Clean up on server close
   wss.on('close', () => {
-    clearInterval(interval);
+    clearTimeout(interval);
+    if (wss.heartbeatInterval) {
+      clearInterval(wss.heartbeatInterval);
+    }
   });
   
   console.log('WebSocket server setup complete');

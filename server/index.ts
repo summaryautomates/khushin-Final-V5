@@ -36,6 +36,7 @@ async function startServer() {
   const MAX_STARTUP_RETRIES = 5;
   let startupAttempts = 0;
   let server: any = null;
+  let wss: any = null;
 
   while (startupAttempts < MAX_STARTUP_RETRIES) {
     try {
@@ -130,7 +131,7 @@ async function startServer() {
       // Setup WebSocket with session support (after routes are registered)
       console.log('Setting up WebSocket...');
       try {
-        const wss = await setupWebSocket(server, sessionMiddleware);
+        wss = await setupWebSocket(server, sessionMiddleware);
         console.log('WebSocket setup complete');
       } catch (wsError) {
         console.error('WebSocket setup failed:', wsError);
@@ -299,6 +300,19 @@ async function startServer() {
       const cleanup = async () => {
         console.log('Starting cleanup process...');
         try {
+          // Close WebSocket server first if it exists
+          if (wss) {
+            console.log('Closing WebSocket server...');
+            wss.close(() => {
+              console.log('WebSocket server closed');
+            });
+            // Clear heartbeat interval if it exists
+            if (wss.heartbeatInterval) {
+              clearInterval(wss.heartbeatInterval);
+            }
+            wss = null;
+          }
+          
           // Close the HTTP server first
           await new Promise<void>((resolve) => {
             server.close(() => {

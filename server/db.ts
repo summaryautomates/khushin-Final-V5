@@ -4,7 +4,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import * as schema from "@shared/schema";
 
 // Get database configuration from environment or use a mock database in development
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_m2gYrtGfDna5@ep-misty-wave-a5yxp4e1.us-east-2.aws.neon.tech/neondb?sslmode=require';
+const DATABASE_URL = process.env.DATABASE_URL;
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL || 'https://bajhzcspbpqymcjguaix.supabase.co';
