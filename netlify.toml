@@ -4,7 +4,7 @@
   # Directory to publish (relative to root of your repo)
   publish = "dist/public"
   # Build command
-  command = "npm run build:client"
+  command = "npm install && npm run build:client"
 
 # Redirect all routes to index.html for client-side routing
 [[redirects]]
