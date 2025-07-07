@@ -4,7 +4,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import * as schema from "@shared/schema";
 
 // Get database configuration from environment
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_m2gYrtGfDna5@ep-misty-wave-a5yxp4e1.us-east-2.aws.neon.tech/neondb?sslmode=require';
+const DATABASE_URL = process.env.DATABASE_URL;
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL || '';
@@ -21,12 +21,13 @@ if (supabaseUrl && supabaseAnonKey) {
 
 let db: any = null;
 let connectionAttempts = 0;
-const MAX_CONNECTION_ATTEMPTS = 5;
+const MAX_CONNECTION_ATTEMPTS = 10;
 
 // Initialize database connection with retry logic
 async function initializeDatabase() {
   if (!DATABASE_URL) {
-    console.error('❌ DATABASE_URL not configured');
+    console.error('❌ DATABASE_URL environment variable is required but not set');
+    console.error('Please configure DATABASE_URL in your environment variables or .env file');
     return false;
   }
 
@@ -39,9 +40,9 @@ async function initializeDatabase() {
       
       const client = postgres(DATABASE_URL, {
         ssl: { rejectUnauthorized: false },
-        max: 5, // Reduced connection pool size
-        idle_timeout: 30,
-        connect_timeout: 240, // Increased from 180 to 240 seconds
+        max: 3, // Further reduced connection pool size for stability
+        idle_timeout: 20,
+        connect_timeout: 60, // Reduced timeout for faster failure detection
         transform: {
           undefined: null
         },
@@ -51,10 +52,10 @@ async function initializeDatabase() {
       
       db = drizzle(client, { schema });
       
-      // Test the connection with longer timeout - increased from 120 to 180 seconds
+      // Test the connection with reasonable timeout
       const testQuery = client`SELECT 1 as test`;
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), 180000) // Increased from 120 to 180 seconds
+        setTimeout(() => reject(new Error('Connection timeout')), 30000) // 30 second timeout
       );
       
       await Promise.race([testQuery, timeoutPromise]);
@@ -75,7 +76,7 @@ async function initializeDatabase() {
       db = null;
       
       if (connectionAttempts < MAX_CONNECTION_ATTEMPTS) {
-        const delay = connectionAttempts * 5000; // Increased from 3000 to 5000ms
+        const delay = Math.min(connectionAttempts * 2000, 10000); // Progressive delay up to 10 seconds
         console.log(`Waiting ${delay}ms before next attempt...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
@@ -98,11 +99,11 @@ export async function checkDatabaseHealth(): Promise<{healthy: boolean, error?: 
     }
 
     if (db) {
-      // Test direct database connection with increased timeout - increased from 90 to 120 seconds
+      // Test direct database connection with reasonable timeout
       try {
         const healthCheckPromise = db.execute('SELECT 1 as health_check');
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Health check timeout')), 120000) // Increased from 90 to 120 seconds
+          setTimeout(() => reject(new Error('Health check timeout')), 15000) // 15 second timeout
         );
         
         await Promise.race([healthCheckPromise, timeoutPromise]);
