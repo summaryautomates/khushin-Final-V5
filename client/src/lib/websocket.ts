@@ -26,15 +26,8 @@ export function useWebSocket() {
     }
 
     // Determine the WebSocket URL
-    // For development in WebContainer, always use ws:// protocol
-    let protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    
-    const host = window.location.host;
-    const wsUrl = `${protocol}//${host}/ws`;
-    
-    console.log('Attempting WebSocket connection to:', wsUrl);
-    
-    try {
+    // Always use secure WebSocket protocol for Netlify deployments
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws; 
       
@@ -59,7 +52,24 @@ export function useWebSocket() {
       // Message received
       ws.onmessage = (event) => {
         try {
-          const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+          // Ensure we're parsing string data properly
+          let data;
+          if (typeof event.data === 'string') {
+            try {
+              data = JSON.parse(event.data);
+            } catch (parseError) {
+              console.error('Error parsing WebSocket message:', parseError);
+              return;
+            }
+          } else {
+            // For non-string data (rare in WebSocket), try to handle it
+            try {
+              data = JSON.parse(event.data.toString());
+            } catch (parseError) {
+              console.error('Error parsing non-string WebSocket message:', parseError);
+              return;
+            }
+          }
           console.log('WebSocket message received:', data);
           
           if (data.type === 'connected') {
