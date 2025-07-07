@@ -46,8 +46,8 @@ export function useWebSocket() {
         // Development environment - use backend server port
         port = ':5000';
       } else if (hostname.includes('webcontainer-api.io')) {
-        // WebContainer environment - use production port
-        port = ':8080';
+        // WebContainer environment - use development port
+        port = ':5000';
       } else {
         // Production or other environments
         port = window.location.port ? `:${window.location.port}` : ':8080';
