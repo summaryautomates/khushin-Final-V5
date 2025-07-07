@@ -39,7 +39,12 @@ export function useWebSocket() {
       // In webcontainer environment, use the current hostname with port 5000
       if (window.location.hostname.includes('webcontainer')) {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        wsUrl = `${protocol}//${window.location.hostname}:5000/ws`;
+        // Parse the webcontainer hostname and replace the external port with internal port 5000
+        const hostname = window.location.hostname;
+        // Webcontainer hostnames have format: hash--externalport--internalport.domain
+        // We need to replace the external port (443) with our server port (5000)
+        const modifiedHostname = hostname.replace(/--443--/, '--5000--');
+        wsUrl = `${protocol}//${modifiedHostname}/ws`;
       } else if (window.location.hostname === 'localhost') {
         // Local development - connect directly to port 5000
         wsUrl = `ws://localhost:5000/ws`;
