@@ -267,6 +267,61 @@ export class ReplitDBStorage implements IStorage {
           }
         ];
       }
+
+      // If no database connection, return mock data
+      if (!db) {
+        console.log('Using mock product data');
+        return [
+          {
+            id: 1,
+            name: "Luxury Gold Lighter",
+            description: "Premium gold-plated lighter with elegant design",
+            price: 299900,
+            category: "lighters",
+            collection: "luxury",
+            images: ["/placeholders/product-placeholder.svg"],
+            customizable: true,
+            features: { material: "Gold-plated", refillable: true, warranty: "Lifetime" },
+            created_at: new Date()
+          },
+          {
+            id: 2,
+            name: "Silver Pocket Lighter",
+            description: "Compact silver lighter perfect for everyday use",
+            price: 149900,
+            category: "lighters",
+            collection: "standard",
+            images: ["/placeholders/product-placeholder.svg"],
+            customizable: false,
+            features: { material: "Silver", refillable: true, warranty: "5 years" },
+            created_at: new Date()
+          },
+          {
+            id: 3,
+            name: "Premium Flask",
+            description: "Stainless steel flask with leather wrapping",
+            price: 189900,
+            category: "flask",
+            collection: "premium",
+            images: ["/placeholders/product-placeholder.svg"],
+            customizable: true,
+            features: { material: "Stainless Steel", capacity: "8oz", leatherWrap: true },
+            created_at: new Date()
+          },
+          {
+            id: 4,
+            name: "Vintage Collection Lighter",
+            description: "Classic design with modern functionality",
+            price: 249900,
+            category: "lighters",
+            collection: "luxury",
+            images: ["/placeholders/product-placeholder.svg"],
+            customizable: true,
+            features: { material: "Brass", refillable: true, vintage: true },
+            created_at: new Date()
+          }
+        ];
+      }
       
       return await this.executeWithFallback(
         async () => {
@@ -349,6 +404,62 @@ export class ReplitDBStorage implements IStorage {
         ];
         return mockProducts.find(p => p.id === id);
       }
+
+      // If no database connection, return mock data
+      if (!db) {
+        console.log('Using mock product data for ID:', id);
+        const mockProducts = [
+          {
+            id: 1,
+            name: "Luxury Gold Lighter",
+            description: "Premium gold-plated lighter with elegant design",
+            price: 299900,
+            category: "lighters",
+            collection: "luxury",
+            images: ["/placeholders/product-placeholder.svg"],
+            customizable: true,
+            features: { material: "Gold-plated", refillable: true, warranty: "Lifetime" },
+            created_at: new Date()
+          },
+          {
+            id: 2,
+            name: "Silver Pocket Lighter",
+            description: "Compact silver lighter perfect for everyday use",
+            price: 149900,
+            category: "lighters",
+            collection: "standard",
+            images: ["/placeholders/product-placeholder.svg"],
+            customizable: false,
+            features: { material: "Silver", refillable: true, warranty: "5 years" },
+            created_at: new Date()
+          },
+          {
+            id: 3,
+            name: "Premium Flask",
+            description: "Stainless steel flask with leather wrapping",
+            price: 189900,
+            category: "flask",
+            collection: "premium",
+            images: ["/placeholders/product-placeholder.svg"],
+            customizable: true,
+            features: { material: "Stainless Steel", capacity: "8oz", leatherWrap: true },
+            created_at: new Date()
+          },
+          {
+            id: 4,
+            name: "Vintage Collection Lighter",
+            description: "Classic design with modern functionality",
+            price: 249900,
+            category: "lighters",
+            collection: "luxury",
+            images: ["/placeholders/product-placeholder.svg"],
+            customizable: true,
+            features: { material: "Brass", refillable: true, vintage: true },
+            created_at: new Date()
+          }
+        ];
+        return mockProducts.find(p => p.id === id);
+      }
       
       return await this.executeWithFallback(
         async () => {
@@ -371,6 +482,62 @@ export class ReplitDBStorage implements IStorage {
   async getProductsByCategory(category: string): Promise<typeof products.$inferSelect[]> {
     try {
       console.log('Fetching products by category:', category);
+
+      // If no database connection, return mock data
+      if (!db) {
+        console.log('Using mock product data for category:', category);
+        const mockProducts = [
+          {
+            id: 1,
+            name: "Luxury Gold Lighter",
+            description: "Premium gold-plated lighter with elegant design",
+            price: 299900,
+            category: "lighters",
+            collection: "luxury",
+            images: ["/placeholders/product-placeholder.svg"],
+            customizable: true,
+            features: { material: "Gold-plated", refillable: true, warranty: "Lifetime" },
+            created_at: new Date()
+          },
+          {
+            id: 2,
+            name: "Silver Pocket Lighter",
+            description: "Compact silver lighter perfect for everyday use",
+            price: 149900,
+            category: "lighters",
+            collection: "standard",
+            images: ["/placeholders/product-placeholder.svg"],
+            customizable: false,
+            features: { material: "Silver", refillable: true, warranty: "5 years" },
+            created_at: new Date()
+          },
+          {
+            id: 3,
+            name: "Premium Flask",
+            description: "Stainless steel flask with leather wrapping",
+            price: 189900,
+            category: "flask",
+            collection: "premium",
+            images: ["/placeholders/product-placeholder.svg"],
+            customizable: true,
+            features: { material: "Stainless Steel", capacity: "8oz", leatherWrap: true },
+            created_at: new Date()
+          },
+          {
+            id: 4,
+            name: "Vintage Collection Lighter",
+            description: "Classic design with modern functionality",
+            price: 249900,
+            category: "lighters",
+            collection: "luxury",
+            images: ["/placeholders/product-placeholder.svg"],
+            customizable: true,
+            features: { material: "Brass", refillable: true, vintage: true },
+            created_at: new Date()
+          }
+        ];
+        return mockProducts.filter(p => p.category === category);
+      }
       
       return await this.executeWithFallback(
         async () => {

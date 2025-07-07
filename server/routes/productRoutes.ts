@@ -12,7 +12,7 @@ export function productRoutes(app: Express) {
       const products = await storage.getProducts();
       
       // If no products are returned (database issue), return empty array with success status
-      if (!products || products.length === 0) {
+      if (!products) {
         console.log('No products found or database unavailable, returning empty array');
         return res.json([]);
       }
