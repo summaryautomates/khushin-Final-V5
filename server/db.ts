@@ -41,7 +41,7 @@ async function initializeDatabase() {
         ssl: { rejectUnauthorized: false },
         max: 5, // Reduced connection pool size
         idle_timeout: 30,
-        connect_timeout: 180, // Increased from 120 to 180 seconds
+        connect_timeout: 240, // Increased from 180 to 240 seconds
         transform: {
           undefined: null
         },
@@ -51,10 +51,10 @@ async function initializeDatabase() {
       
       db = drizzle(client, { schema });
       
-      // Test the connection with longer timeout - increased from 90 to 120 seconds
+      // Test the connection with longer timeout - increased from 120 to 180 seconds
       const testQuery = client`SELECT 1 as test`;
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), 120000) // Increased from 90 to 120 seconds
+        setTimeout(() => reject(new Error('Connection timeout')), 180000) // Increased from 120 to 180 seconds
       );
       
       await Promise.race([testQuery, timeoutPromise]);
@@ -98,11 +98,11 @@ export async function checkDatabaseHealth(): Promise<{healthy: boolean, error?: 
     }
 
     if (db) {
-      // Test direct database connection with increased timeout - increased from 60 to 90 seconds
+      // Test direct database connection with increased timeout - increased from 90 to 120 seconds
       try {
         const healthCheckPromise = db.execute('SELECT 1 as health_check');
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Health check timeout')), 90000) // Increased from 60 to 90 seconds
+          setTimeout(() => reject(new Error('Health check timeout')), 120000) // Increased from 90 to 120 seconds
         );
         
         await Promise.race([healthCheckPromise, timeoutPromise]);
