@@ -21,7 +21,7 @@ if (supabaseUrl && supabaseAnonKey) {
 
 let db: any = null;
 let connectionAttempts = 0;
-const MAX_CONNECTION_ATTEMPTS = 1; // Reduced to 1 to fail faster
+const MAX_CONNECTION_ATTEMPTS = 5; // Increased to allow for retries
 
 // Initialize database connection with retry logic
 async function initializeDatabase() {
@@ -42,7 +42,7 @@ async function initializeDatabase() {
         ssl: false, // Disable SSL for local development
         max: 3, // Further reduced connection pool size for stability
         idle_timeout: 20,
-        connect_timeout: 10, // Reduced timeout to fail faster
+        connect_timeout: 30, // Increased timeout to allow more time for connection
         transform: {
           undefined: null
         },
@@ -56,7 +56,7 @@ async function initializeDatabase() {
         // Test the connection with reasonable timeout
         const testQuery = client`SELECT 1 as test LIMIT 1`;
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Connection timeout')), 5000)
+          setTimeout(() => reject(new Error('Connection timeout')), 15000)
         );
         
         await Promise.race([testQuery, timeoutPromise]);
@@ -81,7 +81,7 @@ async function initializeDatabase() {
       db = null;
       
       if (connectionAttempts < MAX_CONNECTION_ATTEMPTS) {
-        const delay = Math.min(connectionAttempts * 2000, 5000); // Progressive delay up to 5 seconds
+        const delay = Math.min(connectionAttempts * 3000, 10000); // Progressive delay up to 10 seconds
         console.log(`Waiting ${delay}ms before next attempt...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
