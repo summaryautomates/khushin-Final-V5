@@ -20,11 +20,18 @@ export function useWebSocket() {
       wsRef.current = null;
     }
 
-    // Determine the WebSocket URL
-    // Use a more reliable approach to determine WebSocket URL
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    const wsUrl = `${protocol}//${host}/ws`;
+    // Determine the WebSocket URL based on environment
+    let wsUrl: string;
+    
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      // Local development - use the current host
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${protocol}//${window.location.host}/ws`;
+    } else {
+      // Production or WebContainer environment - use current host with appropriate protocol
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${protocol}//${window.location.host}/ws`;
+    }
     
     console.log('Attempting WebSocket connection to:', wsUrl);
     
