@@ -21,23 +21,9 @@ export function useWebSocket() {
     }
 
     // Determine the WebSocket URL
-    const protocol = 'ws:';
-    
-    // Handle WebContainer environment URL format
-    let host = window.location.hostname;
-    let port = '';
-    
-    // For WebContainer environments, use the same port as the current page
-    if (host.includes('webcontainer-api.io')) {
-      // Use the current window's port or default to empty for standard ports
-      port = window.location.port ? `:${window.location.port}` : '';
-    } else {
-      // For local development environments, use localhost with port 5000
-      host = 'localhost';
-      port = ':5000';
-    }
-    
-    const wsUrl = `${protocol}//${host}${port}/ws`;
+    // Derive WebSocket URL directly from the current page origin
+    const base = window.location.origin.replace(/^http/, 'ws').replace(/^https/, 'wss');
+    const wsUrl = `${base}/ws`;
     
     console.log('Attempting WebSocket connection to:', wsUrl);
     
