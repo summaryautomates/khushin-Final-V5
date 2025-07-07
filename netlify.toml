@@ -4,7 +4,7 @@
   # Directory to publish (relative to root of your repo)
   publish = "dist/public"
   # Build command - install dependencies and build the client for Netlify
-  command = "npm install && npm run build:client"
+  command = "npm install --include=dev && npm run build:client"
   # Ignore the server build for Netlify
   ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ./client/"
 
@@ -17,6 +17,7 @@
 # Set environment variables
 [build.environment]
   NODE_ENV = "production"
+  VITE_DEPLOYMENT_ENV = "netlify"
 
 # Set headers for caching and security
 [[headers]]

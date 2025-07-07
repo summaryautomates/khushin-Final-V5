@@ -28,8 +28,10 @@ export const AIAssistant = () => {
   const askAI = useMutation({
     mutationFn: async (message: string) => {
       try {
-        // Check if we're on Netlify - if so, use mock responses
-        if (window.location.hostname.includes('netlify.app') || !window.location.hostname.includes('localhost')) {
+        // Check if we're on a deployment (not localhost) - if so, use mock responses
+        const isDeployment = !window.location.hostname.includes('localhost') && 
+                             !window.location.hostname.includes('127.0.0.1');
+        if (isDeployment) {
           // Simulate network delay
           await new Promise(resolve => setTimeout(resolve, 1000));
           
@@ -92,7 +94,6 @@ export const AIAssistant = () => {
       setMessages(prev => [...prev, 
         { role: 'assistant', content: data.message }
       ]);
-      if (window.location.hostname.includes('netlify.app') || !window.location.hostname.includes('localhost')) return;
     },
     onError: (error: Error) => {
       toast({

@@ -14,9 +14,11 @@ export function useWebSocket() {
   const connect = useCallback(() => {
     console.log('Initializing WebSocket connection...');
 
-    // Check if we're on Netlify or other deployment - if so, don't attempt WebSocket connection
-    if (window.location.hostname.includes('netlify.app') || !window.location.hostname.includes('localhost')) {
-      console.log('Running on deployment - WebSocket connections disabled');
+    // Check if we're on a deployment (not localhost) - if so, don't attempt WebSocket connection
+    const isDeployment = !window.location.hostname.includes('localhost') && 
+                         !window.location.hostname.includes('127.0.0.1');
+    if (isDeployment) {
+      console.log('Running on deployment environment - WebSocket connections disabled');
       setConnected(true); // Pretend we're connected to prevent reconnection attempts
       return;
     }
@@ -169,13 +171,15 @@ export function useWebSocket() {
   }, [connect, toast]);
   
   useEffect(() => {
-    // Only attempt connection if not on Netlify
-    if (window.location.hostname.includes('localhost')) {
+    // Only attempt connection if on localhost
+    const isLocalhost = window.location.hostname.includes('localhost') || 
+                        window.location.hostname.includes('127.0.0.1');
+    if (isLocalhost) {
       setTimeout(connect, 1000); // Delay initial connection by 1 second to allow server to start
     }
 
-    // For Netlify, we'll simulate a connected state after a delay
-    if (window.location.hostname.includes('netlify.app') || !window.location.hostname.includes('localhost')) {
+    // For deployments, simulate a connected state after a delay
+    if (!isLocalhost) {
       setTimeout(() => {
         setConnected(true);
         setAuthenticated(true);
@@ -195,9 +199,11 @@ export function useWebSocket() {
   
   // Expose a function to send messages through the WebSocket
   const sendMessage = useCallback((data: any) => {
-    // For Netlify, just log the message and return true to simulate success
-    if (window.location.hostname.includes('netlify.app') || !window.location.hostname.includes('localhost')) {
-      console.log('Simulating WebSocket message send on deployment:', data);
+    // For deployments, just log the message and return true to simulate success
+    const isLocalhost = window.location.hostname.includes('localhost') || 
+                        window.location.hostname.includes('127.0.0.1');
+    if (!isLocalhost) {
+      console.log('Simulating WebSocket message send on deployment environment:', data);
       return true;
     }
 
