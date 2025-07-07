@@ -22,7 +22,7 @@ export function useWebSocket() {
     }
 
     // Determine the WebSocket URL
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const protocol = 'wss:';
     const host = window.location.host;
     const wsUrl = `${protocol}//${host}/ws`;
     
