@@ -28,22 +28,45 @@ export const AIAssistant = () => {
   const askAI = useMutation({
     mutationFn: async (message: string) => {
       try {
-        // Simulate AI response for now since we don't have a real AI endpoint
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+        // Try to use the real API endpoint first
+        try {
+          const response = await fetch('/api/ai/chat', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ message })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            return data;
+          }
+          
+          // If API fails, fall back to client-side responses
+          console.warn('AI API failed, using fallback responses');
+        } catch (apiError) {
+          console.error('Error calling AI API:', apiError);
+          console.log('Using fallback AI responses');
+        }
         
-        // Generate a simple response based on the message content
-        let response = "I'm sorry, I don't have enough information to answer that question.";
+        // Fallback: Generate a simple response based on the message content
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+        
+        let response = "I'm here to help with your shopping experience. Feel free to ask about our products, orders, or any other questions you might have.";
         
         if (message.toLowerCase().includes('hello') || message.toLowerCase().includes('hi')) {
-          response = "Hello! How can I help you with your shopping today?";
+          response = "Hello! Welcome to KHUSH.IN. How can I assist you with your luxury shopping experience today?";
         } else if (message.toLowerCase().includes('product') || message.toLowerCase().includes('lighter')) {
-          response = "We have a wide range of luxury lighters and flasks. Our premium collection features gold-plated designs with lifetime warranties. Would you like to see our bestsellers?";
+          response = "Our luxury lighter collection features premium materials like gold-plated brass and sterling silver. Each piece comes with a lifetime warranty and free refills for the first year. Would you like to explore our bestsellers?";
         } else if (message.toLowerCase().includes('price') || message.toLowerCase().includes('cost')) {
-          response = "Our products range from ₹14,999 for standard lighters to ₹29,999 for premium luxury designs. All prices include free shipping on orders over ₹5,000.";
+          response = "Our luxury lighters range from ₹14,999 for the Silver Pocket model to ₹29,999 for the Gold Edition. Premium flasks start at ₹12,999. All prices include complimentary gift wrapping and free shipping on orders over ₹5,000.";
         } else if (message.toLowerCase().includes('delivery') || message.toLowerCase().includes('shipping')) {
-          response = "We offer express delivery within 24 hours in major cities, and standard delivery within 3-5 business days nationwide. You can track your order in real-time through your account.";
+          response = "We offer express delivery within 24 hours in Mumbai, Delhi, and Bangalore. Standard delivery takes 3-5 business days nationwide. International shipping is available to select countries. All shipments are fully insured and trackable in real-time.";
         } else if (message.toLowerCase().includes('refund') || message.toLowerCase().includes('return')) {
-          response = "We have a 30-day return policy for all unused products in their original packaging. For customized items, please contact our customer service team.";
+          response = "We have a 30-day hassle-free return policy for all unused products in their original packaging. For customized items, please contact our VIP customer service team at support@khush.in for personalized assistance.";
         }
         
         return { message: response };

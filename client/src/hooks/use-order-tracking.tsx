@@ -14,18 +14,18 @@ export function useOrderTracking(orderRef: string | null) {
 
     // Subscribe to order updates when connected
     if (isConnected) {
-      const subscribed = send({
-        type: 'subscribe',
-        data: { orderRef }
-      });
-      console.log('Subscribed to order updates for:', orderRef);
-
-      if (!subscribed) {
-        toast({
-          title: 'Connection Error',
-          description: 'Unable to subscribe to order updates. Please refresh the page.',
-          variant: 'destructive',
+      try {
+        const subscribed = send({
+          type: 'subscribe',
+          data: { orderRef }
         });
+        console.log('Subscribed to order updates for:', orderRef);
+  
+        if (!subscribed) {
+          console.warn('Failed to send subscription message');
+        }
+      } catch (error) {
+        console.error('Error subscribing to order updates:', error);
       }
     }
     
@@ -38,7 +38,18 @@ export function useOrderTracking(orderRef: string | null) {
     // Set up message handler for this specific order
     const handleMessage = (event: MessageEvent) => {
       try {
-        const data = JSON.parse(event.data);
+        // Safely parse the message data
+        let data;
+        try {
+          if (typeof event.data === 'string') {
+            data = JSON.parse(event.data);
+          } else {
+            return; // Skip non-string data
+          }
+        } catch (parseError) {
+          console.error('Error parsing message data:', parseError);
+          return;
+        }
 
         switch (data.type) {
           case 'connected':
@@ -77,10 +88,14 @@ export function useOrderTracking(orderRef: string | null) {
 
       // Unsubscribe from order updates if connected
       if (isConnected) {
-        send({
-          type: 'unsubscribe',
-          data: { orderRef }
-        });
+        try {
+          send({
+            type: 'unsubscribe',
+            data: { orderRef }
+          });
+        } catch (error) {
+          console.error('Error unsubscribing from order updates:', error);
+        }
       }
     };
   }, [orderRef, isConnected, send, toast, user]);
