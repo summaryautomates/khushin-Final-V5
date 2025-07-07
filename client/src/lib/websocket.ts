@@ -36,10 +36,24 @@ export function useWebSocket() {
       // Determine the WebSocket URL based on environment
       let wsUrl: string;
       
-      // Simplified WebSocket URL construction
+      // Use the correct backend server port for WebSocket connection
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const port = window.location.port ? `:${window.location.port}` : '';
-      wsUrl = `${protocol}//${window.location.hostname}${port}/ws`;
+      const hostname = window.location.hostname;
+      
+      // Determine the correct port based on environment
+      let port: string;
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        // Development environment - use backend server port
+        port = ':5000';
+      } else if (hostname.includes('webcontainer-api.io')) {
+        // WebContainer environment - use production port
+        port = ':8080';
+      } else {
+        // Production or other environments
+        port = window.location.port ? `:${window.location.port}` : ':8080';
+      }
+      
+      wsUrl = `${protocol}//${hostname}${port}/ws`;
       
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws; 
