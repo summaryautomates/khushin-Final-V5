@@ -39,8 +39,8 @@ export function useWebSocket() {
       } else if (window.location.hostname === 'localhost' || window.location.hostname.includes('webcontainer')) {
         // Development environment - use current host for webcontainer, localhost:5000 for local dev
         if (window.location.hostname.includes('webcontainer')) {
-          // In webcontainer, use ws protocol on port 80 (external port mapping)
-          wsUrl = `ws://${window.location.hostname}/ws`;
+          // In webcontainer, use ws protocol on port 5000 where the server is listening
+          wsUrl = `ws://${window.location.hostname}:5000/ws`;
         } else {
           // Local development - connect directly to port 5000
           wsUrl = `ws://localhost:5000/ws`;
