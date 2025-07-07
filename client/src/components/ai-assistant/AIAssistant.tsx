@@ -68,39 +68,7 @@ export const AIAssistant = () => {
             credentials: 'include',
             body: JSON.stringify({ message })
           });
-            body: JSON.stringify({ message })
-          });
 
-          if (response.ok) {
-            const data = await response.json();
-            return data;
-          }
-          
-          // If API fails, fall back to client-side responses
-          console.warn('AI API failed, using fallback responses');
-        } catch (apiError) {
-          console.error('Error calling AI API:', apiError);
-          console.log('Using fallback AI responses');
-        }
-        
-        // Fallback: Generate a simple response based on the message content
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-        
-        let response = "I'm here to help with your shopping experience at KHUSH.IN. Feel free to ask about our luxury lighters, flasks, or any other products.";
-        
-        if (message.toLowerCase().includes('hello') || message.toLowerCase().includes('hi')) {
-          response = "Hello! Welcome to KHUSH.IN. How can I assist you with your luxury shopping experience today?";
-        } else if (message.toLowerCase().includes('product') || message.toLowerCase().includes('lighter')) {
-          response = "Our luxury lighter collection features premium materials like gold-plated brass and sterling silver. Each piece comes with a lifetime warranty and free refills for the first year. Our prices range from ₹14,999 to ₹29,999 depending on the model and customization options.";
-        } else if (message.toLowerCase().includes('price') || message.toLowerCase().includes('cost')) {
-          response = "Our luxury lighters range from ₹14,999 for the Silver Pocket model to ₹29,999 for the Gold Edition. Premium flasks start at ₹12,999. All prices include complimentary gift wrapping and free shipping on orders over ₹5,000.";
-        } else if (message.toLowerCase().includes('delivery') || message.toLowerCase().includes('shipping')) {
-          response = "We offer express delivery within 24 hours in Mumbai, Delhi, and Bangalore. Standard delivery takes 3-5 business days nationwide. International shipping is available to select countries. All shipments are fully insured and trackable in real-time.";
-        } else if (message.toLowerCase().includes('refund') || message.toLowerCase().includes('return')) {
-          response = "We have a 30-day hassle-free return policy for all unused products in their original packaging. For customized items, please contact our VIP customer service team at support@khush.in for personalized assistance.";
-        } else if (message.toLowerCase().includes('flask')) {
-          response = "Our premium flask collection includes stainless steel flasks with leather wrapping, available in various sizes from 6oz to 12oz. Prices start at ₹12,999 and include optional personalized engraving. Each flask comes with a 5-year warranty against leaks.";
-        } else if (message.toLowerCase().includes('customize') || message.toLowerCase().includes('engraving')) {
           if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'Failed to get AI response' }));
             throw new Error(error.message || "Failed to get AI response");
