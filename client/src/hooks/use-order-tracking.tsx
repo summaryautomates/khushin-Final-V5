@@ -12,7 +12,27 @@ export function useOrderTracking(orderRef: string | null) {
   useEffect(() => {
     // For Netlify deployments, we'll use a mock status
     if (window.location.hostname.includes('netlify.app')) {
+      // Simulate order status changes for demo purposes
       setStatus('pending');
+      
+      // Simulate status changes after delays
+      const processingTimer = setTimeout(() => {
+        setStatus('processing');
+      }, 5000);
+      
+      const shippedTimer = setTimeout(() => {
+        setStatus('shipped');
+      }, 10000);
+      
+      const completedTimer = setTimeout(() => {
+        setStatus('completed');
+      }, 15000);
+      
+      return () => {
+        clearTimeout(processingTimer);
+        clearTimeout(shippedTimer);
+        clearTimeout(completedTimer);
+      };
       return;
     }
 

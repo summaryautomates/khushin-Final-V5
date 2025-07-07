@@ -29,14 +29,17 @@ export function useWebSocket() {
       // Determine the WebSocket URL
       // Determine the WebSocket URL based on environment
       let wsUrl: string;
-
-      // For Netlify deployments, we need to disable WebSockets since they won't work
+      
+      // For Netlify deployments, we need to disable WebSockets
       if (window.location.hostname.includes('netlify.app')) {
         console.log('WebSocket disabled on Netlify deployment');
-        // Return early without creating a WebSocket
-        setConnected(false);
+        // Set connected to true to prevent reconnection attempts
+        setConnected(true);
         return;
-      } else if (window.location.hostname === 'localhost' || window.location.hostname.includes('webcontainer')) {
+      }
+
+      // For Netlify deployments, we need to disable WebSockets since they won't work
+      if (window.location.hostname === 'localhost' || window.location.hostname.includes('webcontainer')) {
         // Development environment - use current host for webcontainer, localhost:5000 for local dev
         if (window.location.hostname.includes('webcontainer')) {
           // In webcontainer, use same protocol as main page to avoid mixed content issues
